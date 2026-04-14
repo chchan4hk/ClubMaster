@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "entries": {
+    "LR000003": {
+      "lessonReserveId": "LR000003",
+      "dueDate": "2026-05-01",
+      "payments": [
+        {
+          "paymentId": "PAY-mnvcbzu4-coorfn",
+          "amount": 3600,
+          "method": "PayMe",
+          "reference": "—",
+          "paidAt": "2026-04-12"
+        }
+      ]
+    },
+    "LR000005": {
+      "lessonReserveId": "LR000005",
+      "dueDate": "2026-05-15",
+      "payments": [
+        {
+          "paymentId": "PAY-mnvccx9b-2dr3kh",
+          "amount": 1880,
+          "method": "支付寶",
+          "reference": "13:31, from 53880508",
+          "paidAt": "2026-04-12"
+        }
+      ]
+    },
+    "LR000008": {
+      "lessonReserveId": "LR000008",
+      "dueDate": "2026-03-25",
+      "payments": [
+        {
+          "paymentId": "PAY-mnw151fg-6r1xgm",
+          "amount": 1580,
+          "method": "WeChatPay",
+          "reference": "—",
+          "paidAt": "2026-04-12"
+        }
+      ]
+    }
+  }
+}

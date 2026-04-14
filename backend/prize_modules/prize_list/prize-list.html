@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prize List — Coach Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body
+  class="dashboard-dynamic-bg min-h-screen text-slate-100 p-6"
+  style="--dashboard-bg-img: url('/Source/Image/coach-manager.jpg');">
+  <div class="dynamic-bg-stack" aria-hidden="true">
+    <div class="dynamic-bg-photo"></div>
+    <div class="dynamic-bg-overlay"></div>
+    <canvas class="dynamic-bg-star-net"></canvas>
+    <div class="dynamic-bg-spot-glow"></div>
+  </div>
+
+  <div class="max-w-6xl mx-auto">
+    <header class="mb-6">
+      <p id="backLinkWrap">
+        <a href="/coach-manager.html" target="_top"
+          class="text-sm text-teal-400/90 hover:text-teal-300 underline-offset-2 hover:underline">
+          ← Back to Coach Manager
+        </a>
+      </p>
+      <h1 class="text-2xl font-bold text-teal-300 mt-2">Prize List</h1>
+    </header>
+
+    <section class="glass rounded-xl border border-white/15 p-4 mb-6 overflow-x-auto">
+      <h2 class="text-lg font-semibold text-teal-200 mb-1">Prizes</h2>
+      <p class="text-xs text-slate-500 mb-3">
+        Use <strong>Update</strong> on a row to edit details, or <strong>Create New Prize</strong> below to add a prize.
+      </p>
+      <p id="prizeListErr" class="hidden text-sm text-red-300 mb-2"></p>
+      <p id="prizeListWarn" class="hidden text-sm text-amber-200/90 mb-2"></p>
+      <table class="w-full text-sm text-left border-collapse min-w-max">
+        <thead>
+          <tr id="prizeTableHeadRow" class="border-b border-white/10 text-slate-400">
+            <th class="py-2 pr-3 font-medium">…</th>
+          </tr>
+        </thead>
+        <tbody id="prizeTableBody">
+          <tr><td class="py-4 text-slate-500">Loading…</td></tr>
+        </tbody>
+      </table>
+
+      <div class="mt-4 flex flex-wrap gap-2">
+        <button type="button" id="btnCreateNewPrize"
+          class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm">
+          Create New Prize
+        </button>
+      </div>
+
+      <div id="createPrizePanel" class="hidden mt-6 pt-6 border-t border-white/10 rounded-lg bg-slate-900/50 p-4">
+        <h3 class="text-base font-semibold text-teal-200 mb-4">New prize</h3>
+        <form id="createPrizeForm" class="space-y-3 max-w-2xl">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="newPrizeSportType" class="block text-xs text-slate-400 mb-1">Sport Type</label>
+              <select id="newPrizeSportType"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+              </select>
+            </div>
+            <div>
+              <label for="newPrizeYear" class="block text-xs text-slate-400 mb-1">Year</label>
+              <input id="newPrizeYear" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+          </div>
+          <div>
+            <label for="newPrizeAssociation" class="block text-xs text-slate-400 mb-1">Association</label>
+            <input id="newPrizeAssociation" type="text"
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+          </div>
+          <div>
+            <label for="newPrizeCompetition" class="block text-xs text-slate-400 mb-1">Competition</label>
+            <input id="newPrizeCompetition" type="text" required
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="newPrizeAgeGroup" class="block text-xs text-slate-400 mb-1">Age group</label>
+              <input id="newPrizeAgeGroup" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+            <div>
+              <label for="newPrizePrizeType" class="block text-xs text-slate-400 mb-1">Prize type</label>
+              <select id="newPrizePrizeType" required
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                <option value="Men's Single">Men's Single</option>
+                <option value="Men's Double">Men's Double</option>
+                <option value="Women's Single">Women's Single</option>
+                <option value="Women's Double">Women's Double</option>
+                <option value="Mixed Double">Mixed Double</option>
+                <option value="Team">Team</option>
+                <option value="Others">Others</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label for="newPrizeStudentName" class="block text-xs text-slate-400 mb-1">Student Name</label>
+            <input id="newPrizeStudentName" type="text" required autocomplete="name"
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="newPrizeRanking" class="block text-xs text-slate-400 mb-1">Ranking</label>
+              <input id="newPrizeRanking" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+            <div>
+              <label for="newPrizeStatus" class="block text-xs text-slate-400 mb-1">Status</label>
+              <select id="newPrizeStatus"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                <option value="ACTIVE" selected>ACTIVE</option>
+                <option value="INACTIVE">INACTIVE</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label for="newPrizeVerifiedBy" class="block text-xs text-slate-400 mb-1">Verified By</label>
+            <input id="newPrizeVerifiedBy" type="text"
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+          </div>
+          <div>
+            <label for="newPrizeRemarks" class="block text-xs text-slate-400 mb-1">Remarks</label>
+            <input id="newPrizeRemarks" type="text"
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+          </div>
+          <p id="createPrizeErr" class="hidden text-sm text-red-300"></p>
+          <p id="createPrizeOk" class="hidden text-sm text-teal-300"></p>
+          <div class="flex flex-wrap gap-2 pt-2">
+            <button type="submit" id="createPrizeSubmitBtn"
+              class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
+              Confirm
+            </button>
+            <button type="button" id="createPrizeCancelBtn"
+              class="rounded-lg bg-slate-700 hover:bg-slate-600 border border-white/15 text-slate-100 font-medium px-4 py-2 text-sm">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div id="tableEditPanel" class="hidden mt-6 pt-6 border-t border-white/10 rounded-lg bg-slate-900/40 p-4">
+        <h3 class="text-base font-semibold text-teal-200 mb-4">Edit prize</h3>
+        <form id="tableEditForm" class="space-y-3 max-w-2xl">
+          <p class="text-[11px] uppercase tracking-wide text-slate-500 font-medium">Read-only</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="tableEditPrizeId" class="block text-xs text-slate-400 mb-1">Prize ID</label>
+              <input id="tableEditPrizeId" type="text" readonly
+                class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed" />
+            </div>
+            <div>
+              <label for="tableEditClubId" class="block text-xs text-slate-400 mb-1">Club ID</label>
+              <input id="tableEditClubId" type="text" readonly
+                class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed" />
+            </div>
+            <div>
+              <label for="tableEditClubName" class="block text-xs text-slate-400 mb-1">Club name</label>
+              <input id="tableEditClubName" type="text" readonly
+                class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed" />
+            </div>
+          </div>
+          <div>
+            <label for="tableEditCreatedAt" class="block text-xs text-slate-400 mb-1">Created At</label>
+            <input id="tableEditCreatedAt" type="text" readonly
+              class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed" />
+          </div>
+          <div>
+            <label for="tableEditLastUpdated" class="block text-xs text-slate-400 mb-1">Last Updated Date (current file value)</label>
+            <input id="tableEditLastUpdated" type="text" readonly
+              class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed" />
+          </div>
+          <p class="text-[11px] uppercase tracking-wide text-slate-500 font-medium pt-2">You can edit</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="tableEditSportType" class="block text-xs text-slate-400 mb-1">Sport Type</label>
+              <select id="tableEditSportType"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+              </select>
+            </div>
+            <div>
+              <label for="tableEditYear" class="block text-xs text-slate-400 mb-1">Year</label>
+              <input id="tableEditYear" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+          </div>
+          <div>
+            <label for="tableEditAssociation" class="block text-xs text-slate-400 mb-1">Association</label>
+            <input id="tableEditAssociation" type="text"
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+          </div>
+          <div>
+            <label for="tableEditCompetition" class="block text-xs text-slate-400 mb-1">Competition</label>
+            <input id="tableEditCompetition" type="text" required
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="tableEditAgeGroup" class="block text-xs text-slate-400 mb-1">Age group</label>
+              <input id="tableEditAgeGroup" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+            <div>
+              <label for="tableEditPrizeType" class="block text-xs text-slate-400 mb-1">Prize type</label>
+              <select id="tableEditPrizeType"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                <option value="Men's Single">Men's Single</option>
+                <option value="Men's Double">Men's Double</option>
+                <option value="Women's Single">Women's Single</option>
+                <option value="Women's Double">Women's Double</option>
+                <option value="Mixed Double">Mixed Double</option>
+                <option value="Team">Team</option>
+                <option value="Others">Others</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label for="tableEditStudentName" class="block text-xs text-slate-400 mb-1">Student Name</label>
+            <input id="tableEditStudentName" type="text" required autocomplete="name"
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="tableEditRanking" class="block text-xs text-slate-400 mb-1">Ranking</label>
+              <input id="tableEditRanking" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+            <div>
+              <label for="tableEditStatus" class="block text-xs text-slate-400 mb-1">Status</label>
+              <select id="tableEditStatus"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="INACTIVE">INACTIVE</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label for="tableEditVerifiedBy" class="block text-xs text-slate-400 mb-1">Verified By</label>
+            <input id="tableEditVerifiedBy" type="text"
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+          </div>
+          <div>
+            <label for="tableEditRemarks" class="block text-xs text-slate-400 mb-1">Remarks</label>
+            <input id="tableEditRemarks" type="text"
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+          </div>
+          <p id="tableEditErr" class="hidden text-sm text-red-300"></p>
+          <p id="tableEditOk" class="hidden text-sm text-teal-300"></p>
+          <div class="flex flex-wrap gap-2 pt-2">
+            <button type="button" id="tableEditConfirmBtn"
+              class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
+              Confirm
+            </button>
+            <button type="button" id="tableEditCancelBtn"
+              class="rounded-lg bg-slate-700 hover:bg-slate-600 border border-white/15 text-slate-100 font-medium px-4 py-2 text-sm">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <script src="/js/dashboard-dynamic-bg.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    (function () {
+      var isFramed = false;
+      try {
+        isFramed = window.self !== window.top;
+      } catch (e) {
+        isFramed = true;
+      }
+
+      var token =
+        window.auth &&
+        typeof window.auth.getToken === "function" &&
+        window.auth.getToken();
+      var role = localStorage.getItem("userRole");
+      var sessionOk =
+        Boolean(token) &&
+        (role === "CoachManager" || role === "Coach");
+
+      if (isFramed) {
+        var bw = document.getElementById("backLinkWrap");
+        if (bw) {
+          bw.classList.add("hidden");
+        }
+      }
+
+      function setUidLabels(uid) {
+        var u = uid && String(uid).trim() ? String(uid).trim() : "…";
+        var el = document.getElementById("hdrUid");
+        if (el) {
+          el.textContent = u;
+        }
+        document.querySelectorAll(".hdrUidInline").forEach(function (n) {
+          n.textContent = u;
+        });
+      }
+
+      (function primeClubIdFromUrlOrCache() {
+        var q = new URLSearchParams(window.location.search || "");
+        var id = (q.get("clubId") || q.get("uid") || "").trim();
+        var ctx =
+          window.api &&
+          window.api.getClubFolderContext &&
+          window.api.getClubFolderContext();
+        if (ctx && ctx.clubId) {
+          id = id || String(ctx.clubId).trim();
+        }
+        if (id) {
+          setUidLabels(id);
+        }
+      })();
+
+      if (!sessionOk) {
+        if (
+          !isFramed &&
+          !window.auth.guardPage("CoachManager") &&
+          !window.auth.guardPage("Coach")
+        ) {
+          return;
+        }
+      } else if (!isFramed) {
+        if (role === "CoachManager" && !window.auth.guardPage("CoachManager")) {
+          return;
+        }
+        if (role === "Coach" && !window.auth.guardPage("Coach")) {
+          return;
+        }
+      }
+
+      function escapeHtml(s) {
+        if (s == null) {
+          return "";
+        }
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      var cachedPrizes = [];
+      var PRIZE_TABLE_COLS = [
+        { key: "PrizeID", label: "Prize ID" },
+        { key: "SportType", label: "Sport Type" },
+        { key: "Year", label: "Year" },
+        { key: "Association", label: "Association" },
+        { key: "Competition", label: "Competition" },
+        { key: "Age_group", label: "Age group" },
+        { key: "Prize_type", label: "Prize type" },
+        { key: "StudentName", label: "Student Name" },
+        { key: "Ranking", label: "Ranking" },
+        { key: "Status", label: "Status" },
+        { key: "Created_at", label: "Created At" },
+        { key: "LastUpdated_Date", label: "Last Updated Date" },
+        { key: "VerifiedBy", label: "Verified By" },
+        { key: "Remarks", label: "Remarks" },
+      ];
+
+      function hideCreatePrizePanel() {
+        var p = document.getElementById("createPrizePanel");
+        if (p) {
+          p.classList.add("hidden");
+        }
+        var ce = document.getElementById("createPrizeErr");
+        var co = document.getElementById("createPrizeOk");
+        if (ce) {
+          ce.classList.add("hidden");
+          ce.textContent = "";
+        }
+        if (co) {
+          co.classList.add("hidden");
+          co.textContent = "";
+        }
+      }
+
+      function hideTableEditPanel() {
+        var p = document.getElementById("tableEditPanel");
+        if (p) {
+          p.classList.add("hidden");
+        }
+        var err = document.getElementById("tableEditErr");
+        var ok = document.getElementById("tableEditOk");
+        if (err) {
+          err.classList.add("hidden");
+          err.textContent = "";
+        }
+        if (ok) {
+          ok.classList.add("hidden");
+          ok.textContent = "";
+        }
+      }
+
+      function hideAllPrizePanels() {
+        hideTableEditPanel();
+        hideCreatePrizePanel();
+      }
+
+      function bindSelectWithOrphan(sel, value) {
+        if (!sel) {
+          return;
+        }
+        sel.querySelectorAll("option[data-orphan]").forEach(function (o) {
+          o.remove();
+        });
+        var v = value == null ? "" : String(value).trim();
+        sel.value = v;
+        if (v && sel.value !== v) {
+          var opt = document.createElement("option");
+          opt.value = v;
+          opt.textContent = v;
+          opt.setAttribute("data-orphan", "1");
+          sel.appendChild(opt);
+          sel.value = v;
+        }
+      }
+
+      function initSportTypeSelectsFromBasicInfo() {
+        if (
+          !window.api ||
+          typeof window.api.fetchBasicInfo !== "function" ||
+          typeof window.api.fillSelectFromBasicList !== "function"
+        ) {
+          return Promise.resolve();
+        }
+        return window.api.fetchBasicInfo().then(function (info) {
+          window.api.fillSelectFromBasicList(
+            document.getElementById("newPrizeSportType"),
+            info.sportTypes,
+            {}
+          );
+          window.api.fillSelectFromBasicList(
+            document.getElementById("tableEditSportType"),
+            info.sportTypes,
+            { leadEmpty: true, leadEmptyLabel: "—" }
+          );
+        });
+      }
+
+      function setNewPrizeSportTypeToFirst() {
+        var el = document.getElementById("newPrizeSportType");
+        if (el && el.options.length) {
+          el.selectedIndex = 0;
+        }
+      }
+
+      function applyNewPrizeFormDefaults() {
+        setNewPrizeSportTypeToFirst();
+        var pt = document.getElementById("newPrizePrizeType");
+        if (pt) {
+          pt.value = "Men's Single";
+        }
+        var st = document.getElementById("newPrizeStatus");
+        if (st) {
+          st.value = "ACTIVE";
+        }
+      }
+
+      function openTableEditPanelFromPrize(pz) {
+        hideCreatePrizePanel();
+        document.getElementById("tableEditPrizeId").value = pz.PrizeID || "";
+        document.getElementById("tableEditClubId").value = pz.ClubID || "";
+        document.getElementById("tableEditClubName").value = pz.Club_name || "";
+        bindSelectWithOrphan(
+          document.getElementById("tableEditSportType"),
+          pz.SportType || ""
+        );
+        document.getElementById("tableEditYear").value = pz.Year || "";
+        document.getElementById("tableEditAssociation").value = pz.Association || "";
+        document.getElementById("tableEditCompetition").value = pz.Competition || "";
+        document.getElementById("tableEditAgeGroup").value = pz.Age_group || "";
+        bindSelectWithOrphan(
+          document.getElementById("tableEditPrizeType"),
+          pz.Prize_type,
+        );
+        document.getElementById("tableEditStudentName").value = pz.StudentName || "";
+        document.getElementById("tableEditRanking").value = pz.Ranking || "";
+        var st = (pz.Status || "ACTIVE").toString().trim().toUpperCase();
+        document.getElementById("tableEditStatus").value =
+          st === "INACTIVE" ? "INACTIVE" : "ACTIVE";
+        document.getElementById("tableEditVerifiedBy").value = pz.VerifiedBy || "";
+        document.getElementById("tableEditRemarks").value = pz.Remarks || "";
+        document.getElementById("tableEditCreatedAt").value = pz.Created_at || "";
+        document.getElementById("tableEditLastUpdated").value =
+          pz.LastUpdated_Date || "";
+        document.getElementById("tableEditErr").classList.add("hidden");
+        document.getElementById("tableEditOk").classList.add("hidden");
+        var panel = document.getElementById("tableEditPanel");
+        if (panel) {
+          panel.classList.remove("hidden");
+          try {
+            panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          } catch (se) {
+            /* ignore */
+          }
+        }
+      }
+
+      function renderPrizeTableFromApi(prizes) {
+        var headRow = document.getElementById("prizeTableHeadRow");
+        var tb = document.getElementById("prizeTableBody");
+        if (!headRow || !tb) {
+          return;
+        }
+        if (!prizes || !prizes.length) {
+          headRow.innerHTML =
+            '<th class="py-2 pr-3 font-medium text-slate-400">—</th>';
+          tb.innerHTML =
+            '<tr><td class="py-4 text-slate-500">No prizes in list yet.</td></tr>';
+          return;
+        }
+        headRow.innerHTML =
+          '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap w-24">Actions</th>' +
+          PRIZE_TABLE_COLS.map(function (col) {
+            return (
+              '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap max-w-[14rem]">' +
+              escapeHtml(col.label) +
+              "</th>"
+            );
+          }).join("");
+        tb.innerHTML = prizes
+          .map(function (pz, idx) {
+            var tds = PRIZE_TABLE_COLS.map(function (col) {
+              var v = pz[col.key] != null ? String(pz[col.key]) : "";
+              return (
+                '<td class="py-2 pr-3 text-xs align-top whitespace-pre-wrap break-words max-w-[16rem]">' +
+                escapeHtml(v) +
+                "</td>"
+              );
+            }).join("");
+            return (
+              '<tr class="border-b border-white/5">' +
+              '<td class="py-2 pr-3 align-top whitespace-nowrap">' +
+              '<button type="button" class="cm-row-update rounded-md bg-teal-700/90 hover:bg-teal-600 text-white text-xs font-medium px-2.5 py-1.5" data-idx="' +
+              idx +
+              '">Update</button></td>' +
+              tds +
+              "</tr>"
+            );
+          })
+          .join("");
+      }
+
+      function normPrizeRawHeaderKey(h) {
+        return String(h || "")
+          .replace(/^\uFEFF/, "")
+          .trim()
+          .toLowerCase()
+          .replace(/\s+/g, "_");
+      }
+
+      /** Hide Club ID / club name columns in raw fallback (same as main prize table). */
+      function filterPrizeListRawForDisplay(raw) {
+        if (!raw || !raw.headers || !raw.headers.length) {
+          return raw;
+        }
+        var hide = { clubid: true, club_id: true, club_name: true };
+        var keep = [];
+        var headers = [];
+        raw.headers.forEach(function (h, i) {
+          var k = normPrizeRawHeaderKey(h);
+          if (hide[k]) {
+            return;
+          }
+          keep.push(i);
+          headers.push(h);
+        });
+        var rows = (raw.rows || []).map(function (row) {
+          var cells = Array.isArray(row) ? row : [];
+          return keep.map(function (ix) {
+            return cells[ix] != null ? String(cells[ix]) : "";
+          });
+        });
+        return { headers: headers, rows: rows };
+      }
+
+      /** Renders headers/rows from API `prizeListRaw` (derived from PrizeList.json). */
+      function renderPrizeListRawFallback(raw) {
+        var headRow = document.getElementById("prizeTableHeadRow");
+        var tb = document.getElementById("prizeTableBody");
+        if (!headRow || !tb) {
+          return;
+        }
+        var filtered = filterPrizeListRawForDisplay(raw);
+        if (!filtered || !filtered.headers || !filtered.headers.length) {
+          headRow.innerHTML =
+            '<th class="py-2 pr-3 font-medium text-slate-400">—</th>';
+          tb.innerHTML =
+            '<tr><td class="py-4 text-slate-500">No rows (empty or missing file).</td></tr>';
+          return;
+        }
+        var colCount = filtered.headers.length;
+        headRow.innerHTML = filtered.headers
+          .map(function (h) {
+            return (
+              '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap max-w-[14rem]">' +
+              escapeHtml(h) +
+              "</th>"
+            );
+          })
+          .join("");
+        if (!filtered.rows || !filtered.rows.length) {
+          tb.innerHTML =
+            '<tr><td colspan="' +
+            colCount +
+            '" class="py-4 text-slate-500">Header only — no data rows yet.</td></tr>';
+          return;
+        }
+        try {
+          tb.innerHTML = filtered.rows
+            .map(function (row) {
+              var cells = Array.isArray(row) ? row : [];
+              return (
+                '<tr class="border-b border-white/5">' +
+                cells
+                  .map(function (cell) {
+                    return (
+                      '<td class="py-2 pr-3 text-xs align-top whitespace-pre-wrap break-words max-w-[16rem]">' +
+                      escapeHtml(cell) +
+                      "</td>"
+                    );
+                  })
+                  .join("") +
+                "</tr>"
+              );
+            })
+            .join("");
+        } catch (renderErr) {
+          tb.innerHTML =
+            '<tr><td colspan="' +
+            colCount +
+            '" class="py-4 text-red-300">Could not render table: ' +
+            escapeHtml(
+              renderErr && renderErr.message ? renderErr.message : String(renderErr)
+            ) +
+            "</td></tr>";
+        }
+      }
+
+      var loadPrizeListSeq = 0;
+      var loadPrizeListAbort = null;
+
+      function loadPrizeList() {
+        var errEl = document.getElementById("prizeListErr");
+        var warnEl = document.getElementById("prizeListWarn");
+        hideAllPrizePanels();
+        if (errEl) {
+          errEl.classList.add("hidden");
+        }
+        if (warnEl) {
+          warnEl.classList.add("hidden");
+          warnEl.textContent = "";
+        }
+
+        if (!window.api || typeof window.api.api !== "function") {
+          if (errEl) {
+            errEl.textContent =
+              "Scripts failed to load. Open Coach Manager from the backend server (e.g. http://127.0.0.1:3000/coach-manager.html), not file:// or a static server that omits /js/api.js.";
+            errEl.classList.remove("hidden");
+          }
+          cachedPrizes = [];
+          renderPrizeListRawFallback(null);
+          return;
+        }
+
+        loadPrizeListSeq += 1;
+        var mySeq = loadPrizeListSeq;
+        if (loadPrizeListAbort) {
+          try {
+            loadPrizeListAbort.abort();
+          } catch (abortErr) {
+            /* ignore */
+          }
+        }
+        loadPrizeListAbort =
+          typeof AbortController !== "undefined" ? new AbortController() : null;
+        var fetchOpts = loadPrizeListAbort ? { signal: loadPrizeListAbort.signal } : {};
+
+        window.api
+          .api("/coach-manager/prizes", fetchOpts)
+          .then(function (data) {
+            if (mySeq !== loadPrizeListSeq) {
+              return;
+            }
+            if (!data || data.ok === false) {
+              var failMsg =
+                (data && data.error) || "Could not load prize list (server returned an error).";
+              if (errEl) {
+                errEl.textContent = failMsg;
+                errEl.classList.remove("hidden");
+              }
+              cachedPrizes = [];
+              renderPrizeListRawFallback(null);
+              return;
+            }
+            if (data.clubId) {
+              setUidLabels(data.clubId);
+            }
+            if (warnEl && data.prizesParseWarning) {
+              warnEl.textContent =
+                "Table shows raw columns; structured rows need PrizeID and StudentName in JSON. " +
+                data.prizesParseWarning;
+              warnEl.classList.remove("hidden");
+            }
+            cachedPrizes = Array.isArray(data.prizes) ? data.prizes.slice() : [];
+            try {
+              if (cachedPrizes.length > 0) {
+                renderPrizeTableFromApi(cachedPrizes);
+              } else {
+                renderPrizeListRawFallback(data.prizeListRaw || null);
+              }
+            } catch (renderErr) {
+              if (errEl) {
+                errEl.textContent =
+                  renderErr && renderErr.message
+                    ? renderErr.message
+                    : "Failed to render table.";
+                errEl.classList.remove("hidden");
+              }
+              cachedPrizes = [];
+              renderPrizeListRawFallback(data.prizeListRaw || null);
+            }
+          })
+          .catch(function (e) {
+            if (mySeq !== loadPrizeListSeq) {
+              return;
+            }
+            if (e && (e.name === "AbortError" || (e.cause && e.cause.name === "AbortError"))) {
+              return;
+            }
+            var msg = e.message || "Could not load prize list.";
+            if (e.status === 401 || /Unauthorized|Invalid token/i.test(msg)) {
+              msg +=
+                " Sign in as Coach or Coach Manager on the same host you used to open this site (do not mix localhost and 127.0.0.1).";
+            }
+            if (errEl) {
+              errEl.textContent = msg;
+              errEl.classList.remove("hidden");
+            }
+            cachedPrizes = [];
+            renderPrizeListRawFallback(null);
+          });
+      }
+
+      (function bindPrizeTableActions() {
+        var tb = document.getElementById("prizeTableBody");
+        if (!tb || tb.dataset.cmRowBound === "1") {
+          return;
+        }
+        tb.dataset.cmRowBound = "1";
+        tb.addEventListener("click", function (ev) {
+          var btn = ev.target && ev.target.closest && ev.target.closest("button.cm-row-update");
+          if (!btn) {
+            return;
+          }
+          var idx = parseInt(btn.getAttribute("data-idx"), 10);
+          if (isNaN(idx) || idx < 0 || idx >= cachedPrizes.length) {
+            return;
+          }
+          openTableEditPanelFromPrize(cachedPrizes[idx]);
+        });
+      })();
+
+      document.getElementById("tableEditCancelBtn").addEventListener("click", function () {
+        hideTableEditPanel();
+      });
+
+      document.getElementById("tableEditConfirmBtn").addEventListener("click", function () {
+        var btn = document.getElementById("tableEditConfirmBtn");
+        var errBox = document.getElementById("tableEditErr");
+        var okBox = document.getElementById("tableEditOk");
+        errBox.classList.add("hidden");
+        okBox.classList.add("hidden");
+        var id = document.getElementById("tableEditPrizeId").value.trim();
+        if (!id) {
+          errBox.textContent = "Missing PrizeID.";
+          errBox.classList.remove("hidden");
+          return;
+        }
+        var comp = document.getElementById("tableEditCompetition").value.trim();
+        var sn = document.getElementById("tableEditStudentName").value.trim();
+        if (!comp || !sn) {
+          errBox.textContent = "Competition and Student Name are required.";
+          errBox.classList.remove("hidden");
+          return;
+        }
+        btn.disabled = true;
+        var putBody = {
+          PrizeID: id,
+          SportType: document.getElementById("tableEditSportType").value.trim(),
+          Year: document.getElementById("tableEditYear").value.trim(),
+          Association: document.getElementById("tableEditAssociation").value.trim(),
+          Competition: comp,
+          Age_group: document.getElementById("tableEditAgeGroup").value.trim(),
+          Prize_type: document.getElementById("tableEditPrizeType").value.trim(),
+          StudentName: sn,
+          Ranking: document.getElementById("tableEditRanking").value.trim(),
+          Status: document.getElementById("tableEditStatus").value,
+          VerifiedBy: document.getElementById("tableEditVerifiedBy").value.trim(),
+          Remarks: document.getElementById("tableEditRemarks").value.trim(),
+        };
+        window.api
+          .api("/coach-manager/prizes", {
+            method: "PUT",
+            body: JSON.stringify(putBody),
+          })
+          .then(function () {
+            loadPrizeList();
+          })
+          .catch(function (e) {
+            errBox.textContent = e.message || "Save failed.";
+            errBox.classList.remove("hidden");
+          })
+          .finally(function () {
+            btn.disabled = false;
+          });
+      });
+
+      window.addEventListener("message", function (ev) {
+        if (ev.origin !== window.location.origin) {
+          return;
+        }
+        var d = ev.data;
+        if (!d || d.type !== "sportCoach.clubContext") {
+          return;
+        }
+        var cid = String(d.clubId || d.uid || "").trim();
+        if (cid) {
+          setUidLabels(cid);
+        }
+        if (
+          window.api &&
+          typeof window.api.setClubFolderContext === "function"
+        ) {
+          window.api.setClubFolderContext(
+            cid || null,
+            d.clubName != null && String(d.clubName).trim() !== ""
+              ? String(d.clubName).trim()
+              : null
+          );
+        }
+        loadPrizeList();
+      });
+
+      if (window.api && typeof window.api.api === "function") {
+        window.api
+          .api("/me")
+          .then(function (d) {
+            var u = d.user || {};
+            var cfu =
+              u.club_folder_uid != null && String(u.club_folder_uid).trim() !== ""
+                ? String(u.club_folder_uid).trim()
+                : "";
+            setUidLabels(cfu || u.uid);
+          })
+          .catch(function () {
+            /* keep UID from API response or postMessage */
+          });
+      }
+
+      initSportTypeSelectsFromBasicInfo()
+        .catch(function () {
+          /* dropdowns stay empty if API fails */
+        })
+        .finally(function () {
+          loadPrizeList();
+        });
+
+      document.getElementById("btnCreateNewPrize").addEventListener("click", function () {
+        hideTableEditPanel();
+        var panel = document.getElementById("createPrizePanel");
+        var form = document.getElementById("createPrizeForm");
+        var errEl = document.getElementById("createPrizeErr");
+        var okEl = document.getElementById("createPrizeOk");
+        if (errEl) {
+          errEl.classList.add("hidden");
+          errEl.textContent = "";
+        }
+        if (okEl) {
+          okEl.classList.add("hidden");
+          okEl.textContent = "";
+        }
+        if (form) {
+          form.reset();
+        }
+        applyNewPrizeFormDefaults();
+        if (panel) {
+          panel.classList.remove("hidden");
+          try {
+            panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          } catch (se) {
+            /* ignore */
+          }
+        }
+      });
+
+      document.getElementById("createPrizeCancelBtn").addEventListener("click", function () {
+        hideCreatePrizePanel();
+      });
+
+      document.getElementById("createPrizeForm").addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        var errBox = document.getElementById("createPrizeErr");
+        var okBox = document.getElementById("createPrizeOk");
+        var btn = document.getElementById("createPrizeSubmitBtn");
+        errBox.classList.add("hidden");
+        okBox.classList.add("hidden");
+        errBox.textContent = "";
+        var comp = document.getElementById("newPrizeCompetition").value.trim();
+        var sn = document.getElementById("newPrizeStudentName").value.trim();
+        if (!comp || !sn) {
+          errBox.textContent = "Competition and Student Name are required.";
+          errBox.classList.remove("hidden");
+          return;
+        }
+        btn.disabled = true;
+        var body = {
+          SportType: document.getElementById("newPrizeSportType").value.trim(),
+          Year: document.getElementById("newPrizeYear").value.trim(),
+          Association: document.getElementById("newPrizeAssociation").value.trim(),
+          Competition: comp,
+          Age_group: document.getElementById("newPrizeAgeGroup").value.trim(),
+          Prize_type: document.getElementById("newPrizePrizeType").value.trim(),
+          StudentName: sn,
+          Ranking: document.getElementById("newPrizeRanking").value.trim(),
+          Status: document.getElementById("newPrizeStatus").value,
+          VerifiedBy: document.getElementById("newPrizeVerifiedBy").value.trim(),
+          Remarks: document.getElementById("newPrizeRemarks").value.trim(),
+        };
+        window.api
+          .api("/coach-manager/prizes", {
+            method: "POST",
+            body: JSON.stringify(body),
+          })
+          .then(function (data) {
+            okBox.textContent =
+              (data.message || "Created.") +
+              " Prize ID: " +
+              (data.prizeId || "—");
+            okBox.classList.remove("hidden");
+            document.getElementById("createPrizeForm").reset();
+            applyNewPrizeFormDefaults();
+            loadPrizeList();
+          })
+          .catch(function (e) {
+            errBox.textContent = e.message || "Could not create prize.";
+            errBox.classList.remove("hidden");
+          })
+          .finally(function () {
+            btn.disabled = false;
+          });
+      });
+    })();
+  </script>
+</body>
+</html>

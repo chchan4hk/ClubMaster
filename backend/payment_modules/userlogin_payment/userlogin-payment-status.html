@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Account Subscription — Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    .btn-metal-gold {
+      background: linear-gradient(145deg, #e8c547 0%, #a67c1a 42%, #2a1f08 100%);
+      color: #0c0a06;
+      border: 1px solid rgba(255, 224, 130, 0.45);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 2px 10px rgba(0, 0, 0, 0.45);
+      font-weight: 600;
+    }
+    .btn-metal-gold:hover {
+      filter: brightness(1.09);
+    }
+    .userlogin-pay-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .userlogin-pay-actions .btn-action-compact {
+      flex-shrink: 0;
+      padding: 0.25rem 0.45rem;
+      font-size: 10px;
+      line-height: 1.2;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    body.userlogin-subscription-status-page.dashboard-dynamic-bg {
+      background-color: #e8f4f0;
+      isolation: isolate;
+    }
+    body.userlogin-subscription-status-page .dynamic-bg-photo {
+      opacity: 0.11;
+      filter: sepia(0.25) saturate(0.5) brightness(1.15) contrast(0.95);
+      mix-blend-mode: multiply;
+    }
+    body.userlogin-subscription-status-page .dynamic-bg-overlay {
+      background:
+        linear-gradient(
+          165deg,
+          rgba(248, 252, 251, 0.98) 0%,
+          rgba(232, 244, 240, 0.97) 35%,
+          rgba(220, 236, 232, 0.96) 65%,
+          rgba(240, 250, 247, 0.97) 100%
+        ),
+        radial-gradient(
+          ellipse 120% 90% at var(--spot-x, 50%) var(--spot-y, 50%),
+          rgba(204, 251, 241, 0.5) 0%,
+          transparent 65%
+        );
+    }
+    body.userlogin-subscription-status-page .glass {
+      background: linear-gradient(
+        155deg,
+        rgba(8, 47, 53, 0.85) 0%,
+        rgba(12, 55, 58, 0.88) 50%,
+        rgba(10, 45, 52, 0.86) 100%
+      );
+      border-color: rgba(45, 212, 191, 0.28);
+      box-shadow:
+        inset 0 1px 0 rgba(167, 243, 208, 0.1),
+        0 10px 40px rgba(0, 40, 45, 0.2);
+      backdrop-filter: blur(12px);
+    }
+  </style>
+</head>
+<body
+  class="userlogin-subscription-status-page dashboard-dynamic-bg min-h-screen text-teal-950 p-6 pb-24"
+  style="--dashboard-bg-img: url('/Source/Image/admin.jpg');">
+  <div class="dynamic-bg-stack" aria-hidden="true">
+    <div class="dynamic-bg-photo"></div>
+    <div class="dynamic-bg-overlay"></div>
+    <canvas class="dynamic-bg-star-net"></canvas>
+    <div class="dynamic-bg-spot-glow"></div>
+  </div>
+
+  <div class="max-w-7xl mx-auto relative z-[1] text-teal-100">
+    <header class="mb-6 text-teal-950">
+      <p>
+        <a href="/admin.html" target="_top"
+          class="text-sm text-teal-800 hover:text-teal-950 underline-offset-2 hover:underline font-medium">
+          ← Back to Admin
+        </a>
+      </p>
+      <h1 class="text-2xl font-bold text-teal-950 mt-2 tracking-tight">User Account Subscription</h1>
+      <p class="text-sm text-teal-800/90 mt-1">Payment status · <code class="text-xs bg-teal-100/80 px-1 rounded">backend/data/admin/PaymentList_UserLogin.json</code></p>
+      <p id="loadError" class="hidden text-sm text-red-700 mt-2"></p>
+    </header>
+
+    <section class="glass rounded-xl border border-teal-600/20 p-3 mb-4 flex flex-wrap gap-2 items-center text-xs">
+      <span class="text-teal-100/75 font-medium uppercase tracking-wide">Shortcuts</span>
+      <a id="linkUserAccounts" href="/admin-user-account-management.html" target="_top" rel="noopener"
+        class="rounded-lg bg-teal-500/10 border border-teal-600/25 px-3 py-1.5 text-teal-200 hover:bg-teal-500/20">User Account Management</a>
+      <a id="linkAdminHome" href="/admin.html" target="_top" rel="noopener"
+        class="rounded-lg bg-teal-500/10 border border-teal-600/25 px-3 py-1.5 text-teal-200 hover:bg-teal-500/20">Admin home</a>
+    </section>
+
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+      <div class="glass rounded-xl border border-teal-500/25 p-4">
+        <p class="text-xs text-teal-100/75 uppercase tracking-wide">Confirmed amount (period)</p>
+        <p id="kpiCollected" class="text-2xl font-semibold text-teal-300 mt-1">—</p>
+        <p id="kpiPeriodLabel" class="text-xs text-teal-100/75 mt-1">Period</p>
+      </div>
+      <div class="glass rounded-xl border border-amber-500/25 p-4">
+        <p class="text-xs text-teal-100/75 uppercase tracking-wide">Pending amount</p>
+        <p id="kpiOutstanding" class="text-2xl font-semibold text-amber-200 mt-1">—</p>
+      </div>
+      <div class="glass rounded-xl border border-teal-500/30 p-4">
+        <p class="text-xs text-teal-100/75 uppercase tracking-wide">Pending count</p>
+        <p id="kpiPendingCount" class="text-2xl font-semibold text-teal-200 mt-1">—</p>
+      </div>
+      <div class="glass rounded-xl border border-teal-500/30 p-4">
+        <p class="text-xs text-teal-100/75 uppercase tracking-wide">Total records</p>
+        <p id="kpiTotalRows" class="text-2xl font-semibold text-teal-300 mt-1">—</p>
+        <p class="text-xs text-teal-100/75 mt-1">All subscription payment rows</p>
+      </div>
+    </section>
+
+    <section class="glass rounded-xl border border-teal-600/20 p-4 mb-4">
+      <h2 class="text-sm font-semibold text-teal-200 mb-3">Filter &amp; search</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="lg:col-span-2">
+          <label for="filterSearch" class="block text-xs text-teal-200/70 mb-1">Username, name, UID, or payment ID</label>
+          <input id="filterSearch" type="search" placeholder="Search…"
+            class="w-full rounded-lg bg-teal-950/50 border border-teal-600/25 px-3 py-2 text-sm text-teal-50 focus:outline-none focus:ring-2 focus:ring-teal-400/45" />
+        </div>
+        <div>
+          <label for="filterStatus" class="block text-xs text-teal-200/70 mb-1">Status</label>
+          <select id="filterStatus"
+            class="w-full rounded-lg bg-teal-950/50 border border-teal-600/25 px-3 py-2 text-sm text-teal-50 focus:outline-none focus:ring-2 focus:ring-teal-400/45">
+            <option value="">All</option>
+            <option value="PENDING">Pending</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </div>
+        <div>
+          <label for="filterDateFrom" class="block text-xs text-teal-200/70 mb-1">From (payment / created)</label>
+          <input id="filterDateFrom" type="date"
+            class="w-full rounded-lg bg-teal-950/50 border border-teal-600/25 px-3 py-2 text-sm text-teal-50 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-400/45" />
+        </div>
+        <div>
+          <label for="filterDateTo" class="block text-xs text-teal-200/70 mb-1">To</label>
+          <input id="filterDateTo" type="date"
+            class="w-full rounded-lg bg-teal-950/50 border border-teal-600/25 px-3 py-2 text-sm text-teal-50 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-400/45" />
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-2 mt-4">
+        <div class="flex items-center gap-2">
+          <label for="periodMonth" class="text-xs text-teal-200/70">KPI period (month)</label>
+          <input id="periodMonth" type="month"
+            class="rounded-lg bg-teal-950/50 border border-teal-600/25 px-3 py-1.5 text-sm text-teal-50 [color-scheme:dark]" />
+        </div>
+        <button type="button" id="btnReload"
+          class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-sm font-medium px-4 py-2">Reload data</button>
+        <button type="button" id="btnExportCsv"
+          class="rounded-lg bg-teal-800 hover:bg-teal-700 border border-teal-600/30 text-teal-50 text-sm px-4 py-2">Export CSV</button>
+      </div>
+    </section>
+
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <div class="glass rounded-xl border border-teal-600/25 p-4">
+        <h3 class="text-sm font-semibold text-teal-200 mb-2">Confirmed subscription amount by month</h3>
+        <p class="text-xs text-teal-100/75 mb-2">Sum of <span class="text-teal-200/90">subscription_amount</span> for completed rows (by confirm or payment date).</p>
+        <div class="h-56"><canvas id="chartBar"></canvas></div>
+      </div>
+      <div class="glass rounded-xl border border-teal-600/25 p-4">
+        <h3 class="text-sm font-semibold text-teal-200 mb-2">Status mix</h3>
+        <p class="text-xs text-teal-100/75 mb-2">Filtered table rows (pie updates with filters).</p>
+        <div class="h-56 max-w-md mx-auto"><canvas id="chartPie"></canvas></div>
+      </div>
+    </section>
+
+    <section class="glass rounded-xl border border-teal-600/25 p-4 overflow-x-auto">
+      <h2 class="text-lg font-semibold text-teal-200 mb-2">Payment status</h2>
+      <p id="tableMeta" class="text-xs text-teal-100/75 mb-3"></p>
+      <table class="w-full text-sm text-left border-collapse min-w-[1100px]">
+        <thead>
+          <tr class="border-b border-teal-600/20 text-teal-200/70">
+            <th class="py-2 pr-2 w-8"></th>
+            <th class="py-2 pr-3 font-medium">User</th>
+            <th class="py-2 pr-3 font-medium">Subscription</th>
+            <th class="py-2 pr-3 font-medium text-right">Amount</th>
+            <th class="py-2 pr-3 font-medium">Method</th>
+            <th class="py-2 pr-3 font-medium max-w-[8rem]">Reference</th>
+            <th class="py-2 pr-3 font-medium whitespace-nowrap">Payment date</th>
+            <th class="py-2 pr-3 font-medium">Status</th>
+            <th class="py-2 pr-3 font-medium whitespace-nowrap">Confirmed</th>
+            <th class="py-2 pr-3 font-medium">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr><td class="py-6 text-teal-100/75" colspan="10">Loading…</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <script src="/js/dashboard-dynamic-bg.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    (function () {
+      var isFramed = false;
+      try {
+        isFramed = window.self !== window.top;
+      } catch (e) {
+        isFramed = true;
+      }
+
+      var USERLOGIN_PAY_API = "/admin/userloginpaymentstatus";
+
+      if (!isFramed) {
+        if (!window.auth.guardPage("Admin")) {
+          return;
+        }
+      }
+
+      var chartBarInst = null;
+      var chartPieInst = null;
+      var lastPayload = null;
+      var filteredRows = [];
+
+      function fmtMoney(n) {
+        var x = Number(n);
+        if (!isFinite(x)) {
+          return "—";
+        }
+        return x.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+      }
+
+      function escapeHtml(s) {
+        if (s == null) {
+          return "";
+        }
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function rowStatusKey(r) {
+        var s = String(r.status || "").trim().toUpperCase();
+        if (s === "COMPLETED" || s === "PAID" || s === "CONFIRMED") {
+          return "COMPLETED";
+        }
+        if (s === "PENDING") {
+          return "PENDING";
+        }
+        return "OTHER";
+      }
+
+      function badgeClass(key) {
+        switch (key) {
+          case "COMPLETED":
+            return "bg-teal-500/20 text-teal-200 border-teal-500/40";
+          case "PENDING":
+            return "bg-amber-500/20 text-amber-200 border-amber-500/40";
+          default:
+            return "bg-slate-500/20 text-slate-200 border-slate-500/40";
+        }
+      }
+
+      function rowDateForFilter(r) {
+        var p = String(r.paymentDate || "").trim().slice(0, 10);
+        if (/^\d{4}-\d{2}-\d{2}$/.test(p)) {
+          return p;
+        }
+        return String(r.createdAt || "").trim().slice(0, 10);
+      }
+
+      function applyFilters(rows) {
+        var search = (document.getElementById("filterSearch").value || "").trim().toLowerCase();
+        var st = document.getElementById("filterStatus").value;
+        var dFrom = document.getElementById("filterDateFrom").value;
+        var dTo = document.getElementById("filterDateTo").value;
+
+        return rows.filter(function (r) {
+          if (search) {
+            var blob = [
+              r.username,
+              r.full_name,
+              r.uid,
+              r.paymentId,
+              r.subscription_option,
+            ]
+              .join(" ")
+              .toLowerCase();
+            if (blob.indexOf(search) < 0) {
+              return false;
+            }
+          }
+          if (st && rowStatusKey(r) !== st) {
+            return false;
+          }
+          var d = rowDateForFilter(r);
+          if (dFrom && (!d || d < dFrom)) {
+            return false;
+          }
+          if (dTo && (!d || d > dTo)) {
+            return false;
+          }
+          return true;
+        });
+      }
+
+      function renderKpis(kpis, period) {
+        document.getElementById("kpiCollected").textContent = "$" + fmtMoney(kpis.completedAmountPeriod);
+        document.getElementById("kpiOutstanding").textContent = "$" + fmtMoney(kpis.pendingAmount);
+        document.getElementById("kpiPendingCount").textContent = String(kpis.pendingCount != null ? kpis.pendingCount : "—");
+        document.getElementById("kpiTotalRows").textContent = String(kpis.totalRows != null ? kpis.totalRows : "—");
+        var pl = document.getElementById("kpiPeriodLabel");
+        if (pl && period) {
+          pl.textContent = (period.start || "") + " → " + (period.end || "");
+        }
+      }
+
+      function renderCharts(payload, filtered) {
+        var barEl = document.getElementById("chartBar");
+        var pieEl = document.getElementById("chartPie");
+        if (!barEl || !pieEl || typeof Chart === "undefined") {
+          return;
+        }
+        var barData = payload.chartBarConfirmed || [];
+        var labels = barData.map(function (x) {
+          return x.month;
+        });
+        var values = barData.map(function (x) {
+          return x.amount;
+        });
+        if (chartBarInst) {
+          chartBarInst.destroy();
+        }
+        chartBarInst = new Chart(barEl, {
+          type: "bar",
+          data: {
+            labels: labels,
+            datasets: [{
+              label: "Amount (HKD)",
+              data: values,
+              backgroundColor: "rgba(45, 212, 191, 0.45)",
+              borderColor: "rgba(45, 212, 191, 0.9)",
+              borderWidth: 1,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: "#ccfbf1" } } },
+            scales: {
+              x: { ticks: { color: "#5eead4" }, grid: { color: "rgba(45,212,191,0.12)" } },
+              y: { ticks: { color: "#5eead4" }, grid: { color: "rgba(45,212,191,0.12)" }, beginAtZero: true },
+            },
+          },
+        });
+
+        var pie = { PENDING: 0, COMPLETED: 0, OTHER: 0 };
+        filtered.forEach(function (r) {
+          var k = rowStatusKey(r);
+          if (k === "PENDING") {
+            pie.PENDING++;
+          } else if (k === "COMPLETED") {
+            pie.COMPLETED++;
+          } else {
+            pie.OTHER++;
+          }
+        });
+        if (chartPieInst) {
+          chartPieInst.destroy();
+        }
+        chartPieInst = new Chart(pieEl, {
+          type: "doughnut",
+          data: {
+            labels: ["Pending", "Completed", "Other"],
+            datasets: [{
+              data: [pie.PENDING, pie.COMPLETED, pie.OTHER],
+              backgroundColor: [
+                "rgba(251, 191, 36, 0.78)",
+                "rgba(45, 212, 191, 0.78)",
+                "rgba(148, 163, 184, 0.65)",
+              ],
+              borderWidth: 0,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: "bottom", labels: { color: "#ccfbf1", boxWidth: 12 } },
+            },
+          },
+        });
+      }
+
+      function renderTable(rows) {
+        var tb = document.getElementById("tableBody");
+        var meta = document.getElementById("tableMeta");
+        if (meta) {
+          meta.textContent = rows.length + " row(s) after filters · User login subscription payments";
+        }
+        if (!tb) {
+          return;
+        }
+        if (!rows.length) {
+          tb.innerHTML = '<tr><td class="py-6 text-teal-100/75" colspan="10">No matching rows.</td></tr>';
+          return;
+        }
+        var html = "";
+        rows.forEach(function (r) {
+          var expandId = "ex-" + escapeHtml(r.paymentId).replace(/[^a-zA-Z0-9_-]/g, "");
+          var sk = rowStatusKey(r);
+          html += "<tr class=\"border-b border-teal-800/15 hover:bg-teal-500/[0.06]\" data-pid=\"" + escapeHtml(r.paymentId) + "\">";
+          html += "<td class=\"py-1.5 pr-2 align-middle\"><button type=\"button\" class=\"text-teal-400 hover:text-teal-200 text-xs toggle-ex\" data-target=\"" + expandId + "\">▾</button></td>";
+          html +=
+            "<td class=\"py-1.5 pr-3 align-middle\"><div class=\"text-[11px] leading-tight text-teal-50/95\"><span class=\"font-medium\">" +
+            escapeHtml(r.full_name || "—") +
+            "</span><span class=\"text-teal-100/70\"> · " +
+            escapeHtml(r.username || "") +
+            "</span><br/><span class=\"text-teal-200/70 tabular-nums\">" +
+            escapeHtml(r.uid || "") +
+            "</span></div></td>";
+          html +=
+            "<td class=\"py-1.5 pr-3 align-middle text-[11px] text-teal-100/90\">" +
+            escapeHtml(r.subscription_option || "—") +
+            "</td>";
+          html +=
+            "<td class=\"py-1.5 pr-3 text-right tabular-nums text-teal-200/95 align-middle\">$" +
+            fmtMoney(r.subscription_amount) +
+            "</td>";
+          html += "<td class=\"py-1.5 pr-3 align-middle text-[11px]\">" + escapeHtml(r.paymentMethod || "—") + "</td>";
+          html +=
+            "<td class=\"py-1.5 pr-3 align-middle max-w-[8rem]\"><div class=\"truncate text-[10px] text-teal-100/85\" title=\"" +
+            escapeHtml(r.transactionRef || "") +
+            "\">" +
+            escapeHtml(r.transactionRef || "—") +
+            "</div></td>";
+          html +=
+            "<td class=\"py-1.5 pr-3 align-middle whitespace-nowrap text-[10px] tabular-nums\">" +
+            escapeHtml(r.paymentDate || "—") +
+            "</td>";
+          html +=
+            "<td class=\"py-1.5 pr-3 align-middle\"><span class=\"inline-flex rounded-full border px-2 py-0.5 text-[10px] " +
+            badgeClass(sk) +
+            "\">" +
+            escapeHtml(sk) +
+            "</span></td>";
+          html +=
+            "<td class=\"py-1.5 pr-3 align-middle text-[10px] tabular-nums\">" +
+            escapeHtml(r.confirm_payment_date || "—") +
+            "</td>";
+          html += "<td class=\"py-1.5 pr-2 align-middle\">";
+          html += "<div class=\"userlogin-pay-actions\">";
+          if (sk === "PENDING") {
+            html +=
+              "<button type=\"button\" class=\"btn-metal-gold rounded-md btn-action-compact btn-confirm-sub\" data-id=\"" +
+              escapeHtml(r.paymentId) +
+              "\">Confirm Payment</button>";
+          }
+          html += "</div></td></tr>";
+          html += "<tr id=\"" + expandId + "\" class=\"hidden bg-teal-950/35\"><td colspan=\"10\" class=\"px-4 py-3 text-xs text-teal-200/75\">";
+          html += "<p class=\"font-semibold text-teal-200 mb-1\">Subscription payment detail</p>";
+          html += "<p>Payment ID: <strong class=\"text-teal-100\">" + escapeHtml(r.paymentId) + "</strong></p>";
+          html += "<p>Account expiry (at request): " + escapeHtml(r.Expiry_date || "—") + "</p>";
+          html += "<p>Created: " + escapeHtml(r.createdAt || "—") + "</p>";
+          html += "</td></tr>";
+        });
+        tb.innerHTML = html;
+
+        tb.querySelectorAll(".toggle-ex").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            var id = btn.getAttribute("data-target");
+            var row = id ? document.getElementById(id) : null;
+            if (!row) {
+              return;
+            }
+            row.classList.toggle("hidden");
+            btn.textContent = row.classList.contains("hidden") ? "▾" : "▴";
+          });
+        });
+        tb.querySelectorAll(".btn-confirm-sub").forEach(function (btn) {
+          btn.addEventListener("click", async function () {
+            var id = btn.getAttribute("data-id");
+            if (!id) {
+              return;
+            }
+            if (
+              !window.confirm(
+                "Confirm this subscription payment? The payer UID’s expiry will be extended by the subscription period in userLogin.json (if present), that login’s coach/student row (if any), and every coach/student login whose club_id matches that UID."
+              )
+            ) {
+              return;
+            }
+            try {
+              var resp = await window.api.api(USERLOGIN_PAY_API + "/confirm-payment", {
+                method: "POST",
+                body: JSON.stringify({ paymentId: id }),
+              });
+              await loadData();
+              var okMsg = "Payment confirmed.";
+              if (resp && resp.newExpiry) {
+                okMsg += "\n\nNew expiry date: " + resp.newExpiry;
+              }
+              if (resp && resp.expiryUpdates && resp.expiryUpdates.length) {
+                okMsg += "\n\n" + resp.expiryUpdates.join("\n");
+              }
+              window.alert(okMsg);
+            } catch (e) {
+              window.alert(e.message || String(e));
+            }
+          });
+        });
+      }
+
+      async function loadData() {
+        var errEl = document.getElementById("loadError");
+        if (errEl) {
+          errEl.classList.add("hidden");
+        }
+        var pm = document.getElementById("periodMonth").value;
+        var payPath = USERLOGIN_PAY_API;
+        if (pm) {
+          payPath += "?periodMonth=" + encodeURIComponent(pm);
+        }
+        try {
+          var data = await window.api.api(payPath);
+          if (!data.ok) {
+            throw new Error(data.error || "Load failed");
+          }
+          lastPayload = data;
+          renderKpis(data.kpis, data.period);
+          filteredRows = applyFilters(data.rows || []);
+          renderTable(filteredRows);
+          renderCharts(data, filteredRows);
+        } catch (e) {
+          if (errEl) {
+            errEl.textContent = e.message || String(e);
+            errEl.classList.remove("hidden");
+          }
+          document.getElementById("tableBody").innerHTML =
+            '<tr><td class="py-6 text-red-300" colspan="10">Could not load data.</td></tr>';
+        }
+      }
+
+      function onFilterChange() {
+        if (!lastPayload) {
+          return;
+        }
+        filteredRows = applyFilters(lastPayload.rows || []);
+        renderTable(filteredRows);
+        renderCharts(lastPayload, filteredRows);
+      }
+
+      function wireFilters() {
+        ["filterSearch", "filterStatus", "filterDateFrom", "filterDateTo"].forEach(function (id) {
+          var el = document.getElementById(id);
+          if (el) {
+            el.addEventListener("input", onFilterChange);
+            el.addEventListener("change", onFilterChange);
+          }
+        });
+      }
+
+      document.getElementById("btnReload").addEventListener("click", loadData);
+      document.getElementById("periodMonth").addEventListener("change", loadData);
+
+      document.getElementById("btnExportCsv").addEventListener("click", async function () {
+        var base = window.api.getApiBase().replace(/\/$/, "");
+        var pm = document.getElementById("periodMonth").value;
+        var q = pm ? "?periodMonth=" + encodeURIComponent(pm) : "";
+        var url = base + USERLOGIN_PAY_API + "/export.csv" + q;
+        var token = localStorage.getItem("token");
+        var res = await fetch(url, {
+          headers: token ? { Authorization: "Bearer " + token } : {},
+          credentials: "include",
+        });
+        if (!res.ok) {
+          alert("Export failed");
+          return;
+        }
+        var blob = await res.blob();
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "user-account-subscription-payments.csv";
+        a.click();
+        URL.revokeObjectURL(a.href);
+      });
+
+      (async function init() {
+        var d = new Date();
+        document.getElementById("periodMonth").value =
+          d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+        wireFilters();
+        await loadData();
+      })();
+    })();
+  </script>
+</body>
+</html>

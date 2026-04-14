@@ -1,0 +1,22 @@
+{
+  "prizes": [
+    {
+      "PrizeID": "PR000001",
+      "ClubID": "CM00000005",
+      "Club_name": "培立大中華",
+      "SportType": "Badminton",
+      "Year": "2026",
+      "Association": "香港羽毛球總會",
+      "Competition": "全港青少年錦標賽",
+      "Age_group": "2014-2015",
+      "Prize_type": "Men's Single",
+      "StudentName": "方嘗在",
+      "Ranking": "Gold",
+      "Status": "ACTIVE",
+      "Created_at": "2026-04-12",
+      "LastUpdated_Date": "2026-04-12",
+      "VerifiedBy": "",
+      "Remarks": ""
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coming soon — Sport Court Booking</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-6">
+  <div class="glass rounded-xl border border-white/15 max-w-md w-full p-8 text-center">
+    <h1 class="text-xl font-semibold text-teal-300 mb-2">Coming soon</h1>
+    <p id="moduleLine" class="text-slate-400 text-sm mb-6">This module is not available yet.</p>
+    <div class="flex flex-wrap gap-3 justify-center">
+      <button type="button" id="goBackBtn"
+        class="rounded-lg bg-slate-800 border border-slate-600 px-4 py-2 text-sm hover:bg-slate-700">
+        Go back
+      </button>
+      <a href="main.html"
+        class="rounded-lg border border-teal-500/40 px-4 py-2 text-sm text-teal-300 hover:bg-teal-500/10 inline-flex items-center">
+        Home
+      </a>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      var m = params.get("m");
+      var labels = {
+        "club-master": "Club Master",
+        "coach-information": "Coach Information",
+        "student-information": "Student Information",
+        "lesson-reservation": "Lesson Reservation",
+        "prize-list": "Prize List",
+        "lesson-payment-status": "Lesson Payment Status",
+        "coach-salary": "Coach Salary",
+        "revenue": "Revenue",
+        "upcoming-events": "Upcoming Events",
+        "coach-student-information": "Student Information",
+        "coach-prize-list": "Prize List",
+        "coach-browse-lessons": "Browse Lessons",
+        "coach-my-bookings": "My Bookings",
+        "coach-upcoming-events": "Upcoming Events",
+        "admin-sport-activation": "Sport Activation",
+        "admin-user-account-management": "User Account Management",
+        "admin-payment-status": "Payment Status",
+        "admin-revenue": "Revenue",
+        "admin-statistic-new-module": "Statistic (New Module)",
+        "admin-announcement": "Announcement",
+        "student-coach-details": "Coach Details",
+        "student-browse-lessons": "Browse Lessons",
+        "student-my-bookings": "My Bookings",
+        "student-payment": "Payment",
+        "student-upcoming-competition": "Upcoming Competition",
+        "student-summary": "Summary"
+      };
+      var line = document.getElementById("moduleLine");
+      if (line && m && labels[m]) {
+        line.textContent = labels[m] + " is not available yet.";
+      }
+      document.getElementById("goBackBtn")?.addEventListener("click", function () {
+        if (history.length > 1) {
+          history.back();
+        } else {
+          window.location.href = "main.html";
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

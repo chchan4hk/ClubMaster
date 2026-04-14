@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Account Management — Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body
+  class="dashboard-dynamic-bg min-h-screen text-slate-100 p-6"
+  style="--dashboard-bg-img: url('Source/Image/admin.jpg');">
+  <div class="dynamic-bg-stack" aria-hidden="true">
+    <div class="dynamic-bg-photo"></div>
+    <div class="dynamic-bg-overlay"></div>
+    <canvas class="dynamic-bg-star-net"></canvas>
+    <div class="dynamic-bg-spot-glow"></div>
+  </div>
+
+  <div class="max-w-6xl mx-auto">
+    <header class="flex flex-wrap items-center justify-between gap-4 mb-6">
+      <div>
+        <a href="admin.html"
+          class="text-sm text-teal-400/90 hover:text-teal-300 underline-offset-2 hover:underline">
+          ← Back to Admin
+        </a>
+        <h1 class="text-2xl font-bold text-teal-300 mt-2">User Account Management</h1>
+        <p class="text-slate-400 text-sm mt-1">Coach Manager, Coach and Student</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2 shrink-0">
+        <button type="button" id="addUserBtn"
+          class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm">
+          Add User
+        </button>
+        <button type="button" id="refreshBtn"
+          class="rounded-lg bg-slate-800 border border-slate-600 px-4 py-2 text-sm hover:bg-slate-700">
+          Refresh
+        </button>
+        <button type="button" id="logoutBtn"
+          class="rounded-lg bg-slate-800 border border-slate-600 px-4 py-2 text-sm hover:bg-slate-700">
+          Sign out
+        </button>
+      </div>
+    </header>
+
+    <p id="pageLoadError" class="hidden mb-4 text-sm text-red-300"></p>
+
+    <!-- Add user (collapsible) -->
+    <section id="addUserPanel" class="hidden glass rounded-xl border border-teal-500/20 p-6 mb-6">
+      <h2 class="text-lg font-semibold text-teal-200 mb-4">Create new account</h2>
+      <form id="createForm" class="space-y-4 max-w-xl">
+        <div>
+          <label for="createFullName" class="block text-sm text-slate-400 mb-1">Full name</label>
+          <input id="createFullName" name="full_name" type="text" required autocomplete="name"
+            class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+        </div>
+        <div>
+          <label for="createUsername" class="block text-sm text-slate-400 mb-1">Username</label>
+          <input id="createUsername" name="username" type="text" required autocomplete="username"
+            class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+        </div>
+        <div>
+          <label for="createPassword" class="block text-sm text-slate-400 mb-1">Default password</label>
+          <input id="createPassword" name="password" type="password" required autocomplete="new-password"
+            class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="createClubName" class="block text-sm text-slate-400 mb-1">Club name</label>
+            <input id="createClubName" name="clubName" type="text" required
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+          </div>
+          <div>
+            <label for="createUserRole" class="block text-sm text-slate-400 mb-1">User role</label>
+            <select id="createUserRole" name="userRole" required
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+              <option value="Student">Student</option>
+              <option value="Coach Manager" selected>Coach Manager</option>
+              <option value="Coach">Coach</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label for="createExpiryDate" class="block text-sm text-slate-400 mb-1">Expiry_Date <span class="text-slate-600 font-normal">(optional)</span></label>
+          <input id="createExpiryDate" name="Expiry_Date" type="date"
+            class="w-full max-w-xs rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+        </div>
+        <p id="createFormError" class="hidden text-sm text-red-300"></p>
+        <p id="createFormSuccess" class="hidden text-sm text-teal-300"></p>
+        <button type="submit" id="createSubmitBtn"
+          class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2.5 disabled:opacity-50 disabled:pointer-events-none">
+          Create
+        </button>
+      </form>
+    </section>
+
+    <section class="glass rounded-xl border border-teal-500/20 p-6 mb-6">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <h2 class="text-lg font-semibold text-teal-200">UserLogin - Coach Manager</h2>
+        <span id="countUserLogin" class="text-xs text-slate-500"></span>
+      </div>
+      <div class="overflow-x-auto rounded-lg border border-white/10">
+        <table class="min-w-full text-sm text-left">
+          <thead class="bg-slate-900/60 text-slate-400 border-b border-white/10">
+            <tr>
+              <th class="px-3 py-2 font-medium">UID</th>
+              <th class="px-3 py-2 font-medium">Type / role</th>
+              <th class="px-3 py-2 font-medium">Username</th>
+              <th class="px-3 py-2 font-medium">Full name</th>
+              <th class="px-3 py-2 font-medium">Club</th>
+              <th class="px-3 py-2 font-medium">Status</th>
+              <th class="px-3 py-2 font-medium">Expiry_Date</th>
+              <th class="px-3 py-2 font-medium">Last update</th>
+              <th class="px-3 py-2 font-medium text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyUserLogin" class="divide-y divide-white/5"></tbody>
+        </table>
+      </div>
+      <p id="emptyUserLogin" class="hidden text-sm text-slate-500 mt-2">No accounts.</p>
+    </section>
+
+    <section class="glass rounded-xl border border-teal-500/20 p-6 mb-6">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <h2 class="text-lg font-semibold text-teal-200">UserLogin - Coach</h2>
+        <span id="countCoach" class="text-xs text-slate-500"></span>
+      </div>
+      <div class="overflow-x-auto rounded-lg border border-white/10">
+        <table class="min-w-full text-sm text-left">
+          <thead class="bg-slate-900/60 text-slate-400 border-b border-white/10">
+            <tr>
+              <th class="px-3 py-2 font-medium">UID</th>
+              <th class="px-3 py-2 font-medium">Username</th>
+              <th class="px-3 py-2 font-medium">Full name</th>
+              <th class="px-3 py-2 font-medium">Club</th>
+              <th class="px-3 py-2 font-medium">Status</th>
+              <th class="px-3 py-2 font-medium">Expiry_Date</th>
+              <th class="px-3 py-2 font-medium">Last update</th>
+              <th class="px-3 py-2 font-medium text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyCoach" class="divide-y divide-white/5"></tbody>
+        </table>
+      </div>
+      <p id="emptyCoach" class="hidden text-sm text-slate-500 mt-2">No accounts.</p>
+    </section>
+
+    <section class="glass rounded-xl border border-teal-500/20 p-6 mb-6">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <h2 class="text-lg font-semibold text-teal-200">UserLogin - Student</h2>
+        <span id="countStudent" class="text-xs text-slate-500"></span>
+      </div>
+      <div class="overflow-x-auto rounded-lg border border-white/10">
+        <table class="min-w-full text-sm text-left">
+          <thead class="bg-slate-900/60 text-slate-400 border-b border-white/10">
+            <tr>
+              <th class="px-3 py-2 font-medium">UID</th>
+              <th class="px-3 py-2 font-medium">Username</th>
+              <th class="px-3 py-2 font-medium">Full name</th>
+              <th class="px-3 py-2 font-medium">Club</th>
+              <th class="px-3 py-2 font-medium">Status</th>
+              <th class="px-3 py-2 font-medium">Expiry_Date</th>
+              <th class="px-3 py-2 font-medium">Last update</th>
+              <th class="px-3 py-2 font-medium text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyStudent" class="divide-y divide-white/5"></tbody>
+        </table>
+      </div>
+      <p id="emptyStudent" class="hidden text-sm text-slate-500 mt-2">No accounts.</p>
+    </section>
+  </div>
+
+  <!-- Update status modal -->
+  <div id="updateModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" role="dialog" aria-modal="true" aria-labelledby="updateModalTitle">
+    <div class="glass max-w-lg w-full rounded-xl border border-teal-500/30 p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+      <h3 id="updateModalTitle" class="text-lg font-semibold text-teal-200 mb-4">Update account</h3>
+      <p class="text-sm text-slate-400 mb-2"><span class="text-slate-500">Store:</span> <span id="modalStoreLabel"></span></p>
+      <p class="text-sm text-slate-300 mb-4 font-mono" id="modalUidLine"></p>
+      <label for="modalUsername" class="block text-sm text-slate-400 mb-1">Username</label>
+      <input id="modalUsername" type="text" autocomplete="off"
+        class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-3 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+      <label for="modalFullName" class="block text-sm text-slate-400 mb-1">Full name</label>
+      <input id="modalFullName" type="text" autocomplete="name"
+        class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-3 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+      <label for="modalClubName" class="block text-sm text-slate-400 mb-1">Club</label>
+      <input id="modalClubName" type="text" autocomplete="organization"
+        class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-3 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+      <label for="modalExpiryDate" class="block text-sm text-slate-400 mb-1">Expiry_date <span class="text-slate-600 font-normal">(optional)</span></label>
+      <input id="modalExpiryDate" type="date"
+        class="w-full max-w-xs rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-3 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+      <label for="modalPassword" class="block text-sm text-slate-400 mb-1">New password <span class="text-slate-600 font-normal">(optional)</span></label>
+      <input id="modalPassword" type="password" autocomplete="new-password"
+        class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-3 focus:outline-none focus:ring-2 focus:ring-teal-500/50" placeholder="Leave blank to keep current" />
+      <label for="modalPasswordConfirm" class="block text-sm text-slate-400 mb-1">Re-enter password</label>
+      <input id="modalPasswordConfirm" type="password" autocomplete="new-password"
+        class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-3 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+      <label for="modalStatus" class="block text-sm text-slate-400 mb-1">Status</label>
+      <select id="modalStatus"
+        class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-4 focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+        <option value="ACTIVE">ACTIVE</option>
+        <option value="INACTIVE">INACTIVE</option>
+      </select>
+      <p id="modalError" class="hidden text-sm text-red-300 mb-3"></p>
+      <div class="flex flex-wrap justify-end gap-2">
+        <button type="button" id="modalCancel"
+          class="rounded-lg border border-white/20 px-4 py-2 text-sm text-slate-200 hover:bg-white/10">
+          Cancel
+        </button>
+        <button type="button" id="modalSave"
+          class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50">
+          Save
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Remove Coach Manager: YES / NO -->
+  <div id="removeCoachManagerModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" role="dialog" aria-modal="true" aria-labelledby="removeCmModalTitle">
+    <div class="glass max-w-lg w-full rounded-xl border border-red-500/25 p-6 shadow-xl">
+      <h3 id="removeCmModalTitle" class="text-lg font-semibold text-red-200 mb-3">Confirm removal</h3>
+      <p id="removeCoachManagerModalText" class="text-sm text-slate-300 mb-4 leading-relaxed"></p>
+      <p id="removeCoachManagerModalError" class="hidden text-sm text-red-300 mb-3"></p>
+      <div class="flex flex-wrap justify-end gap-2">
+        <button type="button" id="removeCmModalNo"
+          class="rounded-lg border border-white/20 px-4 py-2 text-sm text-slate-200 hover:bg-white/10">
+          NO
+        </button>
+        <button type="button" id="removeCmModalYes"
+          class="rounded-lg bg-red-600 hover:bg-red-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50">
+          YES
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/dashboard-dynamic-bg.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    (function () {
+      if (!window.auth.guardPage("Admin")) {
+        return;
+      }
+
+      document.getElementById("logoutBtn").addEventListener("click", function () {
+        window.auth.logout();
+      });
+
+      var addUserPanel = document.getElementById("addUserPanel");
+      document.getElementById("addUserBtn").addEventListener("click", function () {
+        addUserPanel.classList.toggle("hidden");
+        if (!addUserPanel.classList.contains("hidden")) {
+          addUserPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      });
+
+      var pageLoadError = document.getElementById("pageLoadError");
+
+      function esc(s) {
+        if (s == null) return "";
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function statusBadge(st) {
+        var u = (st || "").toString().trim().toUpperCase();
+        if (u === "ACTIVE") {
+          return '<span class="text-teal-300">ACTIVE</span>';
+        }
+        if (u === "INACTIVE") {
+          return '<span class="text-slate-500">INACTIVE</span>';
+        }
+        return esc(st || "—");
+      }
+
+      var modal = document.getElementById("updateModal");
+      var modalStoreLabel = document.getElementById("modalStoreLabel");
+      var modalUidLine = document.getElementById("modalUidLine");
+      var modalUsername = document.getElementById("modalUsername");
+      var modalFullName = document.getElementById("modalFullName");
+      var modalClubName = document.getElementById("modalClubName");
+      var modalExpiryDate = document.getElementById("modalExpiryDate");
+      var modalPassword = document.getElementById("modalPassword");
+      var modalPasswordConfirm = document.getElementById("modalPasswordConfirm");
+      var modalStatus = document.getElementById("modalStatus");
+      var modalError = document.getElementById("modalError");
+      var modalSave = document.getElementById("modalSave");
+      var pendingModal = null;
+
+      var removeCoachManagerModal = document.getElementById("removeCoachManagerModal");
+      var removeCoachManagerModalText = document.getElementById("removeCoachManagerModalText");
+      var removeCoachManagerModalError = document.getElementById("removeCoachManagerModalError");
+      var removeCmModalYes = document.getElementById("removeCmModalYes");
+      var removeCmModalNo = document.getElementById("removeCmModalNo");
+      var pendingRemoveCm = null;
+
+      function closeRemoveCoachManagerModal() {
+        removeCoachManagerModal.classList.add("hidden");
+        removeCoachManagerModalError.classList.add("hidden");
+        pendingRemoveCm = null;
+      }
+
+      function openRemoveCoachManagerModal(row, uid, removeBtn) {
+        pendingRemoveCm = { uid: uid, removeBtn: removeBtn };
+        var label = row ? row.username || row.uid : uid;
+        removeCoachManagerModalText.textContent =
+          "Permanently remove Coach Manager " +
+          String(label) +
+          "? Their UserLogin entry will be deleted and the club folder for UID " +
+          String(uid) +
+          " will be removed. This cannot be undone.";
+        removeCoachManagerModalError.classList.add("hidden");
+        removeCoachManagerModal.classList.remove("hidden");
+      }
+
+      removeCmModalNo.addEventListener("click", closeRemoveCoachManagerModal);
+      removeCoachManagerModal.addEventListener("click", function (ev) {
+        if (ev.target === removeCoachManagerModal) closeRemoveCoachManagerModal();
+      });
+      removeCmModalYes.addEventListener("click", function () {
+        if (!pendingRemoveCm) return;
+        var uid = pendingRemoveCm.uid;
+        var removeBtn = pendingRemoveCm.removeBtn;
+        removeCoachManagerModalError.classList.add("hidden");
+        removeCmModalYes.disabled = true;
+        removeCmModalNo.disabled = true;
+        window.api
+          .api("/admin/login-accounts/remove", {
+            method: "POST",
+            body: JSON.stringify({
+              store: "userLogin",
+              uid: uid,
+              deleteCoachManager: true,
+            }),
+          })
+          .then(function () {
+            closeRemoveCoachManagerModal();
+            return loadLists();
+          })
+          .catch(function (e) {
+            removeCoachManagerModalError.textContent = e.message || "Remove failed.";
+            removeCoachManagerModalError.classList.remove("hidden");
+          })
+          .finally(function () {
+            removeCmModalYes.disabled = false;
+            removeCmModalNo.disabled = false;
+            if (removeBtn) removeBtn.disabled = false;
+          });
+      });
+
+      function closeModal() {
+        modal.classList.add("hidden");
+        modalError.classList.add("hidden");
+        pendingModal = null;
+        modalPassword.value = "";
+        modalPasswordConfirm.value = "";
+      }
+
+      document.getElementById("modalCancel").addEventListener("click", closeModal);
+      modal.addEventListener("click", function (ev) {
+        if (ev.target === modal) closeModal();
+      });
+
+      function openUpdateModal(store, row) {
+        pendingModal = { store: store, uid: row.uid };
+        var labels = { userLogin: "UserLogin", coach: "UserLogin Coach", student: "UserLogin Student" };
+        modalStoreLabel.textContent = labels[store] || store;
+        modalUidLine.textContent = "UID " + row.uid;
+        modalUsername.value = row.username != null ? String(row.username) : "";
+        modalFullName.value = row.fullName != null ? String(row.fullName) : "";
+        modalClubName.value = row.clubName != null ? String(row.clubName) : "";
+        var ex =
+          (row.expiryDate != null && String(row.expiryDate).trim()) ||
+          (row.Expiry_date != null && String(row.Expiry_date).trim()) ||
+          "";
+        modalExpiryDate.value = /^\d{4}-\d{2}-\d{2}$/.test(ex) ? ex : "";
+        modalPassword.value = "";
+        modalPasswordConfirm.value = "";
+        var st = (row.status || "").toString().trim().toUpperCase();
+        modalStatus.value = st === "INACTIVE" ? "INACTIVE" : "ACTIVE";
+        modalError.classList.add("hidden");
+        modal.classList.remove("hidden");
+      }
+
+      modalSave.addEventListener("click", function () {
+        if (!pendingModal) return;
+        modalError.classList.add("hidden");
+        var active = modalStatus.value === "ACTIVE";
+        var un = modalUsername.value.trim();
+        if (!un) {
+          modalError.textContent = "Username is required.";
+          modalError.classList.remove("hidden");
+          return;
+        }
+        var pw = modalPassword.value;
+        var pw2 = modalPasswordConfirm.value;
+        if (pw.length > 0 || pw2.length > 0) {
+          if (pw !== pw2) {
+            modalError.textContent = "Password and re-entered password do not match.";
+            modalError.classList.remove("hidden");
+            return;
+          }
+          if (pw.length < 6) {
+            modalError.textContent = "Password must be at least 6 characters.";
+            modalError.classList.remove("hidden");
+            return;
+          }
+        }
+        var expVal = (modalExpiryDate.value || "").trim();
+        var payload = {
+          store: pendingModal.store,
+          uid: pendingModal.uid,
+          username: un,
+          fullName: modalFullName.value,
+          clubName: modalClubName.value,
+          expiryDate: expVal,
+          Expiry_date: expVal,
+          active: active,
+        };
+        if (pw.length > 0) {
+          payload.password = pw;
+          payload.passwordConfirm = pw2;
+        }
+        modalSave.disabled = true;
+        window.api
+          .api("/admin/login-accounts/set-status", {
+            method: "POST",
+            body: JSON.stringify(payload),
+          })
+          .then(function () {
+            closeModal();
+            return loadLists();
+          })
+          .catch(function (e) {
+            modalError.textContent = e.message || "Could not update.";
+            modalError.classList.remove("hidden");
+          })
+          .finally(function () {
+            modalSave.disabled = false;
+          });
+      });
+
+      var rowCache = { userLogin: [], coach: [], student: [] };
+
+      function actionButtons(store, row) {
+        var uid = esc(row.uid);
+        var cmRemoveAttr =
+          store === "userLogin" && row.role === "CoachManager"
+            ? ' data-coach-manager-remove="1"'
+            : "";
+        return (
+          '<button type="button" class="row-update text-teal-400 hover:text-teal-300 text-xs font-medium mr-2" ' +
+          'data-store="' +
+          esc(store) +
+          '" data-uid="' +
+          uid +
+          '">Update</button>' +
+          '<button type="button" class="row-remove text-red-300 hover:text-red-200 text-xs font-medium" ' +
+          'data-store="' +
+          esc(store) +
+          '" data-uid="' +
+          uid +
+          '"' +
+          cmRemoveAttr +
+          ">Remove</button>"
+        );
+      }
+
+      function bindTableActions(tbody) {
+        tbody.addEventListener("click", function (ev) {
+          var t = ev.target;
+          if (!t || !t.classList) return;
+          var store = t.getAttribute("data-store");
+          var uid = t.getAttribute("data-uid");
+          if (!store || !uid) return;
+          var list = rowCache[store] || [];
+          var row = list.find(function (r) {
+            return String(r.uid) === String(uid);
+          });
+          if (t.classList.contains("row-update")) {
+            if (!row) return;
+            openUpdateModal(store, row);
+            return;
+          }
+          if (t.classList.contains("row-remove")) {
+            if (t.getAttribute("data-coach-manager-remove") === "1") {
+              if (!row) return;
+              openRemoveCoachManagerModal(row, uid, t);
+              return;
+            }
+            var label = row
+              ? (row.username || row.uid)
+              : uid;
+            var msg =
+              store === "coach" || store === "student"
+                ? "Permanently delete this login record from the file? This cannot be undone.\n\n" +
+                  label
+                : "Mark this account as INACTIVE? They will not be able to sign in.\n\n" + label;
+            if (!window.confirm(msg)) {
+              return;
+            }
+            t.disabled = true;
+            var removeUrl =
+              store === "coach" || store === "student"
+                ? "/admin/login-accounts/remove"
+                : "/admin/login-accounts/set-status";
+            var removeBody =
+              store === "coach" || store === "student"
+                ? { store: store, uid: uid }
+                : { store: store, uid: uid, active: false };
+            window.api
+              .api(removeUrl, {
+                method: "POST",
+                body: JSON.stringify(removeBody),
+              })
+              .then(function () {
+                return loadLists();
+              })
+              .catch(function (e) {
+                window.alert(e.message || "Remove failed.");
+              })
+              .finally(function () {
+                t.disabled = false;
+              });
+          }
+        });
+      }
+
+      bindTableActions(document.getElementById("tbodyUserLogin"));
+      bindTableActions(document.getElementById("tbodyCoach"));
+      bindTableActions(document.getElementById("tbodyStudent"));
+
+      function renderUserLogin(rows) {
+        var tb = document.getElementById("tbodyUserLogin");
+        var empty = document.getElementById("emptyUserLogin");
+        document.getElementById("countUserLogin").textContent =
+          rows.length + " account" + (rows.length === 1 ? "" : "s");
+        if (!rows.length) {
+          tb.innerHTML = "";
+          empty.classList.remove("hidden");
+          return;
+        }
+        empty.classList.add("hidden");
+        tb.innerHTML = rows
+          .map(function (r) {
+            var typeLine = esc(r.usertype || "—") + " · " + esc(r.role || "—");
+            return (
+              "<tr class='bg-slate-900/20'>" +
+              "<td class='px-3 py-2 font-mono text-xs'>" +
+              esc(r.uid) +
+              "</td>" +
+              "<td class='px-3 py-2 text-xs'>" +
+              typeLine +
+              "</td>" +
+              "<td class='px-3 py-2'>" +
+              esc(r.username) +
+              "</td>" +
+              "<td class='px-3 py-2'>" +
+              esc(r.fullName || "—") +
+              "</td>" +
+              "<td class='px-3 py-2'>" +
+              esc(r.clubName || "—") +
+              "</td>" +
+              "<td class='px-3 py-2'>" +
+              statusBadge(r.status) +
+              "</td>" +
+              "<td class='px-3 py-2 text-slate-400'>" +
+              esc(r.expiryDate || "—") +
+              "</td>" +
+              "<td class='px-3 py-2 text-slate-400'>" +
+              esc(r.lastUpdateDate || "—") +
+              "</td>" +
+              "<td class='px-3 py-2 text-right whitespace-nowrap'>" +
+              actionButtons("userLogin", r) +
+              "</td>" +
+              "</tr>"
+            );
+          })
+          .join("");
+      }
+
+      function renderRoleRows(tbId, emptyId, countId, storeKey, rows) {
+        var tb = document.getElementById(tbId);
+        var empty = document.getElementById(emptyId);
+        document.getElementById(countId).textContent =
+          rows.length + " account" + (rows.length === 1 ? "" : "s");
+        if (!rows.length) {
+          tb.innerHTML = "";
+          empty.classList.remove("hidden");
+          return;
+        }
+        empty.classList.add("hidden");
+        tb.innerHTML = rows
+          .map(function (r) {
+            return (
+              "<tr class='bg-slate-900/20'>" +
+              "<td class='px-3 py-2 font-mono text-xs'>" +
+              esc(r.uid) +
+              "</td>" +
+              "<td class='px-3 py-2'>" +
+              esc(r.username) +
+              "</td>" +
+              "<td class='px-3 py-2'>" +
+              esc(r.fullName || "—") +
+              "</td>" +
+              "<td class='px-3 py-2'>" +
+              esc(r.clubName || "—") +
+              "</td>" +
+              "<td class='px-3 py-2'>" +
+              statusBadge(r.status) +
+              "</td>" +
+              "<td class='px-3 py-2 text-slate-400'>" +
+              esc(r.expiryDate || "—") +
+              "</td>" +
+              "<td class='px-3 py-2 text-slate-400'>" +
+              esc(r.lastUpdateDate || "—") +
+              "</td>" +
+              "<td class='px-3 py-2 text-right whitespace-nowrap'>" +
+              actionButtons(storeKey, r) +
+              "</td>" +
+              "</tr>"
+            );
+          })
+          .join("");
+      }
+
+      function loadLists() {
+        pageLoadError.classList.add("hidden");
+        return window.api
+          .api("/admin/login-accounts", { method: "GET" })
+          .then(function (data) {
+            rowCache.userLogin = data.userLogin || [];
+            rowCache.coach = data.coach || [];
+            rowCache.student = data.student || [];
+            renderUserLogin(rowCache.userLogin);
+            renderRoleRows("tbodyCoach", "emptyCoach", "countCoach", "coach", rowCache.coach);
+            renderRoleRows(
+              "tbodyStudent",
+              "emptyStudent",
+              "countStudent",
+              "student",
+              rowCache.student
+            );
+          })
+          .catch(function (e) {
+            pageLoadError.textContent = e.message || "Could not load accounts.";
+            pageLoadError.classList.remove("hidden");
+          });
+      }
+
+      document.getElementById("refreshBtn").addEventListener("click", loadLists);
+
+      /* —— Create —— */
+      var createForm = document.getElementById("createForm");
+      var createErr = document.getElementById("createFormError");
+      var createOk = document.getElementById("createFormSuccess");
+      var createBtn = document.getElementById("createSubmitBtn");
+
+      function hideCreateMsgs() {
+        createErr.classList.add("hidden");
+        createOk.classList.add("hidden");
+      }
+
+      createForm.addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        hideCreateMsgs();
+        var base = window.api.getApiBase().replace(/\/$/, "");
+        var token = window.auth.getToken();
+        createBtn.disabled = true;
+        var fd = new FormData(createForm);
+        fetch(base + "/admin/coach-managers", {
+          method: "POST",
+          headers: token ? { Authorization: "Bearer " + token } : {},
+          body: fd,
+          credentials: "include",
+        })
+          .then(function (res) {
+            return res.json().then(function (data) {
+              if (!res.ok) {
+                throw new Error(data.error || res.statusText || "Request failed");
+              }
+              return data;
+            });
+          })
+          .then(function (data) {
+            if (data.clubId) {
+              createOk.textContent =
+                (data.message || "Created.") + " Club ID: " + data.clubId + ".";
+            } else if (data.loginUid) {
+              createOk.textContent =
+                (data.message || "Account created.") + " UID: " + data.loginUid + ".";
+            } else {
+              createOk.textContent = data.message || "Created.";
+            }
+            createOk.classList.remove("hidden");
+            createForm.reset();
+            document.getElementById("createUserRole").value = "Coach Manager";
+            loadLists();
+          })
+          .catch(function (e) {
+            var msg = e.message || "Could not create account.";
+            if (msg === "The user already existed !") {
+              window.alert("The user already existed !");
+            }
+            createErr.textContent = msg;
+            createErr.classList.remove("hidden");
+          })
+          .finally(function () {
+            createBtn.disabled = false;
+          });
+      });
+
+      loadLists();
+    })();
+  </script>
+</body>
+</html>

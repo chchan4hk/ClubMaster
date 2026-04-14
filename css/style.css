@@ -1,0 +1,146 @@
+/* Optional overrides on top of Tailwind CDN */
+.glass {
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(10px);
+}
+
+/**
+ * Full-viewport background: photo + mouse-tracking spotlight + parallax.
+ * Set on body: --dashboard-bg-img, updated by JS: --spot-x/y %, --parallax-x/y (-1..1).
+ */
+body.dashboard-dynamic-bg {
+  position: relative;
+  background-color: #0d1117;
+  isolation: isolate;
+  --spot-x: 50%;
+  --spot-y: 50%;
+  --parallax-x: 0;
+  --parallax-y: 0;
+}
+
+body.dashboard-dynamic-bg > .dynamic-bg-stack {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Extra size so parallax translate does not show edges */
+body.dashboard-dynamic-bg .dynamic-bg-photo {
+  position: absolute;
+  inset: -8%;
+  width: 116%;
+  height: 116%;
+  background-image: var(--dashboard-bg-img);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center center;
+  transform: translate(
+      calc(var(--parallax-x, 0) * 12px),
+      calc(var(--parallax-y, 0) * 10px)
+    )
+    scale(1.05);
+  will-change: transform;
+}
+
+/* Canvas: star net (constellation lines) */
+body.dashboard-dynamic-bg .dynamic-bg-star-net {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Soft deep-space veil — gentle light near pointer, mostly calm */
+body.dashboard-dynamic-bg .dynamic-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse 90% 75% at var(--spot-x, 50%) var(--spot-y, 50%),
+      rgba(20, 35, 55, 0.28) 0%,
+      rgba(12, 18, 38, 0.62) 45%,
+      rgba(8, 12, 26, 0.88) 100%
+    ),
+    radial-gradient(
+      circle at 20% 80%,
+      rgba(30, 58, 90, 0.15) 0%,
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at 85% 25%,
+      rgba(25, 45, 75, 0.12) 0%,
+      transparent 40%
+    );
+}
+
+/* Very subtle cool haze (no strong teal spotlight) */
+body.dashboard-dynamic-bg .dynamic-bg-spot-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle min(70vw, 560px) at var(--spot-x, 50%) var(--spot-y, 50%),
+    rgba(100, 180, 220, 0.04) 0%,
+    transparent 55%
+  );
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.dashboard-dynamic-bg .dynamic-bg-photo {
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: none;
+  }
+
+  body.dashboard-dynamic-bg .dynamic-bg-star-net {
+    display: none;
+  }
+}
+
+/**
+ * Role dashboard overview images: tile hotspots (HKIT_Dashboard.html pattern).
+ * Used on coach-manager (3×3), coach / admin / student (2×3).
+ */
+a.cm-hotspot {
+  position: absolute;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s ease;
+  text-decoration: none;
+}
+
+a.cm-hotspot:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+a.cm-hotspot:focus-visible {
+  outline: 2px solid rgba(45, 212, 191, 0.55);
+  outline-offset: 2px;
+}
+
+/* Default styles for mobile (small screens) */
+body {
+  font-size: 16px;
+  margin: 0;
+  padding: 16px;
+}
+
+/* Tablets and small desktops */
+@media (min-width: 768px) {
+  body {
+    padding: 24px;
+    max-width: 750px;
+    margin: 0 auto;
+  }
+}
+
+/* Desktops */
+@media (min-width: 1024px) {
+  body {
+    max-width: 960px;
+  }
+}

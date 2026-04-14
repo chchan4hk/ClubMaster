@@ -1,0 +1,6 @@
+node_modules/
+dist/
+data/
+.env
+# Reproducible: npm run rds:download-ca
+certs/global-bundle.pem

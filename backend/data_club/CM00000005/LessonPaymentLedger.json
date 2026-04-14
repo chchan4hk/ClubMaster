@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "entries": {
+    "LR000004": {
+      "lessonReserveId": "LR000004",
+      "dueDate": "2026-04-07",
+      "payments": [
+        {
+          "paymentId": "PAY-mnyotp5i-13u64q",
+          "amount": 1280,
+          "method": "支付寶",
+          "reference": "—",
+          "paidAt": "2026-04-14"
+        }
+      ]
+    },
+    "LR000005": {
+      "lessonReserveId": "LR000005",
+      "dueDate": "2026-01-07",
+      "payments": [
+        {
+          "paymentId": "PAY-mnyotp5i-44omgn",
+          "amount": 1880,
+          "method": "支付寶",
+          "reference": "—",
+          "paidAt": "2026-04-14"
+        }
+      ]
+    }
+  }
+}

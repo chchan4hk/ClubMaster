@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My payments — Student</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    /* Pale green–white base with soft metallic sheen */
+    .student-pay-root {
+      min-height: 100vh;
+      color: #14532d;
+      background-color: #f7fef9;
+      background-image:
+        linear-gradient(
+          165deg,
+          rgba(255, 255, 255, 0.97) 0%,
+          rgba(236, 253, 245, 0.92) 42%,
+          rgba(220, 252, 231, 0.88) 100%
+        ),
+        linear-gradient(
+          118deg,
+          transparent 38%,
+          rgba(255, 255, 255, 0.55) 48%,
+          rgba(209, 250, 229, 0.35) 52%,
+          transparent 62%
+        ),
+        linear-gradient(
+          52deg,
+          rgba(167, 243, 208, 0.12) 0%,
+          transparent 45%,
+          rgba(255, 255, 255, 0.4) 80%
+        );
+    }
+    .student-pay-card {
+      background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.82) 0%,
+        rgba(240, 253, 244, 0.75) 100%
+      );
+      border: 1px solid rgba(16, 185, 129, 0.22);
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.9) inset,
+        0 8px 24px rgba(6, 78, 59, 0.06),
+        0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+    }
+    .student-pay-modal-panel {
+      background: linear-gradient(
+        160deg,
+        rgba(255, 255, 255, 0.95) 0%,
+        rgba(236, 253, 245, 0.9) 100%
+      );
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.85),
+        0 12px 40px rgba(6, 78, 59, 0.1);
+    }
+    .student-pay-qr-frame {
+      background: linear-gradient(145deg, #ffffff 0%, #ecfdf5 55%, #d1fae5 100%);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      box-shadow:
+        inset 0 2px 8px rgba(255, 255, 255, 0.9),
+        0 4px 16px rgba(5, 150, 105, 0.08);
+    }
+  </style>
+</head>
+<body class="student-pay-root antialiased">
+  <div class="max-w-6xl mx-auto p-6 pb-24 relative z-[1] lg:flex lg:gap-6">
+    <div class="flex-1 min-w-0">
+      <header class="mb-6 flex flex-wrap justify-between gap-4 items-start">
+        <div>
+          <p>
+            <a href="/student.html" class="text-sm text-emerald-700 hover:text-emerald-900 underline-offset-2 hover:underline font-medium">← Student home</a>
+          </p>
+          <h1 class="text-2xl font-bold text-emerald-900 mt-2 tracking-tight">My payments</h1>
+          <p class="text-xs text-emerald-800/70 mt-1">After you pay, your coach manager will confirm receipt in <code class="text-emerald-900/80 bg-white/60 px-1 rounded">LessonReserveList</code> before <strong>Payment confirm</strong> is set.</p>
+        </div>
+        <button type="button" id="logoutBtn"
+          class="rounded-lg bg-white/80 border border-emerald-300/60 text-emerald-900 px-4 py-2 text-sm hover:bg-white shadow-sm">
+          Sign out
+        </button>
+      </header>
+
+      <p id="loadError" class="hidden text-sm text-red-700 mb-4 font-medium"></p>
+
+      <section class="student-pay-card rounded-xl p-5 mb-4">
+        <div class="flex flex-wrap justify-between gap-4 items-start">
+          <div>
+            <p class="text-xs text-emerald-800/60 uppercase tracking-wide font-medium">Student</p>
+            <p id="hdrName" class="text-xl font-semibold text-emerald-950">—</p>
+            <p class="text-sm text-emerald-900/80 mt-1">
+              ID <span id="hdrId" class="text-emerald-950 font-medium">—</span>
+              · Level <span id="hdrLevel" class="text-emerald-950 font-medium">—</span>
+              · Coach <span id="hdrCoach" class="text-emerald-950 font-medium">—</span>
+            </p>
+            <p class="text-xs text-emerald-800/55 mt-1" id="hdrClub">—</p>
+          </div>
+          <div class="text-right">
+            <p class="text-xs text-emerald-800/60 uppercase tracking-wide font-medium">Outstanding balance</p>
+            <p id="hdrOutstanding" class="text-3xl font-bold text-amber-800 tabular-nums">—</p>
+            <span id="hdrOverdueBadge" class="hidden mt-2 inline-flex rounded-full bg-red-100 border border-red-300 text-red-800 text-xs px-3 py-1 font-medium">
+              Payment due — please settle to avoid late fees
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <div class="student-pay-card rounded-xl p-3">
+          <p class="text-[10px] text-emerald-800/55 uppercase font-medium">Paid (lifetime)</p>
+          <p id="kpiLife" class="text-lg font-semibold text-emerald-800 tabular-nums">—</p>
+        </div>
+        <div class="student-pay-card rounded-xl p-3">
+          <p class="text-[10px] text-emerald-800/55 uppercase font-medium">Paid (this month)</p>
+          <p id="kpiMonth" class="text-lg font-semibold text-teal-800 tabular-nums">—</p>
+        </div>
+        <div class="student-pay-card rounded-xl p-3">
+          <p class="text-[10px] text-emerald-800/55 uppercase font-medium">Next due</p>
+          <p id="kpiNextDue" class="text-lg font-semibold text-emerald-900">—</p>
+        </div>
+        <div class="student-pay-card rounded-xl p-3">
+          <p class="text-[10px] text-emerald-800/55 uppercase font-medium">Last payment</p>
+          <p id="kpiLast" class="text-lg font-semibold text-emerald-900 tabular-nums">—</p>
+        </div>
+      </section>
+
+      <div id="overdueBanner" class="hidden mb-4 rounded-xl border border-red-300/80 bg-red-50/90 px-4 py-3 text-sm text-red-900">
+        <strong class="font-semibold">Payment overdue</strong> — please settle outstanding amounts as soon as possible to avoid late fees or lesson suspension.
+      </div>
+
+      <section class="student-pay-card rounded-xl p-4 mb-4 overflow-x-auto">
+        <div class="flex flex-wrap justify-between gap-2 items-center mb-3">
+          <h2 class="text-lg font-semibold text-emerald-900">My lesson fees</h2>
+          <button type="button" id="btnOpenPay"
+            class="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2 shadow-sm">
+            Make a payment
+          </button>
+        </div>
+        <table class="w-full text-sm text-left border-collapse min-w-[860px] text-emerald-950">
+          <thead>
+            <tr class="border-b border-emerald-200/80 text-emerald-800/75">
+              <th class="py-2 pr-2 font-medium">Lesson / type</th>
+              <th class="py-2 pr-2 font-medium">Coach</th>
+              <th class="py-2 pr-2 font-medium text-right">Fee</th>
+              <th class="py-2 pr-2 font-medium text-right">Paid</th>
+              <th class="py-2 pr-2 font-medium text-right">Outstanding</th>
+              <th class="py-2 pr-2 font-medium">Due</th>
+              <th class="py-2 pr-2 font-medium">Status</th>
+              <th class="py-2 pr-2 font-medium">Payment Confirmed</th>
+              <th class="py-2 pr-2 font-medium"></th>
+            </tr>
+          </thead>
+          <tbody id="lessonBody">
+            <tr><td class="py-6 text-emerald-700/70" colspan="9">Loading…</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="student-pay-card rounded-xl p-4 mb-4">
+        <h2 class="text-lg font-semibold text-emerald-900 mb-3">Recent transactions</h2>
+        <ul id="txList" class="space-y-2 text-sm"></ul>
+        <p id="txEmpty" class="text-emerald-800/60 text-sm hidden">No payments recorded yet.</p>
+      </section>
+    </div>
+
+    <aside class="w-full lg:w-56 shrink-0 space-y-3 mt-6 lg:mt-0">
+      <div class="student-pay-card rounded-xl p-4 space-y-2">
+        <h3 class="text-xs font-semibold text-emerald-900 uppercase tracking-wide">Quick actions</h3>
+        <button type="button" id="btnStmtPdf"
+          class="w-full text-left rounded-lg bg-white/70 hover:bg-white border border-emerald-200/80 text-emerald-900 px-3 py-2 text-sm shadow-sm">
+          Statement / PDF (print)
+        </button>
+        <a id="linkBookings" href="#" target="_blank" rel="noopener"
+          class="block rounded-lg bg-white/70 hover:bg-white border border-emerald-200/80 px-3 py-2 text-sm text-emerald-800 font-medium">
+          My bookings
+        </a>
+        <a id="linkBrowse" href="#" target="_blank" rel="noopener"
+          class="block rounded-lg bg-white/70 hover:bg-white border border-emerald-200/80 px-3 py-2 text-sm text-emerald-800 font-medium">
+          Browse lessons
+        </a>
+        <a id="linkContact" href="#"
+          class="block rounded-lg bg-white/70 hover:bg-white border border-emerald-200/80 px-3 py-2 text-sm text-emerald-800 font-medium">
+          Contact club
+        </a>
+      </div>
+    </aside>
+  </div>
+
+  <div id="modalPay" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-emerald-950/25 backdrop-blur-sm overflow-y-auto" aria-modal="true">
+    <div class="student-pay-modal-panel rounded-2xl max-w-xl w-full my-8 shadow-xl max-h-[min(92vh,920px)] overflow-y-auto">
+      <div class="p-5 sm:p-6">
+        <h3 class="text-lg font-semibold text-emerald-950">Make a payment</h3>
+        <p class="text-xs text-emerald-800/70 mt-1">Choose lessons and amounts. Complete the transfer, enter your reference, then confirm.</p>
+
+        <div id="refLines" class="mt-3 text-xs text-emerald-800/80 space-y-1"></div>
+
+        <form id="formPay" class="mt-4 space-y-4">
+          <div>
+            <p class="text-xs font-semibold text-emerald-900 mb-2">Allocate to lesson(s)</p>
+            <div id="allocRows" class="space-y-2 max-h-48 overflow-y-auto text-sm border border-emerald-200/70 rounded-lg p-3 bg-white/50"></div>
+            <p class="text-xs text-emerald-800/60 mt-2">Check a lesson, then enter any amount up to its outstanding balance.</p>
+          </div>
+          <div class="flex flex-wrap items-end gap-3">
+            <div>
+              <label class="block text-xs text-emerald-800/80 mb-1">Total paying (HKD)</label>
+              <input id="payTotal" type="number" step="0.01" min="0" readonly
+                class="w-40 rounded-lg bg-white border border-emerald-200/80 px-3 py-2 text-emerald-950 text-sm tabular-nums" />
+            </div>
+            <button type="button" id="btnFillFull" class="rounded-lg bg-emerald-100 hover:bg-emerald-200/90 border border-emerald-300/60 text-emerald-900 text-xs px-3 py-2">
+              Fill full outstanding (selected)
+            </button>
+          </div>
+          <div>
+            <label class="block text-xs text-emerald-800/80 mb-1">Payment method</label>
+            <select id="payMethod" required
+              class="w-full rounded-lg bg-white border border-emerald-200/80 px-3 py-2 text-emerald-950 text-sm">
+              <option value="">— Select method —</option>
+              <option value="PayMe">PayMe</option>
+              <option value="FPS">FPS</option>
+              <option value="WeChatPay">Wechat Pay</option>
+              <option value="Alipay">Alipay</option>
+              <option value="支付寶">支付寶</option>
+            </select>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-emerald-900 uppercase tracking-wide mb-2">Payment QR</p>
+            <p id="qrSinglePlaceholder" class="text-sm text-emerald-800/65 py-2">
+              Choose a payment method above to show the club’s QR code (from <code class="text-xs">ClubInfo.json</code>).
+            </p>
+            <div id="qrSingleWrap" class="hidden w-full max-w-xs student-pay-qr-frame rounded-xl p-4">
+              <img id="qrSingleImg" alt="" class="w-full max-w-[220px] mx-auto object-contain rounded-lg border border-white/80 bg-white" />
+              <p id="qrSingleLabel" class="text-xs text-center text-emerald-900 font-medium mt-3"></p>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs text-emerald-800/80 mb-1">Transaction reference</label>
+            <input id="payRef" type="text" placeholder="Bank / PayMe / FPS / WeChat / Alipay reference"
+              class="w-full rounded-lg bg-white border border-emerald-200/80 px-3 py-2 text-emerald-950 text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs text-emerald-800/80 mb-1">Payment date</label>
+            <input id="payDate" type="date" required
+              class="w-full rounded-lg bg-white border border-emerald-200/80 px-3 py-2 text-emerald-950 text-sm" />
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button type="submit" class="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2 shadow-sm">Confirm &amp; pay</button>
+            <button type="button" id="btnPayCancel" class="rounded-lg bg-white border border-emerald-300/70 text-emerald-900 text-sm px-4 py-2 hover:bg-emerald-50">Cancel</button>
+          </div>
+          <p id="payErr" class="hidden text-sm text-red-700 font-medium"></p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/dashboard-common.js"></script>
+  <script>
+    (function () {
+      if (!window.auth.guardPage("Student")) {
+        return;
+      }
+
+      var payload = null;
+      var qrUrls = {};
+
+      function fmtMoney(n) {
+        var x = Number(n);
+        if (!isFinite(x)) {
+          return "—";
+        }
+        return x.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+      }
+
+      function escapeHtml(s) {
+        if (s == null) {
+          return "";
+        }
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function badgeClass(st) {
+        if (st === "PAID") {
+          return "bg-emerald-100 text-emerald-900 border-emerald-300/70";
+        }
+        if (st === "PARTIALLY_PAID") {
+          return "bg-amber-100 text-amber-900 border-amber-300/70";
+        }
+        if (st === "OVERDUE") {
+          return "bg-red-100 text-red-900 border-red-300/80";
+        }
+        return "bg-slate-100 text-slate-800 border-slate-300/60";
+      }
+
+      function paymentConfirmedBadgeClass(label) {
+        if (label === "yes") {
+          return "bg-emerald-100 text-emerald-900 border-emerald-300/70";
+        }
+        return "bg-amber-50 text-amber-900 border-amber-200/80";
+      }
+
+      function rowClass(lesson) {
+        if (lesson.displayStatus === "OVERDUE") {
+          return "bg-red-50/90 border-l-2 border-red-400";
+        }
+        return "";
+      }
+
+      function methodToChannel(m) {
+        if (m === "PayMe") {
+          return "payme";
+        }
+        if (m === "FPS") {
+          return "fps";
+        }
+        if (m === "WeChatPay") {
+          return "wechat";
+        }
+        if (m === "Alipay") {
+          return "alipay";
+        }
+        if (m === "支付寶") {
+          return "zhifubao";
+        }
+        return "";
+      }
+
+      function updateSingleQr() {
+        var sel = document.getElementById("payMethod");
+        var m = sel ? sel.value : "";
+        var ch = methodToChannel(m);
+        var wrap = document.getElementById("qrSingleWrap");
+        var ph = document.getElementById("qrSinglePlaceholder");
+        var img = document.getElementById("qrSingleImg");
+        var lbl = document.getElementById("qrSingleLabel");
+        if (!ch || !qrUrls[ch]) {
+          wrap.classList.add("hidden");
+          ph.classList.remove("hidden");
+          return;
+        }
+        var url = qrUrls[ch];
+        ph.classList.add("hidden");
+        wrap.classList.remove("hidden");
+        img.src = url;
+        if (ch === "alipay") {
+          lbl.textContent = "Alipay";
+        } else if (ch === "zhifubao") {
+          lbl.textContent = "支付寶";
+        } else if (ch === "payme") {
+          lbl.textContent = "PayMe";
+        } else if (ch === "fps") {
+          lbl.textContent = "FPS";
+        } else if (ch === "wechat") {
+          lbl.textContent = "WeChat Pay";
+        } else {
+          lbl.textContent = "";
+        }
+      }
+
+      function storeQrUrls(instr) {
+        qrUrls = (instr && instr.qrUrls) || {};
+      }
+
+      function recalcTotal() {
+        var sum = 0;
+        document.querySelectorAll(".alloc-row").forEach(function (row) {
+          var chk = row.querySelector(".alloc-chk");
+          var inp = row.querySelector(".alloc-amt");
+          if (chk && chk.checked && inp) {
+            var v = Number(inp.value);
+            if (isFinite(v) && v > 0) {
+              sum += v;
+            }
+          }
+        });
+        document.getElementById("payTotal").value = sum > 0 ? String(Math.round(sum * 100) / 100) : "";
+      }
+
+      function buildAllocRows() {
+        var box = document.getElementById("allocRows");
+        box.innerHTML = "";
+        var lessons = (payload && payload.lessons) || [];
+        lessons.forEach(function (L) {
+          if (!L.canPay) {
+            return;
+          }
+          var row = document.createElement("div");
+          row.className = "alloc-row flex flex-wrap items-center gap-2 py-1 border-b border-emerald-100";
+          row.innerHTML =
+            "<label class=\"flex items-center gap-2 grow min-w-[200px] cursor-pointer select-none text-emerald-950\">" +
+            "<input type=\"checkbox\" class=\"alloc-chk rounded border-emerald-300 text-emerald-600\" data-rid=\"" +
+            escapeHtml(L.lessonReserveId) +
+            "\" data-max=\"" +
+            L.outstanding +
+            "\" />" +
+            "<span>" +
+            escapeHtml(L.lessonId) +
+            " <span class=\"text-emerald-800/65\">(max $" +
+            fmtMoney(L.outstanding) +
+            ")</span></span></label>" +
+            "<input type=\"number\" step=\"0.01\" min=\"0\" placeholder=\"Amount\" class=\"alloc-amt w-28 rounded bg-white border border-emerald-200/80 px-2 py-1 text-xs text-emerald-950\" disabled />";
+          box.appendChild(row);
+          var chk = row.querySelector(".alloc-chk");
+          var inp = row.querySelector(".alloc-amt");
+          chk.addEventListener("change", function () {
+            inp.disabled = !chk.checked;
+            if (chk.checked) {
+              inp.value = String(L.outstanding);
+            } else {
+              inp.value = "";
+            }
+            recalcTotal();
+          });
+          inp.addEventListener("input", recalcTotal);
+        });
+        if (!box.children.length) {
+          box.innerHTML = "<p class=\"text-emerald-800/65 text-sm\">No outstanding balances.</p>";
+        }
+      }
+
+      async function load() {
+        var errEl = document.getElementById("loadError");
+        errEl.classList.add("hidden");
+        try {
+          var data = await window.api.api("/student/payment");
+          if (!data.ok) {
+            throw new Error(data.error || "Load failed");
+          }
+          payload = data;
+          if (data.clubId && window.api.setClubFolderContext) {
+            window.api.setClubFolderContext(data.clubId, data.clubName || null);
+          }
+
+          var sp = data.studentProfile || {};
+          document.getElementById("hdrName").textContent = sp.fullName || "—";
+          document.getElementById("hdrId").textContent = sp.studentId || "—";
+          document.getElementById("hdrLevel").textContent = sp.level || "—";
+          document.getElementById("hdrCoach").textContent = sp.coach || "—";
+          document.getElementById("hdrClub").textContent = data.clubName ? "Club: " + data.clubName : "";
+          document.getElementById("hdrOutstanding").textContent = "$" + fmtMoney(data.outstandingBalance);
+          var ob = document.getElementById("hdrOverdueBadge");
+          var ban = document.getElementById("overdueBanner");
+          if (data.hasOverdue) {
+            ob.classList.remove("hidden");
+            ban.classList.remove("hidden");
+          } else {
+            ob.classList.add("hidden");
+            ban.classList.add("hidden");
+          }
+
+          var k = data.kpis || {};
+          document.getElementById("kpiLife").textContent = "$" + fmtMoney(k.totalPaidLifetime);
+          document.getElementById("kpiMonth").textContent = "$" + fmtMoney(k.totalPaidThisMonth);
+          document.getElementById("kpiNextDue").textContent = k.nextPaymentDueDate || "—";
+          document.getElementById("kpiLast").textContent =
+            k.lastPaymentDate ? "$" + fmtMoney(k.lastPaymentAmount) + " · " + k.lastPaymentDate : "—";
+
+          var tbody = document.getElementById("lessonBody");
+          var lessons = data.lessons || [];
+          if (!lessons.length) {
+            tbody.innerHTML = '<tr><td class="py-6 text-emerald-800/60" colspan="9">No active lesson bookings with fees.</td></tr>';
+          } else {
+            tbody.innerHTML = lessons
+              .map(function (L) {
+                var typeLabel =
+                  (L.sportType || "—") + " · " + String(L.lessonKind || "").replace(/_/g, " ");
+                var stLabel = String(L.displayStatus || "").replace(/_/g, " ");
+                var pcLabel = L.paymentConfirmed === "yes" ? "yes" : "In Progress";
+                return (
+                  "<tr class=\"border-b border-emerald-100/80 " +
+                  rowClass(L) +
+                  "\">" +
+                  "<td class=\"py-2 pr-2\"><div class=\"text-emerald-950 font-medium\">" +
+                  escapeHtml(L.lessonLabel || "") +
+                  "</div><div class=\"text-xs text-emerald-800/65\">" +
+                  escapeHtml(typeLabel) +
+                  "</div></td>" +
+                  "<td class=\"py-2 pr-2\">" +
+                  escapeHtml(L.coachName || "—") +
+                  "</td>" +
+                  "<td class=\"py-2 pr-2 text-right tabular-nums\">$" +
+                  fmtMoney(L.totalFee) +
+                  "</td>" +
+                  "<td class=\"py-2 pr-2 text-right tabular-nums text-emerald-800\">$" +
+                  fmtMoney(L.amountPaid) +
+                  "</td>" +
+                  "<td class=\"py-2 pr-2 text-right tabular-nums text-amber-800 font-medium\">$" +
+                  fmtMoney(L.outstanding) +
+                  "</td>" +
+                  "<td class=\"py-2 pr-2\">" +
+                  escapeHtml(L.dueDate || "—") +
+                  "</td>" +
+                  "<td class=\"py-2 pr-2\"><span class=\"inline-flex rounded-full border px-2 py-0.5 text-xs " +
+                  badgeClass(L.displayStatus) +
+                  "\">" +
+                  escapeHtml(stLabel) +
+                  "</span></td>" +
+                  "<td class=\"py-2 pr-2\"><span class=\"inline-flex rounded-full border px-2 py-0.5 text-xs " +
+                  paymentConfirmedBadgeClass(pcLabel) +
+                  "\">" +
+                  escapeHtml(pcLabel) +
+                  "</span></td>" +
+                  "<td class=\"py-2 pr-2\">" +
+                  (L.canPay
+                    ? "<button type=\"button\" class=\"rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1.5 btn-pay shadow-sm\">Pay now</button>"
+                    : "") +
+                  "</td></tr>"
+                );
+              })
+              .join("");
+            tbody.querySelectorAll(".btn-pay").forEach(function (btn) {
+              btn.addEventListener("click", function () {
+                openPayModal();
+              });
+            });
+          }
+
+          var txs = data.transactions || [];
+          var txList = document.getElementById("txList");
+          var txEmpty = document.getElementById("txEmpty");
+          if (!txs.length) {
+            txList.innerHTML = "";
+            txEmpty.classList.remove("hidden");
+          } else {
+            txEmpty.classList.add("hidden");
+            txList.innerHTML = txs
+              .map(function (t) {
+                return (
+                  "<li class=\"flex flex-wrap justify-between gap-2 rounded-lg border border-emerald-200/70 bg-white/60 px-3 py-2 text-emerald-950\">" +
+                  "<span>" +
+                  escapeHtml(t.paidAt) +
+                  " · " +
+                  escapeHtml(t.method) +
+                  " · $" +
+                  fmtMoney(t.amount) +
+                  "</span>" +
+                  "<span class=\"text-emerald-800/65 text-xs\">Ref: " +
+                  escapeHtml(t.reference || "—") +
+                  "</span></li>"
+                );
+              })
+              .join("");
+          }
+
+          var links = data.links || {};
+          document.getElementById("linkBookings").href = links.myBookings || "#";
+          document.getElementById("linkBrowse").href = links.lessonBrowse || "#";
+          document.getElementById("linkContact").href =
+            "mailto:?subject=" +
+            encodeURIComponent(
+              "Payment — " + (data.clubName || "club") + " (" + (sp.studentId || "") + ")"
+            );
+
+          storeQrUrls(data.paymentInstructions || {});
+          var refBox = document.getElementById("refLines");
+          refBox.innerHTML = "";
+          ((data.paymentInstructions && data.paymentInstructions.referenceLines) || []).forEach(function (line) {
+            var p = document.createElement("p");
+            p.textContent = line.key + ": " + line.value;
+            refBox.appendChild(p);
+          });
+        } catch (e) {
+          errEl.textContent = e.message || String(e);
+          errEl.classList.remove("hidden");
+          document.getElementById("lessonBody").innerHTML =
+            '<tr><td class="py-6 text-red-700" colspan="9">Failed to load.</td></tr>';
+        }
+      }
+
+      function openPayModal() {
+        if (!payload) {
+          return;
+        }
+        buildAllocRows();
+        document.getElementById("payMethod").value = "";
+        document.getElementById("payDate").value = new Date().toISOString().slice(0, 10);
+        document.getElementById("payRef").value = "";
+        document.getElementById("payErr").classList.add("hidden");
+        updateSingleQr();
+        document.getElementById("modalPay").classList.remove("hidden");
+      }
+
+      function closePayModal() {
+        document.getElementById("modalPay").classList.add("hidden");
+      }
+
+      document.getElementById("btnOpenPay").addEventListener("click", openPayModal);
+      document.getElementById("btnPayCancel").addEventListener("click", closePayModal);
+      document.getElementById("payMethod").addEventListener("change", updateSingleQr);
+
+      document.getElementById("btnFillFull").addEventListener("click", function () {
+        document.querySelectorAll(".alloc-row").forEach(function (row) {
+          var chk = row.querySelector(".alloc-chk");
+          var inp = row.querySelector(".alloc-amt");
+          if (chk && chk.checked && inp) {
+            inp.value = chk.getAttribute("data-max") || "";
+          }
+        });
+        recalcTotal();
+      });
+
+      document.getElementById("formPay").addEventListener("submit", async function (ev) {
+        ev.preventDefault();
+        var err = document.getElementById("payErr");
+        err.classList.add("hidden");
+        if (!document.getElementById("payMethod").value) {
+          err.textContent = "Please select a payment method.";
+          err.classList.remove("hidden");
+          return;
+        }
+        var allocations = [];
+        var amtInvalid = false;
+        document.querySelectorAll(".alloc-row").forEach(function (row) {
+          var chk = row.querySelector(".alloc-chk");
+          var inp = row.querySelector(".alloc-amt");
+          if (!chk || !chk.checked || !inp) {
+            return;
+          }
+          var rid = chk.getAttribute("data-rid");
+          var max = Number(chk.getAttribute("data-max"));
+          var amt = Number(inp.value);
+          if (!rid || !isFinite(amt) || amt <= 0) {
+            return;
+          }
+          if (amt > max + 0.02) {
+            err.textContent = "Amount for a lesson cannot exceed its outstanding balance.";
+            err.classList.remove("hidden");
+            amtInvalid = true;
+            return;
+          }
+          allocations.push({ lessonReserveId: rid, amount: Math.round(amt * 100) / 100 });
+        });
+        if (amtInvalid) {
+          return;
+        }
+        if (!allocations.length) {
+          err.textContent = "Select at least one lesson and enter an amount.";
+          err.classList.remove("hidden");
+          return;
+        }
+        try {
+          await window.api.api("/student/payment/confirm", {
+            method: "POST",
+            body: JSON.stringify({
+              allocations: allocations,
+              method: document.getElementById("payMethod").value,
+              transactionRef: document.getElementById("payRef").value.trim(),
+              paidAt: document.getElementById("payDate").value,
+            }),
+          });
+          closePayModal();
+          await load();
+        } catch (e) {
+          err.textContent = e.message || String(e);
+          err.classList.remove("hidden");
+        }
+      });
+
+      document.getElementById("btnStmtPdf").addEventListener("click", function () {
+        if (!payload) {
+          return;
+        }
+        var sp = payload.studentProfile || {};
+        var rows = (payload.lessons || [])
+          .map(function (L) {
+            return (
+              "<tr><td style='border:1px solid #ccc;padding:8px'>" +
+              escapeHtml(L.lessonId) +
+              "</td><td style='border:1px solid #ccc;padding:8px;text-align:right'>" +
+              fmtMoney(L.totalFee) +
+              "</td><td style='border:1px solid #ccc;padding:8px;text-align:right'>" +
+              fmtMoney(L.amountPaid) +
+              "</td><td style='border:1px solid #ccc;padding:8px;text-align:right'>" +
+              fmtMoney(L.outstanding) +
+              "</td></tr>"
+            );
+          })
+          .join("");
+        var w = window.open("", "_blank");
+        w.document.write(
+          "<html><head><title>Statement</title></head><body style='font-family:sans-serif;padding:24px'>" +
+            "<p style='color:#555;font-size:13px'>Use your browser <strong>Print → Save as PDF</strong> to download a PDF.</p>" +
+            "<h2>Payment statement</h2><p>" +
+            escapeHtml(sp.fullName || "") +
+            " · " +
+            escapeHtml(sp.studentId || "") +
+            " · " +
+            escapeHtml(payload.clubName || "") +
+            "</p>" +
+            "<table style='width:100%;border-collapse:collapse;margin-top:16px;font-size:14px'>" +
+            "<thead><tr style='background:#f0f0f0'><th style='border:1px solid #ccc;padding:8px;text-align:left'>Lesson</th>" +
+            "<th style='border:1px solid #ccc;padding:8px;text-align:right'>Fee</th>" +
+            "<th style='border:1px solid #ccc;padding:8px;text-align:right'>Paid</th>" +
+            "<th style='border:1px solid #ccc;padding:8px;text-align:right'>Outstanding</th></tr></thead><tbody>" +
+            rows +
+            "</tbody></table></body></html>"
+        );
+        w.document.close();
+        w.print();
+      });
+
+      document.getElementById("logoutBtn").addEventListener("click", function () {
+        if (window.auth && window.auth.logout) {
+          window.auth.logout();
+        }
+      });
+
+      load();
+    })();
+  </script>
+</body>
+</html>

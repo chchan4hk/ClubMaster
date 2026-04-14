@@ -1,0 +1,40 @@
+{
+  "prizes": [
+    {
+      "PrizeID": "PR000001",
+      "ClubID": "CM00000003",
+      "Club_name": "流星羽毛球會",
+      "SportType": "Badminton",
+      "Year": "2025",
+      "Association": "香港羽毛球總會",
+      "Competition": "全港青少年錦標賽",
+      "Age_group": "2012-2013",
+      "Prize_type": "Men's Double",
+      "StudentName": "Chan Dai Man",
+      "Ranking": "Gold",
+      "Status": "ACTIVE",
+      "Created_at": "2026-04-10",
+      "LastUpdated_Date": "2026-04-11",
+      "VerifiedBy": "Felix Fan",
+      "Remarks": "Good"
+    },
+    {
+      "PrizeID": "PR000002",
+      "ClubID": "CM00000003",
+      "Club_name": "流星羽毛球會",
+      "SportType": "Badminton",
+      "Year": "2026",
+      "Association": "香港羽毛球總會",
+      "Competition": "全港青少年錦標賽",
+      "Age_group": "2012-2013",
+      "Prize_type": "Men's Single",
+      "StudentName": "Chan Dai Man",
+      "Ranking": "Gold",
+      "Status": "ACTIVE",
+      "Created_at": "2026-04-10",
+      "LastUpdated_Date": "2026-04-11",
+      "VerifiedBy": "Felix Fan",
+      "Remarks": "Good"
+    }
+  ]
+}

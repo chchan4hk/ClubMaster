@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Sign in — Sport Court Booking</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* Fill visible viewport on phones (address bar) and desktops; fallback for older browsers */
+    .login-page-root {
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+    .login-top-frame {
+      padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+      padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+      padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
+    }
+    .login-bottom-frame {
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+    /* Narrow viewports: keep some image visible if the login block wraps tall */
+    @media (max-width: 639px) {
+      .login-bottom-frame {
+        min-height: max(8rem, 25vh);
+      }
+    }
+    @supports (height: 100dvh) {
+      @media (max-width: 639px) {
+        .login-bottom-frame {
+          min-height: clamp(8rem, 28dvh, 45vh);
+        }
+      }
+    }
+    /* Yellow → gold → orange → white with gentle blink (slow cycle for comfort) */
+    @keyframes login-video-hint {
+      0% {
+        color: #facc15;
+        opacity: 1;
+      }
+      11% {
+        opacity: 0.55;
+      }
+      22% {
+        color: #d4af37;
+        opacity: 1;
+      }
+      33% {
+        opacity: 0.55;
+      }
+      44% {
+        color: #f97316;
+        opacity: 1;
+      }
+      55% {
+        opacity: 0.55;
+      }
+      66% {
+        color: #ffffff;
+        opacity: 1;
+      }
+      77% {
+        opacity: 0.55;
+      }
+      88% {
+        color: #facc15;
+        opacity: 1;
+      }
+      94% {
+        opacity: 0.55;
+      }
+      100% {
+        color: #facc15;
+        opacity: 1;
+      }
+    }
+    .login-video-hint {
+      animation: login-video-hint 3.6s ease-in-out infinite;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .login-video-hint {
+        animation: none;
+        color: #facc15;
+        opacity: 1;
+      }
+    }
+
+    /* Login card — animated frame + headline */
+    @keyframes login-border-flow {
+      0%,
+      100% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+    }
+    @keyframes login-glow-breathe {
+      0%,
+      100% {
+        opacity: 0.45;
+        transform: translateX(-50%) scale(1);
+      }
+      50% {
+        opacity: 0.85;
+        transform: translateX(-50%) scale(1.03);
+      }
+    }
+    @keyframes login-btn-shine {
+      0% {
+        transform: translateX(-120%) skewX(-12deg);
+      }
+      100% {
+        transform: translateX(220%) skewX(-12deg);
+      }
+    }
+    .login-card-outer {
+      background: linear-gradient(
+        120deg,
+        #0d9488,
+        #06b6d4,
+        #10b981,
+        #2dd4bf,
+        #0d9488
+      );
+      background-size: 280% 100%;
+      animation: login-border-flow 5s ease infinite;
+      box-shadow:
+        0 0 40px -10px rgba(45, 212, 191, 0.35),
+        0 12px 40px -20px rgba(6, 182, 212, 0.25);
+    }
+    .login-card-inner {
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+    .login-card-glow {
+      animation: login-glow-breathe 4s ease-in-out infinite;
+    }
+    .login-field {
+      transition:
+        border-color 0.2s ease,
+        box-shadow 0.25s ease,
+        transform 0.2s ease;
+    }
+    .login-field:hover:not(:focus) {
+      border-color: rgba(45, 212, 191, 0.35);
+    }
+    .login-field:focus {
+      border-color: rgba(45, 212, 191, 0.65);
+      box-shadow:
+        0 0 0 1px rgba(45, 212, 191, 0.35),
+        0 8px 28px -12px rgba(34, 211, 238, 0.45);
+      transform: translateY(-1px);
+    }
+    .login-signin-btn {
+      position: relative;
+      background: linear-gradient(120deg, #0d9488, #0891b2, #059669, #0d9488);
+      background-size: 200% 100%;
+      transition:
+        background-position 0.35s ease,
+        transform 0.15s ease,
+        box-shadow 0.25s ease,
+        filter 0.2s ease;
+      box-shadow:
+        0 4px 16px -4px rgba(20, 184, 166, 0.55),
+        0 0 24px -8px rgba(6, 182, 212, 0.35);
+    }
+    .login-signin-btn:hover {
+      background-position: 100% 50%;
+      filter: brightness(1.08);
+      box-shadow:
+        0 8px 28px -6px rgba(45, 212, 191, 0.5),
+        0 0 32px -6px rgba(34, 211, 238, 0.35);
+    }
+    .login-signin-btn:active {
+      transform: scale(0.97);
+    }
+    .login-signin-btn::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background: linear-gradient(
+        105deg,
+        transparent 40%,
+        rgba(255, 255, 255, 0.22) 50%,
+        transparent 60%
+      );
+      transform: translateX(-120%) skewX(-12deg);
+      animation: login-btn-shine 3.5s ease-in-out infinite;
+      pointer-events: none;
+      border-radius: inherit;
+    }
+    .login-signin-btn .login-signin-label {
+      position: relative;
+      z-index: 1;
+    }
+    /* Subscription renewal (expired account) */
+    .renewal-metallic-panel {
+      background: linear-gradient(145deg, #1a3b2e 0%, #234a38 35%, #2c5a3a 70%, #1e4d3a 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        inset 0 -2px 8px rgba(0, 0, 0, 0.35),
+        0 12px 40px rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    /* Gold / white metallic — slow shifting gradient */
+    @keyframes renewal-gold-metallic {
+      0% {
+        background-position: 0% 40%;
+      }
+      50% {
+        background-position: 100% 60%;
+      }
+      100% {
+        background-position: 0% 40%;
+      }
+    }
+    .renewal-payment-shell {
+      background: linear-gradient(
+        118deg,
+        #faf7f0 0%,
+        #f0ebe3 8%,
+        #fffefb 18%,
+        #e6d5b8 28%,
+        #fefcf8 38%,
+        #d4b896 48%,
+        #faf6ee 58%,
+        #c9a86c 68%,
+        #fffef9 78%,
+        #e8dcc8 88%,
+        #f5f0e8 100%
+      );
+      background-size: 280% 280%;
+      animation: renewal-gold-metallic 32s ease-in-out infinite;
+      box-shadow: inset 0 0 100px rgba(255, 255, 255, 0.35);
+    }
+    .renewal-payment-inner {
+      background: rgba(15, 23, 42, 0.82);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(251, 191, 36, 0.22);
+      box-shadow:
+        0 25px 50px -12px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+    .renewal-plan-card {
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+    }
+    /* Metallic plan tiles: gold / yellow / orange on near-black */
+    .renewal-plan-card.renewal-plan-card--metal-gold {
+      background: linear-gradient(
+        152deg,
+        #0c0a08 0%,
+        #1a1510 22%,
+        #2a2218 48%,
+        #15120e 72%,
+        #080706 100%
+      );
+      border-color: rgba(196, 155, 72, 0.55);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 220, 150, 0.14),
+        inset 0 -10px 28px rgba(0, 0, 0, 0.5),
+        0 6px 20px rgba(0, 0, 0, 0.4);
+    }
+    .renewal-plan-card--metal-gold .renewal-plan-title {
+      color: #f5ecd4;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+    }
+    .renewal-plan-card--metal-gold .renewal-plan-price {
+      color: #fbbf24;
+      text-shadow: 0 0 18px rgba(251, 191, 36, 0.22);
+    }
+    .renewal-plan-card.renewal-plan-card--metal-yellow {
+      background: linear-gradient(
+        152deg,
+        #0e0d08 0%,
+        #1c1a0f 25%,
+        #2d2a14 50%,
+        #161409 75%,
+        #090804 100%
+      );
+      border-color: rgba(210, 185, 60, 0.55);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 245, 180, 0.12),
+        inset 0 -10px 28px rgba(0, 0, 0, 0.48),
+        0 6px 20px rgba(0, 0, 0, 0.38);
+    }
+    .renewal-plan-card--metal-yellow .renewal-plan-title {
+      color: #faf6d8;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+    }
+    .renewal-plan-card--metal-yellow .renewal-plan-price {
+      color: #fde047;
+      text-shadow: 0 0 20px rgba(253, 224, 71, 0.2);
+    }
+    .renewal-plan-card.renewal-plan-card--metal-orange {
+      background: linear-gradient(
+        152deg,
+        #100b08 0%,
+        #1f140e 28%,
+        #321c12 52%,
+        #180f0a 78%,
+        #080605 100%
+      );
+      border-color: rgba(200, 100, 45, 0.5);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 200, 150, 0.1),
+        inset 0 -10px 28px rgba(0, 0, 0, 0.52),
+        0 6px 20px rgba(0, 0, 0, 0.42);
+    }
+    .renewal-plan-card--metal-orange .renewal-plan-title {
+      color: #ffe8d4;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.88);
+    }
+    .renewal-plan-card--metal-orange .renewal-plan-price {
+      color: #fb923c;
+      text-shadow: 0 0 18px rgba(251, 146, 60, 0.22);
+    }
+    .renewal-plan-card.selected {
+      border-color: rgba(45, 212, 191, 0.75);
+      box-shadow:
+        0 0 0 2px rgba(45, 212, 191, 0.35),
+        0 10px 28px -8px rgba(20, 184, 166, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+    .renewal-method-btn.selected {
+      background: rgba(45, 212, 191, 0.2);
+      border-color: rgba(45, 212, 191, 0.55);
+      color: #99f6e4;
+    }
+    /* Match Coach Manager → Payment → Verify Payment Table “Confirm Payment” */
+    .renewal-btn-metal-gold {
+      background: linear-gradient(145deg, #e8c547 0%, #a67c1a 42%, #2a1f08 100%);
+      color: #0c0a06;
+      border: 1px solid rgba(255, 224, 130, 0.45);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 2px 10px rgba(0, 0, 0, 0.45);
+      font-weight: 600;
+    }
+    .renewal-btn-metal-gold:hover:not(:disabled) {
+      filter: brightness(1.09);
+    }
+    .renewal-section-label {
+      font-size: 0.875rem;
+      line-height: 1.35;
+      font-weight: 600;
+      color: #fde68a;
+      letter-spacing: 0.02em;
+    }
+    .renewal-plan-card .renewal-plan-title {
+      font-size: 0.9375rem;
+      line-height: 1.35;
+    }
+    .renewal-plan-card .renewal-plan-price {
+      font-size: 0.8125rem;
+      line-height: 1.35;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .login-card-outer,
+      .login-card-glow {
+        animation: none;
+      }
+      .login-card-outer {
+        background: linear-gradient(120deg, #0d9488, #0891b2, #059669);
+      }
+      .login-card-glow {
+        opacity: 0.5;
+        transform: translateX(-50%);
+      }
+      .login-field:focus {
+        transform: none;
+      }
+      .login-signin-btn::after {
+        animation: none;
+        display: none;
+      }
+      .renewal-payment-shell {
+        animation: none;
+        background-size: 100% 100%;
+        background-position: center;
+      }
+    }
+  </style>
+</head>
+<body class="login-page-root flex flex-col bg-slate-950 text-slate-100 overflow-x-hidden pb-[env(safe-area-inset-bottom,0px)]">
+  <header class="login-top-frame shrink-0 border-b border-slate-800/80 pb-2 sm:pb-3 sm:px-4 md:px-6">
+    <div class="login-card-outer w-full max-w-6xl mx-auto rounded-xl p-[2px] sm:rounded-2xl">
+      <div
+        class="login-card-inner glass relative overflow-hidden rounded-[11px] border border-white/10 sm:rounded-[14px]">
+        <div
+          class="login-card-glow pointer-events-none absolute -top-20 left-1/2 h-40 w-[130%] -translate-x-1/2 rounded-full bg-gradient-to-r from-teal-400/25 via-cyan-400/20 to-emerald-400/25 blur-3xl"
+          aria-hidden="true"></div>
+        <div class="relative z-[1] px-3 py-2.5 sm:px-4 sm:py-3 md:px-5 md:py-3">
+          <p id="err" class="mb-2 rounded-lg border border-red-500/30 bg-red-950/40 px-2.5 py-1.5 text-sm text-red-200 hidden"></p>
+          <form id="loginForm" class="flex flex-wrap items-end gap-2 sm:gap-2.5 md:gap-3 min-w-0">
+            <div
+              class="flex flex-col gap-1 min-w-0 w-full sm:w-auto flex-1 basis-full sm:basis-auto sm:flex-initial sm:min-w-[10.5rem] md:min-w-[11rem]">
+              <label for="username"
+                class="text-[10px] font-semibold uppercase tracking-wider text-teal-300/90 sm:text-[11px]">Username</label>
+              <input type="text" id="username" required autocomplete="username"
+                class="login-field w-full min-h-10 rounded-lg border border-slate-600/90 bg-slate-950/80 px-3 py-2 text-white text-base shadow-inner shadow-black/20 backdrop-blur-sm sm:min-h-9 sm:text-sm focus:outline-none focus:ring-0" />
+            </div>
+            <div
+              class="flex flex-col gap-1 min-w-0 w-full sm:w-auto flex-1 basis-full sm:basis-auto sm:flex-initial sm:min-w-[10.5rem] md:min-w-[11rem]">
+              <label for="password"
+                class="text-[10px] font-semibold uppercase tracking-wider text-teal-300/90 sm:text-[11px]">Password</label>
+              <input type="password" id="password" required autocomplete="current-password"
+                class="login-field w-full min-h-10 rounded-lg border border-slate-600/90 bg-slate-950/80 px-3 py-2 text-white text-base shadow-inner shadow-black/20 backdrop-blur-sm sm:min-h-9 sm:text-sm focus:outline-none focus:ring-0" />
+            </div>
+            <div
+              class="flex flex-col gap-1 min-w-0 w-full sm:w-auto flex-1 basis-full sm:basis-auto sm:flex-initial sm:min-w-[11rem] md:min-w-[12rem]">
+              <label for="userRole"
+                class="text-[10px] font-semibold uppercase tracking-wider text-teal-300/90 sm:text-[11px]">User Role</label>
+              <select id="userRole" required
+                class="login-field w-full min-h-10 cursor-pointer rounded-lg border border-slate-600/90 bg-slate-950/80 px-3 py-2 text-white text-base shadow-inner shadow-black/20 backdrop-blur-sm sm:min-h-9 sm:text-sm focus:outline-none focus:ring-0">
+                <option value="" selected disabled>Please select</option>
+                <option value="Coach Manager">Coach Manager</option>
+                <option value="Coach">Coach</option>
+                <option value="Student">Student</option>
+                <option value="Admin">Admin</option>
+              </select>
+            </div>
+            <button type="submit"
+              class="login-signin-btn shrink-0 min-h-10 w-full overflow-hidden rounded-lg px-5 py-2 text-sm font-bold uppercase tracking-wide text-white sm:min-h-9 sm:w-auto">
+              <span class="login-signin-label">Sign in</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </header>
+  <div
+    id="loginBgStage"
+    class="login-bottom-frame relative flex min-h-0 w-full cursor-pointer bg-slate-900 overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-teal-500/50"
+    role="button"
+    tabindex="0"
+    aria-label="Click on the background to play the welcome video">
+    <img
+      id="loginBgImage"
+      src="Source/Image/default.jpg"
+      alt="Welcome"
+      class="pointer-events-none h-full min-h-0 w-full object-cover object-center select-none"
+      width="1920"
+      height="1080"
+      sizes="100vw"
+      decoding="async"
+    />
+    <p
+      id="loginBgVideoHint"
+      class="login-video-hint pointer-events-none absolute left-1/2 top-2 z-[5] max-w-[min(100%,22rem)] -translate-x-1/2 px-2 text-center text-xs font-medium leading-snug sm:top-3 sm:max-w-xl sm:text-sm [text-shadow:0_1px_2px_rgba(0,0,0,0.9),0_0_12px_rgba(0,0,0,0.65)]"
+      aria-hidden="true">
+      Click on this ⬇ to show the video
+    </p>
+    <video
+      id="openingVideo"
+      class="absolute inset-0 z-10 hidden h-full w-full bg-black object-cover object-center"
+      playsinline
+      preload="none"
+      src="Source/Image/opening.mp4"
+      aria-hidden="true"></video>
+  </div>
+
+  <!-- Expired account notice -->
+  <div id="renewalExpiredModal" class="hidden fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70" role="dialog" aria-modal="true" aria-labelledby="renewalExpiredTitle">
+    <div class="renewal-metallic-panel max-w-md w-full rounded-2xl p-8 text-center">
+      <h2 id="renewalExpiredTitle" class="text-lg font-semibold text-white mb-3">Account expired</h2>
+      <p class="text-slate-200/95 text-sm leading-relaxed mb-6">
+        Your account is expired, please proceed payment
+      </p>
+      <button type="button" id="renewalExpiredOk"
+        class="rounded-lg bg-white/15 hover:bg-white/25 border border-white/20 text-white font-medium px-8 py-2.5 w-full sm:w-auto">
+        OK
+      </button>
+    </div>
+  </div>
+
+  <!-- Subscription renewal flow -->
+  <div id="renewalPaymentPanel" class="hidden fixed inset-0 z-[190] renewal-payment-shell overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="renewalPayTitle">
+    <div class="renewal-payment-inner max-w-4xl mx-4 sm:mx-auto my-6 sm:my-8 rounded-2xl px-4 py-6 sm:px-8 sm:py-8 pb-12">
+      <h2 id="renewalPayTitle" class="text-xl font-bold text-teal-300 mb-6 text-center">Subscription Renewal</h2>
+
+      <p class="renewal-section-label mb-4">Payment Method</p>
+      <div class="flex flex-wrap gap-2 mb-8">
+        <button type="button" class="renewal-method-btn rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800" data-method="PayMe">PayMe</button>
+        <button type="button" class="renewal-method-btn rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800" data-method="FPS">FPS</button>
+        <button type="button" class="renewal-method-btn rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800" data-method="AliPay">AliPay</button>
+        <button type="button" class="renewal-method-btn rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800" data-method="支付寶">支付寶</button>
+      </div>
+
+      <p class="renewal-section-label mb-3">Subscription Options</p>
+      <p id="renewalPlanLoadErr" class="hidden text-sm text-amber-200/95 mb-3" role="alert"></p>
+      <div id="renewalPlanGrid" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8" role="group" aria-label="Subscription options"></div>
+
+      <div class="rounded-xl border border-slate-600 bg-slate-900/40 p-4 mb-6">
+        <p class="text-slate-400 text-sm mb-3">Scan to pay</p>
+        <div class="flex justify-center bg-white/5 rounded-lg p-4 min-h-[200px] items-center">
+          <img id="renewalQrImg" src="" alt="Payment QR code" class="max-w-[220px] w-full h-auto rounded-md hidden" />
+          <p id="renewalQrPlaceholder" class="text-slate-500 text-sm text-center px-4">Select a payment method to show QR code</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8 items-stretch">
+        <div class="flex flex-col min-h-0">
+          <label for="renewalTxDetails" class="renewal-section-label block mb-1">Transaction Details (Sender/Important Nots)</label>
+          <textarea id="renewalTxDetails" rows="4" placeholder="Optional"
+            class="w-full min-h-[7rem] flex-1 rounded-lg border border-slate-600 bg-slate-950/80 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/40 resize-y"></textarea>
+        </div>
+        <div class="flex flex-col">
+          <label for="renewalTxDate" class="renewal-section-label block mb-1">Transaction Date</label>
+          <input type="datetime-local" id="renewalTxDate"
+            class="w-full rounded-lg border border-slate-600 bg-slate-950/80 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/40" />
+        </div>
+      </div>
+
+      <p id="renewalPayErr" class="hidden text-sm text-red-300 mb-4"></p>
+      <div class="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
+        <button type="button" id="renewalCancelBtn"
+          class="rounded-lg border border-slate-500 bg-slate-800/80 hover:bg-slate-700 text-slate-100 text-sm px-4 py-3 sm:min-w-[8rem]">
+          Cancel
+        </button>
+        <button type="button" id="renewalConfirmBtn"
+          class="renewal-btn-metal-gold flex-1 sm:flex-none sm:min-w-[12rem] rounded-lg text-sm px-4 py-3 disabled:opacity-50 disabled:cursor-not-allowed">
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Thank you -->
+  <div id="renewalThanksModal" class="hidden fixed inset-0 z-[210] flex items-center justify-center p-4 bg-black/75" role="dialog" aria-modal="true">
+    <div class="bg-slate-900 border border-slate-600 rounded-2xl max-w-md w-full p-8 text-center shadow-xl">
+      <p class="text-slate-100 text-sm leading-relaxed mb-6">
+        Thank you for your payment, we will keep you posted. GoodBye!
+      </p>
+      <button type="button" id="renewalThanksOk"
+        class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-8 py-2.5">
+        OK
+      </button>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    (function () {
+      if (new URLSearchParams(window.location.search).get("logout")) {
+        window.auth.clearSession();
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+      if (window.auth.getToken()) {
+        var dash = window.auth.resolveDashboardPageFromStorage();
+        if (dash) {
+          window.location.href = dash;
+        }
+      }
+
+      document.getElementById("loginForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+        var err = document.getElementById("err");
+        err.classList.add("hidden");
+        var role = document.getElementById("userRole").value;
+        try {
+          var result = await window.auth.loginWithContext(
+            document.getElementById("username").value.trim(),
+            document.getElementById("password").value,
+            role,
+            ""
+          );
+          if (result && result.accountExpired && result.user) {
+            window.sportCoachRenewal.start(result.user);
+          }
+        } catch (x) {
+          err.textContent = x.message || "Login failed";
+          err.classList.remove("hidden");
+        }
+      });
+
+      (function setupSubscriptionRenewal() {
+        var QR_IMAGE_DIR = "/backend/data/admin/Image/";
+        var SUBSCRIPTION_LIST_PATH = "/backend/data/admin/subscriptionList.json";
+        var METAL_VARIANT_CLASSES = [
+          "renewal-plan-card--metal-gold",
+          "renewal-plan-card--metal-yellow",
+          "renewal-plan-card--metal-orange",
+        ];
+        var SUB_ID_TO_PERIOD = {
+          SUB000001: "1m",
+          SUB000002: "3m",
+          SUB000003: "1y",
+        };
+        var METHOD_QR = {
+          PayMe: "Payme_QR.jpg",
+          FPS: "FPS_QR.jpg",
+          AliPay: "Alipay_QR.jpg",
+          支付寶: "支付寶_QR.jpg",
+        };
+        var pendingUser = null;
+        var selectedMethod = "";
+        var selectedPlan = "";
+        var selectedSubscriptionOption = "";
+        var selectedSubscriptionAmount = 0;
+        var cachedSubscriptionRows = null;
+
+        function pad2(n) {
+          return String(n).padStart(2, "0");
+        }
+        function defaultDatetimeLocal() {
+          var d = new Date();
+          return (
+            d.getFullYear() +
+            "-" +
+            pad2(d.getMonth() + 1) +
+            "-" +
+            pad2(d.getDate()) +
+            "T" +
+            pad2(d.getHours()) +
+            ":" +
+            pad2(d.getMinutes())
+          );
+        }
+        function qrBaseUrl() {
+          if (window.api && typeof window.api.getAppOrigin === "function") {
+            return window.api.getAppOrigin().replace(/\/$/, "");
+          }
+          return "";
+        }
+        function showEl(id, on) {
+          var el = document.getElementById(id);
+          if (!el) return;
+          el.classList.toggle("hidden", !on);
+        }
+        function escapeHtml(s) {
+          var div = document.createElement("div");
+          div.textContent = s == null ? "" : String(s);
+          return div.innerHTML;
+        }
+        function formatHkdAmount(n) {
+          var x = Number(n);
+          if (!Number.isFinite(x)) {
+            return "0";
+          }
+          return Math.round(x).toLocaleString("en-HK");
+        }
+        function subscriptionPeriodForRow(row, index) {
+          var p = String(
+            row.subscription_period || row.subscriptionPeriod || "",
+          ).trim();
+          if (p) {
+            return p;
+          }
+          var sid = String(row.Sub_ID || "").trim().toUpperCase();
+          if (sid && SUB_ID_TO_PERIOD[sid]) {
+            return SUB_ID_TO_PERIOD[sid];
+          }
+          var fallback = ["1m", "3m", "1y"];
+          return fallback[index] || "1m";
+        }
+        async function loadRenewalPlanCards() {
+          var grid = document.getElementById("renewalPlanGrid");
+          var errEl = document.getElementById("renewalPlanLoadErr");
+          if (!grid) {
+            return;
+          }
+          if (errEl) {
+            errEl.classList.add("hidden");
+          }
+          grid.innerHTML =
+            '<p class="text-slate-500 text-sm col-span-full py-4 text-center">Loading subscription options…</p>';
+          try {
+            if (!cachedSubscriptionRows) {
+              var url = qrBaseUrl() + SUBSCRIPTION_LIST_PATH;
+              var res = await fetch(url, { credentials: "same-origin" });
+              if (!res.ok) {
+                throw new Error("Could not load subscription list (" + res.status + ").");
+              }
+              var data = await res.json();
+              cachedSubscriptionRows = Array.isArray(data.subscriptions)
+                ? data.subscriptions
+                : [];
+            }
+            var rows = cachedSubscriptionRows.slice(0, 3);
+            if (!rows.length) {
+              throw new Error("No subscription options in subscriptionList.json.");
+            }
+            grid.innerHTML = "";
+            rows.forEach(function (row, i) {
+              var opt = String(
+                row.Sub_Option || row.subscription_option || "",
+              ).trim();
+              var amtRaw =
+                row.Sub_Amount != null ? row.Sub_Amount : row.subscription_amount;
+              var amt = Number(amtRaw);
+              if (!Number.isFinite(amt) || amt < 0) {
+                amt = 0;
+              }
+              var subId = String(row.Sub_ID || "").trim();
+              var period = subscriptionPeriodForRow(row, i);
+              var metal = METAL_VARIANT_CLASSES[i % METAL_VARIANT_CLASSES.length];
+              var btn = document.createElement("button");
+              btn.type = "button";
+              btn.className =
+                "renewal-plan-card text-left rounded-xl border p-4 min-h-[5.75rem] flex flex-col justify-center " +
+                metal;
+              btn.setAttribute("data-plan", period);
+              btn.setAttribute("data-subscription-option", opt);
+              btn.setAttribute("data-price", String(amt));
+              if (subId) {
+                btn.setAttribute("data-sub-id", subId);
+              }
+              btn.innerHTML =
+                '<span class="renewal-plan-title block">' +
+                escapeHtml(opt) +
+                "</span>" +
+                '<span class="renewal-plan-price block mt-2">HKD $' +
+                escapeHtml(formatHkdAmount(amt)) +
+                "</span>";
+              grid.appendChild(btn);
+            });
+          } catch (e) {
+            cachedSubscriptionRows = null;
+            grid.innerHTML = "";
+            if (errEl) {
+              errEl.textContent =
+                (e && e.message) || "Could not load subscription options.";
+              errEl.classList.remove("hidden");
+            }
+          }
+        }
+        function setQrForMethod(method) {
+          var img = document.getElementById("renewalQrImg");
+          var ph = document.getElementById("renewalQrPlaceholder");
+          if (!img || !ph) {
+            return;
+          }
+          if (!method) {
+            img.classList.add("hidden");
+            img.removeAttribute("src");
+            img.onload = null;
+            img.onerror = null;
+            ph.textContent = "Select a payment method to show QR code";
+            ph.classList.remove("hidden");
+            return;
+          }
+          var file = METHOD_QR[method];
+          if (!file) {
+            ph.textContent = "No QR mapped for this method.";
+            ph.classList.remove("hidden");
+            img.classList.add("hidden");
+            return;
+          }
+          ph.classList.add("hidden");
+          img.classList.remove("hidden");
+          img.onload = function () {
+            ph.classList.add("hidden");
+          };
+          img.onerror = function () {
+            ph.textContent =
+              "QR image not found. Add " +
+              file +
+              " under backend/data/admin/Image/";
+            ph.classList.remove("hidden");
+            img.classList.add("hidden");
+          };
+          img.src =
+            qrBaseUrl() + QR_IMAGE_DIR + encodeURIComponent(file);
+        }
+
+        document.querySelectorAll(".renewal-method-btn").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            selectedMethod = btn.getAttribute("data-method") || "";
+            document.querySelectorAll(".renewal-method-btn").forEach(function (b) {
+              b.classList.toggle("selected", b === btn);
+            });
+            setQrForMethod(selectedMethod);
+          });
+        });
+
+        var renewalPlanGrid = document.getElementById("renewalPlanGrid");
+        if (renewalPlanGrid) {
+          renewalPlanGrid.addEventListener("click", function (ev) {
+            var card = ev.target.closest(".renewal-plan-card");
+            if (!card || !renewalPlanGrid.contains(card)) {
+              return;
+            }
+            selectedPlan = card.getAttribute("data-plan") || "";
+            selectedSubscriptionOption =
+              card.getAttribute("data-subscription-option") || "";
+            var priceRaw = card.getAttribute("data-price");
+            var priceNum = priceRaw != null ? parseInt(priceRaw, 10) : NaN;
+            selectedSubscriptionAmount =
+              Number.isFinite(priceNum) && priceNum >= 0 ? priceNum : 0;
+            renewalPlanGrid.querySelectorAll(".renewal-plan-card").forEach(function (c) {
+              c.classList.toggle("selected", c === card);
+            });
+          });
+        }
+
+        document.getElementById("renewalExpiredOk").addEventListener("click", async function () {
+          showEl("renewalExpiredModal", false);
+          showEl("renewalPaymentPanel", true);
+          document.getElementById("renewalTxDate").value = defaultDatetimeLocal();
+          document.getElementById("renewalPayErr").classList.add("hidden");
+          await loadRenewalPlanCards();
+        });
+
+        document.getElementById("renewalCancelBtn").addEventListener("click", function () {
+          cachedSubscriptionRows = null;
+          var pg = document.getElementById("renewalPlanGrid");
+          if (pg) {
+            pg.innerHTML = "";
+          }
+          showEl("renewalPaymentPanel", false);
+          showEl("renewalExpiredModal", true);
+          document.getElementById("renewalPayErr").classList.add("hidden");
+        });
+
+        document.getElementById("renewalConfirmBtn").addEventListener("click", async function () {
+          var errEl = document.getElementById("renewalPayErr");
+          errEl.classList.add("hidden");
+          var method = selectedMethod;
+          var period = selectedPlan;
+          if (!method) {
+            errEl.textContent = "Please choose a payment method.";
+            errEl.classList.remove("hidden");
+            return;
+          }
+          if (!period) {
+            errEl.textContent = "Please choose a subscription option.";
+            errEl.classList.remove("hidden");
+            return;
+          }
+          var btn = document.getElementById("renewalConfirmBtn");
+          btn.disabled = true;
+          try {
+            await window.api.api("/subscription/payment-request", {
+              method: "POST",
+              body: JSON.stringify({
+                paymentMethod: method,
+                subscriptionPeriod: period,
+                transactionDetails: document.getElementById("renewalTxDetails").value.trim(),
+                transactionDate: document.getElementById("renewalTxDate").value,
+                username: pendingUser ? pendingUser.username : "",
+                role: pendingUser ? pendingUser.role : "",
+                uid: pendingUser ? pendingUser.uid : "",
+                expiry_date: pendingUser ? pendingUser.expiry_date || "" : "",
+                subscription_option: selectedSubscriptionOption,
+                subscription_amount: selectedSubscriptionAmount,
+              }),
+            });
+            showEl("renewalPaymentPanel", false);
+            showEl("renewalThanksModal", true);
+          } catch (x) {
+            errEl.textContent = x.message || "Could not submit.";
+            errEl.classList.remove("hidden");
+          } finally {
+            btn.disabled = false;
+          }
+        });
+
+        document.getElementById("renewalThanksOk").addEventListener("click", function () {
+          showEl("renewalThanksModal", false);
+          window.auth.logout();
+        });
+
+        window.sportCoachRenewal = {
+          start: function (user) {
+            pendingUser = user;
+            selectedMethod = "";
+            selectedPlan = "";
+            selectedSubscriptionOption = "";
+            selectedSubscriptionAmount = 0;
+            cachedSubscriptionRows = null;
+            var planGrid = document.getElementById("renewalPlanGrid");
+            if (planGrid) {
+              planGrid.innerHTML = "";
+            }
+            var planErr = document.getElementById("renewalPlanLoadErr");
+            if (planErr) {
+              planErr.classList.add("hidden");
+            }
+            document.querySelectorAll(".renewal-method-btn").forEach(function (b) {
+              b.classList.remove("selected");
+            });
+            document.getElementById("renewalTxDetails").value = "";
+            setQrForMethod("");
+            var ph = document.getElementById("renewalQrPlaceholder");
+            if (ph) {
+              ph.textContent = "Select a payment method to show QR code";
+            }
+            showEl("renewalExpiredModal", true);
+          },
+        };
+      })();
+
+      (function setupOpeningVideo() {
+        var stage = document.getElementById("loginBgStage");
+        var imgEl = document.getElementById("loginBgImage");
+        var video = document.getElementById("openingVideo");
+        var hint = document.getElementById("loginBgVideoHint");
+        if (!stage || !imgEl || !video) {
+          return;
+        }
+
+        var playing = false;
+
+        function showPhoto() {
+          playing = false;
+          video.classList.add("hidden");
+          try {
+            video.pause();
+            video.currentTime = 0;
+          } catch (e) {
+            /* ignore */
+          }
+          imgEl.classList.remove("hidden");
+          stage.classList.add("cursor-pointer");
+          stage.setAttribute("aria-label", "Click on the background to play the welcome video");
+          stage.setAttribute("aria-busy", "false");
+          if (hint) {
+            hint.classList.remove("hidden");
+          }
+        }
+
+        function showVideo() {
+          playing = true;
+          imgEl.classList.add("hidden");
+          video.classList.remove("hidden");
+          stage.classList.remove("cursor-pointer");
+          stage.setAttribute("aria-label", "Playing video");
+          stage.setAttribute("aria-busy", "true");
+          if (hint) {
+            hint.classList.add("hidden");
+          }
+          var p = video.play();
+          if (p && typeof p.catch === "function") {
+            p.catch(function () {
+              showPhoto();
+            });
+          }
+        }
+
+        video.addEventListener("ended", showPhoto);
+        video.addEventListener("error", showPhoto);
+
+        function onActivate(ev) {
+          if (playing) {
+            return;
+          }
+          if (ev.type === "keydown" && ev.key !== "Enter" && ev.key !== " ") {
+            return;
+          }
+          if (ev.type === "keydown") {
+            ev.preventDefault();
+          }
+          showVideo();
+        }
+
+        stage.addEventListener("click", onActivate);
+        stage.addEventListener("keydown", onActivate);
+      })();
+    })();
+  </script>
+</body>
+</html>

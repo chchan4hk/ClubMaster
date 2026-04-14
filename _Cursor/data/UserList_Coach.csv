@@ -1,0 +1,2 @@
+CoachID,Club Name,full_name,sex (M or F),email,role (admin | coach_manager | coach | student),contact_number,status,created_at,remark,photo,lastUpdate_date,hourly_rate
+C0001,HK Sports Club,Derek Wong,M,cwong@example.com,coach,92345678,INACTIVE,2024-03-01,,/photos/coach/cwong.jpg,2026-01-10,220

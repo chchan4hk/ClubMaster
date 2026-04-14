@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "coaches": [
+    {
+      "CoachID": "C000001",
+      "club_name": "流星羽毛球會",
+      "full_name": "Felix Fan",
+      "sex": "F",
+      "date_of_birth": "1984-06-07",
+      "joined_date": "2023-10-10",
+      "home_address": "Price Edward",
+      "country": "Hong Kong",
+      "email": "felixfan@hotmail.com",
+      "contact_number": "+852 68232478",
+      "status": "ACTIVE",
+      "created_at": "2026-04-09",
+      "remark": "Gigi Leung's Husband",
+      "lastUpdate_date": "2026-04-10",
+      "hourly_rate (HKD)": "600"
+    },
+    {
+      "CoachID": "C000003",
+      "club_name": "流星羽毛球會",
+      "full_name": "Isabelle Wong",
+      "sex": "F",
+      "date_of_birth": "1986-12-12",
+      "joined_date": "2026-02-10",
+      "home_address": "Kowloon Tong",
+      "country": "Hong Kong",
+      "email": "isaWong@hotmail.com",
+      "contact_number": "+852 67305118",
+      "status": "ACTIVE",
+      "created_at": "2026-04-10",
+      "remark": "Pretty Lady",
+      "lastUpdate_date": "2026-04-10",
+      "hourly_rate (HKD)": "500"
+    }
+  ]
+}

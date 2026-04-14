@@ -1,0 +1,3 @@
+UID,usertype,Username,password,is_activated,creation_date,club_name,club_photo,status,lastUpdate_date
+C0000,administrator,admin,admin,YES,2026-04-01,,,ACTIVE,
+C0001,Coach Manager,aiko,aiko123,YES,2026-04-05,Pui Lap,image/PuiLap.jpg,ACTIVE,2026-04-05

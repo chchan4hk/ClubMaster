@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User account</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="min-h-full bg-slate-900/90 text-slate-100 p-6">
+  <div class="glass rounded-xl border border-white/15 p-6 max-w-lg">
+    <h2 class="text-lg font-semibold text-teal-300 mb-4">User account</h2>
+    <p id="loadState" class="text-sm text-slate-400">Loading…</p>
+    <dl id="accountFields" class="hidden space-y-3 text-sm">
+      <div class="flex flex-col sm:flex-row sm:gap-4">
+        <dt class="text-slate-500 shrink-0 w-40">User type</dt>
+        <dd id="fieldUserType" class="font-medium text-slate-200"></dd>
+      </div>
+      <div class="flex flex-col sm:flex-row sm:gap-4">
+        <dt class="text-slate-500 shrink-0 w-40">Username</dt>
+        <dd id="fieldUsername" class="font-medium text-slate-200"></dd>
+      </div>
+      <div class="flex flex-col sm:flex-row sm:gap-4">
+        <dt class="text-slate-500 shrink-0 w-40">Full Name</dt>
+        <dd id="fieldFullName" class="font-medium text-slate-200"></dd>
+      </div>
+      <div class="flex flex-col sm:flex-row sm:gap-4">
+        <dt id="labelClubName" class="text-slate-500 shrink-0 w-40">Club name</dt>
+        <dd id="fieldClubName" class="font-medium text-slate-200"></dd>
+      </div>
+      <div class="flex flex-col sm:flex-row sm:gap-4">
+        <dt class="text-slate-500 shrink-0 w-40">Status</dt>
+        <dd id="fieldStatus" class="font-medium text-slate-200"></dd>
+      </div>
+      <div class="flex flex-col sm:flex-row sm:gap-4">
+        <dt id="labelCreated" class="text-slate-500 shrink-0 w-40">Creation date</dt>
+        <dd id="fieldCreated" class="font-medium text-slate-200"></dd>
+      </div>
+      <div class="flex flex-col sm:flex-row sm:gap-4">
+        <dt class="text-slate-500 shrink-0 w-40">Expiry date</dt>
+        <dd id="fieldExpiryDate" class="font-medium text-slate-200"></dd>
+      </div>
+    </dl>
+    <p id="errorBox" class="hidden text-sm text-red-300 mt-4"></p>
+  </div>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    (function () {
+      if (!window.auth.getToken()) {
+        window.location.href = "main.html";
+        return;
+      }
+      var loadState = document.getElementById("loadState");
+      var fields = document.getElementById("accountFields");
+      var errBox = document.getElementById("errorBox");
+      window.api
+        .api("/me")
+        .then(function (data) {
+          var u = data.user;
+          if (!u) {
+            throw new Error("No user in response");
+          }
+          document.getElementById("fieldUserType").textContent =
+            u.usertype != null && String(u.usertype).trim() !== ""
+              ? String(u.usertype)
+              : String(u.role || "—");
+          document.getElementById("fieldUsername").textContent =
+            u.username != null ? String(u.username) : "—";
+          document.getElementById("fieldFullName").textContent = (function () {
+            var fn =
+              u.full_name != null && String(u.full_name).trim() !== ""
+                ? String(u.full_name).trim()
+                : "";
+            return fn !== "" && fn !== "—" ? fn : "—";
+          })();
+          document.getElementById("fieldClubName").textContent =
+            u.club_name != null && String(u.club_name).trim() !== ""
+              ? String(u.club_name)
+              : "—";
+          document.getElementById("fieldStatus").textContent =
+            u.status != null && String(u.status).trim() !== ""
+              ? String(u.status)
+              : "—";
+          document.getElementById("fieldCreated").textContent =
+            u.creation_date != null ? String(u.creation_date) : "—";
+          document.getElementById("fieldExpiryDate").textContent =
+            u.expiry_date != null ? String(u.expiry_date) : "—";
+          if (u.role === "Student" || u.role === "Coach") {
+            var lc = document.getElementById("labelClubName");
+            var ld = document.getElementById("labelCreated");
+            if (lc) {
+              lc.textContent = "Club Name";
+            }
+            if (ld) {
+              ld.textContent = "Creation_date";
+            }
+          }
+          loadState.classList.add("hidden");
+          fields.classList.remove("hidden");
+        })
+        .catch(function (e) {
+          loadState.classList.add("hidden");
+          errBox.textContent = e.message || "Could not load account.";
+          errBox.classList.remove("hidden");
+        });
+    })();
+  </script>
+</body>
+</html>
