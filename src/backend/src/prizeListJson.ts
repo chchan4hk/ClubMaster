@@ -468,6 +468,84 @@ export function loadPrizes(clubId: string): PrizeCsvRow[] {
   });
 }
 
+/** Uppercase PrizeID → club folder UID (row `ClubID`, or session folder when missing). */
+const prizeIdToClubId = new Map<string, string>();
+let prizeIdClubIndexReady = false;
+
+/**
+ * Rebuilds PrizeID → club UID from all distinct `PrizeList.json` files (dedupes storage-pin).
+ */
+export function rebuildPrizeIdClubIndex(): void {
+  const next = new Map<string, string>();
+  const root = dataClubRoot();
+  if (fs.existsSync(root)) {
+    const seenFiles = new Set<string>();
+    for (const name of fs.readdirSync(root)) {
+      if (!isValidClubFolderId(name)) {
+        continue;
+      }
+      const abs = path.normalize(prizeListPath(name));
+      if (seenFiles.has(abs)) {
+        continue;
+      }
+      if (!fs.existsSync(abs)) {
+        continue;
+      }
+      seenFiles.add(abs);
+      const rows = readPrizeListDocument(name);
+      for (const r of rows) {
+        const u = r.prizeId.replace(/^\uFEFF/, "").trim().toUpperCase();
+        if (!u || next.has(u)) {
+          continue;
+        }
+        const logical = (r.clubId && r.clubId.trim()) || name;
+        next.set(u, logical);
+      }
+    }
+  }
+  prizeIdToClubId.clear();
+  for (const [k, v] of next) {
+    prizeIdToClubId.set(k, v);
+  }
+  prizeIdClubIndexReady = true;
+}
+
+function ensurePrizeIdClubIndex(): void {
+  if (!prizeIdClubIndexReady) {
+    rebuildPrizeIdClubIndex();
+  }
+}
+
+function registerPrizeIdInIndex(prizeId: string, clubUid: string): void {
+  const u = prizeId.replace(/^\uFEFF/, "").trim().toUpperCase();
+  const c = clubUid.trim();
+  if (!u || !c) {
+    return;
+  }
+  if (!prizeIdToClubId.has(u)) {
+    prizeIdToClubId.set(u, c);
+  }
+}
+
+function upsertPrizeIdInIndex(prizeId: string, clubUid: string): void {
+  const u = prizeId.replace(/^\uFEFF/, "").trim().toUpperCase();
+  const c = clubUid.trim();
+  if (!u || !c) {
+    return;
+  }
+  prizeIdToClubId.set(u, c);
+}
+
+/** Club folder UID for this PrizeID (from row ClubID / first roster match), or null. */
+export function findClubUidForPrizeId(prizeId: string): string | null {
+  const id = prizeId.trim();
+  if (!id) {
+    return null;
+  }
+  ensurePrizeIdClubIndex();
+  return prizeIdToClubId.get(id.toUpperCase()) ?? null;
+}
+
 export type PrizeListRaw = {
   relativePath: string;
   headers: string[];
@@ -605,6 +683,7 @@ export function appendPrizeRow(
     remarks: sanitizeCell(input.remarks),
   });
   writePrizeListDocument(clubId, rows);
+  registerPrizeIdInIndex(prizeId, sessionUid);
   return { ok: true, prizeId };
 }
 
@@ -672,5 +751,11 @@ export function updatePrizeRow(
     return { ok: false, error: "Prize not found." };
   }
   writePrizeListDocument(clubId, next);
+  const updated = next.find((r) => prizeIdsEqual(r.prizeId, id));
+  if (updated) {
+    const uid =
+      (updated.clubId && updated.clubId.trim()) || clubId.trim();
+    upsertPrizeIdInIndex(updated.prizeId, uid);
+  }
   return { ok: true };
 }

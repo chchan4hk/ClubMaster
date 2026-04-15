@@ -678,6 +678,89 @@ export function loadLessons(clubId: string): LessonCsvRow[] {
   }));
 }
 
+/** Uppercase LessonID → club folder UID (`clubUid` on row, or session folder). */
+const lessonIdToClubId = new Map<string, string>();
+let lessonIdClubIndexReady = false;
+
+/**
+ * Rebuilds LessonID → club UID from distinct `LessonList.json` files (dedupes LESSON_LIST_CLUB_ID pin).
+ */
+export function rebuildLessonIdClubIndex(): void {
+  const next = new Map<string, string>();
+  const root = dataClubRoot();
+  if (fs.existsSync(root)) {
+    const seenFiles = new Set<string>();
+    for (const name of fs.readdirSync(root)) {
+      if (!isValidClubFolderId(name)) {
+        continue;
+      }
+      const fileClub = resolveLessonFileClubId(name);
+      const p = lessonListPath(fileClub);
+      if (!p) {
+        continue;
+      }
+      const abs = path.normalize(p);
+      if (seenFiles.has(abs)) {
+        continue;
+      }
+      if (!fs.existsSync(p)) {
+        continue;
+      }
+      seenFiles.add(abs);
+      const lessons = loadLessons(fileClub);
+      for (const row of lessons) {
+        const u = row.lessonId.replace(/^\uFEFF/, "").trim().toUpperCase();
+        if (!u || next.has(u)) {
+          continue;
+        }
+        const logical = (row.clubUid && row.clubUid.trim()) || fileClub;
+        next.set(u, logical);
+      }
+    }
+  }
+  lessonIdToClubId.clear();
+  for (const [k, v] of next) {
+    lessonIdToClubId.set(k, v);
+  }
+  lessonIdClubIndexReady = true;
+}
+
+function ensureLessonIdClubIndex(): void {
+  if (!lessonIdClubIndexReady) {
+    rebuildLessonIdClubIndex();
+  }
+}
+
+function registerLessonIdInIndex(lessonId: string, clubUid: string): void {
+  const u = lessonId.replace(/^\uFEFF/, "").trim().toUpperCase();
+  const c = clubUid.trim();
+  if (!u || !c) {
+    return;
+  }
+  if (!lessonIdToClubId.has(u)) {
+    lessonIdToClubId.set(u, c);
+  }
+}
+
+function upsertLessonIdInIndex(lessonId: string, clubUid: string): void {
+  const u = lessonId.replace(/^\uFEFF/, "").trim().toUpperCase();
+  const c = clubUid.trim();
+  if (!u || !c) {
+    return;
+  }
+  lessonIdToClubId.set(u, c);
+}
+
+/** Club folder UID for this LessonID (from row ClubID / first roster match), or null. */
+export function findClubUidForLessonId(lessonId: string): string | null {
+  const id = lessonId.trim();
+  if (!id) {
+    return null;
+  }
+  ensureLessonIdClubIndex();
+  return lessonIdToClubId.get(id.toUpperCase()) ?? null;
+}
+
 export function searchLessonsInClub(
   clubId: string,
   classInfo?: string,
@@ -920,6 +1003,10 @@ export function appendLessonRow(
   newRow.reservedNumber = "0";
   lessons.push(newRow);
   writeLessonsToJsonFile(p, lessons);
+  registerLessonIdInIndex(
+    lessonId,
+    (newRow.clubUid && newRow.clubUid.trim()) || clubId.trim(),
+  );
   return { ok: true, lessonId };
 }
 
@@ -984,6 +1071,13 @@ export function updateLessonRow(
     return { ok: false, error: "Lesson not found." };
   }
   writeLessonsToJsonFile(p, next);
+  const upd = next.find((r) => lessonIdsEqual(r.lessonId, id));
+  if (upd) {
+    upsertLessonIdInIndex(
+      upd.lessonId,
+      (upd.clubUid && upd.clubUid.trim()) || clubId.trim(),
+    );
+  }
   return { ok: true };
 }
 

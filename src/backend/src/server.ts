@@ -30,7 +30,12 @@ import { Lesson_payment_status } from "./payment_modules/Lesson_payment_status";
 import { createUserLoginPaymentStatusRouter } from "./payment_modules/UserLogin_payment_status";
 import { Student_payment } from "./payment_modules/Student_payment";
 import { createBasicInfoRouter } from "./routes/basicInfoRoutes";
-import { isValidClubFolderId } from "./coachListCsv";
+import {
+  isValidClubFolderId,
+  rebuildCoachIdClubIndex,
+} from "./coachListCsv";
+import { rebuildLessonIdClubIndex } from "./lessonListCsv";
+import { rebuildPrizeIdClubIndex } from "./prizeListJson";
 import {
   rebuildStudentIdClubIndex,
   resolveStudentClubSession,
@@ -78,6 +83,9 @@ ensureUserlistFileExists();
 ensureUserlistSchema();
 ensureCoachStudentLoginFilesExist();
 rebuildStudentIdClubIndex();
+rebuildCoachIdClubIndex();
+rebuildPrizeIdClubIndex();
+rebuildLessonIdClubIndex();
 
 startProductionMemoryLogging();
 

@@ -725,27 +725,65 @@ export function loadCoaches(clubId: string): CoachCsvRow[] {
   return readCoachListJsonFromPath(p);
 }
 
+/**
+ * Uppercase trimmed CoachID → club folder id. First occurrence in `data_club` readdir order
+ * wins (same semantics as the legacy linear scan).
+ */
+const coachIdToClubId = new Map<string, string>();
+let coachIdClubIndexReady = false;
+
+/**
+ * Rebuilds the CoachID → club folder index from disk (all `UserList_Coach.json` files).
+ */
+export function rebuildCoachIdClubIndex(): void {
+  const next = new Map<string, string>();
+  const root = dataClubRoot();
+  if (fs.existsSync(root)) {
+    for (const name of fs.readdirSync(root)) {
+      if (!isValidClubFolderId(name)) {
+        continue;
+      }
+      const coaches = loadCoaches(name);
+      for (const c of coaches) {
+        const u = c.coachId.replace(/^\uFEFF/, "").trim().toUpperCase();
+        if (!u || next.has(u)) {
+          continue;
+        }
+        next.set(u, name);
+      }
+    }
+  }
+  coachIdToClubId.clear();
+  for (const [k, v] of next) {
+    coachIdToClubId.set(k, v);
+  }
+  coachIdClubIndexReady = true;
+}
+
+function ensureCoachIdClubIndex(): void {
+  if (!coachIdClubIndexReady) {
+    rebuildCoachIdClubIndex();
+  }
+}
+
+function registerCoachIdInIndex(coachId: string, clubId: string): void {
+  const u = coachId.replace(/^\uFEFF/, "").trim().toUpperCase();
+  if (!u) {
+    return;
+  }
+  if (!coachIdToClubId.has(u)) {
+    coachIdToClubId.set(u, clubId);
+  }
+}
+
 /** First club folder id whose UserList_Coach.json lists this CoachID, or null. */
 export function findClubUidForCoachId(coachId: string): string | null {
   const uid = coachId.trim();
   if (!uid) {
     return null;
   }
-  const root = dataClubRoot();
-  if (!fs.existsSync(root)) {
-    return null;
-  }
-  const upper = uid.toUpperCase();
-  for (const name of fs.readdirSync(root)) {
-    if (!isValidClubFolderId(name)) {
-      continue;
-    }
-    const coaches = loadCoaches(name);
-    if (coaches.some((c) => c.coachId.trim().toUpperCase() === upper)) {
-      return name;
-    }
-  }
-  return null;
+  ensureCoachIdClubIndex();
+  return coachIdToClubId.get(uid.toUpperCase()) ?? null;
 }
 
 function normEqCoachField(a: string, b: string): boolean {
@@ -902,6 +940,7 @@ export function appendCoachRow(
     lastUpdateDate: today,
   });
   writeCoachListFile(clubId, coaches);
+  registerCoachIdInIndex(coachId, clubId);
   return { ok: true, coachId };
 }
 
@@ -990,8 +1029,8 @@ export function removeCoachRow(
   return { ok: true };
 }
 
-/** Deletes the coach data row from UserList_Coach.json (row removed, not marked INACTIVE). */
-export function purgeCoachRow(
+/** Deletes the coach data row from UserList_Coach.json (disk only; no index rebuild). */
+function purgeCoachRowOnDisk(
   clubId: string,
   coachId: string,
 ): { ok: true } | { ok: false; error: string } {
@@ -1008,6 +1047,18 @@ export function purgeCoachRow(
   }
   writeCoachListFile(clubId, next);
   return { ok: true };
+}
+
+/** Deletes the coach data row from UserList_Coach.json (row removed, not marked INACTIVE). */
+export function purgeCoachRow(
+  clubId: string,
+  coachId: string,
+): { ok: true } | { ok: false; error: string } {
+  const r = purgeCoachRowOnDisk(clubId, coachId);
+  if (r.ok) {
+    rebuildCoachIdClubIndex();
+  }
+  return r;
 }
 
 const PURGE_COACH_SKIP_ERRORS = new Set([
@@ -1044,7 +1095,7 @@ export function purgeCoachRowFromAllClubFolders(
     if (!isValidClubFolderId(folder)) {
       continue;
     }
-    const r = purgeCoachRow(folder, id);
+    const r = purgeCoachRowOnDisk(folder, id);
     if (r.ok) {
       updatedClubIds.push(folder);
       continue;
@@ -1054,8 +1105,8 @@ export function purgeCoachRowFromAllClubFolders(
     }
     return r;
   }
-  if (updatedClubIds.length === 0) {
-    return { ok: true, updatedClubIds: [] };
+  if (updatedClubIds.length > 0) {
+    rebuildCoachIdClubIndex();
   }
   return { ok: true, updatedClubIds };
 }
