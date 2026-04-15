@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "students": [
+    {
+      "StudentID": "S000001",
+      "club_name": "培立大中華",
+      "full_name": "方嘗在",
+      "sex": "M",
+      "email": "fong123@yahoo.com.hk",
+      "contact_number": "+85253880508",
+      "guardian": "Mr Fong",
+      "guardian_contact": "+852 93412450",
+      "school": "St Peter Primary School",
+      "student_coach": "王偉強",
+      "status": "ACTIVE",
+      "created_at": "2026-04-10",
+      "remark": "",
+      "lastUpdate_date": "2026-04-10",
+      "date_of_birth": "2014-06-07",
+      "joined_date": "2026-04-10",
+      "home_address": "Kennedy Town  Hong Kong Island",
+      "country": "Hong Kong"
+    },
+    {
+      "StudentID": "S000002",
+      "club_name": "培立大中華",
+      "full_name": "KELVIN CHAN",
+      "sex": "N/A",
+      "email": "CHCHAN4@GMAIL.COM",
+      "contact_number": "+85253880508",
+      "guardian": "Mr Fong",
+      "guardian_contact": "+85253880508",
+      "school": "French International School",
+      "student_coach": "王偉強",
+      "status": "ACTIVE",
+      "created_at": "2026-04-14",
+      "remark": "",
+      "lastUpdate_date": "2026-04-14",
+      "date_of_birth": "",
+      "joined_date": "2026-04-15",
+      "home_address": "KOWLOON WEST  HONG KONG",
+      "country": "Hong Kong"
+    }
+  ]
+}

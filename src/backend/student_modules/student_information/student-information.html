@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Information — Coach Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body
+  class="dashboard-dynamic-bg min-h-screen text-slate-100 p-6"
+  style="--dashboard-bg-img: url('/Source/Image/coach-manager.jpg');">
+  <div class="dynamic-bg-stack" aria-hidden="true">
+    <div class="dynamic-bg-photo"></div>
+    <div class="dynamic-bg-overlay"></div>
+    <canvas class="dynamic-bg-star-net"></canvas>
+    <div class="dynamic-bg-spot-glow"></div>
+  </div>
+
+  <div class="max-w-6xl mx-auto">
+    <header class="mb-6">
+      <p id="backLinkWrap">
+        <a href="/coach-manager.html" target="_top"
+          class="text-sm text-teal-400/90 hover:text-teal-300 underline-offset-2 hover:underline">
+          ← Back to Coach Manager
+        </a>
+      </p>
+      <h1 class="text-2xl font-bold text-teal-300 mt-2">Student Information</h1>
+    </header>
+
+    <section class="glass rounded-xl border border-white/15 p-4 mb-6 overflow-x-auto">
+      <h2 class="text-lg font-semibold text-teal-200 mb-3">Student roster</h2>
+      <p id="fullCsvError" class="hidden text-sm text-red-300 mb-2"></p>
+      <p id="fullCsvWarn" class="hidden text-sm text-amber-200/90 mb-2"></p>
+      <table class="w-full text-sm text-left border-collapse min-w-max">
+        <thead>
+          <tr id="fullCsvHeadRow" class="border-b border-white/10 text-slate-400">
+            <th class="py-2 pr-3 font-medium">…</th>
+          </tr>
+        </thead>
+        <tbody id="fullCsvBody">
+          <tr><td class="py-4 text-slate-500">Loading…</td></tr>
+        </tbody>
+      </table>
+
+      <div class="mt-4 flex flex-wrap gap-2">
+        <button type="button" id="btnCreateNewStudent"
+          class="rounded-lg border border-orange-600/45 bg-gradient-to-b from-orange-800 via-orange-900 to-orange-950 px-4 py-2 text-sm font-semibold text-orange-50 shadow-[0_4px_16px_-4px_rgba(0,0,0,0.5),0_0_24px_-8px_rgba(234,88,12,0.22),inset_0_1px_0_rgba(255,237,213,0.2)] hover:from-orange-700 hover:via-orange-800 hover:to-orange-900">
+          Create New Student
+        </button>
+        <button type="button" id="btnNewStudentRoleAccount"
+          class="rounded-lg border border-amber-400/35 bg-gradient-to-b from-amber-500 to-amber-700 px-4 py-2 text-sm font-semibold text-black shadow-[0_4px_14px_-4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.25)] hover:from-amber-400 hover:to-amber-600">
+          New Login Account
+        </button>
+      </div>
+
+      <div id="createStudentPanel" class="hidden mt-6 pt-6 border-t border-white/10 rounded-lg bg-slate-900/50 p-4">
+        <h3 class="text-base font-semibold text-teal-200 mb-4">New student</h3>
+        <form id="createStudentForm" class="space-y-3 max-w-2xl">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="newStudentFullName" class="block text-xs text-slate-400 mb-1">Full Name</label>
+              <input id="newStudentFullName" type="text" required autocomplete="name"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+            <div>
+              <label for="newStudentClubName" class="block text-xs text-slate-400 mb-1">Club Name</label>
+              <input id="newStudentClubName" type="text" readonly tabindex="-1" aria-readonly="true"
+                class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="newStudentDob" class="block text-xs text-slate-400 mb-1">Date of Birth</label>
+              <input id="newStudentDob" type="date"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+            <div>
+              <label for="newStudentJoined" class="block text-xs text-slate-400 mb-1">Joined Date</label>
+              <input id="newStudentJoined" type="date" required
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+          </div>
+          <div>
+            <label for="newStudentAddress" class="block text-xs text-slate-400 mb-1">Home Address</label>
+            <input id="newStudentAddress" type="text" autocomplete="street-address"
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label for="newStudentSex" class="block text-xs text-slate-400 mb-1">Sex</label>
+              <select id="newStudentSex" required
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                <option value="M">M</option>
+                <option value="F">F</option>
+                <option value="N/A" selected>N/A</option>
+              </select>
+            </div>
+            <div>
+              <label for="newStudentCountry" class="block text-xs text-slate-400 mb-1">Country</label>
+              <select id="newStudentCountry" required
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                <option value="">— Select —</option>
+                <option value="Hong Kong">Hong Kong</option>
+                <option value="China">China</option>
+                <option value="Taiwan">Taiwan</option>
+                <option value="Malaysia">Malaysia</option>
+                <option value="Korea">Korea</option>
+              </select>
+            </div>
+            <div>
+              <label for="newStudentPhone" class="block text-xs text-slate-400 mb-1">Contact Number</label>
+              <input id="newStudentPhone" type="text" autocomplete="tel"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="newStudentSchool" class="block text-xs text-slate-400 mb-1">School</label>
+              <input id="newStudentSchool" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+            <div>
+              <label for="newStudentEmail" class="block text-xs text-slate-400 mb-1">Email Address</label>
+              <input id="newStudentEmail" type="email" required autocomplete="email"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="newStudentGuardian" class="block text-xs text-slate-400 mb-1">Guardian</label>
+              <input id="newStudentGuardian" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+            <div>
+              <label for="newStudentGuardianContact" class="block text-xs text-slate-400 mb-1">Guardian Contact</label>
+              <input id="newStudentGuardianContact" type="text" autocomplete="tel"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="newStudentStudentCoach" class="block text-xs text-slate-400 mb-1">Student coach</label>
+              <select id="newStudentStudentCoach"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                <option value="N/A">N/A</option>
+              </select>
+            </div>
+            <div>
+              <label for="newStudentRemark" class="block text-xs text-slate-400 mb-1">Remark</label>
+              <input id="newStudentRemark" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+          </div>
+          <p id="createStudentErr" class="hidden text-sm text-red-300"></p>
+          <p id="createStudentOk" class="hidden text-sm text-teal-300"></p>
+          <div class="flex flex-wrap gap-2 pt-2">
+            <button type="submit" id="createStudentSubmitBtn"
+              class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
+              Confirm
+            </button>
+            <button type="button" id="createStudentCancelBtn"
+              class="rounded-lg bg-slate-700 hover:bg-slate-600 border border-white/15 text-slate-100 font-medium px-4 py-2 text-sm">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div id="tableEditPanel" class="hidden mt-6 pt-6 border-t border-white/10 rounded-lg bg-slate-900/40 p-4">
+        <h3 class="text-base font-semibold text-teal-200 mb-3">Edit student</h3>
+        <p class="text-xs text-slate-500 mb-4">
+          You can change <strong>Full Name</strong>, <strong>Sex</strong>, <strong>Date of Birth</strong>, <strong>Joined Date</strong>,
+          <strong>Home Address</strong>, <strong>Country</strong>, <strong>Email Address</strong>,
+          <strong>Contact Number</strong>, <strong>Guardian</strong>, <strong>Guardian Contact</strong>, <strong>School</strong>,
+          <strong>Student coach</strong>, <strong>Status</strong>, and <strong>Remark</strong>
+          in the student roster (<code class="text-slate-400">UserList_Student.json</code>). Click <strong>Confirm</strong> to save; <strong>Last Update Date</strong> is set to today for this student.
+        </p>
+        <form id="tableEditForm" class="space-y-3 max-w-2xl">
+          <p class="text-[11px] uppercase tracking-wide text-slate-500 font-medium">Read-only</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="tableEditStudentId" class="block text-xs text-slate-400 mb-1">Student ID</label>
+              <input id="tableEditStudentId" type="text" readonly
+                class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed" />
+            </div>
+            <div>
+              <label for="tableEditClubName" class="block text-xs text-slate-400 mb-1">Club</label>
+              <input id="tableEditClubName" type="text" readonly
+                class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="tableEditCreated" class="block text-xs text-slate-400 mb-1">Created At</label>
+              <input id="tableEditCreated" type="text" readonly
+                class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed" />
+            </div>
+            <div>
+              <label for="tableEditLastUpdate" class="block text-xs text-slate-400 mb-1">Last Update Date (current file value)</label>
+              <input id="tableEditLastUpdate" type="text" readonly
+                class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed" />
+            </div>
+          </div>
+          <p class="text-[11px] uppercase tracking-wide text-slate-500 font-medium pt-2">You can edit</p>
+          <div>
+            <label for="tableEditFullName" class="block text-xs text-slate-400 mb-1">Full Name</label>
+            <input id="tableEditFullName" type="text" required autocomplete="name"
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="tableEditDateOfBirth" class="block text-xs text-slate-400 mb-1">Date of Birth</label>
+              <input id="tableEditDateOfBirth" type="date"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+            <div>
+              <label for="tableEditJoinedDate" class="block text-xs text-slate-400 mb-1">Joined Date</label>
+              <input id="tableEditJoinedDate" type="date"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+          </div>
+          <div>
+            <label for="tableEditHomeAddress" class="block text-xs text-slate-400 mb-1">Home Address</label>
+            <input id="tableEditHomeAddress" type="text" autocomplete="street-address"
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label for="tableEditSex" class="block text-xs text-slate-400 mb-1">Sex</label>
+              <select id="tableEditSex"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                <option value="">—</option>
+                <option value="M">M</option>
+                <option value="F">F</option>
+                <option value="N/A">N/A</option>
+              </select>
+            </div>
+            <div>
+              <label for="tableEditCountry" class="block text-xs text-slate-400 mb-1">Country</label>
+              <select id="tableEditCountry"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                <option value="">—</option>
+                <option value="Hong Kong">Hong Kong</option>
+                <option value="China">China</option>
+                <option value="Taiwan">Taiwan</option>
+                <option value="Malaysia">Malaysia</option>
+                <option value="Korea">Korea</option>
+              </select>
+            </div>
+            <div>
+              <label for="tableEditContactNumber" class="block text-xs text-slate-400 mb-1">Contact Number</label>
+              <input id="tableEditContactNumber" type="text" autocomplete="tel"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="tableEditSchool" class="block text-xs text-slate-400 mb-1">School</label>
+              <input id="tableEditSchool" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+            <div>
+              <label for="tableEditEmail" class="block text-xs text-slate-400 mb-1">Email Address</label>
+              <input id="tableEditEmail" type="email" required autocomplete="email"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="tableEditGuardian" class="block text-xs text-slate-400 mb-1">Guardian</label>
+              <input id="tableEditGuardian" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+            <div>
+              <label for="tableEditGuardianContact" class="block text-xs text-slate-400 mb-1">Guardian Contact</label>
+              <input id="tableEditGuardianContact" type="text" autocomplete="tel"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+          </div>
+          <div>
+            <label for="tableEditStatus" class="block text-xs text-slate-400 mb-1">Status</label>
+            <select id="tableEditStatus"
+              class="w-full max-w-md rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+              <option value="ACTIVE">ACTIVE</option>
+              <option value="INACTIVE">INACTIVE</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="tableEditStudentCoach" class="block text-xs text-slate-400 mb-1">Student coach</label>
+              <select id="tableEditStudentCoach"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                <option value="N/A">N/A</option>
+              </select>
+            </div>
+            <div>
+              <label for="tableEditRemark" class="block text-xs text-slate-400 mb-1">Remark</label>
+              <input id="tableEditRemark" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+          </div>
+          <p id="tableEditErr" class="hidden text-sm text-red-300"></p>
+          <p id="tableEditOk" class="hidden text-sm text-teal-300"></p>
+          <div class="flex flex-wrap gap-2 pt-2">
+            <button type="button" id="tableEditConfirmBtn"
+              class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
+              Confirm
+            </button>
+            <button type="button" id="tableEditCancelBtn"
+              class="rounded-lg bg-slate-700 hover:bg-slate-600 border border-white/15 text-slate-100 font-medium px-4 py-2 text-sm">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <div id="removeUserConfirmModal" class="fixed inset-0 z-[80] hidden" aria-hidden="true" role="dialog" aria-labelledby="removeUserConfirmTitle">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" id="removeUserConfirmBackdrop"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+      <div
+        class="pointer-events-auto w-full max-w-md rounded-xl border border-white/15 bg-slate-900/95 shadow-xl p-5 text-slate-100">
+        <p id="removeUserConfirmTitle" class="text-base text-slate-100 mb-5">Confirm to remove the user</p>
+        <div class="flex flex-wrap gap-2 justify-end">
+          <button type="button" id="removeUserConfirmNo"
+            class="rounded-lg bg-slate-700 hover:bg-slate-600 border border-white/15 text-slate-100 px-4 py-2 text-sm font-medium">
+            No, thanks
+          </button>
+          <button type="button" id="removeUserConfirmYes"
+            class="rounded-lg bg-red-600 hover:bg-red-500 text-white px-4 py-2 text-sm font-medium disabled:opacity-50">
+            YES
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="newStudentRoleAccountModal" class="fixed inset-0 z-[85] hidden" aria-hidden="true" role="dialog"
+    aria-labelledby="newStudentRoleAccountTitle">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" id="newStudentRoleAccountBackdrop"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+      <div
+        class="pointer-events-auto w-full max-w-md rounded-xl border border-amber-600/40 bg-gradient-to-br from-zinc-950 via-stone-950 to-black p-5 text-amber-50 shadow-[0_25px_60px_-12px_rgba(0,0,0,0.9),0_0_0_1px_rgba(212,175,55,0.08),0_0_80px_-20px_rgba(180,134,11,0.12)] ring-1 ring-amber-500/20">
+        <h2 id="newStudentRoleAccountTitle" class="text-base font-semibold text-amber-200 mb-4 tracking-tight">New Login Account for  Student</h2>
+        <div class="space-y-3">
+          <div>
+            <label for="newStudentRoleFullName" class="block text-xs text-amber-200/55 mb-1">Full Name</label>
+            <select id="newStudentRoleFullName"
+              class="w-full rounded-lg bg-black/50 border border-amber-900/45 px-3 py-2 text-amber-50 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-600/35 focus:border-amber-600/40">
+              <option value="">— Select —</option>
+            </select>
+          </div>
+          <div>
+            <label for="newStudentRoleUsername" class="block text-xs text-amber-200/55 mb-1">Username</label>
+            <input id="newStudentRoleUsername" type="text" autocomplete="username"
+              class="w-full rounded-lg bg-black/50 border border-amber-900/45 px-3 py-2 text-amber-50 text-sm placeholder:text-amber-200/25 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-600/35 focus:border-amber-600/40" />
+          </div>
+          <div>
+            <label for="newStudentRolePassword" class="block text-xs text-amber-200/55 mb-1">Password</label>
+            <input id="newStudentRolePassword" type="password" autocomplete="new-password"
+              class="w-full rounded-lg bg-black/50 border border-amber-900/45 px-3 py-2 text-amber-50 text-sm placeholder:text-amber-200/25 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-600/35 focus:border-amber-600/40" />
+          </div>
+          <div>
+            <label for="newStudentRolePassword2" class="block text-xs text-amber-200/55 mb-1">Re-enter Password</label>
+            <input id="newStudentRolePassword2" type="password" autocomplete="new-password"
+              class="w-full rounded-lg bg-black/50 border border-amber-900/45 px-3 py-2 text-amber-50 text-sm placeholder:text-amber-200/25 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-600/35 focus:border-amber-600/40" />
+          </div>
+        </div>
+        <p id="newStudentRoleAccountErr" class="mt-3 text-sm text-red-300 hidden"></p>
+        <div class="flex flex-wrap gap-2 justify-end mt-5">
+          <button type="button" id="newStudentRoleAccountCancel"
+            class="rounded-lg border border-amber-800/40 bg-black/35 hover:bg-amber-950/25 text-amber-100 px-4 py-2 text-sm font-medium">
+            Cancel
+          </button>
+          <button type="button" id="newStudentRoleAccountOk"
+            class="rounded-lg border border-amber-400/35 bg-gradient-to-b from-amber-500 to-amber-700 hover:from-amber-400 hover:to-amber-600 text-black px-4 py-2 text-sm font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] disabled:opacity-50">
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="loginAccountSuccessModal" class="fixed inset-0 z-[95] hidden" aria-hidden="true" role="dialog"
+    aria-labelledby="loginAccountSuccessTitle">
+    <div class="absolute inset-0 bg-black/55 backdrop-blur-sm" id="loginAccountSuccessBackdrop"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+      <div
+        class="pointer-events-auto w-full max-w-md rounded-xl border border-emerald-500/40 bg-gradient-to-br from-emerald-950 via-green-950 to-black p-5 text-emerald-50 shadow-[0_25px_60px_-12px_rgba(0,0,0,0.9),0_0_0_1px_rgba(52,211,153,0.1),0_0_70px_-18px_rgba(16,185,129,0.18)] ring-1 ring-emerald-400/25">
+        <h2 id="loginAccountSuccessTitle" class="text-base font-semibold text-emerald-200 mb-3 tracking-tight">
+          Login account created
+        </h2>
+        <p id="loginAccountSuccessMessage"
+          class="text-sm text-emerald-100/90 leading-relaxed whitespace-pre-wrap"></p>
+        <div class="flex justify-end mt-5">
+          <button type="button" id="loginAccountSuccessClose"
+            class="rounded-lg border border-emerald-400/40 bg-gradient-to-b from-emerald-500 to-emerald-800 hover:from-emerald-400 hover:to-emerald-700 text-white px-5 py-2 text-sm font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_4px_14px_-4px_rgba(0,0,0,0.45)]">
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/dashboard-dynamic-bg.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    (function () {
+      var isFramed = false;
+      try {
+        isFramed = window.self !== window.top;
+      } catch (e) {
+        isFramed = true;
+      }
+
+      var token =
+        window.auth &&
+        typeof window.auth.getToken === "function" &&
+        window.auth.getToken();
+      var role = localStorage.getItem("userRole");
+      var sessionOk =
+        Boolean(token) &&
+        (role === "CoachManager" || role === "Coach");
+
+      var btnNewStudentRole = document.getElementById("btnNewStudentRoleAccount");
+      if (btnNewStudentRole && role !== "CoachManager") {
+        btnNewStudentRole.classList.add("hidden");
+      }
+
+      if (isFramed) {
+        var bw = document.getElementById("backLinkWrap");
+        if (bw) {
+          bw.classList.add("hidden");
+        }
+      }
+
+      function setUidLabels(uid) {
+        var u = uid && String(uid).trim() ? String(uid).trim() : "…";
+        var el = document.getElementById("hdrUid");
+        if (el) {
+          el.textContent = u;
+        }
+        document.querySelectorAll(".hdrUidInline").forEach(function (n) {
+          n.textContent = u;
+        });
+      }
+
+      (function primeClubIdFromUrlOrCache() {
+        var q = new URLSearchParams(window.location.search || "");
+        var id = (q.get("clubId") || q.get("uid") || "").trim();
+        var ctx =
+          window.api &&
+          window.api.getClubFolderContext &&
+          window.api.getClubFolderContext();
+        if (ctx && ctx.clubId) {
+          id = id || String(ctx.clubId).trim();
+        }
+        if (id) {
+          setUidLabels(id);
+        }
+      })();
+
+      var cachedManagerClubName = "";
+
+      function getManagerClubNameFromUrl() {
+        var q = new URLSearchParams(window.location.search || "");
+        var raw = q.get("clubName");
+        if (raw == null || String(raw).trim() === "") {
+          return "";
+        }
+        try {
+          return decodeURIComponent(String(raw).replace(/\+/g, " ")).trim();
+        } catch (e) {
+          return String(raw).trim();
+        }
+      }
+
+      function resolveManagerClubName() {
+        var fromUrl = getManagerClubNameFromUrl();
+        if (fromUrl) {
+          return fromUrl;
+        }
+        var ctx =
+          window.api &&
+          window.api.getClubFolderContext &&
+          window.api.getClubFolderContext();
+        if (ctx && ctx.clubName && String(ctx.clubName).trim() !== "") {
+          return String(ctx.clubName).trim();
+        }
+        if (cachedManagerClubName && String(cachedManagerClubName).trim() !== "") {
+          return String(cachedManagerClubName).trim();
+        }
+        return "";
+      }
+
+      function setNewStudentClubNameField() {
+        var el = document.getElementById("newStudentClubName");
+        if (!el) {
+          return;
+        }
+        el.value = resolveManagerClubName();
+      }
+
+      setNewStudentClubNameField();
+
+      if (role === "Coach") {
+        var siIntro = document.querySelector("section.glass > p.text-xs");
+        if (siIntro) {
+          siIntro.textContent =
+            "Showing students whose Student coach matches your roster name, login, or Coach ID (UserList_Student.json).";
+        }
+      }
+
+      if (!sessionOk) {
+        if (
+          !isFramed &&
+          !window.auth.guardPage("CoachManager") &&
+          !window.auth.guardPage("Coach")
+        ) {
+          return;
+        }
+      } else if (!isFramed) {
+        if (role === "CoachManager" && !window.auth.guardPage("CoachManager")) {
+          return;
+        }
+        if (role === "Coach" && !window.auth.guardPage("Coach")) {
+          return;
+        }
+      }
+
+      function escapeHtml(s) {
+        if (s == null) {
+          return "";
+        }
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      var cachedStudents = [];
+
+      /** Options for New Login modal: full_name from club UserList_Student.json (via GET /coach-manager/students). */
+      function fillNewStudentRoleFullNameSelect() {
+        var sel = document.getElementById("newStudentRoleFullName");
+        if (!sel || sel.tagName !== "SELECT") {
+          return;
+        }
+        sel.innerHTML = "";
+        var lead = document.createElement("option");
+        lead.value = "";
+        lead.textContent = "— Select —";
+        sel.appendChild(lead);
+        var list = Array.isArray(cachedStudents) ? cachedStudents.slice() : [];
+        var rows = [];
+        list.forEach(function (s) {
+          var fn = s.full_name != null ? String(s.full_name).trim() : "";
+          if (!fn) {
+            return;
+          }
+          rows.push({
+            fullName: fn,
+            studentId: s.StudentID != null ? String(s.StudentID).trim() : "",
+          });
+        });
+        rows.sort(function (a, b) {
+          var c = a.fullName.localeCompare(b.fullName, undefined, {
+            sensitivity: "base",
+          });
+          return c !== 0 ? c : a.studentId.localeCompare(b.studentId);
+        });
+        var nameCount = Object.create(null);
+        rows.forEach(function (r) {
+          var k = r.fullName.toLowerCase();
+          nameCount[k] = (nameCount[k] || 0) + 1;
+        });
+        rows.forEach(function (row) {
+          var k = row.fullName.toLowerCase();
+          var opt = document.createElement("option");
+          opt.value = row.fullName;
+          var label = row.fullName;
+          if (nameCount[k] > 1 && row.studentId) {
+            label = row.fullName + " (" + row.studentId + ")";
+          }
+          opt.textContent = label;
+          sel.appendChild(opt);
+        });
+      }
+
+      var STUDENT_TABLE_COLS = [
+        { key: "StudentID", label: "Student ID" },
+        { key: "club_name", label: "Club" },
+        { key: "full_name", label: "Full Name" },
+        { key: "sex", label: "Sex" },
+        { key: "email", label: "Email Address" },
+        { key: "contact_number", label: "Contact Number" },
+        { key: "guardian", label: "Guardian" },
+        { key: "guardian_contact", label: "Guardian Contact" },
+        { key: "school", label: "School" },
+        { key: "student_coach", label: "Student coach" },
+        { key: "status", label: "Status" },
+        { key: "created_at", label: "Created At" },
+        { key: "remark", label: "Remark" },
+        { key: "lastUpdate_date", label: "Last Update Date" },
+        { key: "date_of_birth", label: "Date of Birth" },
+        { key: "joined_date", label: "Joined Date" },
+        { key: "home_address", label: "Home Address" },
+        { key: "country", label: "Country" },
+      ];
+
+      function hideCreateStudentPanel() {
+        var p = document.getElementById("createStudentPanel");
+        if (p) {
+          p.classList.add("hidden");
+        }
+        var ce = document.getElementById("createStudentErr");
+        var co = document.getElementById("createStudentOk");
+        if (ce) {
+          ce.classList.add("hidden");
+          ce.textContent = "";
+        }
+        if (co) {
+          co.classList.add("hidden");
+          co.textContent = "";
+        }
+      }
+
+      function hideTableEditPanel() {
+        var p = document.getElementById("tableEditPanel");
+        if (p) {
+          p.classList.add("hidden");
+        }
+        var err = document.getElementById("tableEditErr");
+        var ok = document.getElementById("tableEditOk");
+        if (err) {
+          err.classList.add("hidden");
+          err.textContent = "";
+        }
+        if (ok) {
+          ok.classList.add("hidden");
+          ok.textContent = "";
+        }
+      }
+
+      function hideAllStudentPanels() {
+        hideTableEditPanel();
+        hideCreateStudentPanel();
+      }
+
+      function isoDateForPicker(s) {
+        var t = (s == null ? "" : String(s)).trim();
+        return /^\d{4}-\d{2}-\d{2}$/.test(t) ? t : "";
+      }
+
+      function bindSelectWithOrphan(sel, value) {
+        if (!sel) {
+          return;
+        }
+        sel.querySelectorAll("option[data-orphan]").forEach(function (o) {
+          o.remove();
+        });
+        var v = value == null ? "" : String(value).trim();
+        sel.value = v;
+        if (v && sel.value !== v) {
+          var opt = document.createElement("option");
+          opt.value = v;
+          opt.textContent = v;
+          opt.setAttribute("data-orphan", "1");
+          sel.appendChild(opt);
+          sel.value = v;
+        }
+      }
+
+      function initCountrySelectsFromBasicInfo() {
+        if (
+          !window.api ||
+          typeof window.api.fetchBasicInfo !== "function" ||
+          typeof window.api.fillSelectFromBasicList !== "function"
+        ) {
+          return Promise.resolve();
+        }
+        return window.api.fetchBasicInfo().then(function (info) {
+          window.api.fillSelectFromBasicList(
+            document.getElementById("newStudentCountry"),
+            info.countries,
+            {}
+          );
+          window.api.fillSelectFromBasicList(
+            document.getElementById("tableEditCountry"),
+            info.countries,
+            { leadEmpty: true, leadEmptyLabel: "—" }
+          );
+        });
+      }
+
+      function fillStudentCoachSelectFromNames(sel, names) {
+        if (!sel || sel.tagName !== "SELECT") {
+          return;
+        }
+        sel.innerHTML = "";
+        var naOpt = document.createElement("option");
+        naOpt.value = "N/A";
+        naOpt.textContent = "N/A";
+        sel.appendChild(naOpt);
+        names.forEach(function (nm) {
+          var opt = document.createElement("option");
+          opt.value = nm;
+          opt.textContent = nm;
+          sel.appendChild(opt);
+        });
+      }
+
+      /** Fills Create + Edit Student coach selects from GET /coach-manager/coaches (UserList_Coach.json full_name). */
+      function loadStudentCoachSelectOptions() {
+        if (!window.api || typeof window.api.api !== "function") {
+          return Promise.resolve();
+        }
+        return window.api.api("/coach-manager/coaches").then(function (data) {
+          if (!data || data.ok === false) {
+            return;
+          }
+          var names = [];
+          var seen = Object.create(null);
+          (Array.isArray(data.coaches) ? data.coaches : []).forEach(function (c) {
+            var fn = c.full_name != null ? String(c.full_name).trim() : "";
+            if (fn && !seen[fn]) {
+              seen[fn] = true;
+              names.push(fn);
+            }
+          });
+          names.sort(function (a, b) {
+            return a.localeCompare(b, undefined, { sensitivity: "base" });
+          });
+          fillStudentCoachSelectFromNames(
+            document.getElementById("tableEditStudentCoach"),
+            names
+          );
+          fillStudentCoachSelectFromNames(
+            document.getElementById("newStudentStudentCoach"),
+            names
+          );
+        });
+      }
+
+      function setNewStudentCountryToFirst() {
+        var el = document.getElementById("newStudentCountry");
+        if (el && el.options.length) {
+          el.selectedIndex = 0;
+        }
+      }
+
+      function ymdTodayLocal() {
+        var d = new Date();
+        var y = d.getFullYear();
+        var m = String(d.getMonth() + 1).padStart(2, "0");
+        var day = String(d.getDate()).padStart(2, "0");
+        return y + "-" + m + "-" + day;
+      }
+
+      function openTableEditPanelFromStudent(s) {
+        hideCreateStudentPanel();
+        document.getElementById("tableEditStudentId").value = s.StudentID || "";
+        document.getElementById("tableEditClubName").value = s.club_name || "";
+        document.getElementById("tableEditFullName").value = s.full_name || "";
+        bindSelectWithOrphan(document.getElementById("tableEditSex"), s.sex);
+        document.getElementById("tableEditDateOfBirth").value =
+          isoDateForPicker(s.date_of_birth);
+        document.getElementById("tableEditJoinedDate").value =
+          isoDateForPicker(s.joined_date);
+        document.getElementById("tableEditHomeAddress").value =
+          s.home_address || "";
+        bindSelectWithOrphan(document.getElementById("tableEditCountry"), s.country);
+        document.getElementById("tableEditEmail").value = s.email || "";
+        document.getElementById("tableEditContactNumber").value =
+          s.contact_number || "";
+        document.getElementById("tableEditGuardian").value = s.guardian || "";
+        document.getElementById("tableEditGuardianContact").value =
+          s.guardian_contact || "";
+        document.getElementById("tableEditSchool").value = s.school || "";
+        var sc =
+          s.student_coach != null && String(s.student_coach).trim() !== ""
+            ? String(s.student_coach).trim()
+            : "N/A";
+        bindSelectWithOrphan(document.getElementById("tableEditStudentCoach"), sc);
+        var st = (s.status || "ACTIVE").toString().trim().toUpperCase();
+        document.getElementById("tableEditStatus").value =
+          st === "INACTIVE" ? "INACTIVE" : "ACTIVE";
+        document.getElementById("tableEditRemark").value = s.remark || "";
+        document.getElementById("tableEditCreated").value = s.created_at || "";
+        document.getElementById("tableEditLastUpdate").value =
+          s.lastUpdate_date || "";
+        document.getElementById("tableEditErr").classList.add("hidden");
+        document.getElementById("tableEditOk").classList.add("hidden");
+        var panel = document.getElementById("tableEditPanel");
+        if (panel) {
+          panel.classList.remove("hidden");
+          try {
+            panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          } catch (se) {
+            /* ignore */
+          }
+        }
+      }
+
+      function renderStudentTableFromApi(students) {
+        var headRow = document.getElementById("fullCsvHeadRow");
+        var tb = document.getElementById("fullCsvBody");
+        if (!headRow || !tb) {
+          return;
+        }
+        if (!students || !students.length) {
+          headRow.innerHTML =
+            '<th class="py-2 pr-3 font-medium text-slate-400">—</th>';
+          tb.innerHTML =
+            '<tr><td class="py-4 text-slate-500">No students in list yet.</td></tr>';
+          return;
+        }
+        headRow.innerHTML =
+          '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap min-w-[9.5rem]">Actions</th>' +
+          STUDENT_TABLE_COLS.map(function (col) {
+            return (
+              '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap max-w-[14rem]">' +
+              escapeHtml(col.label) +
+              "</th>"
+            );
+          }).join("");
+        tb.innerHTML = students
+          .map(function (s, idx) {
+            var tds = STUDENT_TABLE_COLS.map(function (col) {
+              var v = s[col.key] != null ? String(s[col.key]) : "";
+              return (
+                '<td class="py-2 pr-3 text-xs align-top whitespace-pre-wrap break-words max-w-[16rem]">' +
+                escapeHtml(v) +
+                "</td>"
+              );
+            }).join("");
+            var removeBtn =
+              role === "CoachManager"
+                ? '<button type="button" class="cm-row-remove rounded-md bg-red-200/90 hover:bg-red-300 border border-red-300/70 text-slate-900 text-xs font-medium px-2.5 py-1.5 shadow-sm" data-idx="' +
+                  idx +
+                  '">Remove</button>'
+                : "";
+            return (
+              '<tr class="border-b border-white/5">' +
+              '<td class="py-2 pr-3 align-top whitespace-nowrap">' +
+              '<div class="flex flex-wrap gap-1.5">' +
+              '<button type="button" class="cm-row-update rounded-md bg-amber-100/95 hover:bg-amber-200 border border-amber-300/80 text-slate-900 text-xs font-medium px-2.5 py-1.5 shadow-sm" data-idx="' +
+              idx +
+              '">Update</button>' +
+              removeBtn +
+              "</div></td>" +
+              tds +
+              "</tr>"
+            );
+          })
+          .join("");
+      }
+
+      function renderRawCsvFallback(csv) {
+        var headRow = document.getElementById("fullCsvHeadRow");
+        var tb = document.getElementById("fullCsvBody");
+        if (!headRow || !tb) {
+          return;
+        }
+        if (!csv || !csv.headers || !csv.headers.length) {
+          headRow.innerHTML =
+            '<th class="py-2 pr-3 font-medium text-slate-400">—</th>';
+          tb.innerHTML =
+            '<tr><td class="py-4 text-slate-500">No roster rows (empty or missing file).</td></tr>';
+          return;
+        }
+        var colCount = csv.headers.length;
+        headRow.innerHTML = csv.headers
+          .map(function (h) {
+            return (
+              '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap max-w-[14rem]">' +
+              escapeHtml(h) +
+              "</th>"
+            );
+          })
+          .join("");
+        if (!csv.rows || !csv.rows.length) {
+          tb.innerHTML =
+            '<tr><td colspan="' +
+            colCount +
+            '" class="py-4 text-slate-500">Header only — no data rows yet.</td></tr>';
+          return;
+        }
+        try {
+          tb.innerHTML = csv.rows
+            .map(function (row) {
+              var cells = Array.isArray(row) ? row : [];
+              return (
+                '<tr class="border-b border-white/5">' +
+                cells
+                  .map(function (cell) {
+                    return (
+                      '<td class="py-2 pr-3 text-xs align-top whitespace-pre-wrap break-words max-w-[16rem]">' +
+                      escapeHtml(cell) +
+                      "</td>"
+                    );
+                  })
+                  .join("") +
+                "</tr>"
+              );
+            })
+            .join("");
+        } catch (renderErr) {
+          tb.innerHTML =
+            '<tr><td colspan="' +
+            colCount +
+            '" class="py-4 text-red-300">Could not render table: ' +
+            escapeHtml(
+              renderErr && renderErr.message ? renderErr.message : String(renderErr)
+            ) +
+            "</td></tr>";
+        }
+      }
+
+      var loadFullCsvSeq = 0;
+      var loadFullCsvAbort = null;
+
+      function loadFullCsv() {
+        var errEl = document.getElementById("fullCsvError");
+        var warnEl = document.getElementById("fullCsvWarn");
+        hideAllStudentPanels();
+        if (errEl) {
+          errEl.classList.add("hidden");
+        }
+        if (warnEl) {
+          warnEl.classList.add("hidden");
+          warnEl.textContent = "";
+        }
+
+        if (!window.api || typeof window.api.api !== "function") {
+          if (errEl) {
+            errEl.textContent =
+              "Scripts failed to load. Open Coach Manager from the running Node server (same origin as the API), not file:// or a static server that omits /js/api.js.";
+            errEl.classList.remove("hidden");
+          }
+          cachedStudents = [];
+          renderRawCsvFallback(null);
+          return;
+        }
+
+        loadFullCsvSeq += 1;
+        var mySeq = loadFullCsvSeq;
+        if (loadFullCsvAbort) {
+          try {
+            loadFullCsvAbort.abort();
+          } catch (abortErr) {
+            /* ignore */
+          }
+        }
+        loadFullCsvAbort =
+          typeof AbortController !== "undefined" ? new AbortController() : null;
+        var fetchOpts = loadFullCsvAbort ? { signal: loadFullCsvAbort.signal } : {};
+
+        window.api
+          .api("/coach-manager/students", fetchOpts)
+          .then(function (data) {
+            if (mySeq !== loadFullCsvSeq) {
+              return;
+            }
+            if (!data || data.ok === false) {
+              var failMsg =
+                (data && data.error) || "Could not load student list (server returned an error).";
+              if (errEl) {
+                errEl.textContent = failMsg;
+                errEl.classList.remove("hidden");
+              }
+              cachedStudents = [];
+              renderRawCsvFallback(null);
+              return;
+            }
+            if (data.clubId) {
+              setUidLabels(data.clubId);
+            }
+            if (data.clubName && String(data.clubName).trim() !== "") {
+              cachedManagerClubName = String(data.clubName).trim();
+              setNewStudentClubNameField();
+            }
+            if (warnEl && data.studentsParseWarning) {
+              warnEl.textContent =
+                "Roster table shows raw columns; structured rows need valid StudentID + full_name. " +
+                data.studentsParseWarning;
+              warnEl.classList.remove("hidden");
+            }
+            cachedStudents = Array.isArray(data.students) ? data.students.slice() : [];
+            try {
+              if (cachedStudents.length > 0) {
+                renderStudentTableFromApi(cachedStudents);
+              } else {
+                renderRawCsvFallback(data.studentCsv || null);
+              }
+            } catch (renderErr) {
+              if (errEl) {
+                errEl.textContent =
+                  renderErr && renderErr.message
+                    ? renderErr.message
+                    : "Failed to render table.";
+                errEl.classList.remove("hidden");
+              }
+              cachedStudents = [];
+              renderRawCsvFallback(data.studentCsv || null);
+            }
+          })
+          .catch(function (e) {
+            if (mySeq !== loadFullCsvSeq) {
+              return;
+            }
+            if (e && (e.name === "AbortError" || (e.cause && e.cause.name === "AbortError"))) {
+              return;
+            }
+            var msg = e.message || "Could not load student roster.";
+            if (e.status === 401 || /Unauthorized|Invalid token/i.test(msg)) {
+              msg +=
+                " Sign in as Coach or Coach Manager on the same host you used to open this site (do not mix localhost and 127.0.0.1).";
+            }
+            if (errEl) {
+              errEl.textContent = msg;
+              errEl.classList.remove("hidden");
+            }
+            cachedStudents = [];
+            renderRawCsvFallback(null);
+          });
+      }
+
+      var pendingRemoveStudent = null;
+
+      function closeRemoveUserConfirmModal() {
+        pendingRemoveStudent = null;
+        var m = document.getElementById("removeUserConfirmModal");
+        if (m) {
+          m.classList.add("hidden");
+          m.setAttribute("aria-hidden", "true");
+        }
+        document.body.classList.remove("overflow-hidden");
+        var yesBtn = document.getElementById("removeUserConfirmYes");
+        if (yesBtn) {
+          yesBtn.disabled = false;
+        }
+      }
+
+      function openRemoveUserConfirmModal(triggerBtn, studentId) {
+        pendingRemoveStudent = { button: triggerBtn, studentId: studentId };
+        var m = document.getElementById("removeUserConfirmModal");
+        if (m) {
+          m.classList.remove("hidden");
+          m.setAttribute("aria-hidden", "false");
+        }
+        document.body.classList.add("overflow-hidden");
+      }
+
+      document.getElementById("removeUserConfirmBackdrop").addEventListener("click", closeRemoveUserConfirmModal);
+      document.getElementById("removeUserConfirmNo").addEventListener("click", closeRemoveUserConfirmModal);
+      document.getElementById("removeUserConfirmYes").addEventListener("click", function () {
+        if (!pendingRemoveStudent) {
+          return;
+        }
+        var p = pendingRemoveStudent;
+        var sid = p.studentId;
+        var triggerBtn = p.button;
+        pendingRemoveStudent = null;
+        closeRemoveUserConfirmModal();
+        var yesBtn = document.getElementById("removeUserConfirmYes");
+        if (triggerBtn) {
+          triggerBtn.disabled = true;
+        }
+        if (yesBtn) {
+          yesBtn.disabled = true;
+        }
+        window.api
+          .api("/coach-manager/students/remove", {
+            method: "POST",
+            body: JSON.stringify({ StudentID: sid }),
+          })
+          .then(function () {
+            hideTableEditPanel();
+            loadFullCsv();
+          })
+          .catch(function (e) {
+            window.alert(e.message || "Remove failed.");
+          })
+          .finally(function () {
+            if (triggerBtn) {
+              triggerBtn.disabled = false;
+            }
+            if (yesBtn) {
+              yesBtn.disabled = false;
+            }
+          });
+      });
+
+      (function bindStudentTableActions() {
+        var tb = document.getElementById("fullCsvBody");
+        if (!tb || tb.dataset.cmRowBound === "1") {
+          return;
+        }
+        tb.dataset.cmRowBound = "1";
+        tb.addEventListener("click", function (ev) {
+          var rm =
+            ev.target && ev.target.closest && ev.target.closest("button.cm-row-remove");
+          if (rm) {
+            if (role !== "CoachManager") {
+              return;
+            }
+            var ridx = parseInt(rm.getAttribute("data-idx"), 10);
+            if (isNaN(ridx) || ridx < 0 || ridx >= cachedStudents.length) {
+              return;
+            }
+            var srow = cachedStudents[ridx];
+            var sid =
+              srow && srow.StudentID != null ? String(srow.StudentID).trim() : "";
+            if (!sid) {
+              window.alert("Missing Student ID.");
+              return;
+            }
+            openRemoveUserConfirmModal(rm, sid);
+            return;
+          }
+          var btn = ev.target && ev.target.closest && ev.target.closest("button.cm-row-update");
+          if (!btn) {
+            return;
+          }
+          var idx = parseInt(btn.getAttribute("data-idx"), 10);
+          if (isNaN(idx) || idx < 0 || idx >= cachedStudents.length) {
+            return;
+          }
+          openTableEditPanelFromStudent(cachedStudents[idx]);
+        });
+      })();
+
+      document.getElementById("tableEditCancelBtn").addEventListener("click", function () {
+        hideTableEditPanel();
+      });
+
+      document.getElementById("tableEditConfirmBtn").addEventListener("click", function () {
+        var btn = document.getElementById("tableEditConfirmBtn");
+        var errBox = document.getElementById("tableEditErr");
+        var okBox = document.getElementById("tableEditOk");
+        errBox.classList.add("hidden");
+        okBox.classList.add("hidden");
+        var id = document.getElementById("tableEditStudentId").value.trim();
+        if (!id) {
+          errBox.textContent = "Missing StudentID.";
+          errBox.classList.remove("hidden");
+          return;
+        }
+        var nm = document.getElementById("tableEditFullName").value.trim();
+        var em = document.getElementById("tableEditEmail").value.trim();
+        if (!nm || !em) {
+          errBox.textContent = "full_name and email are required.";
+          errBox.classList.remove("hidden");
+          return;
+        }
+        btn.disabled = true;
+        var putBody = {
+          StudentID: id,
+          full_name: nm,
+          email: em,
+          contact_number: document
+            .getElementById("tableEditContactNumber")
+            .value.trim(),
+          sex: document.getElementById("tableEditSex").value.trim(),
+          date_of_birth: document
+            .getElementById("tableEditDateOfBirth")
+            .value.trim(),
+          joined_date: document
+            .getElementById("tableEditJoinedDate")
+            .value.trim(),
+          home_address: document
+            .getElementById("tableEditHomeAddress")
+            .value.trim(),
+          country: document.getElementById("tableEditCountry").value.trim(),
+          status: document.getElementById("tableEditStatus").value,
+          remark: document.getElementById("tableEditRemark").value.trim(),
+          guardian: document.getElementById("tableEditGuardian").value.trim(),
+          guardian_contact: document
+            .getElementById("tableEditGuardianContact")
+            .value.trim(),
+          school: document.getElementById("tableEditSchool").value.trim(),
+          student_coach: document
+            .getElementById("tableEditStudentCoach")
+            .value.trim(),
+        };
+        window.api
+          .api("/coach-manager/students", {
+            method: "PUT",
+            body: JSON.stringify(putBody),
+          })
+          .then(function () {
+            loadFullCsv();
+          })
+          .catch(function (e) {
+            errBox.textContent = e.message || "Save failed.";
+            errBox.classList.remove("hidden");
+          })
+          .finally(function () {
+            btn.disabled = false;
+          });
+      });
+
+      window.addEventListener("message", function (ev) {
+        if (ev.origin !== window.location.origin) {
+          return;
+        }
+        var d = ev.data;
+        if (!d || d.type !== "sportCoach.clubContext") {
+          return;
+        }
+        var cid = String(d.clubId || d.uid || "").trim();
+        if (cid) {
+          setUidLabels(cid);
+        }
+        if (
+          window.api &&
+          typeof window.api.setClubFolderContext === "function"
+        ) {
+          window.api.setClubFolderContext(
+            cid || null,
+            d.clubName != null && String(d.clubName).trim() !== ""
+              ? String(d.clubName).trim()
+              : null
+          );
+        }
+        if (d.clubName != null && String(d.clubName).trim() !== "") {
+          cachedManagerClubName = String(d.clubName).trim();
+        }
+        setNewStudentClubNameField();
+        loadStudentCoachSelectOptions()
+          .catch(function () {
+            /* keep N/A-only select if coaches fail */
+          })
+          .finally(function () {
+            loadFullCsv();
+          });
+      });
+
+      if (window.api && typeof window.api.api === "function") {
+        window.api
+          .api("/me")
+          .then(function (d) {
+            var u = d.user || {};
+            var cfu =
+              u.club_folder_uid != null && String(u.club_folder_uid).trim() !== ""
+                ? String(u.club_folder_uid).trim()
+                : "";
+            setUidLabels(cfu || u.uid);
+            var cn =
+              u.club_name != null &&
+              String(u.club_name).trim() !== "" &&
+              u.club_name !== "—"
+                ? String(u.club_name).trim()
+                : "";
+            if (cn) {
+              cachedManagerClubName = cn;
+            }
+            setNewStudentClubNameField();
+          })
+          .catch(function () {
+            /* keep UID from CSV response or postMessage */
+          });
+      }
+
+      Promise.all([
+        initCountrySelectsFromBasicInfo(),
+        loadStudentCoachSelectOptions(),
+      ])
+        .catch(function () {
+          /* dropdowns stay empty if API fails */
+        })
+        .finally(function () {
+          loadFullCsv();
+        });
+
+      document.getElementById("btnCreateNewStudent").addEventListener("click", function () {
+        hideTableEditPanel();
+        var panel = document.getElementById("createStudentPanel");
+        var form = document.getElementById("createStudentForm");
+        var errEl = document.getElementById("createStudentErr");
+        var okEl = document.getElementById("createStudentOk");
+        if (errEl) {
+          errEl.classList.add("hidden");
+          errEl.textContent = "";
+        }
+        if (okEl) {
+          okEl.classList.add("hidden");
+          okEl.textContent = "";
+        }
+        if (form) {
+          form.reset();
+        }
+        setNewStudentCountryToFirst();
+        var joined = document.getElementById("newStudentJoined");
+        if (joined) {
+          joined.value = ymdTodayLocal();
+        }
+        setNewStudentClubNameField();
+        var coachSel = document.getElementById("newStudentStudentCoach");
+        if (coachSel && coachSel.tagName === "SELECT") {
+          coachSel.value = "N/A";
+        }
+        if (panel) {
+          panel.classList.remove("hidden");
+          try {
+            panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          } catch (se) {
+            /* ignore */
+          }
+        }
+      });
+
+      document.getElementById("createStudentCancelBtn").addEventListener("click", function () {
+        hideCreateStudentPanel();
+      });
+
+      document.getElementById("createStudentForm").addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        var errBox = document.getElementById("createStudentErr");
+        var okBox = document.getElementById("createStudentOk");
+        var btn = document.getElementById("createStudentSubmitBtn");
+        errBox.classList.add("hidden");
+        okBox.classList.add("hidden");
+        errBox.textContent = "";
+        var nm = document.getElementById("newStudentFullName").value.trim();
+        var em = document.getElementById("newStudentEmail").value.trim();
+        if (!nm || !em) {
+          errBox.textContent = "Full Name and Email are required.";
+          errBox.classList.remove("hidden");
+          return;
+        }
+        btn.disabled = true;
+        var body = {
+          full_name: nm,
+          sex: document.getElementById("newStudentSex").value.trim(),
+          date_of_birth: document.getElementById("newStudentDob").value.trim(),
+          home_address: document.getElementById("newStudentAddress").value.trim(),
+          country: document.getElementById("newStudentCountry").value.trim(),
+          email: em,
+          contact_number: document.getElementById("newStudentPhone").value.trim(),
+          joined_date: document.getElementById("newStudentJoined").value.trim(),
+          remark: document.getElementById("newStudentRemark").value.trim(),
+          guardian: document.getElementById("newStudentGuardian").value.trim(),
+          guardian_contact: document
+            .getElementById("newStudentGuardianContact")
+            .value.trim(),
+          school: document.getElementById("newStudentSchool").value.trim(),
+          student_coach: document
+            .getElementById("newStudentStudentCoach")
+            .value.trim(),
+          status: "ACTIVE",
+        };
+        window.api
+          .api("/coach-manager/students", {
+            method: "POST",
+            body: JSON.stringify(body),
+          })
+          .then(function (data) {
+            okBox.textContent =
+              (data.message || "Created.") +
+              " Student ID: " +
+              (data.studentId || "—");
+            okBox.classList.remove("hidden");
+            document.getElementById("createStudentForm").reset();
+            document.getElementById("newStudentJoined").value = ymdTodayLocal();
+            setNewStudentCountryToFirst();
+            setNewStudentClubNameField();
+            var cSel = document.getElementById("newStudentStudentCoach");
+            if (cSel && cSel.tagName === "SELECT") {
+              cSel.value = "N/A";
+            }
+            loadFullCsv();
+          })
+          .catch(function (e) {
+            errBox.textContent = e.message || "Could not create student.";
+            errBox.classList.remove("hidden");
+          })
+          .finally(function () {
+            btn.disabled = false;
+          });
+      });
+
+      if (role === "CoachManager") {
+        function openNewStudentRoleAccountModal() {
+          var m = document.getElementById("newStudentRoleAccountModal");
+          var err = document.getElementById("newStudentRoleAccountErr");
+          if (err) {
+            err.classList.add("hidden");
+            err.textContent = "";
+          }
+          function showModal() {
+            fillNewStudentRoleFullNameSelect();
+            var fn = document.getElementById("newStudentRoleFullName");
+            var un = document.getElementById("newStudentRoleUsername");
+            var p1 = document.getElementById("newStudentRolePassword");
+            var p2 = document.getElementById("newStudentRolePassword2");
+            if (fn && fn.tagName === "SELECT") {
+              fn.selectedIndex = 0;
+            }
+            if (un) {
+              un.value = "";
+            }
+            if (p1) {
+              p1.value = "";
+            }
+            if (p2) {
+              p2.value = "";
+            }
+            if (m) {
+              m.classList.remove("hidden");
+              m.setAttribute("aria-hidden", "false");
+            }
+          }
+          if (
+            window.api &&
+            typeof window.api.api === "function" &&
+            (!cachedStudents || cachedStudents.length === 0)
+          ) {
+            window.api
+              .api("/coach-manager/students")
+              .then(function (data) {
+                if (data && data.ok && Array.isArray(data.students)) {
+                  cachedStudents = data.students.slice();
+                }
+              })
+              .catch(function () {
+                /* keep empty list; select shows — Select — only */
+              })
+              .finally(showModal);
+            return;
+          }
+          showModal();
+        }
+
+        function closeNewStudentRoleAccountModal() {
+          var m = document.getElementById("newStudentRoleAccountModal");
+          if (m) {
+            m.classList.add("hidden");
+            m.setAttribute("aria-hidden", "true");
+          }
+        }
+
+        function openLoginAccountSuccessModal(message) {
+          var msgEl = document.getElementById("loginAccountSuccessMessage");
+          var modal = document.getElementById("loginAccountSuccessModal");
+          if (msgEl) {
+            msgEl.textContent = message || "";
+          }
+          if (modal) {
+            modal.classList.remove("hidden");
+            modal.setAttribute("aria-hidden", "false");
+          }
+          document.body.classList.add("overflow-hidden");
+        }
+
+        function closeLoginAccountSuccessModal() {
+          var modal = document.getElementById("loginAccountSuccessModal");
+          if (modal) {
+            modal.classList.add("hidden");
+            modal.setAttribute("aria-hidden", "true");
+          }
+          document.body.classList.remove("overflow-hidden");
+        }
+
+        document
+          .getElementById("loginAccountSuccessBackdrop")
+          .addEventListener("click", closeLoginAccountSuccessModal);
+        document
+          .getElementById("loginAccountSuccessClose")
+          .addEventListener("click", closeLoginAccountSuccessModal);
+
+        document
+          .getElementById("btnNewStudentRoleAccount")
+          .addEventListener("click", function () {
+            hideCreateStudentPanel();
+            hideTableEditPanel();
+            openNewStudentRoleAccountModal();
+          });
+        document
+          .getElementById("newStudentRoleAccountCancel")
+          .addEventListener("click", closeNewStudentRoleAccountModal);
+        document
+          .getElementById("newStudentRoleAccountBackdrop")
+          .addEventListener("click", closeNewStudentRoleAccountModal);
+        document
+          .getElementById("newStudentRoleAccountOk")
+          .addEventListener("click", function () {
+            var errEl = document.getElementById("newStudentRoleAccountErr");
+            var okBtn = document.getElementById("newStudentRoleAccountOk");
+            if (!window.api || typeof window.api.api !== "function") {
+              if (errEl) {
+                errEl.textContent = "API not loaded.";
+                errEl.classList.remove("hidden");
+              }
+              return;
+            }
+            var fullNameEl = document.getElementById("newStudentRoleFullName");
+            var usernameEl = document.getElementById("newStudentRoleUsername");
+            var pwEl = document.getElementById("newStudentRolePassword");
+            var pw2El = document.getElementById("newStudentRolePassword2");
+            var fullName =
+              fullNameEl && fullNameEl.value != null
+                ? String(fullNameEl.value).trim()
+                : "";
+            var username = usernameEl ? usernameEl.value.trim() : "";
+            var pw = pwEl ? pwEl.value : "";
+            var pw2 = pw2El ? pw2El.value : "";
+            if (errEl) {
+              errEl.classList.add("hidden");
+              errEl.textContent = "";
+            }
+            if (!fullName || !username || !pw) {
+              if (errEl) {
+                errEl.textContent =
+                  "Select a student (full name), username, and password are required.";
+                errEl.classList.remove("hidden");
+              }
+              return;
+            }
+            if (pw !== pw2) {
+              if (errEl) {
+                errEl.textContent = "Passwords do not match.";
+                errEl.classList.remove("hidden");
+              }
+              return;
+            }
+            if (pw.length < 6) {
+              if (errEl) {
+                errEl.textContent = "Password must be at least 6 characters.";
+                errEl.classList.remove("hidden");
+              }
+              return;
+            }
+            okBtn.disabled = true;
+            window.api
+              .api("/coach-manager/students/role-login-account", {
+                method: "POST",
+                body: JSON.stringify({
+                  fullName: fullName,
+                  username: username,
+                  password: pw,
+                  passwordConfirm: pw2,
+                }),
+              })
+              .then(function (data) {
+                var uid = data.uid != null ? String(data.uid) : "";
+                var cid = data.clubId != null ? String(data.clubId) : "";
+                var cname = data.clubName != null ? String(data.clubName) : "";
+                var parts = [data.message || "Created."];
+                if (uid) {
+                  parts.push("Login UID: " + uid + ".");
+                }
+                if (cid || cname) {
+                  parts.push("Club: " + (cid || "—") + (cname ? " (" + cname + ")" : "") + ".");
+                }
+                closeNewStudentRoleAccountModal();
+                openLoginAccountSuccessModal(parts.join("\n"));
+              })
+              .catch(function (e) {
+                if (errEl) {
+                  errEl.textContent = e.message || "Could not create account.";
+                  errEl.classList.remove("hidden");
+                }
+              })
+              .finally(function () {
+                okBtn.disabled = false;
+              });
+          });
+      }
+    })();
+  </script>
+</body>
+</html>

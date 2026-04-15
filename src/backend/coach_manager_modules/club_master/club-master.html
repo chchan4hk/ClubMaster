@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Club Master — Coach Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body
+  class="dashboard-dynamic-bg min-h-screen text-slate-100 p-6"
+  style="--dashboard-bg-img: url('/Source/Image/coach-manager.jpg');">
+  <div class="dynamic-bg-stack" aria-hidden="true">
+    <div class="dynamic-bg-photo"></div>
+    <div class="dynamic-bg-overlay"></div>
+    <canvas class="dynamic-bg-star-net"></canvas>
+    <div class="dynamic-bg-spot-glow"></div>
+  </div>
+
+  <div class="max-w-4xl mx-auto">
+    <header class="mb-6">
+      <p id="backLinkWrap">
+        <a href="/coach-manager.html" target="_top"
+          class="text-sm text-teal-400/90 hover:text-teal-300 underline-offset-2 hover:underline">
+          ← Back to Coach Manager
+        </a>
+      </p>
+      <h1 class="text-2xl font-bold text-teal-300 mt-2">Club Master</h1>
+      <div class="mt-4">
+        <button type="button" id="btnOpenSportCenters"
+          class="rounded-lg bg-yellow-100 hover:bg-yellow-200 border border-yellow-300/80 text-black font-medium px-4 py-2 text-sm shadow-sm">
+          Select Sport Center
+        </button>
+      </div>
+    </header>
+
+    <section class="glass rounded-xl border border-white/15 p-5 mb-6">
+      <p id="loadErr" class="hidden text-sm text-red-300 mb-3"></p>
+      <p id="saveErr" class="hidden text-sm text-red-300 mb-3"></p>
+      <p id="saveOk" class="hidden text-sm text-teal-300 mb-3"></p>
+
+      <div id="btnRowView" class="flex flex-wrap gap-2 mb-5">
+        <button type="button" id="btnUpdate"
+          class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm">
+          Update
+        </button>
+        <button type="button" id="btnCancelView"
+          class="rounded-lg bg-slate-700 hover:bg-slate-600 border border-white/15 text-slate-100 font-medium px-4 py-2 text-sm">
+          Cancel
+        </button>
+      </div>
+
+      <div id="btnRowEdit" class="hidden flex flex-wrap gap-2 mb-5">
+        <button type="button" id="btnConfirm"
+          class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
+          Confirm
+        </button>
+        <button type="button" id="btnCancelEdit"
+          class="rounded-lg bg-slate-700 hover:bg-slate-600 border border-white/15 text-slate-100 font-medium px-4 py-2 text-sm">
+          Cancel
+        </button>
+      </div>
+
+      <input type="hidden" id="fClubLogo" value="" />
+      <input type="hidden" id="fPayQrRel-payme" value="" />
+      <input type="hidden" id="fPayQrRel-fps" value="" />
+      <input type="hidden" id="fPayQrRel-wechat" value="" />
+      <input type="hidden" id="fPayQrRel-alipay" value="" />
+      <input type="hidden" id="fPayQrRel-zhifubao" value="" />
+
+      <div id="formWrap" class="space-y-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="fSportType" class="block text-xs text-slate-400 mb-1">Sport Type</label>
+            <select id="fSportType" disabled
+              class="club-field w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-100 text-sm cursor-not-allowed [color-scheme:dark]">
+              <option value="">—</option>
+            </select>
+          </div>
+          <div>
+            <label for="fCountry" class="block text-xs text-slate-400 mb-1">Country</label>
+            <select id="fCountry" disabled
+              class="club-field w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-100 text-sm cursor-not-allowed [color-scheme:dark]">
+              <option value="">—</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="fClubName" class="block text-xs text-slate-400 mb-1">Club Name</label>
+            <input id="fClubName" type="text" readonly
+              class="club-field w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-100 text-sm cursor-not-allowed" />
+          </div>
+          <div>
+            <label for="fSetupDate" class="block text-xs text-slate-400 mb-1">Setup Date</label>
+            <input id="fSetupDate" type="text" readonly placeholder="e.g. 2022/05/05"
+              class="club-field w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-100 text-sm cursor-not-allowed" />
+          </div>
+        </div>
+
+        <div>
+          <label for="fClubDesc" class="block text-xs text-slate-400 mb-1">Club description</label>
+          <textarea id="fClubDesc" rows="3" readonly
+            class="club-field w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-100 text-sm cursor-not-allowed resize-y min-h-[4rem]"></textarea>
+        </div>
+
+        <div>
+          <span class="block text-xs text-slate-400 mb-2">Club Logo</span>
+          <div class="flex flex-col sm:flex-row sm:items-start gap-4">
+            <div
+              class="shrink-0 w-[310px] h-[240px] rounded-xl border border-white/15 bg-slate-950/80 overflow-hidden flex items-center justify-center"
+              aria-label="Club logo preview">
+              <img id="clubLogoPreview" alt="Club logo" class="hidden w-[310px] h-[240px] object-cover" />
+              <span id="clubLogoPlaceholder" class="text-xs text-slate-500 px-4 text-center">No logo yet</span>
+            </div>
+            <div class="flex-1 min-w-0 space-y-2">
+              <p class="text-[11px] text-slate-500 leading-relaxed">
+                Upload a photo: it is center-cropped and saved as a <strong class="text-slate-400">310×240</strong> JPEG.
+              </p>
+              <input id="fClubLogoFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif" disabled
+                class="club-logo-input block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-teal-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-teal-600 disabled:opacity-50 disabled:pointer-events-none" />
+            </div>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-white/10 bg-slate-950/40 p-4">
+          <h2 class="text-sm font-semibold text-teal-200/95 mb-1">Payment QR codes</h2>
+          <p class="text-[11px] text-slate-500 leading-relaxed mb-4">
+            Upload QR images for PayMe, FPS, WeChat Pay, Alipay, and 支付寶.
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div class="payment-qr-block space-y-2" data-channel="payme">
+              <span class="block text-xs text-slate-400">PayMe</span>
+              <div
+                class="w-full max-w-[220px] aspect-square rounded-lg border border-white/15 bg-slate-950/80 overflow-hidden flex items-center justify-center mx-auto sm:mx-0"
+                aria-label="PayMe QR preview">
+                <img id="qrPreview-payme" alt="PayMe QR" class="hidden w-full h-full object-contain p-1" />
+                <span id="qrPlaceholder-payme" class="text-[11px] text-slate-500 px-3 text-center">No QR yet</span>
+              </div>
+              <input type="file" id="fPayQrFile-payme" data-channel="payme" accept="image/jpeg,image/png,image/webp,image/gif" disabled
+                class="payment-qr-input block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-teal-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-teal-600 disabled:opacity-50 disabled:pointer-events-none" />
+            </div>
+            <div class="payment-qr-block space-y-2" data-channel="fps">
+              <span class="block text-xs text-slate-400">FPS</span>
+              <div
+                class="w-full max-w-[220px] aspect-square rounded-lg border border-white/15 bg-slate-950/80 overflow-hidden flex items-center justify-center mx-auto sm:mx-0"
+                aria-label="FPS QR preview">
+                <img id="qrPreview-fps" alt="FPS QR" class="hidden w-full h-full object-contain p-1" />
+                <span id="qrPlaceholder-fps" class="text-[11px] text-slate-500 px-3 text-center">No QR yet</span>
+              </div>
+              <input type="file" id="fPayQrFile-fps" data-channel="fps" accept="image/jpeg,image/png,image/webp,image/gif" disabled
+                class="payment-qr-input block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-teal-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-teal-600 disabled:opacity-50 disabled:pointer-events-none" />
+            </div>
+            <div class="payment-qr-block space-y-2" data-channel="wechat">
+              <span class="block text-xs text-slate-400">WeChat Pay</span>
+              <div
+                class="w-full max-w-[220px] aspect-square rounded-lg border border-white/15 bg-slate-950/80 overflow-hidden flex items-center justify-center mx-auto sm:mx-0"
+                aria-label="WeChat Pay QR preview">
+                <img id="qrPreview-wechat" alt="WeChat Pay QR" class="hidden w-full h-full object-contain p-1" />
+                <span id="qrPlaceholder-wechat" class="text-[11px] text-slate-500 px-3 text-center">No QR yet</span>
+              </div>
+              <input type="file" id="fPayQrFile-wechat" data-channel="wechat" accept="image/jpeg,image/png,image/webp,image/gif" disabled
+                class="payment-qr-input block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-teal-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-teal-600 disabled:opacity-50 disabled:pointer-events-none" />
+            </div>
+            <div class="payment-qr-block space-y-2" data-channel="alipay">
+              <span class="block text-xs text-slate-400">Alipay</span>
+              <div
+                class="w-full max-w-[220px] aspect-square rounded-lg border border-white/15 bg-slate-950/80 overflow-hidden flex items-center justify-center mx-auto sm:mx-0"
+                aria-label="Alipay QR preview">
+                <img id="qrPreview-alipay" alt="Alipay QR" class="hidden w-full h-full object-contain p-1" />
+                <span id="qrPlaceholder-alipay" class="text-[11px] text-slate-500 px-3 text-center">No QR yet</span>
+              </div>
+              <input type="file" id="fPayQrFile-alipay" data-channel="alipay" accept="image/jpeg,image/png,image/webp,image/gif" disabled
+                class="payment-qr-input block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-teal-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-teal-600 disabled:opacity-50 disabled:pointer-events-none" />
+            </div>
+            <div class="payment-qr-block space-y-2" data-channel="zhifubao">
+              <span class="block text-xs text-slate-400">支付寶</span>
+              <div
+                class="w-full max-w-[220px] aspect-square rounded-lg border border-white/15 bg-slate-950/80 overflow-hidden flex items-center justify-center mx-auto sm:mx-0"
+                aria-label="支付寶 QR preview">
+                <img id="qrPreview-zhifubao" alt="支付寶 QR" class="hidden w-full h-full object-contain p-1" />
+                <span id="qrPlaceholder-zhifubao" class="text-[11px] text-slate-500 px-3 text-center">No QR yet</span>
+              </div>
+              <input type="file" id="fPayQrFile-zhifubao" data-channel="zhifubao" accept="image/jpeg,image/png,image/webp,image/gif" disabled
+                class="payment-qr-input block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-teal-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-teal-600 disabled:opacity-50 disabled:pointer-events-none" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div id="sportCenterModal" class="fixed inset-0 z-[100] hidden" aria-hidden="true">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" id="sportCenterModalBackdrop"></div>
+    <div class="absolute inset-3 sm:inset-6 md:inset-10 flex items-center justify-center pointer-events-none p-0">
+      <div
+        class="pointer-events-auto w-full max-w-3xl max-h-[min(92vh,880px)] flex flex-col rounded-xl border border-white/15 bg-slate-900/95 shadow-xl text-slate-100">
+        <div class="flex items-start justify-between gap-3 px-4 py-3 border-b border-white/10 shrink-0">
+          <div>
+            <h2 class="text-lg font-semibold text-teal-200">Select Sport Center</h2>
+            <p id="sportCenterModalSub" class="text-xs text-slate-500 mt-1"></p>
+          </div>
+          <button type="button" id="sportCenterModalCloseX"
+            class="text-slate-400 hover:text-slate-200 p-1.5 rounded-lg text-lg leading-none"
+            aria-label="Close">×</button>
+        </div>
+        <p id="sportCenterModalErr" class="hidden mx-4 mt-2 text-sm text-red-300 shrink-0"></p>
+        <div id="sportCenterModalBody" class="flex-1 overflow-y-auto px-4 py-3 min-h-[180px]">
+          <p class="text-sm text-slate-500">Loading…</p>
+        </div>
+        <div class="flex flex-wrap gap-2 justify-end px-4 py-3 border-t border-white/10 shrink-0">
+          <button type="button" id="sportCenterBtnCreateVenue"
+            class="rounded-lg bg-violet-300 hover:bg-violet-200 border border-violet-400/70 text-slate-900 font-medium px-4 py-2 text-sm shadow-sm">
+            Create New Venue
+          </button>
+          <button type="button" id="sportCenterBtnClose"
+            class="rounded-lg bg-slate-700 hover:bg-slate-600 border border-white/15 px-4 py-2 text-sm">Close</button>
+          <button type="button" id="sportCenterBtnCancelEdit"
+            class="hidden rounded-lg bg-slate-600 hover:bg-slate-500 border border-white/10 px-4 py-2 text-sm">Cancel</button>
+          <button type="button" id="sportCenterBtnUpdate"
+            class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50">Update</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="createVenueModal" class="fixed inset-0 z-[110] hidden" aria-hidden="true" role="dialog"
+    aria-labelledby="createVenueModalTitle">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" id="createVenueModalBackdrop"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+      <div
+        class="pointer-events-auto w-full max-w-lg rounded-xl border border-white/15 bg-slate-900/95 shadow-xl p-5 text-slate-100 max-h-[min(90vh,640px)] overflow-y-auto">
+        <h2 id="createVenueModalTitle" class="text-lg font-semibold text-teal-200 mb-1">Create New Venue</h2>
+        <p class="text-xs text-slate-500 mb-4">Adds one ACTIVE row to your club&rsquo;s SportCenterList.csv.</p>
+        <p id="createVenueModalErr" class="hidden text-sm text-red-300 mb-3"></p>
+        <div class="space-y-3 text-sm">
+          <div>
+            <label for="newVenueCountry" class="block text-xs text-slate-400 mb-1">Country</label>
+            <select id="newVenueCountry"
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+              <option value="">— Select —</option>
+            </select>
+          </div>
+          <div>
+            <label for="newVenueSportType" class="block text-xs text-slate-400 mb-1">SportType</label>
+            <select id="newVenueSportType"
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+              <option value="">— Select —</option>
+            </select>
+          </div>
+          <div>
+            <label for="newVenueLocation" class="block text-xs text-slate-400 mb-1">Location</label>
+            <select id="newVenueLocation"
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+              <option value="">— Select —</option>
+              <option value="Clubhouse">Clubhouse</option>
+              <option value="School">School</option>
+              <option value="Others">Others</option>
+            </select>
+          </div>
+          <div>
+            <label for="newVenueSportCenter" class="block text-xs text-slate-400 mb-1">Sport center</label>
+            <input id="newVenueSportCenter" type="text" placeholder="Venue name"
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+          </div>
+          <div>
+            <label for="newVenueAddress" class="block text-xs text-slate-400 mb-1">Address</label>
+            <textarea id="newVenueAddress" rows="2" placeholder="Address"
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm resize-y min-h-[2.5rem] focus:outline-none focus:ring-2 focus:ring-teal-500/50"></textarea>
+          </div>
+          <div>
+            <label for="newVenueLink" class="block text-xs text-slate-400 mb-1">Link</label>
+            <input id="newVenueLink" type="url" inputmode="url" placeholder="https://…"
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-2 justify-end mt-6">
+          <button type="button" id="createVenueBtnCancel"
+            class="rounded-lg bg-slate-700 hover:bg-slate-600 border border-white/15 px-4 py-2 text-sm">Cancel</button>
+          <button type="button" id="createVenueBtnConfirm"
+            class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/dashboard-dynamic-bg.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    (function () {
+      var LOGO_W = 310;
+      var LOGO_H = 240;
+      var JPEG_QUALITY = 0.9;
+
+      var isFramed = false;
+      try {
+        isFramed = window.self !== window.top;
+      } catch (e) {
+        isFramed = true;
+      }
+
+      var token =
+        window.auth &&
+        typeof window.auth.getToken === "function" &&
+        window.auth.getToken();
+      var role = localStorage.getItem("userRole");
+      var sessionOk = Boolean(token) && role === "CoachManager";
+
+      if (isFramed) {
+        var bw = document.getElementById("backLinkWrap");
+        if (bw) {
+          bw.classList.add("hidden");
+        }
+      }
+
+      if (!sessionOk) {
+        if (!isFramed && !window.auth.guardPage("CoachManager")) {
+          return;
+        }
+      } else if (!isFramed && !window.auth.guardPage("CoachManager")) {
+        return;
+      }
+
+      var PAY_QR_ORDER = ["payme", "fps", "wechat", "alipay", "zhifubao"];
+      var snapshot = {};
+      var lastClubLogoUrl = null;
+      var pendingLogoBlob = null;
+      var localPreviewUrl = null;
+      var lastPaymentQrUrls = {};
+      var pendingPaymentQrBlobs = {};
+      var localPaymentQrPreviewUrls = {};
+
+      function fieldGet(f, names) {
+        if (!f) {
+          return "";
+        }
+        for (var i = 0; i < names.length; i++) {
+          var n = names[i];
+          if (Object.prototype.hasOwnProperty.call(f, n)) {
+            var v = f[n];
+            return v == null ? "" : String(v);
+          }
+        }
+        return "";
+      }
+
+      function refillSelectOptions(selectId, values) {
+        var sel = document.getElementById(selectId);
+        if (!sel) {
+          return;
+        }
+        var prev = String(sel.value || "").trim();
+        sel.innerHTML = "";
+        var emptyOpt = document.createElement("option");
+        emptyOpt.value = "";
+        emptyOpt.textContent = "—";
+        sel.appendChild(emptyOpt);
+        var list = Array.isArray(values) ? values : [];
+        for (var i = 0; i < list.length; i++) {
+          var raw = list[i];
+          var label = raw == null ? "" : String(raw).trim();
+          if (!label) {
+            continue;
+          }
+          var o = document.createElement("option");
+          o.value = label;
+          o.textContent = label;
+          sel.appendChild(o);
+        }
+        setSelectToValue(sel, prev);
+      }
+
+      function setSelectToValue(sel, value) {
+        if (!sel) {
+          return;
+        }
+        var v = value == null ? "" : String(value).trim();
+        sel.value = v;
+        if (v && sel.value !== v) {
+          var opt = document.createElement("option");
+          opt.value = v;
+          opt.textContent = v;
+          sel.appendChild(opt);
+          sel.value = v;
+        }
+      }
+
+      function loadBasicInfoLists() {
+        if (!window.api || typeof window.api.api !== "function") {
+          return Promise.resolve();
+        }
+        return window.api
+          .api("/basic-info")
+          .then(function (data) {
+            if (!data || data.ok === false) {
+              return;
+            }
+            refillSelectOptions("fSportType", data.sportTypes || []);
+            refillSelectOptions("fCountry", data.countries || []);
+            refillSelectOptions("newVenueCountry", data.countries || []);
+            refillSelectOptions("newVenueSportType", data.sportTypes || []);
+          })
+          .catch(function () {
+            /* dropdowns keep placeholder only */
+          });
+      }
+
+      function setLogoPreview(url) {
+        var img = document.getElementById("clubLogoPreview");
+        var ph = document.getElementById("clubLogoPlaceholder");
+        if (!img || !ph) {
+          return;
+        }
+        if (url) {
+          img.onload = function () {
+            img.classList.remove("hidden");
+            ph.classList.add("hidden");
+          };
+          img.onerror = function () {
+            img.classList.add("hidden");
+            ph.classList.remove("hidden");
+          };
+          img.src = url;
+        } else {
+          img.removeAttribute("src");
+          img.classList.add("hidden");
+          ph.classList.remove("hidden");
+        }
+      }
+
+      function setPaymentQrPreview(channel, url) {
+        var img = document.getElementById("qrPreview-" + channel);
+        var ph = document.getElementById("qrPlaceholder-" + channel);
+        if (!img || !ph) {
+          return;
+        }
+        if (url) {
+          img.onload = function () {
+            img.classList.remove("hidden");
+            ph.classList.add("hidden");
+          };
+          img.onerror = function () {
+            img.classList.add("hidden");
+            ph.classList.remove("hidden");
+          };
+          img.src = url;
+        } else {
+          img.removeAttribute("src");
+          img.classList.add("hidden");
+          ph.classList.remove("hidden");
+        }
+      }
+
+      function applyPaymentQrHiddens(f) {
+        var m = document.getElementById("fPayQrRel-payme");
+        var fp = document.getElementById("fPayQrRel-fps");
+        var w = document.getElementById("fPayQrRel-wechat");
+        var a = document.getElementById("fPayQrRel-alipay");
+        var z = document.getElementById("fPayQrRel-zhifubao");
+        if (m) {
+          m.value = fieldGet(f, ["club_payment_payme"]);
+        }
+        if (fp) {
+          fp.value = fieldGet(f, ["club_payment_FPS", "club_payment_fps"]);
+        }
+        if (w) {
+          w.value = fieldGet(f, ["club_payment_wechat"]);
+        }
+        if (a) {
+          a.value = fieldGet(f, ["club_payment_alipay"]);
+        }
+        if (z) {
+          z.value = fieldGet(f, ["club_payment_支付寶"]);
+        }
+      }
+
+      function applyPaymentQrPreviewsFromServer(urls) {
+        var u = urls && typeof urls === "object" ? urls : {};
+        for (var i = 0; i < PAY_QR_ORDER.length; i++) {
+          var ch = PAY_QR_ORDER[i];
+          lastPaymentQrUrls[ch] = u[ch] || null;
+          setPaymentQrPreview(ch, lastPaymentQrUrls[ch] || null);
+        }
+      }
+
+      function applyFieldsToForm(f) {
+        setSelectToValue(
+          document.getElementById("fSportType"),
+          fieldGet(f, ["SportType", "Sport_type", "sport_type"])
+        );
+        document.getElementById("fClubName").value = fieldGet(f, ["Club_name", "club_name"]);
+        setSelectToValue(
+          document.getElementById("fCountry"),
+          fieldGet(f, ["country", "Country"])
+        );
+        document.getElementById("fSetupDate").value = fieldGet(f, ["setup_date", "setupDate"]);
+        document.getElementById("fClubDesc").value = fieldGet(f, ["club_desc", "clubDesc"]);
+        document.getElementById("fClubLogo").value = fieldGet(f, ["club_logo", "clubLogo"]);
+        applyPaymentQrHiddens(f);
+      }
+
+      function readFormForPut() {
+        return {
+          SportType: document.getElementById("fSportType").value.trim(),
+          Sport_type: document.getElementById("fSportType").value.trim(),
+          Club_name: document.getElementById("fClubName").value.trim(),
+          country: document.getElementById("fCountry").value.trim(),
+          setup_date: document.getElementById("fSetupDate").value.trim(),
+          club_desc: document.getElementById("fClubDesc").value.trim(),
+          club_logo: document.getElementById("fClubLogo").value.trim(),
+          club_payment_payme: document.getElementById("fPayQrRel-payme").value.trim(),
+          club_payment_FPS: document.getElementById("fPayQrRel-fps").value.trim(),
+          club_payment_wechat: document.getElementById("fPayQrRel-wechat").value.trim(),
+          club_payment_alipay: document
+            .getElementById("fPayQrRel-alipay")
+            .value.trim(),
+          club_payment_支付寶: document
+            .getElementById("fPayQrRel-zhifubao")
+            .value.trim(),
+        };
+      }
+
+      function setEditable(on) {
+        var fields = document.querySelectorAll(".club-field");
+        for (var i = 0; i < fields.length; i++) {
+          var el = fields[i];
+          var isSel = el.tagName === "SELECT";
+          if (isSel) {
+            el.disabled = !on;
+          } else {
+            el.readOnly = !on;
+          }
+          if (on) {
+            el.classList.remove("bg-slate-950/80", "cursor-not-allowed");
+            el.classList.add("bg-slate-900/60", "border-white/15", "focus:outline-none", "focus:ring-2", "focus:ring-teal-500/50");
+          } else {
+            el.classList.add("bg-slate-950/80", "cursor-not-allowed");
+            el.classList.remove("bg-slate-900/60", "border-white/15", "focus:outline-none", "focus:ring-2", "focus:ring-teal-500/50");
+          }
+        }
+        var fi = document.getElementById("fClubLogoFile");
+        if (fi) {
+          fi.disabled = !on;
+        }
+        var pq = document.querySelectorAll(".payment-qr-input");
+        for (var p = 0; p < pq.length; p++) {
+          pq[p].disabled = !on;
+        }
+        document.getElementById("btnRowView").classList.toggle("hidden", on);
+        document.getElementById("btnRowEdit").classList.toggle("hidden", !on);
+      }
+
+      function clearLocalLogoState() {
+        pendingLogoBlob = null;
+        var fi = document.getElementById("fClubLogoFile");
+        if (fi) {
+          fi.value = "";
+        }
+        if (localPreviewUrl) {
+          try {
+            URL.revokeObjectURL(localPreviewUrl);
+          } catch (e) {
+            /* ignore */
+          }
+          localPreviewUrl = null;
+        }
+      }
+
+      function clearLocalPaymentQrState() {
+        pendingPaymentQrBlobs = {};
+        for (var i = 0; i < PAY_QR_ORDER.length; i++) {
+          var ch = PAY_QR_ORDER[i];
+          var inp = document.getElementById("fPayQrFile-" + ch);
+          if (inp) {
+            inp.value = "";
+          }
+          if (localPaymentQrPreviewUrls[ch]) {
+            try {
+              URL.revokeObjectURL(localPaymentQrPreviewUrls[ch]);
+            } catch (e2) {
+              /* ignore */
+            }
+            delete localPaymentQrPreviewUrls[ch];
+          }
+        }
+      }
+
+      function hideMessages() {
+        ["loadErr", "saveErr", "saveOk"].forEach(function (id) {
+          var el = document.getElementById(id);
+          if (el) {
+            el.classList.add("hidden");
+            el.textContent = "";
+          }
+        });
+      }
+
+      function resizeImageToFixedJpeg(file, outW, outH, quality, callback) {
+        var img = new Image();
+        var url = URL.createObjectURL(file);
+        img.onload = function () {
+          URL.revokeObjectURL(url);
+          var w = img.naturalWidth || img.width;
+          var h = img.naturalHeight || img.height;
+          if (!w || !h) {
+            callback(null);
+            return;
+          }
+          var canvas = document.createElement("canvas");
+          canvas.width = outW;
+          canvas.height = outH;
+          var ctx = canvas.getContext("2d");
+          if (!ctx) {
+            callback(null);
+            return;
+          }
+          var scale = Math.max(outW / w, outH / h);
+          var dw = w * scale;
+          var dh = h * scale;
+          var ox = (outW - dw) / 2;
+          var oy = (outH - dh) / 2;
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(0, 0, outW, outH);
+          ctx.clip();
+          ctx.drawImage(img, ox, oy, dw, dh);
+          ctx.restore();
+          canvas.toBlob(
+            function (blob) {
+              callback(blob);
+            },
+            "image/jpeg",
+            quality
+          );
+        };
+        img.onerror = function () {
+          URL.revokeObjectURL(url);
+          callback(null);
+        };
+        img.src = url;
+      }
+
+      function resizeImageContainJpeg(file, maxEdge, quality, callback) {
+        var img = new Image();
+        var url = URL.createObjectURL(file);
+        img.onload = function () {
+          URL.revokeObjectURL(url);
+          var w = img.naturalWidth || img.width;
+          var h = img.naturalHeight || img.height;
+          if (!w || !h) {
+            callback(null);
+            return;
+          }
+          var scale = Math.min(maxEdge / w, maxEdge / h, 1);
+          var tw = Math.max(1, Math.round(w * scale));
+          var th = Math.max(1, Math.round(h * scale));
+          var canvas = document.createElement("canvas");
+          canvas.width = tw;
+          canvas.height = th;
+          var ctx = canvas.getContext("2d");
+          if (!ctx) {
+            callback(null);
+            return;
+          }
+          ctx.drawImage(img, 0, 0, tw, th);
+          canvas.toBlob(
+            function (blob) {
+              callback(blob);
+            },
+            "image/jpeg",
+            quality
+          );
+        };
+        img.onerror = function () {
+          URL.revokeObjectURL(url);
+          callback(null);
+        };
+        img.src = url;
+      }
+
+      function postClubLogo(blob) {
+        var tok = localStorage.getItem("token");
+        var base =
+          window.api &&
+          (typeof window.api.getApiBase === "function"
+            ? window.api.getApiBase()
+            : window.api.API_BASE);
+        if (!base) {
+          return Promise.reject(new Error("API not available."));
+        }
+        var url = base.replace(/\/$/, "") + "/coach-manager/clubinfo/logo";
+        var fd = new FormData();
+        fd.append("logo", blob, "club_logo.jpg");
+        var headers = {};
+        if (tok) {
+          headers.Authorization = "Bearer " + tok;
+        }
+        return fetch(url, {
+          method: "POST",
+          body: fd,
+          headers: headers,
+          credentials: "include",
+        }).then(function (res) {
+          return res.json().then(function (data) {
+            if (!res.ok) {
+              throw new Error(data.error || res.statusText || "Upload failed");
+            }
+            return data;
+          });
+        }).then(function (data) {
+          var hid = document.getElementById("fClubLogo");
+          if (hid) {
+            var rel =
+              (data.fields && fieldGet(data.fields, ["club_logo", "clubLogo"])) ||
+              data.club_logo ||
+              "";
+            hid.value = rel;
+          }
+          return data;
+        });
+      }
+
+      function postPaymentQr(blob, channel) {
+        var tok = localStorage.getItem("token");
+        var base =
+          window.api &&
+          (typeof window.api.getApiBase === "function"
+            ? window.api.getApiBase()
+            : window.api.API_BASE);
+        if (!base) {
+          return Promise.reject(new Error("API not available."));
+        }
+        var url = base.replace(/\/$/, "") + "/coach-manager/clubinfo/payment-qr";
+        var fd = new FormData();
+        fd.append("qr", blob, channel + "_qr.jpg");
+        fd.append("channel", channel);
+        var headers = {};
+        if (tok) {
+          headers.Authorization = "Bearer " + tok;
+        }
+        return fetch(url, {
+          method: "POST",
+          body: fd,
+          headers: headers,
+          credentials: "include",
+        })
+          .then(function (res) {
+            return res.json().then(function (data) {
+              if (!res.ok) {
+                throw new Error(data.error || res.statusText || "Upload failed");
+              }
+              return data;
+            });
+          })
+          .then(function (data) {
+            if (data.fields) {
+              applyPaymentQrHiddens(data.fields);
+            }
+            if (data.paymentQrUrls) {
+              applyPaymentQrPreviewsFromServer(data.paymentQrUrls);
+            }
+            return data;
+          });
+      }
+
+      function loadClubInfo() {
+        hideMessages();
+        var errEl = document.getElementById("loadErr");
+        if (!window.api || typeof window.api.api !== "function") {
+          if (errEl) {
+            errEl.textContent =
+              "Open Coach Manager from the running Node server (same host and port as your backend).";
+            errEl.classList.remove("hidden");
+          }
+          return Promise.resolve();
+        }
+        return window.api
+          .api("/coach-manager/clubinfo")
+          .then(function (data) {
+            if (!data || !data.fields) {
+              throw new Error("Invalid response.");
+            }
+            snapshot = Object.assign({}, data.fields);
+            applyFieldsToForm(data.fields);
+            lastClubLogoUrl = data.club_logo_url || null;
+            setLogoPreview(lastClubLogoUrl || null);
+            applyPaymentQrPreviewsFromServer(data.paymentQrUrls);
+            if (data.clubId && window.api.setClubFolderContext) {
+              window.api.setClubFolderContext(
+                data.clubId,
+                data.clubName != null ? String(data.clubName).trim() : null
+              );
+            }
+          })
+          .catch(function (e) {
+            if (errEl) {
+              errEl.textContent = e.message || "Could not load club information.";
+              errEl.classList.remove("hidden");
+            }
+          });
+      }
+
+      function wirePaymentQrFileInput(channel) {
+        var inp = document.getElementById("fPayQrFile-" + channel);
+        if (!inp) {
+          return;
+        }
+        inp.addEventListener("change", function () {
+          var f = inp.files && inp.files[0];
+          if (!f) {
+            return;
+          }
+          var errEl = document.getElementById("saveErr");
+          if (errEl) {
+            errEl.classList.add("hidden");
+            errEl.textContent = "";
+          }
+          resizeImageContainJpeg(f, 900, JPEG_QUALITY, function (blob) {
+            if (!blob) {
+              if (errEl) {
+                errEl.textContent = "Could not read that image. Try another file.";
+                errEl.classList.remove("hidden");
+              }
+              inp.value = "";
+              return;
+            }
+            pendingPaymentQrBlobs[channel] = blob;
+            if (localPaymentQrPreviewUrls[channel]) {
+              try {
+                URL.revokeObjectURL(localPaymentQrPreviewUrls[channel]);
+              } catch (e0) {
+                /* ignore */
+              }
+            }
+            localPaymentQrPreviewUrls[channel] = URL.createObjectURL(blob);
+            setPaymentQrPreview(channel, localPaymentQrPreviewUrls[channel]);
+          });
+        });
+      }
+
+      for (var qi = 0; qi < PAY_QR_ORDER.length; qi++) {
+        wirePaymentQrFileInput(PAY_QR_ORDER[qi]);
+      }
+
+      document.getElementById("fClubLogoFile").addEventListener("change", function () {
+        var inp = document.getElementById("fClubLogoFile");
+        var f = inp && inp.files && inp.files[0];
+        if (!f) {
+          return;
+        }
+        var errEl = document.getElementById("saveErr");
+        if (errEl) {
+          errEl.classList.add("hidden");
+          errEl.textContent = "";
+        }
+        resizeImageToFixedJpeg(f, LOGO_W, LOGO_H, JPEG_QUALITY, function (blob) {
+          if (!blob) {
+            if (errEl) {
+              errEl.textContent = "Could not read that image. Try another file.";
+              errEl.classList.remove("hidden");
+            }
+            inp.value = "";
+            return;
+          }
+          pendingLogoBlob = blob;
+          if (localPreviewUrl) {
+            try {
+              URL.revokeObjectURL(localPreviewUrl);
+            } catch (e2) {
+              /* ignore */
+            }
+          }
+          localPreviewUrl = URL.createObjectURL(blob);
+          setLogoPreview(localPreviewUrl);
+        });
+      });
+
+      document.getElementById("btnUpdate").addEventListener("click", function () {
+        hideMessages();
+        setEditable(true);
+      });
+
+      document.getElementById("btnCancelView").addEventListener("click", function () {
+        hideMessages();
+        loadClubInfo();
+      });
+
+      document.getElementById("btnCancelEdit").addEventListener("click", function () {
+        hideMessages();
+        clearLocalLogoState();
+        clearLocalPaymentQrState();
+        applyFieldsToForm(snapshot);
+        setLogoPreview(lastClubLogoUrl || null);
+        applyPaymentQrPreviewsFromServer(lastPaymentQrUrls);
+        setEditable(false);
+      });
+
+      document.getElementById("btnConfirm").addEventListener("click", function () {
+        hideMessages();
+        var errBox = document.getElementById("saveErr");
+        var okBox = document.getElementById("saveOk");
+        var btn = document.getElementById("btnConfirm");
+        btn.disabled = true;
+
+        var chain = Promise.resolve();
+        for (var pi = 0; pi < PAY_QR_ORDER.length; pi++) {
+          var pch = PAY_QR_ORDER[pi];
+          if (pendingPaymentQrBlobs[pch]) {
+            (function (ch, b) {
+              chain = chain.then(function () {
+                return postPaymentQr(b, ch);
+              });
+            })(pch, pendingPaymentQrBlobs[pch]);
+          }
+        }
+        if (pendingLogoBlob) {
+          chain = chain.then(function () {
+            return postClubLogo(pendingLogoBlob);
+          });
+        }
+
+        chain
+          .then(function () {
+            return window.api.api("/coach-manager/clubinfo", {
+              method: "PUT",
+              body: JSON.stringify(readFormForPut()),
+            });
+          })
+          .then(function (data) {
+            clearLocalLogoState();
+            clearLocalPaymentQrState();
+            return loadClubInfo().then(function () {
+              setEditable(false);
+              if (okBox) {
+                okBox.textContent =
+                  "Saved. Last update date is " +
+                  (data && data.lastUpdate_date ? data.lastUpdate_date : "today") +
+                  " (set automatically).";
+                okBox.classList.remove("hidden");
+              }
+            });
+          })
+          .catch(function (e) {
+            if (errBox) {
+              errBox.textContent = e.message || "Save failed.";
+              errBox.classList.remove("hidden");
+            }
+          })
+          .finally(function () {
+            btn.disabled = false;
+          });
+      });
+
+      window.addEventListener("message", function (ev) {
+        if (ev.origin !== window.location.origin) {
+          return;
+        }
+        var d = ev.data;
+        if (!d || d.type !== "sportCoach.clubContext") {
+          return;
+        }
+        var cid = String(d.clubId || d.uid || "").trim();
+        if (cid && window.api && typeof window.api.setClubFolderContext === "function") {
+          window.api.setClubFolderContext(
+            cid,
+            d.clubName != null && String(d.clubName).trim() !== ""
+              ? String(d.clubName).trim()
+              : null
+          );
+        }
+        loadClubInfo();
+      });
+
+      function escapeHtmlSc(s) {
+        if (s == null) {
+          return "";
+        }
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function safeMapHref(u) {
+        var s = String(u || "").trim();
+        return /^https?:\/\//i.test(s) ? s : "";
+      }
+
+      var scEditing = false;
+      var scLoadedActive = null;
+
+      function setSportCenterEditing(on) {
+        scEditing = on;
+        var checks = document.querySelectorAll("#sportCenterModalBody input.sc-check");
+        for (var i = 0; i < checks.length; i++) {
+          checks[i].disabled = !on;
+        }
+        var btnUp = document.getElementById("sportCenterBtnUpdate");
+        var btnCx = document.getElementById("sportCenterBtnCancelEdit");
+        if (btnUp) {
+          btnUp.textContent = on ? "Save" : "Update";
+        }
+        if (btnCx) {
+          btnCx.classList.toggle("hidden", !on);
+        }
+      }
+
+      function revertSportCenterChecks() {
+        if (!scLoadedActive) {
+          return;
+        }
+        var checks = document.querySelectorAll("#sportCenterModalBody input.sc-check");
+        for (var i = 0; i < checks.length; i++) {
+          var el = checks[i];
+          var idx = parseInt(el.getAttribute("data-row-index"), 10);
+          el.checked = scLoadedActive.has(idx);
+        }
+      }
+
+      function renderSportCenterModal(data) {
+        var body = document.getElementById("sportCenterModalBody");
+        var sub = document.getElementById("sportCenterModalSub");
+        if (!body) {
+          return;
+        }
+        var sections = (data && data.sections) || [];
+        var filter = data && data.sportTypeFilter;
+        if (sub) {
+          sub.textContent = filter
+            ? "Showing centers for sport type: " + filter + "."
+            : "No sport type in your club profile — showing all centers.";
+        }
+        if (!sections.length) {
+          body.innerHTML =
+            '<p class="text-sm text-slate-500">No sport centers in the list for this filter.</p>';
+          return;
+        }
+        var html = "";
+        for (var s = 0; s < sections.length; s++) {
+          var sec = sections[s];
+          var loc = sec.location || "—";
+          html +=
+            '<section class="mb-6 last:mb-2"><h3 class="text-sm font-semibold text-teal-200/90 mb-2 border-b border-white/10 pb-1">' +
+            escapeHtmlSc(loc) +
+            '</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-2">';
+          var centers = sec.centers || [];
+          for (var c = 0; c < centers.length; c++) {
+            var row = centers[c];
+            var st = String(row.status || "").trim().toUpperCase();
+            var active = st === "ACTIVE";
+            var cardClass = active
+              ? "border-yellow-300/90 bg-yellow-100 ring-1 ring-yellow-200/80 shadow-sm"
+              : "border-white/10 bg-slate-950/55 ring-1 ring-white/5";
+            var badgeClass = active
+              ? "bg-yellow-200 text-black border border-yellow-400/80 font-semibold"
+              : "bg-slate-700/90 text-slate-400 border border-white/5";
+            var titleClass = active ? "text-black" : "text-slate-200";
+            var addrClass = active ? "text-black" : "text-slate-500";
+            var mapClass = active
+              ? "text-black underline decoration-black/50 hover:text-neutral-800"
+              : "text-teal-500/80 hover:text-teal-400";
+            var chkClass = active
+              ? "border-black/35 bg-white accent-yellow-500"
+              : "border-white/20 bg-slate-900 text-teal-600";
+            var href = safeMapHref(row.link);
+            html +=
+              '<div class="flex gap-2.5 items-start rounded-lg border px-2.5 py-2 min-w-0 ' +
+              cardClass +
+              '">' +
+              '<input type="checkbox" class="sc-check mt-0.5 h-4 w-4 shrink-0 rounded focus:ring-teal-500/50 ' +
+              chkClass +
+              '" data-row-index="' +
+              row.rowIndex +
+              '" ' +
+              (active ? "checked " : "") +
+              'disabled />' +
+              '<div class="min-w-0 flex-1">' +
+              '<div class="flex flex-wrap items-center gap-1.5">' +
+              '<span class="font-medium text-sm leading-snug ' +
+              titleClass +
+              '">' +
+              escapeHtmlSc(row.sportCenter) +
+              "</span>" +
+              '<span class="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded ' +
+              badgeClass +
+              '">' +
+              escapeHtmlSc(st || "—") +
+              "</span>" +
+              (href
+                ? '<a href="' +
+                  escapeHtmlSc(href) +
+                  '" target="_blank" rel="noopener noreferrer" class="text-xs underline ' +
+                  mapClass +
+                  '">Map</a>'
+                : "") +
+              "</div>" +
+              (row.address
+                ? '<p class="text-[11px] mt-1 whitespace-pre-wrap leading-relaxed ' +
+                  addrClass +
+                  '">' +
+                  escapeHtmlSc(row.address) +
+                  "</p>"
+                : "") +
+              "</div></div>";
+          }
+          html += "</div></section>";
+        }
+        body.innerHTML = html;
+        scLoadedActive = new Set();
+        for (var s2 = 0; s2 < sections.length; s2++) {
+          var cen = sections[s2].centers || [];
+          for (var j = 0; j < cen.length; j++) {
+            var r = cen[j];
+            var st2 = String(r.status || "").trim().toUpperCase();
+            if (st2 === "ACTIVE") {
+              scLoadedActive.add(r.rowIndex);
+            }
+          }
+        }
+        setSportCenterEditing(false);
+      }
+
+      function loadSportCenterModalData() {
+        var errEl = document.getElementById("sportCenterModalErr");
+        var body = document.getElementById("sportCenterModalBody");
+        if (errEl) {
+          errEl.classList.add("hidden");
+          errEl.textContent = "";
+        }
+        if (body) {
+          body.innerHTML = '<p class="text-sm text-slate-500">Loading…</p>';
+        }
+        if (!window.api || typeof window.api.api !== "function") {
+          if (body) {
+            body.innerHTML =
+              '<p class="text-sm text-red-300">API not available.</p>';
+          }
+          return Promise.resolve();
+        }
+        return window.api
+          .api("/coach-manager/sport-centers")
+          .then(function (data) {
+            renderSportCenterModal(data);
+          })
+          .catch(function (e) {
+            if (errEl) {
+              errEl.textContent = e.message || "Could not load sport centers.";
+              errEl.classList.remove("hidden");
+            }
+            if (body) {
+              body.innerHTML = "";
+            }
+          });
+      }
+
+      function openSportCenterModal() {
+        var modal = document.getElementById("sportCenterModal");
+        if (modal) {
+          modal.classList.remove("hidden");
+          modal.setAttribute("aria-hidden", "false");
+        }
+        document.body.classList.add("overflow-hidden");
+        loadSportCenterModalData();
+      }
+
+      function closeCreateVenueModal() {
+        var m = document.getElementById("createVenueModal");
+        if (m) {
+          m.classList.add("hidden");
+          m.setAttribute("aria-hidden", "true");
+        }
+        var err = document.getElementById("createVenueModalErr");
+        if (err) {
+          err.classList.add("hidden");
+          err.textContent = "";
+        }
+      }
+
+      function openCreateVenueModal() {
+        var m = document.getElementById("createVenueModal");
+        if (m) {
+          m.classList.remove("hidden");
+          m.setAttribute("aria-hidden", "false");
+        }
+        var err = document.getElementById("createVenueModalErr");
+        if (err) {
+          err.classList.add("hidden");
+          err.textContent = "";
+        }
+        document.getElementById("newVenueLocation").value = "";
+        document.getElementById("newVenueSportCenter").value = "";
+        document.getElementById("newVenueAddress").value = "";
+        document.getElementById("newVenueLink").value = "";
+        if (window.api && typeof window.api.api === "function") {
+          window.api
+            .api("/basic-info")
+            .then(function (data) {
+              if (data && data.ok !== false) {
+                refillSelectOptions("newVenueCountry", data.countries || []);
+                refillSelectOptions("newVenueSportType", data.sportTypes || []);
+              }
+            })
+            .catch(function () {
+              /* keep existing options */
+            });
+        }
+      }
+
+      function closeSportCenterModal() {
+        closeCreateVenueModal();
+        var modal = document.getElementById("sportCenterModal");
+        if (modal) {
+          modal.classList.add("hidden");
+          modal.setAttribute("aria-hidden", "true");
+        }
+        document.body.classList.remove("overflow-hidden");
+        scEditing = false;
+        scLoadedActive = null;
+      }
+
+      document.getElementById("btnOpenSportCenters").addEventListener("click", function () {
+        openSportCenterModal();
+      });
+
+      document.getElementById("sportCenterBtnCreateVenue").addEventListener("click", function () {
+        openCreateVenueModal();
+      });
+
+      document.getElementById("createVenueModalBackdrop").addEventListener("click", closeCreateVenueModal);
+      document.getElementById("createVenueBtnCancel").addEventListener("click", closeCreateVenueModal);
+
+      document.getElementById("createVenueBtnConfirm").addEventListener("click", function () {
+        var errEl = document.getElementById("createVenueModalErr");
+        var btn = document.getElementById("createVenueBtnConfirm");
+        if (errEl) {
+          errEl.classList.add("hidden");
+          errEl.textContent = "";
+        }
+        var country = document.getElementById("newVenueCountry").value.trim();
+        var sportType = document.getElementById("newVenueSportType").value.trim();
+        var location = document.getElementById("newVenueLocation").value.trim();
+        var sportCenter = document.getElementById("newVenueSportCenter").value.trim();
+        var address = document.getElementById("newVenueAddress").value.trim();
+        var link = document.getElementById("newVenueLink").value.trim();
+        if (!country || !sportType || !location || !sportCenter) {
+          if (errEl) {
+            errEl.textContent =
+              "Please select Country, SportType, and Location, and enter sport_center (venue name).";
+            errEl.classList.remove("hidden");
+          }
+          return;
+        }
+        btn.disabled = true;
+        window.api
+          .api("/coach-manager/sport-centers", {
+            method: "POST",
+            body: JSON.stringify({
+              country: country,
+              sportType: sportType,
+              location: location,
+              sport_center: sportCenter,
+              address: address,
+              link: link,
+            }),
+          })
+          .then(function () {
+            closeCreateVenueModal();
+            return loadSportCenterModalData();
+          })
+          .catch(function (e) {
+            if (errEl) {
+              errEl.textContent = e.message || "Could not create venue.";
+              errEl.classList.remove("hidden");
+            }
+          })
+          .finally(function () {
+            btn.disabled = false;
+          });
+      });
+
+      function wireSportCenterModalClose() {
+        closeSportCenterModal();
+      }
+
+      document.getElementById("sportCenterModalBackdrop").addEventListener("click", wireSportCenterModalClose);
+      document.getElementById("sportCenterModalCloseX").addEventListener("click", wireSportCenterModalClose);
+      document.getElementById("sportCenterBtnClose").addEventListener("click", wireSportCenterModalClose);
+
+      document.getElementById("sportCenterBtnCancelEdit").addEventListener("click", function () {
+        revertSportCenterChecks();
+        setSportCenterEditing(false);
+      });
+
+      document.getElementById("sportCenterBtnUpdate").addEventListener("click", function () {
+        var btn = document.getElementById("sportCenterBtnUpdate");
+        var errEl = document.getElementById("sportCenterModalErr");
+        if (!scEditing) {
+          setSportCenterEditing(true);
+          return;
+        }
+        var activeRowIndices = [];
+        var checks = document.querySelectorAll("#sportCenterModalBody input.sc-check");
+        for (var i = 0; i < checks.length; i++) {
+          if (checks[i].checked) {
+            var idx = parseInt(checks[i].getAttribute("data-row-index"), 10);
+            if (!isNaN(idx)) {
+              activeRowIndices.push(idx);
+            }
+          }
+        }
+        btn.disabled = true;
+        if (errEl) {
+          errEl.classList.add("hidden");
+          errEl.textContent = "";
+        }
+        window.api
+          .api("/coach-manager/sport-centers", {
+            method: "PUT",
+            body: JSON.stringify({ activeRowIndices: activeRowIndices }),
+          })
+          .then(function () {
+            return loadSportCenterModalData();
+          })
+          .catch(function (e) {
+            if (errEl) {
+              errEl.textContent = e.message || "Save failed.";
+              errEl.classList.remove("hidden");
+            }
+          })
+          .finally(function () {
+            btn.disabled = false;
+          });
+      });
+
+      loadBasicInfoLists().then(function () {
+        return loadClubInfo();
+      });
+    })();
+  </script>
+</body>
+</html>

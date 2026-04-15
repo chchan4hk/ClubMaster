@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Browse Lessons</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    @keyframes reserve-silver-metallic {
+      0%,
+      100% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+    }
+    #reserveConfirmPanel.reserve-modal-metallic {
+      background: linear-gradient(
+        118deg,
+        #f4f6f8 0%,
+        #e8ecf0 14%,
+        #d1d8e0 28%,
+        #a8b4c0 42%,
+        #8e9aa8 50%,
+        #a8b4c0 58%,
+        #d1d8e0 72%,
+        #eceff3 86%,
+        #f4f6f8 100%
+      );
+      background-size: 280% 280%;
+      animation: reserve-silver-metallic 7s ease-in-out infinite;
+      border-color: rgba(100, 116, 139, 0.45);
+      box-shadow:
+        0 25px 50px -12px rgba(15, 23, 42, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        inset 0 -2px 8px rgba(71, 85, 105, 0.12);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #reserveConfirmPanel.reserve-modal-metallic {
+        animation: none;
+        background-position: 50% 50%;
+      }
+    }
+    @keyframes cancel-orange-metallic {
+      0%,
+      100% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+    }
+    #cancelBookingMessageBox.cancel-metallic-orange {
+      background: linear-gradient(
+        118deg,
+        #fff7ed 0%,
+        #ffedd5 12%,
+        #fdba74 28%,
+        #fb923c 42%,
+        #ea580c 50%,
+        #fb923c 58%,
+        #fdba74 72%,
+        #fed7aa 88%,
+        #fff7ed 100%
+      );
+      background-size: 300% 300%;
+      animation: cancel-orange-metallic 6.5s ease-in-out infinite;
+      border: 2px solid rgba(154, 52, 18, 0.4);
+      box-shadow:
+        inset 0 2px 0 rgba(255, 255, 255, 0.55),
+        inset 0 -3px 12px rgba(194, 65, 12, 0.18),
+        0 4px 24px rgba(124, 45, 18, 0.35);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #cancelBookingMessageBox.cancel-metallic-orange {
+        animation: none;
+        background-position: 50% 50%;
+      }
+    }
+  </style>
+</head>
+<body
+  class="dashboard-dynamic-bg min-h-screen text-slate-100 p-6"
+  style="--dashboard-bg-img: url('/Source/Image/coach.jpg');">
+  <div class="dynamic-bg-stack" aria-hidden="true">
+    <div class="dynamic-bg-photo"></div>
+    <div class="dynamic-bg-overlay"></div>
+    <canvas class="dynamic-bg-star-net"></canvas>
+    <div class="dynamic-bg-spot-glow"></div>
+  </div>
+
+  <div class="max-w-6xl mx-auto">
+    <header class="mb-6">
+      <p id="backLinkWrap">
+        <a id="backTopLink" href="/coach.html" target="_top"
+          class="text-sm text-teal-400/90 hover:text-teal-300 underline-offset-2 hover:underline">
+          ← Back
+        </a>
+      </p>
+      <h1 class="text-2xl font-bold text-teal-300 mt-2" id="lessonBrowseHeading">Browse Lessons</h1>
+    </header>
+
+    <section class="glass rounded-xl border border-white/15 p-4 mb-6 overflow-x-auto">
+      <h2 class="text-lg font-semibold text-teal-200 mb-1">Lesson list</h2>
+      <p class="text-xs text-slate-500 mb-3" id="lessonBrowseIntro">
+        Read-only lesson list for your club (data from <code class="text-slate-400">LessonList.json</code>, same columns as Lesson Reservation).
+        Coaches see every lesson in the club; Coach Managers see the same full list. No edits.
+      </p>
+      <p id="fullLessonListError" class="hidden text-sm text-red-300 mb-2"></p>
+      <p id="fullLessonListWarn" class="hidden text-sm text-amber-200/90 mb-2"></p>
+      <table class="w-full text-sm text-left border-collapse min-w-max">
+        <thead>
+          <tr id="fullLessonListHeadRow" class="border-b border-white/10 text-slate-400">
+            <th class="py-2 pr-3 font-medium">…</th>
+          </tr>
+        </thead>
+        <tbody id="fullLessonListBody">
+          <tr><td class="py-4 text-slate-500">Loading…</td></tr>
+        </tbody>
+      </table>
+
+      <div class="mt-4 flex flex-wrap gap-2">
+        <button type="button" id="btnLessonTimetable"
+          class="rounded-lg bg-yellow-100 hover:bg-yellow-200/90 border border-yellow-200 text-slate-800 font-medium px-4 py-2 text-sm shadow-sm">
+          Lesson TimeTable
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <div id="reserveConfirmBackdrop" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+    role="presentation" aria-hidden="true">
+    <div id="reserveConfirmPanel" role="dialog" aria-modal="true" aria-labelledby="reserveConfirmTitle"
+      class="reserve-modal-metallic max-w-lg w-full rounded-xl border shadow-xl p-5 max-h-[90vh] overflow-y-auto">
+      <h3 id="reserveConfirmTitle" class="text-lg font-semibold text-teal-900 mb-3 drop-shadow-sm">Reserve this lesson</h3>
+      <p class="text-xs text-slate-600 mb-3">Review the details below. Your booking is saved when you confirm.</p>
+      <dl id="reserveConfirmDetails" class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm border border-slate-500/40 rounded-lg p-3 bg-white/15 shadow-inner shadow-slate-900/15">
+      </dl>
+      <p id="reserveConfirmError" class="hidden text-sm text-red-700 font-medium mt-3"></p>
+      <div class="mt-5 flex flex-wrap gap-2 justify-end">
+        <button type="button" id="reserveConfirmCancel"
+          class="rounded-lg border border-slate-500/50 bg-white/50 hover:bg-white/75 text-slate-800 px-4 py-2 text-sm font-medium shadow-sm">
+          Cancel
+        </button>
+        <button type="button" id="reserveConfirmOk"
+          class="rounded-lg border-2 border-amber-500/90 bg-neutral-950 text-amber-400 hover:bg-neutral-900 hover:border-amber-400 hover:text-amber-300 px-4 py-2 text-sm font-semibold shadow-lg shadow-amber-900/20">
+          Confirm to Reserve
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="cancelBookingBackdrop" class="hidden fixed inset-0 z-[55] flex items-center justify-center p-4 bg-black/55 backdrop-blur-sm"
+    role="presentation" aria-hidden="true">
+    <div id="cancelBookingDialog" role="dialog" aria-modal="true" aria-labelledby="cancelBookingQuestion"
+      class="max-w-md w-full rounded-2xl shadow-2xl overflow-hidden outline-none ring-2 ring-orange-400/25">
+      <div id="cancelBookingMessageBox" class="cancel-metallic-orange px-10 py-12 sm:px-12 sm:py-14">
+        <p id="cancelBookingQuestion" class="text-center text-lg sm:text-xl font-semibold text-amber-950 leading-snug drop-shadow-sm">
+          Confirm to cancel the booking?
+        </p>
+      </div>
+      <div class="bg-neutral-950/92 border-t border-orange-950/40 px-4 py-3">
+        <p id="cancelBookingModalError" class="hidden text-sm text-red-300 text-center mb-3"></p>
+        <div class="flex flex-wrap justify-center gap-3">
+          <button type="button" id="cancelBookingNo"
+            class="rounded-lg border border-white/20 bg-white/10 hover:bg-white/15 text-slate-100 px-6 py-2.5 text-sm font-medium min-w-[5rem]">
+            No
+          </button>
+          <button type="button" id="cancelBookingYes"
+            class="rounded-lg border-2 border-amber-600/90 bg-orange-700 hover:bg-orange-600 text-white px-6 py-2.5 text-sm font-semibold min-w-[5rem] shadow-md shadow-orange-950/40">
+            Yes
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/dashboard-dynamic-bg.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    (function () {
+      var isFramed = false;
+      try {
+        isFramed = window.self !== window.top;
+      } catch (e) {
+        isFramed = true;
+      }
+
+      var token =
+        window.auth &&
+        typeof window.auth.getToken === "function" &&
+        window.auth.getToken();
+      var role = localStorage.getItem("userRole");
+      var isStudentRole = role === "Student";
+      var sessionOk =
+        Boolean(token) &&
+        (role === "CoachManager" || role === "Coach" || role === "Student");
+
+      if (isFramed) {
+        var bw = document.getElementById("backLinkWrap");
+        if (bw) {
+          bw.classList.add("hidden");
+        }
+      }
+
+      var backA = document.getElementById("backTopLink");
+      if (backA) {
+        if (role === "CoachManager") {
+          backA.setAttribute("href", "/coach-manager.html");
+          backA.textContent = "← Back to Coach Manager";
+        } else if (isStudentRole) {
+          backA.setAttribute("href", "/student.html");
+          backA.textContent = "← Back to Student";
+        } else {
+          backA.setAttribute("href", "/coach.html");
+          backA.textContent = "← Back to Coach";
+        }
+      }
+
+      if (isStudentRole) {
+        var hh = document.getElementById("lessonBrowseHeading");
+        if (hh) {
+          hh.textContent = "Browse Lessons";
+        }
+        var intro = document.getElementById("lessonBrowseIntro");
+        if (intro) {
+          intro.classList.add("hidden");
+          intro.textContent = "";
+        }
+        var btnTt = document.getElementById("btnLessonTimetable");
+        if (btnTt) {
+          btnTt.classList.add("hidden");
+        }
+      }
+
+      function setUidLabels(uid) {
+        var u = uid && String(uid).trim() ? String(uid).trim() : "…";
+        document.querySelectorAll(".hdrUidInline").forEach(function (n) {
+          n.textContent = u;
+        });
+      }
+
+      (function primeClubIdFromUrlOrCache() {
+        var q = new URLSearchParams(window.location.search || "");
+        var id = (q.get("clubId") || q.get("uid") || "").trim();
+        var ctx =
+          window.api &&
+          window.api.getClubFolderContext &&
+          window.api.getClubFolderContext();
+        if (ctx && ctx.clubId) {
+          id = id || String(ctx.clubId).trim();
+        }
+        if (id) {
+          setUidLabels(id);
+        }
+      })();
+
+      function getLessonModuleClubId() {
+        var q = new URLSearchParams(window.location.search || "");
+        var id = (q.get("clubId") || q.get("uid") || "").trim();
+        var ctx =
+          window.api &&
+          window.api.getClubFolderContext &&
+          window.api.getClubFolderContext();
+        if (ctx && ctx.clubId) {
+          id = id || String(ctx.clubId).trim();
+        }
+        return id;
+      }
+
+      if (!isFramed) {
+        if (isStudentRole) {
+          if (!window.auth.guardPage("Student")) {
+            return;
+          }
+        } else if (role === "CoachManager") {
+          if (!window.auth.guardPage("CoachManager")) {
+            return;
+          }
+        } else if (role === "Coach") {
+          if (!window.auth.guardPage("Coach")) {
+            return;
+          }
+        } else {
+          return;
+        }
+      }
+
+      function escapeHtml(s) {
+        if (s == null) {
+          return "";
+        }
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      var cachedLessons = [];
+
+      var LESSON_TABLE_COLS = [
+        { key: "LessonID", label: "Lesson ID" },
+        { key: "Year", label: "Year" },
+        { key: "class_id", label: "Class ID" },
+        { key: "class_info", label: "Class info" },
+        { key: "class_time", label: "Class time" },
+        { key: "class_fee", label: "Class fee" },
+        { key: "Coach Name", label: "Coach Name" },
+        { key: "Sport_center", label: "Sport Center" },
+        { key: "court_no", label: "Court no." },
+        { key: "max_number", label: "Max number" },
+        { key: "ReservedNumber", label: "Reserved #" },
+        { key: "lesson_start_date", label: "Lesson start date" },
+        { key: "lesson_end_date", label: "Lesson end date" },
+        { key: "SportType", label: "Sport Type" },
+      ];
+
+      function rawLessonTableFromResponse(data) {
+        if (!data) {
+          return null;
+        }
+        return data.lessonListRaw != null ? data.lessonListRaw : data.lessonCsv || null;
+      }
+
+      function renderLessonTableFromApi(lessons) {
+        var headRow = document.getElementById("fullLessonListHeadRow");
+        var tb = document.getElementById("fullLessonListBody");
+        if (!headRow || !tb) {
+          return;
+        }
+        if (!lessons || !lessons.length) {
+          headRow.innerHTML =
+            '<th class="py-2 pr-3 font-medium text-slate-400">—</th>';
+          tb.innerHTML =
+            '<tr><td class="py-4 text-slate-500">No lessons in list yet.</td></tr>';
+          return;
+        }
+        headRow.innerHTML =
+          (isStudentRole
+            ? '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap min-w-[9rem]">Reserve / Cancel</th>'
+            : "") +
+          LESSON_TABLE_COLS.map(function (col) {
+            return (
+              '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap max-w-[14rem]">' +
+              escapeHtml(col.label) +
+              "</th>"
+            );
+          }).join("");
+        tb.innerHTML = lessons
+          .map(function (L) {
+            var tds = LESSON_TABLE_COLS.map(function (col) {
+              var v = L[col.key] != null ? String(L[col.key]) : "";
+              return (
+                '<td class="py-2 pr-3 text-xs align-top whitespace-pre-wrap break-words max-w-[16rem]">' +
+                escapeHtml(v) +
+                "</td>"
+              );
+            }).join("");
+            var lid =
+              L.LessonID != null && String(L.LessonID).trim() !== ""
+                ? String(L.LessonID).trim()
+                : "";
+            var reserveCell = "";
+            if (isStudentRole) {
+              var st = (L.status || "").toString().trim().toUpperCase();
+              var hasMyBooking = Boolean(L.studentHasActiveReservation);
+              if (st === "ACTIVE" && lid) {
+                var parts = [];
+                if (!hasMyBooking) {
+                  parts.push(
+                    '<button type="button" class="lb-reserve rounded-md bg-green-800 hover:bg-green-700 text-white text-xs font-medium px-2.5 py-1.5 disabled:opacity-50" data-lesson-id="' +
+                      escapeHtml(lid) +
+                      '">Reserve</button>'
+                  );
+                }
+                if (hasMyBooking) {
+                  parts.push(
+                    '<button type="button" class="lb-cancel-booking rounded-md bg-rose-200/90 hover:bg-rose-300/90 border border-rose-300/80 text-rose-950 text-xs font-medium px-2.5 py-1.5 disabled:opacity-50 shadow-sm" data-lesson-id="' +
+                      escapeHtml(lid) +
+                      '">Cancel Booking</button>'
+                  );
+                }
+                reserveCell =
+                  '<td class="py-2 pr-3 align-top whitespace-nowrap">' +
+                  '<div class="flex flex-wrap items-center gap-1">' +
+                  parts.join("") +
+                  "</div></td>";
+              } else {
+                reserveCell =
+                  '<td class="py-2 pr-3 text-xs text-slate-500 align-top">—</td>';
+              }
+            }
+            return (
+              '<tr class="border-b border-white/5">' +
+              (isStudentRole ? reserveCell : "") +
+              tds +
+              "</tr>"
+            );
+          })
+          .join("");
+      }
+
+      function renderLessonListRawFallback(raw) {
+        var headRow = document.getElementById("fullLessonListHeadRow");
+        var tb = document.getElementById("fullLessonListBody");
+        if (!headRow || !tb) {
+          return;
+        }
+        if (!raw || !raw.headers || !raw.headers.length) {
+          headRow.innerHTML =
+            '<th class="py-2 pr-3 font-medium text-slate-400">—</th>';
+          tb.innerHTML =
+            '<tr><td class="py-4 text-slate-500">No lessons found.</td></tr>';
+          return;
+        }
+        var colCount = raw.headers.length;
+        headRow.innerHTML = raw.headers
+          .map(function (h) {
+            return (
+              '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap max-w-[14rem]">' +
+              escapeHtml(h) +
+              "</th>"
+            );
+          })
+          .join("");
+        if (!raw.rows || !raw.rows.length) {
+          tb.innerHTML =
+            '<tr><td colspan="' +
+            colCount +
+            '" class="py-4 text-slate-500">Header only — no data rows yet.</td></tr>';
+          return;
+        }
+        try {
+          tb.innerHTML = raw.rows
+            .map(function (row) {
+              var cells = Array.isArray(row) ? row : [];
+              return (
+                '<tr class="border-b border-white/5">' +
+                cells
+                  .map(function (cell) {
+                    return (
+                      '<td class="py-2 pr-3 text-xs align-top whitespace-pre-wrap break-words max-w-[16rem]">' +
+                      escapeHtml(cell) +
+                      "</td>"
+                    );
+                  })
+                  .join("") +
+                "</tr>"
+              );
+            })
+            .join("");
+        } catch (renderErr) {
+          tb.innerHTML =
+            '<tr><td colspan="' +
+            colCount +
+            '" class="py-4 text-red-300">Could not render table: ' +
+            escapeHtml(
+              renderErr && renderErr.message ? renderErr.message : String(renderErr)
+            ) +
+            "</td></tr>";
+        }
+      }
+
+      var loadSeq = 0;
+      var loadAbort = null;
+
+      function lessonsApiPath() {
+        if (role === "Coach" || isStudentRole) {
+          var cid = (getLessonModuleClubId() || "").trim();
+          if (!cid) {
+            return null;
+          }
+          return (
+            "/coach-manager/lessons?clubId=" + encodeURIComponent(cid)
+          );
+        }
+        return "/coach-manager/lessons";
+      }
+
+      function loadLessonList() {
+        var errEl = document.getElementById("fullLessonListError");
+        var warnEl = document.getElementById("fullLessonListWarn");
+        if (errEl) {
+          errEl.classList.add("hidden");
+        }
+        if (warnEl) {
+          warnEl.classList.add("hidden");
+          warnEl.textContent = "";
+          warnEl.classList.add("text-amber-200/90");
+          warnEl.classList.remove("text-teal-300");
+        }
+
+        if (!window.api || typeof window.api.api !== "function") {
+          if (errEl) {
+            errEl.textContent =
+              "Scripts failed to load. Open this site from the running Node server (same origin), not file://.";
+            errEl.classList.remove("hidden");
+          }
+          cachedLessons = [];
+          renderLessonListRawFallback(null);
+          return;
+        }
+
+        loadSeq += 1;
+        var mySeq = loadSeq;
+        if (loadAbort) {
+          try {
+            loadAbort.abort();
+          } catch (abortErr) {
+            /* ignore */
+          }
+        }
+        loadAbort =
+          typeof AbortController !== "undefined" ? new AbortController() : null;
+        var fetchOpts = loadAbort ? { signal: loadAbort.signal } : {};
+
+        var path = lessonsApiPath();
+        if (!path) {
+          if (errEl) {
+            errEl.textContent =
+              isStudentRole
+                ? "Missing club context. Open Browse Lessons from the Student dashboard (Overview), or sign in again."
+                : "Missing Club ID. Open Browse Lessons from the Coach dashboard, or add ?clubId=YOUR_CLUB_ID to the URL.";
+            errEl.classList.remove("hidden");
+          }
+          cachedLessons = [];
+          renderLessonListRawFallback(null);
+          return;
+        }
+
+        window.api
+          .api(path, fetchOpts)
+          .then(function (data) {
+            if (mySeq !== loadSeq) {
+              return;
+            }
+            if (!data || data.ok === false) {
+              var failMsg =
+                (data && data.error) || "Could not load lesson list (server error).";
+              if (errEl) {
+                errEl.textContent = failMsg;
+                errEl.classList.remove("hidden");
+              }
+              cachedLessons = [];
+              renderLessonListRawFallback(null);
+              return;
+            }
+            if (data.clubId) {
+              setUidLabels(data.clubId);
+            }
+            var parts = [];
+            if (warnEl && data.lessonsParseWarning) {
+              parts.push(
+                "Lesson list could not be read in full. " +
+                  data.lessonsParseWarning
+              );
+            }
+            if (warnEl && parts.length) {
+              warnEl.textContent = parts.join(" ");
+              warnEl.classList.remove("hidden");
+            }
+            cachedLessons = Array.isArray(data.lessons) ? data.lessons.slice() : [];
+            try {
+              if (cachedLessons.length > 0) {
+                renderLessonTableFromApi(cachedLessons);
+              } else {
+                renderLessonListRawFallback(rawLessonTableFromResponse(data));
+              }
+            } catch (renderErr) {
+              if (errEl) {
+                errEl.textContent =
+                  renderErr && renderErr.message
+                    ? renderErr.message
+                    : "Failed to render table.";
+                errEl.classList.remove("hidden");
+              }
+              cachedLessons = [];
+              renderLessonListRawFallback(rawLessonTableFromResponse(data));
+            }
+          })
+          .catch(function (e) {
+            if (mySeq !== loadSeq) {
+              return;
+            }
+            if (e && (e.name === "AbortError" || (e.cause && e.cause.name === "AbortError"))) {
+              return;
+            }
+            var msg = e.message || "Could not load lessons.";
+            if (e.status === 401 || /Unauthorized|Invalid token/i.test(msg)) {
+              msg +=
+                " Sign in on the same host you used to open this site (do not mix localhost and 127.0.0.1).";
+            }
+            if (errEl) {
+              errEl.textContent = msg;
+              errEl.classList.remove("hidden");
+            }
+            cachedLessons = [];
+            renderLessonListRawFallback(null);
+          });
+      }
+
+      window.addEventListener("message", function (ev) {
+        if (ev.origin !== window.location.origin) {
+          return;
+        }
+        var d = ev.data;
+        if (!d || d.type !== "sportCoach.clubContext") {
+          return;
+        }
+        var cid = String(d.clubId || d.uid || "").trim();
+        if (cid) {
+          setUidLabels(cid);
+        }
+        if (
+          window.api &&
+          typeof window.api.setClubFolderContext === "function"
+        ) {
+          window.api.setClubFolderContext(
+            cid || null,
+            d.clubName != null && String(d.clubName).trim() !== ""
+              ? String(d.clubName).trim()
+              : null
+          );
+        }
+        loadLessonList();
+      });
+
+      if (window.api && typeof window.api.api === "function") {
+        window.api
+          .api("/me")
+          .then(function (d) {
+            var u = d.user || {};
+            var cfu =
+              u.club_folder_uid != null && String(u.club_folder_uid).trim() !== ""
+                ? String(u.club_folder_uid).trim()
+                : "";
+            setUidLabels(cfu || u.uid);
+          })
+          .catch(function () {
+            /* ignore */
+          })
+          .finally(function () {
+            loadLessonList();
+          });
+      } else {
+        loadLessonList();
+      }
+
+      var pendingReserveLessonId = null;
+      var reserveBackdrop = document.getElementById("reserveConfirmBackdrop");
+      var reservePanel = document.getElementById("reserveConfirmPanel");
+      var reserveDetails = document.getElementById("reserveConfirmDetails");
+      var reserveModalErr = document.getElementById("reserveConfirmError");
+      var reserveBtnOk = document.getElementById("reserveConfirmOk");
+      var reserveBtnCancel = document.getElementById("reserveConfirmCancel");
+
+      var pendingCancelLessonId = null;
+      var cancelBookingBackdrop = document.getElementById("cancelBookingBackdrop");
+      var cancelBookingDialog = document.getElementById("cancelBookingDialog");
+      var cancelBookingModalError = document.getElementById("cancelBookingModalError");
+      var cancelBookingNo = document.getElementById("cancelBookingNo");
+      var cancelBookingYes = document.getElementById("cancelBookingYes");
+
+      function closeCancelBookingModal() {
+        pendingCancelLessonId = null;
+        if (cancelBookingBackdrop) {
+          cancelBookingBackdrop.classList.add("hidden");
+          cancelBookingBackdrop.setAttribute("aria-hidden", "true");
+        }
+        if (cancelBookingModalError) {
+          cancelBookingModalError.classList.add("hidden");
+          cancelBookingModalError.textContent = "";
+        }
+        if (cancelBookingYes) {
+          cancelBookingYes.disabled = false;
+        }
+        if (cancelBookingNo) {
+          cancelBookingNo.disabled = false;
+        }
+      }
+
+      function openCancelBookingModal(lessonId) {
+        if (!cancelBookingBackdrop || !lessonId) {
+          return;
+        }
+        pendingCancelLessonId = lessonId;
+        if (cancelBookingModalError) {
+          cancelBookingModalError.classList.add("hidden");
+          cancelBookingModalError.textContent = "";
+        }
+        cancelBookingBackdrop.classList.remove("hidden");
+        cancelBookingBackdrop.setAttribute("aria-hidden", "false");
+        if (cancelBookingNo) {
+          cancelBookingNo.focus();
+        }
+      }
+
+      function submitCancelBooking() {
+        var lid = pendingCancelLessonId;
+        if (!lid || !window.api || typeof window.api.api !== "function") {
+          return;
+        }
+        var errCancel = document.getElementById("fullLessonListError");
+        var warnCancel = document.getElementById("fullLessonListWarn");
+        if (errCancel) {
+          errCancel.classList.add("hidden");
+          errCancel.textContent = "";
+        }
+        if (warnCancel) {
+          warnCancel.classList.add("hidden");
+          warnCancel.textContent = "";
+          warnCancel.classList.add("text-amber-200/90");
+          warnCancel.classList.remove("text-teal-300");
+        }
+        if (cancelBookingModalError) {
+          cancelBookingModalError.classList.add("hidden");
+          cancelBookingModalError.textContent = "";
+        }
+        if (cancelBookingYes) {
+          cancelBookingYes.disabled = true;
+        }
+        if (cancelBookingNo) {
+          cancelBookingNo.disabled = true;
+        }
+        window.api
+          .api("/coach-manager/lessons/cancel-reserve", {
+            method: "POST",
+            body: JSON.stringify({ lessonId: lid }),
+          })
+          .then(function (data) {
+            closeCancelBookingModal();
+            if (warnCancel) {
+              warnCancel.classList.remove("text-amber-200/90");
+              warnCancel.classList.add("text-teal-300");
+              warnCancel.textContent =
+                (data && data.message ? data.message : "Booking cancelled.") +
+                (data && data.lessonReserveId
+                  ? " (ref: " + data.lessonReserveId + ")"
+                  : "");
+              warnCancel.classList.remove("hidden");
+            }
+            loadLessonList();
+          })
+          .catch(function (e) {
+            var msg = e.message || "Could not cancel booking.";
+            if (cancelBookingModalError) {
+              cancelBookingModalError.textContent = msg;
+              cancelBookingModalError.classList.remove("hidden");
+            }
+            if (cancelBookingYes) {
+              cancelBookingYes.disabled = false;
+            }
+            if (cancelBookingNo) {
+              cancelBookingNo.disabled = false;
+            }
+          });
+      }
+
+      function lessonDisplayField(L, key) {
+        if (!L) {
+          return "";
+        }
+        var v = L[key];
+        return v != null && String(v).trim() !== "" ? String(v) : "—";
+      }
+
+      function lessonPeriodText(L) {
+        var a = lessonDisplayField(L, "lesson_start_date");
+        var b = lessonDisplayField(L, "lesson_end_date");
+        if (a === "—" && b === "—") {
+          return "—";
+        }
+        if (a === "—") {
+          return b;
+        }
+        if (b === "—") {
+          return a;
+        }
+        return a + " to " + b;
+      }
+
+      function buildReserveDetailRows(L) {
+        var rows = [
+          { label: "Lesson ID", value: lessonDisplayField(L, "LessonID") },
+          { label: "Sport Type", value: lessonDisplayField(L, "SportType") },
+          { label: "Year", value: lessonDisplayField(L, "Year") },
+          { label: "Class Info", value: lessonDisplayField(L, "class_info") },
+          { label: "Class Time", value: lessonDisplayField(L, "class_time") },
+          { label: "Max Number", value: lessonDisplayField(L, "max_number") },
+          { label: "Sport Center", value: lessonDisplayField(L, "Sport_center") },
+          { label: "Lesson Period", value: lessonPeriodText(L) },
+          { label: "CourtNo", value: lessonDisplayField(L, "court_no") },
+          { label: "Coach Name", value: lessonDisplayField(L, "Coach Name") },
+        ];
+        return rows
+          .map(function (r) {
+            return (
+              '<dt class="text-slate-600 whitespace-nowrap">' +
+              escapeHtml(r.label) +
+              "</dt>" +
+              '<dd class="text-slate-900 min-w-0 break-words font-medium">' +
+              escapeHtml(r.value) +
+              "</dd>"
+            );
+          })
+          .join("");
+      }
+
+      function closeReserveModal() {
+        pendingReserveLessonId = null;
+        if (reserveBackdrop) {
+          reserveBackdrop.classList.add("hidden");
+          reserveBackdrop.setAttribute("aria-hidden", "true");
+        }
+        if (reserveModalErr) {
+          reserveModalErr.classList.add("hidden");
+          reserveModalErr.textContent = "";
+        }
+        if (reserveBtnOk) {
+          reserveBtnOk.disabled = false;
+        }
+      }
+
+      function openReserveModal(lessonId) {
+        if (!reserveBackdrop || !reserveDetails) {
+          return;
+        }
+        var L = null;
+        for (var i = 0; i < cachedLessons.length; i++) {
+          var x = cachedLessons[i];
+          var id =
+            x && x.LessonID != null && String(x.LessonID).trim() !== ""
+              ? String(x.LessonID).trim()
+              : "";
+          if (id === lessonId) {
+            L = x;
+            break;
+          }
+        }
+        if (!L) {
+          var errEl = document.getElementById("fullLessonListError");
+          if (errEl) {
+            errEl.textContent = "Could not load lesson details. Refresh the list and try again.";
+            errEl.classList.remove("hidden");
+          }
+          return;
+        }
+        pendingReserveLessonId = lessonId;
+        reserveDetails.innerHTML = buildReserveDetailRows(L);
+        if (reserveModalErr) {
+          reserveModalErr.classList.add("hidden");
+          reserveModalErr.textContent = "";
+        }
+        reserveBackdrop.classList.remove("hidden");
+        reserveBackdrop.setAttribute("aria-hidden", "false");
+        if (reserveBtnOk) {
+          reserveBtnOk.focus();
+        }
+      }
+
+      if (reserveBackdrop) {
+        reserveBackdrop.addEventListener("click", function (ev) {
+          if (ev.target === reserveBackdrop) {
+            closeReserveModal();
+          }
+        });
+      }
+      if (reserveBtnCancel) {
+        reserveBtnCancel.addEventListener("click", closeReserveModal);
+      }
+      if (reservePanel) {
+        reservePanel.addEventListener("click", function (ev) {
+          ev.stopPropagation();
+        });
+      }
+      document.addEventListener("keydown", function (ev) {
+        if (ev.key !== "Escape") {
+          return;
+        }
+        if (
+          cancelBookingBackdrop &&
+          !cancelBookingBackdrop.classList.contains("hidden")
+        ) {
+          closeCancelBookingModal();
+          return;
+        }
+        if (reserveBackdrop && !reserveBackdrop.classList.contains("hidden")) {
+          closeReserveModal();
+        }
+      });
+
+      if (cancelBookingBackdrop) {
+        cancelBookingBackdrop.addEventListener("click", function (ev) {
+          if (ev.target === cancelBookingBackdrop) {
+            closeCancelBookingModal();
+          }
+        });
+      }
+      if (cancelBookingDialog) {
+        cancelBookingDialog.addEventListener("click", function (ev) {
+          ev.stopPropagation();
+        });
+      }
+      if (cancelBookingNo) {
+        cancelBookingNo.addEventListener("click", closeCancelBookingModal);
+      }
+      if (cancelBookingYes && isStudentRole) {
+        cancelBookingYes.addEventListener("click", submitCancelBooking);
+      }
+
+      if (reserveBtnOk && isStudentRole) {
+        reserveBtnOk.addEventListener("click", function () {
+          var lid = pendingReserveLessonId;
+          if (!lid || !window.api || typeof window.api.api !== "function") {
+            return;
+          }
+          var errEl = document.getElementById("fullLessonListError");
+          var warnEl = document.getElementById("fullLessonListWarn");
+          if (errEl) {
+            errEl.classList.add("hidden");
+            errEl.textContent = "";
+          }
+          if (reserveModalErr) {
+            reserveModalErr.classList.add("hidden");
+            reserveModalErr.textContent = "";
+          }
+          reserveBtnOk.disabled = true;
+          window.api
+            .api("/coach-manager/lessons/reserve", {
+              method: "POST",
+              body: JSON.stringify({ lessonId: lid }),
+            })
+            .then(function (data) {
+              closeReserveModal();
+              if (warnEl) {
+                warnEl.classList.remove("text-amber-200/90");
+                warnEl.classList.add("text-teal-300");
+                warnEl.textContent =
+                  (data && data.message ? data.message : "Reserved.") +
+                  (data && data.lessonReserveId
+                    ? " Reference: " + data.lessonReserveId
+                    : "");
+                warnEl.classList.remove("hidden");
+              }
+              loadLessonList();
+            })
+            .catch(function (e) {
+              var msg = e.message || "Could not reserve.";
+              if (reserveModalErr) {
+                reserveModalErr.textContent = msg;
+                reserveModalErr.classList.remove("hidden");
+              }
+            })
+            .finally(function () {
+              if (reserveBtnOk) {
+                reserveBtnOk.disabled = false;
+              }
+            });
+        });
+      }
+
+      document.getElementById("fullLessonListBody").addEventListener("click", function (ev) {
+        if (!isStudentRole) {
+          return;
+        }
+        var cancelBtn =
+          ev.target && ev.target.closest && ev.target.closest("button.lb-cancel-booking");
+        if (cancelBtn) {
+          var lidCancel = cancelBtn.getAttribute("data-lesson-id");
+          if (!lidCancel) {
+            return;
+          }
+          var errPre = document.getElementById("fullLessonListError");
+          var warnPre = document.getElementById("fullLessonListWarn");
+          if (errPre) {
+            errPre.classList.add("hidden");
+            errPre.textContent = "";
+          }
+          if (warnPre) {
+            warnPre.classList.add("hidden");
+            warnPre.textContent = "";
+          }
+          openCancelBookingModal(lidCancel);
+          return;
+        }
+        var btn = ev.target && ev.target.closest && ev.target.closest("button.lb-reserve");
+        if (!btn) {
+          return;
+        }
+        var lid = btn.getAttribute("data-lesson-id");
+        if (!lid) {
+          return;
+        }
+        var errEl = document.getElementById("fullLessonListError");
+        var warnEl = document.getElementById("fullLessonListWarn");
+        if (errEl) {
+          errEl.classList.add("hidden");
+          errEl.textContent = "";
+        }
+        if (warnEl) {
+          warnEl.classList.add("hidden");
+          warnEl.textContent = "";
+          warnEl.classList.add("text-amber-200/90");
+          warnEl.classList.remove("text-teal-300");
+        }
+        openReserveModal(lid);
+      });
+
+      var btnLessonTimetable = document.getElementById("btnLessonTimetable");
+      if (btnLessonTimetable) {
+        btnLessonTimetable.addEventListener("click", function () {
+        var cid = getLessonModuleClubId();
+        var url = "/backend/lesson_modules/lesson_reservation/lesson-timetable.html";
+        var qs = [];
+        if (cid) {
+          qs.push("clubId=" + encodeURIComponent(cid));
+        }
+        if (role === "Coach") {
+          qs.push("browse=1");
+        }
+        if (qs.length) {
+          url += "?" + qs.join("&");
+        }
+        window.open(url, "_blank", "noopener,noreferrer");
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "name": "ClubMaster",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ClubMaster — run npm scripts from this folder (src/). Backend is ./backend.",
+  "scripts": {
+    "build": "npm run build --prefix backend",
+    "start": "npm run start --prefix backend",
+    "dev": "npm run dev --prefix backend"
+  }
+}

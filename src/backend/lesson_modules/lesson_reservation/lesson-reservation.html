@@ -1,0 +1,2044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson Reservation — Coach Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body
+  class="dashboard-dynamic-bg min-h-screen text-slate-100 p-6"
+  style="--dashboard-bg-img: url('/Source/Image/coach-manager.jpg');">
+  <div class="dynamic-bg-stack" aria-hidden="true">
+    <div class="dynamic-bg-photo"></div>
+    <div class="dynamic-bg-overlay"></div>
+    <canvas class="dynamic-bg-star-net"></canvas>
+    <div class="dynamic-bg-spot-glow"></div>
+  </div>
+
+  <div class="max-w-6xl mx-auto">
+    <header class="mb-6">
+      <p id="backLinkWrap">
+        <a href="/coach-manager.html" target="_top"
+          class="text-sm text-teal-400/90 hover:text-teal-300 underline-offset-2 hover:underline">
+          ← Back to Coach Manager
+        </a>
+      </p>
+      <h1 class="text-2xl font-bold text-teal-300 mt-2">Lesson Reservation</h1>
+    </header>
+
+    <section class="glass rounded-xl border border-white/15 p-4 mb-6 overflow-x-auto">
+      <h2 class="text-lg font-semibold text-teal-200 mb-1">Lesson list</h2>
+      <p class="text-xs text-slate-500 mb-3">
+        Lessons are stored in <code class="text-slate-400">LessonList.json</code>. Use <strong>Update</strong> on a row to edit, or <strong>Create New Lesson</strong> below to add.
+      </p>
+      <p id="fullLessonListError" class="hidden text-sm text-red-300 mb-2"></p>
+      <p id="fullLessonListWarn" class="hidden text-sm text-amber-200/90 mb-2"></p>
+      <table class="w-full text-sm text-left border-collapse min-w-max">
+        <thead>
+          <tr id="fullLessonListHeadRow" class="border-b border-white/10 text-slate-400">
+            <th class="py-2 pr-3 font-medium">…</th>
+          </tr>
+        </thead>
+        <tbody id="fullLessonListBody">
+          <tr><td class="py-4 text-slate-500">Loading…</td></tr>
+        </tbody>
+      </table>
+
+      <div class="mt-4 flex flex-wrap gap-2">
+        <button type="button" id="btnCreateNewLesson"
+          class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm">
+          Create New Lesson
+        </button>
+        <button type="button" id="btnLessonTimetable"
+          class="rounded-lg bg-yellow-100 hover:bg-yellow-200/90 border border-yellow-200 text-slate-800 font-medium px-4 py-2 text-sm shadow-sm">
+          Lesson TimeTable
+        </button>
+      </div>
+
+      <div id="createLessonPanel" class="hidden mt-6 pt-6 border-t border-white/10 rounded-lg bg-slate-900/50 p-4">
+        <h3 class="text-base font-semibold text-teal-200 mb-2">New lesson</h3>
+        <p class="text-xs text-slate-500 mb-4">
+          <strong>Lesson ID</strong> is assigned automatically. <strong>Created at</strong> and <strong>Last updated</strong> are set when you confirm.
+        </p>
+        <form id="createLessonForm" class="space-y-3 max-w-2xl">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="newLessonSportType" class="block text-xs text-slate-400 mb-1">Sport Type</label>
+              <select id="newLessonSportType" required
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+              </select>
+            </div>
+            <div>
+              <label for="newLessonClubName" class="block text-xs text-slate-400 mb-1">Club Name</label>
+              <input id="newLessonClubName" type="text" readonly
+                class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed"
+                value="" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div>
+              <label for="newLessonYear" class="block text-xs text-slate-400 mb-1">Year</label>
+              <input id="newLessonYear" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+            <div>
+              <label for="newLessonClassId" class="block text-xs text-slate-400 mb-1">Class ID</label>
+              <input id="newLessonClassId" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+            <div>
+              <label for="newLessonMaxNumber" class="block text-xs text-slate-400 mb-1">Max number</label>
+              <input id="newLessonMaxNumber" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+            <div>
+              <label for="newLessonReservedNumber" class="block text-xs text-slate-400 mb-1">Reserved number</label>
+              <input id="newLessonReservedNumber" type="text" value="0" readonly
+                title="Starts at 0 for new lessons (saved in LessonList.json)."
+                class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="newLessonClassInfo" class="block text-xs text-slate-400 mb-1">Class info</label>
+              <input id="newLessonClassInfo" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+            <div>
+              <label for="newLessonClassTime" class="block text-xs text-slate-400 mb-1">Class time</label>
+              <input id="newLessonClassTime" type="text" placeholder="e.g. 14:00–15:30"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+          </div>
+          <div class="rounded-lg border border-white/10 bg-slate-900/40 p-4 space-y-3">
+            <p class="text-sm font-semibold text-teal-200">Class Time</p>
+            <p class="text-xs text-slate-500">Which days does this class run?</p>
+            <div class="flex flex-wrap gap-x-4 gap-y-2">
+              <label class="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer select-none">
+                <input type="checkbox" id="newDaySun" class="rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50" />
+                Sun
+              </label>
+              <label class="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer select-none">
+                <input type="checkbox" id="newDayMon" class="rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50" />
+                Monday
+              </label>
+              <label class="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer select-none">
+                <input type="checkbox" id="newDayTue" class="rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50" />
+                Tuesday
+              </label>
+              <label class="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer select-none">
+                <input type="checkbox" id="newDayWed" class="rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50" />
+                Wednesday
+              </label>
+              <label class="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer select-none">
+                <input type="checkbox" id="newDayThu" class="rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50" />
+                Thursday
+              </label>
+              <label class="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer select-none">
+                <input type="checkbox" id="newDayFri" class="rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50" />
+                Friday
+              </label>
+              <label class="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer select-none">
+                <input type="checkbox" id="newDaySat" class="rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50" />
+                Saturday
+              </label>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label for="newLessonAgeGroup" class="block text-xs text-slate-400 mb-1">Age group</label>
+              <input id="newLessonAgeGroup" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+            <div>
+              <label for="newLessonFrequency" class="block text-xs text-slate-400 mb-1">Frequency</label>
+              <input id="newLessonFrequency" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+            <div>
+              <label for="newLessonClassFee" class="block text-xs text-slate-400 mb-1">Class fee</label>
+              <input id="newLessonClassFee" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="newLessonStart" class="block text-xs text-slate-400 mb-1">Lesson start date</label>
+              <input id="newLessonStart" type="date"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+            <div>
+              <label for="newLessonEnd" class="block text-xs text-slate-400 mb-1">Lesson end date</label>
+              <input id="newLessonEnd" type="date"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div>
+              <label for="newLessonSportCenter" class="block text-xs text-slate-400 mb-1">Sport center</label>
+              <select id="newLessonSportCenter"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                <option value="">— Select sport center —</option>
+              </select>
+              <p class="text-[10px] text-slate-500 mt-1">Options are active sport centers configured for your club (e.g. 界限街一號體育館, 界限街二號體育館).</p>
+            </div>
+            <div>
+              <label for="newLessonCourtNo" class="block text-xs text-slate-400 mb-1">Court no.</label>
+              <input id="newLessonCourtNo" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+            <div>
+              <label for="newLessonCoachName" class="block text-xs text-slate-400 mb-1">Coach Name</label>
+              <select id="newLessonCoachName"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                <option value="">— Select coach —</option>
+              </select>
+              <p class="text-[10px] text-slate-500 mt-1">Options are ACTIVE coaches from <code class="text-slate-400">UserList_Coach.json</code> for your club.</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="newLessonStatus" class="block text-xs text-slate-400 mb-1">Status</label>
+              <select id="newLessonStatus"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                <option value="ACTIVE" selected>ACTIVE</option>
+                <option value="INACTIVE">INACTIVE</option>
+              </select>
+            </div>
+            <div>
+              <label for="newLessonRemarks" class="block text-xs text-slate-400 mb-1">Remarks</label>
+              <input id="newLessonRemarks" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+          </div>
+          <p id="createLessonErr" class="hidden text-sm text-red-300"></p>
+          <p id="createLessonOk" class="hidden text-sm text-teal-300"></p>
+          <div class="flex flex-wrap gap-2 pt-2">
+            <button type="submit" id="createLessonSubmitBtn"
+              class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
+              Confirm
+            </button>
+            <button type="button" id="createLessonCancelBtn"
+              class="rounded-lg bg-slate-700 hover:bg-slate-600 border border-white/15 text-slate-100 font-medium px-4 py-2 text-sm">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div id="tableEditPanel" class="hidden mt-6 pt-6 border-t border-white/10 rounded-lg bg-slate-900/40 p-4">
+        <h3 class="text-base font-semibold text-teal-200 mb-3">Edit lesson</h3>
+        <p class="text-xs text-slate-500 mb-4">
+          Click <strong>Confirm</strong> to save your changes.
+        </p>
+        <form id="tableEditForm" class="space-y-3 max-w-2xl">
+          <input type="hidden" id="tableEditLessonId" value="" />
+          <p class="text-[11px] uppercase tracking-wide text-slate-500 font-medium">Read-only</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="tableEditCreated" class="block text-xs text-slate-400 mb-1">Created at</label>
+              <input id="tableEditCreated" type="text" readonly
+                class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed" />
+            </div>
+            <div>
+              <label for="tableEditLastUpdate" class="block text-xs text-slate-400 mb-1">Last update date</label>
+              <input id="tableEditLastUpdate" type="text" readonly
+                class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed" />
+            </div>
+          </div>
+          <p class="text-[11px] uppercase tracking-wide text-slate-500 font-medium pt-2">You can edit</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="tableEditSportType" class="block text-xs text-slate-400 mb-1">Sport Type</label>
+              <select id="tableEditSportType"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+              </select>
+            </div>
+            <div>
+              <label for="tableEditYear" class="block text-xs text-slate-400 mb-1">Year</label>
+              <input id="tableEditYear" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div>
+              <label for="tableEditClassId" class="block text-xs text-slate-400 mb-1">Class ID</label>
+              <input id="tableEditClassId" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+            <div>
+              <label for="tableEditMaxNumber" class="block text-xs text-slate-400 mb-1">Max number</label>
+              <input id="tableEditMaxNumber" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+            <div>
+              <label for="tableEditReservedNumber" class="block text-xs text-slate-400 mb-1">Reserved number</label>
+              <input id="tableEditReservedNumber" type="text" inputmode="numeric" pattern="[0-9]*"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="tableEditClassInfo" class="block text-xs text-slate-400 mb-1">Class info</label>
+              <input id="tableEditClassInfo" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+            <div>
+              <label for="tableEditClassTime" class="block text-xs text-slate-400 mb-1">Class time</label>
+              <input id="tableEditClassTime" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+          </div>
+          <div class="rounded-lg border border-white/10 bg-slate-900/40 p-4 space-y-3">
+            <p class="text-sm font-semibold text-teal-200">Class Time</p>
+            <p class="text-xs text-slate-500">Days this class runs.</p>
+            <div class="flex flex-wrap gap-x-4 gap-y-2">
+              <label class="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer select-none">
+                <input type="checkbox" id="tableEditDaySun" class="rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50" />
+                Sun
+              </label>
+              <label class="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer select-none">
+                <input type="checkbox" id="tableEditDayMon" class="rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50" />
+                Monday
+              </label>
+              <label class="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer select-none">
+                <input type="checkbox" id="tableEditDayTue" class="rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50" />
+                Tuesday
+              </label>
+              <label class="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer select-none">
+                <input type="checkbox" id="tableEditDayWed" class="rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50" />
+                Wednesday
+              </label>
+              <label class="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer select-none">
+                <input type="checkbox" id="tableEditDayThu" class="rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50" />
+                Thursday
+              </label>
+              <label class="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer select-none">
+                <input type="checkbox" id="tableEditDayFri" class="rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50" />
+                Friday
+              </label>
+              <label class="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer select-none">
+                <input type="checkbox" id="tableEditDaySat" class="rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50" />
+                Saturday
+              </label>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label for="tableEditAgeGroup" class="block text-xs text-slate-400 mb-1">Age group</label>
+              <input id="tableEditAgeGroup" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+            <div>
+              <label for="tableEditFrequency" class="block text-xs text-slate-400 mb-1">Frequency</label>
+              <input id="tableEditFrequency" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+            <div>
+              <label for="tableEditClassFee" class="block text-xs text-slate-400 mb-1">Class fee</label>
+              <input id="tableEditClassFee" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="tableEditLessonStart" class="block text-xs text-slate-400 mb-1">Lesson start date</label>
+              <input id="tableEditLessonStart" type="date"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+            <div>
+              <label for="tableEditLessonEnd" class="block text-xs text-slate-400 mb-1">Lesson end date</label>
+              <input id="tableEditLessonEnd" type="date"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div>
+              <label for="tableEditSportCenter" class="block text-xs text-slate-400 mb-1">Sport center</label>
+              <select id="tableEditSportCenter"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                <option value="">— Select sport center —</option>
+              </select>
+              <p class="text-[10px] text-slate-500 mt-1"><strong>Sport Center</strong> column, ACTIVE rows only — same list as create.</p>
+            </div>
+            <div>
+              <label for="tableEditCourtNo" class="block text-xs text-slate-400 mb-1">Court no.</label>
+              <input id="tableEditCourtNo" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+            <div>
+              <label for="tableEditCoachName" class="block text-xs text-slate-400 mb-1">Coach Name</label>
+              <select id="tableEditCoachName"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                <option value="">— Select coach —</option>
+              </select>
+              <p class="text-[10px] text-slate-500 mt-1"><strong>Coach Name</strong> — ACTIVE coaches from <code class="text-slate-400">UserList_Coach.json</code>; values not in the list stay selectable as a one-off row.</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="flex flex-nowrap items-end gap-3">
+              <div class="flex-1 min-w-0">
+                <label for="tableEditStatus" class="block text-xs text-slate-400 mb-1">Status</label>
+                <select id="tableEditStatus"
+                  class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                  <option value="ACTIVE">ACTIVE</option>
+                  <option value="INACTIVE">INACTIVE</option>
+                </select>
+              </div>
+              <div class="shrink-0">
+                <button type="button" id="btnReservedStatusFromEdit"
+                  class="rounded-lg bg-black hover:bg-neutral-900 text-white font-medium px-3 py-2 text-sm whitespace-nowrap border border-white/10">
+                  Status
+                </button>
+              </div>
+            </div>
+            <div>
+              <label for="tableEditRemarks" class="block text-xs text-slate-400 mb-1">Remarks</label>
+              <input id="tableEditRemarks" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            </div>
+          </div>
+          <p id="tableEditErr" class="hidden text-sm text-red-300"></p>
+          <p id="tableEditOk" class="hidden text-sm text-teal-300"></p>
+          <div class="flex flex-wrap gap-2 pt-2">
+            <button type="button" id="btnAssignStudentFromEdit"
+              class="rounded-lg bg-violet-600 hover:bg-violet-500 text-white font-medium px-4 py-2 text-sm">
+              Assign Student
+            </button>
+            <button type="button" id="tableEditConfirmBtn"
+              class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
+              Confirm
+            </button>
+            <button type="button" id="tableEditCancelBtn"
+              class="rounded-lg bg-slate-700 hover:bg-slate-600 border border-white/15 text-slate-100 font-medium px-4 py-2 text-sm">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <div id="reservedStatusBackdrop" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-stone-950/65 backdrop-blur-sm p-4"
+    aria-modal="true" role="dialog" aria-labelledby="reservedStatusTitle">
+    <div
+      class="relative max-w-2xl w-full max-h-[85vh] overflow-y-auto rounded-xl border border-amber-200/55 bg-gradient-to-br from-amber-50 via-stone-200 to-stone-500 p-6 text-stone-800 shadow-[0_18px_50px_rgba(55,45,30,0.38),inset_0_1px_0_rgba(255,253,240,0.9)] ring-1 ring-amber-100/45">
+      <div class="pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-b from-amber-100/35 via-amber-50/10 to-stone-600/25"></div>
+      <div class="relative">
+        <h3 id="reservedStatusTitle" class="text-lg font-semibold text-stone-900 mb-1 tracking-tight drop-shadow-[0_1px_0_rgba(255,251,235,0.8)]">
+          Reserved status
+        </h3>
+        <p class="text-xs text-stone-600 mb-4 border-b border-amber-200/45 pb-3">
+          Lesson booking summary
+        </p>
+        <div id="reservedStatusGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm"></div>
+        <button type="button" id="reservedStatusClose"
+          class="mt-5 rounded-lg border border-amber-300/55 bg-gradient-to-b from-amber-100 via-amber-200/95 to-stone-400 px-4 py-2 text-sm font-semibold text-stone-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),inset_0_-1px_0_rgba(120,100,70,0.12)] hover:from-amber-50 hover:via-amber-100 hover:to-stone-300">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="assignStudentBackdrop" class="hidden fixed inset-0 z-[102] flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4"
+    aria-modal="true" role="dialog" aria-labelledby="assignStudentTitle">
+    <div
+      class="relative w-full max-w-lg max-h-[min(88vh,640px)] flex flex-col rounded-xl border border-teal-500/30 bg-slate-900 shadow-xl text-slate-100">
+      <div class="px-5 py-4 border-b border-white/10 shrink-0">
+        <h3 id="assignStudentTitle" class="text-lg font-semibold text-teal-200">Assign students</h3>
+        <p class="text-xs text-slate-500 mt-1">Create reservations for this lesson (LessonReserveList.json).</p>
+      </div>
+      <div class="px-5 py-3 space-y-3 overflow-y-auto flex-1 min-h-0">
+        <div id="assignStudentLessonInfo" class="rounded-lg border border-white/10 bg-slate-950/60 p-3 text-sm space-y-1">
+        </div>
+        <div>
+          <p class="text-[11px] uppercase tracking-wide text-slate-500 font-medium mb-2">Students (UserList_Student)</p>
+          <div id="assignStudentList" class="rounded-lg border border-white/10 bg-slate-950/50 max-h-[min(40vh,280px)] overflow-y-auto p-2 space-y-1 text-sm">
+            <p class="text-slate-500 text-xs px-2 py-3">Loading…</p>
+          </div>
+        </div>
+        <p id="assignStudentErr" class="hidden text-sm text-red-300"></p>
+        <p id="assignStudentOk" class="hidden text-sm text-teal-300"></p>
+      </div>
+      <div class="flex flex-wrap justify-end gap-2 px-5 py-3 border-t border-white/10 shrink-0">
+        <button type="button" id="assignStudentModalCancel"
+          class="rounded-lg bg-slate-700 hover:bg-slate-600 border border-white/15 text-slate-100 font-medium px-4 py-2 text-sm">
+          Cancel
+        </button>
+        <button type="button" id="assignStudentModalConfirm"
+          class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/dashboard-dynamic-bg.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    (function () {
+      var isFramed = false;
+      try {
+        isFramed = window.self !== window.top;
+      } catch (e) {
+        isFramed = true;
+      }
+
+      var token =
+        window.auth &&
+        typeof window.auth.getToken === "function" &&
+        window.auth.getToken();
+      var role = localStorage.getItem("userRole");
+      var myBookingsMode = false;
+      try {
+        myBookingsMode =
+          new URLSearchParams(window.location.search || "").get("myBookings") ===
+          "1";
+      } catch (eMb) {
+        myBookingsMode = false;
+      }
+      var sessionOk =
+        Boolean(token) &&
+        (role === "CoachManager" || role === "Coach");
+      var coachLessonsReadOnly =
+        role === "Coach" && (isFramed || myBookingsMode);
+
+      if (isFramed) {
+        var bw = document.getElementById("backLinkWrap");
+        if (bw) {
+          bw.classList.add("hidden");
+        }
+      }
+
+      function setUidLabels(uid) {
+        var u = uid && String(uid).trim() ? String(uid).trim() : "…";
+        var el = document.getElementById("hdrUid");
+        if (el) {
+          el.textContent = u;
+        }
+        document.querySelectorAll(".hdrUidInline").forEach(function (n) {
+          n.textContent = u;
+        });
+      }
+
+      (function primeClubIdFromUrlOrCache() {
+        var q = new URLSearchParams(window.location.search || "");
+        var id = (q.get("clubId") || q.get("uid") || "").trim();
+        var ctx =
+          window.api &&
+          window.api.getClubFolderContext &&
+          window.api.getClubFolderContext();
+        if (ctx && ctx.clubId) {
+          id = id || String(ctx.clubId).trim();
+        }
+        if (id) {
+          setUidLabels(id);
+        }
+      })();
+
+      function getLessonModuleClubId() {
+        var q = new URLSearchParams(window.location.search || "");
+        var id = (q.get("clubId") || q.get("uid") || "").trim();
+        var ctx =
+          window.api &&
+          window.api.getClubFolderContext &&
+          window.api.getClubFolderContext();
+        if (ctx && ctx.clubId) {
+          id = id || String(ctx.clubId).trim();
+        }
+        if (!id) {
+          var hdr = document.getElementById("hdrUid");
+          if (hdr && hdr.textContent) {
+            var t = hdr.textContent.trim();
+            if (t && t !== "—") {
+              id = t;
+            }
+          }
+        }
+        return id;
+      }
+
+      if (!sessionOk) {
+        if (
+          !isFramed &&
+          !window.auth.guardPage("CoachManager") &&
+          !window.auth.guardPage("Coach")
+        ) {
+          return;
+        }
+      } else if (!isFramed) {
+        if (role === "CoachManager" && !window.auth.guardPage("CoachManager")) {
+          return;
+        }
+        if (role === "Coach" && !window.auth.guardPage("Coach")) {
+          return;
+        }
+      }
+
+      if (coachLessonsReadOnly) {
+        var h1El = document.querySelector("header h1");
+        if (h1El) {
+          h1El.textContent = "My Bookings";
+        }
+        var secH2 = document.querySelector("section.glass > h2");
+        if (secH2) {
+          secH2.textContent = "Your lessons";
+        }
+        var secIntro = document.querySelector("section.glass > p.text-xs");
+        if (secIntro) {
+          secIntro.textContent =
+            "Showing lessons associated with your coach profile.";
+        }
+        var bCreate = document.getElementById("btnCreateNewLesson");
+        if (bCreate) {
+          bCreate.classList.add("hidden");
+        }
+        var bResEdit = document.getElementById("btnReservedStatusFromEdit");
+        if (bResEdit) {
+          bResEdit.classList.add("hidden");
+        }
+        var bAssign = document.getElementById("btnAssignStudentFromEdit");
+        if (bAssign) {
+          bAssign.classList.add("hidden");
+        }
+      }
+
+      if (role !== "CoachManager") {
+        var bAssignCm = document.getElementById("btnAssignStudentFromEdit");
+        if (bAssignCm) {
+          bAssignCm.classList.add("hidden");
+        }
+      }
+
+      function escapeHtml(s) {
+        if (s == null) {
+          return "";
+        }
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      var cachedLessons = [];
+      /** ACTIVE reservations for this club (from GET /coach-manager/lessons). */
+      var cachedLessonReservations = [];
+      var cachedManagerClubName = "";
+      /** Distinct "Sport Center" names from SportCenterList.csv (Status ACTIVE). */
+      var cachedActiveSportCenters = [];
+      /** Coach display names (`full_name`) from UserList_Coach.json (Status ACTIVE), from GET /lessons. */
+      var cachedCoachNames = [];
+
+      function activeStudentNamesForLesson(lessonId) {
+        var id = String(lessonId || "").trim().toUpperCase();
+        if (!id) {
+          return [];
+        }
+        return cachedLessonReservations
+          .filter(function (r) {
+            return (
+              String(r.lessonId || "").trim().toUpperCase() === id &&
+              String(r.status || "").trim().toUpperCase() === "ACTIVE"
+            );
+          })
+          .map(function (r) {
+            return String(r.Student_Name || "").trim();
+          })
+          .filter(Boolean);
+      }
+
+      function lessonSnapshotFromEditForm() {
+        var sc = document.getElementById("tableEditSportCenter");
+        return {
+          LessonID: document.getElementById("tableEditLessonId").value.trim(),
+          class_info: document.getElementById("tableEditClassInfo").value.trim(),
+          lesson_start_date: document.getElementById("tableEditLessonStart").value.trim(),
+          lesson_end_date: document.getElementById("tableEditLessonEnd").value.trim(),
+          class_time: document.getElementById("tableEditClassTime").value.trim(),
+          Age_group: document.getElementById("tableEditAgeGroup").value.trim(),
+          Sport_center: sc ? sc.value.trim() : "",
+          "Coach Name": document.getElementById("tableEditCoachName").value.trim(),
+          max_number: document.getElementById("tableEditMaxNumber").value.trim(),
+          ReservedNumber: document.getElementById("tableEditReservedNumber").value.trim(),
+        };
+      }
+
+      function openReservedStatusModal(L) {
+        var backdrop = document.getElementById("reservedStatusBackdrop");
+        var grid = document.getElementById("reservedStatusGrid");
+        if (!backdrop || !grid) {
+          return;
+        }
+        var lessonId = String(L.LessonID || L.lessonId || "").trim();
+        var classInfo = L.class_info != null ? String(L.class_info) : "";
+        var start = L.lesson_start_date != null ? String(L.lesson_start_date) : "";
+        var end = L.lesson_end_date != null ? String(L.lesson_end_date) : "";
+        var classTime = L.class_time != null ? String(L.class_time) : "";
+        var age = L.Age_group != null ? String(L.Age_group) : "";
+        var center = L.Sport_center != null ? String(L.Sport_center) : "";
+        var coach = L["Coach Name"] != null ? String(L["Coach Name"]) : "";
+        var maxN = L.max_number != null ? String(L.max_number) : "";
+        var resN = L.ReservedNumber != null ? String(L.ReservedNumber) : "";
+        var names = lessonId ? activeStudentNamesForLesson(lessonId) : [];
+        var studentBlock = !lessonId
+          ? "— (no lesson ID — use Update on a row or open edit after choosing a lesson)"
+          : names.length > 0
+            ? names.join("\n")
+            : "— (no ACTIVE reservations)";
+        var pairs = [
+          ["Lesson info", classInfo || "—"],
+          ["Period", start && end ? start + " → " + end : start || end || "—"],
+          ["Lesson time", classTime || "—"],
+          ["Age group", age || "—"],
+          ["Sport center", center || "—"],
+          ["Coach name", coach || "—"],
+          ["Max number", maxN || "—"],
+          ["Reserved number", resN || "—"],
+          ["Student list (Student_Name)", studentBlock],
+        ];
+        grid.innerHTML = "";
+        pairs.forEach(function (pair, idx) {
+          var isLast = idx === pairs.length - 1;
+          var cell = document.createElement("div");
+          cell.className =
+            "rounded-lg border border-amber-200/50 bg-gradient-to-b from-amber-50/95 via-stone-200/80 to-stone-400/70 p-3 shadow-[inset_0_1px_0_rgba(255,253,240,0.95),inset_0_-1px_0_rgba(90,78,58,0.14)]" +
+            (isLast ? " sm:col-span-2" : "");
+          var lab = document.createElement("div");
+          lab.className =
+            "text-[11px] font-semibold uppercase tracking-wide text-stone-500 mb-1";
+          lab.textContent = pair[0];
+          var val = document.createElement("div");
+          val.className =
+            "text-stone-900 text-sm whitespace-pre-wrap break-words leading-snug";
+          val.textContent = pair[1];
+          cell.appendChild(lab);
+          cell.appendChild(val);
+          grid.appendChild(cell);
+        });
+        backdrop.classList.remove("hidden");
+      }
+
+      function closeReservedStatusModal() {
+        var backdrop = document.getElementById("reservedStatusBackdrop");
+        if (backdrop) {
+          backdrop.classList.add("hidden");
+        }
+      }
+
+      function studentIdsWithActiveReservationForLesson(lessonId) {
+        var id = String(lessonId || "").trim().toUpperCase();
+        if (!id) {
+          return new Set();
+        }
+        var set = new Set();
+        cachedLessonReservations.forEach(function (r) {
+          if (
+            String(r.lessonId || "").trim().toUpperCase() === id &&
+            String(r.status || "").trim().toUpperCase() === "ACTIVE"
+          ) {
+            set.add(String(r.StudentID || "").trim().toUpperCase());
+          }
+        });
+        return set;
+      }
+
+      function closeAssignStudentModal() {
+        var bd = document.getElementById("assignStudentBackdrop");
+        if (bd) {
+          bd.classList.add("hidden");
+        }
+        var err = document.getElementById("assignStudentErr");
+        var ok = document.getElementById("assignStudentOk");
+        if (err) {
+          err.classList.add("hidden");
+          err.textContent = "";
+        }
+        if (ok) {
+          ok.classList.add("hidden");
+          ok.textContent = "";
+        }
+      }
+
+      function renderAssignStudentLessonInfo() {
+        var box = document.getElementById("assignStudentLessonInfo");
+        if (!box) {
+          return;
+        }
+        var classId = document.getElementById("tableEditClassId").value.trim();
+        var classInfo = document.getElementById("tableEditClassInfo").value.trim();
+        var coachSel = document.getElementById("tableEditCoachName");
+        var coach = coachSel ? coachSel.value.trim() : "";
+        box.innerHTML =
+          "<div><span class=\"text-slate-500\">Class ID</span> " +
+          escapeHtml(classId || "—") +
+          "</div>" +
+          "<div><span class=\"text-slate-500\">Class info</span> " +
+          escapeHtml(classInfo || "—") +
+          "</div>" +
+          "<div><span class=\"text-slate-500\">Coach Name</span> " +
+          escapeHtml(coach || "—") +
+          "</div>";
+      }
+
+      function openAssignStudentModal() {
+        var lessonId = document.getElementById("tableEditLessonId").value.trim();
+        if (!lessonId) {
+          return;
+        }
+        var bd = document.getElementById("assignStudentBackdrop");
+        var listEl = document.getElementById("assignStudentList");
+        if (!bd || !listEl) {
+          return;
+        }
+        renderAssignStudentLessonInfo();
+        var err = document.getElementById("assignStudentErr");
+        var ok = document.getElementById("assignStudentOk");
+        if (err) {
+          err.classList.add("hidden");
+          err.textContent = "";
+        }
+        if (ok) {
+          ok.classList.add("hidden");
+          ok.textContent = "";
+        }
+        listEl.innerHTML =
+          '<p class="text-slate-500 text-xs px-2 py-3">Loading students…</p>';
+        bd.classList.remove("hidden");
+        var already = studentIdsWithActiveReservationForLesson(lessonId);
+        if (!window.api || typeof window.api.api !== "function") {
+          listEl.innerHTML =
+            '<p class="text-red-300 text-xs px-2 py-3">API not available.</p>';
+          return;
+        }
+        window.api
+          .api("/coach-manager/students")
+          .then(function (data) {
+            if (!data || data.ok === false) {
+              throw new Error(
+                (data && data.error) || "Could not load student list."
+              );
+            }
+            var students = Array.isArray(data.students) ? data.students : [];
+            students.sort(function (a, b) {
+              var na = String(a.full_name || a.Full_name || "").toLowerCase();
+              var nb = String(b.full_name || b.Full_name || "").toLowerCase();
+              return na.localeCompare(nb);
+            });
+            listEl.innerHTML = "";
+            if (!students.length) {
+              listEl.innerHTML =
+                '<p class="text-slate-500 text-xs px-2 py-3">No students in roster.</p>';
+              return;
+            }
+            students.forEach(function (st) {
+              var sid = String(
+                st.StudentID || st.studentID || st.studentId || ""
+              ).trim();
+              var name = String(st.full_name || st.Full_name || "").trim();
+              var status = String(st.status || "").trim().toUpperCase();
+              var row = document.createElement("label");
+              row.className =
+                "flex items-start gap-2 px-2 py-1.5 rounded-md hover:bg-white/5 cursor-pointer select-none";
+              var cb = document.createElement("input");
+              cb.type = "checkbox";
+              cb.className =
+                "mt-0.5 rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50 shrink-0";
+              cb.setAttribute("data-student-id", sid);
+              var inactive = status !== "ACTIVE";
+              var booked = sid && already.has(sid.toUpperCase());
+              if (inactive || booked || !sid) {
+                cb.disabled = true;
+                cb.checked = false;
+                row.classList.remove("hover:bg-white/5", "cursor-pointer");
+                row.classList.add("cursor-default", "opacity-80");
+              }
+              var txt = document.createElement("span");
+              txt.className = "text-slate-200 text-sm leading-snug";
+              var line =
+                escapeHtml(name || "—") +
+                " <span class=\"text-slate-500\">(" +
+                escapeHtml(sid || "—") +
+                ")</span>";
+              if (inactive) {
+                line +=
+                  " <span class=\"text-amber-200/90 text-xs\">(not ACTIVE)</span>";
+              } else if (booked) {
+                line +=
+                  " <span class=\"text-slate-500 text-xs\">(already reserved)</span>";
+              }
+              txt.innerHTML = line;
+              row.appendChild(cb);
+              row.appendChild(txt);
+              listEl.appendChild(row);
+            });
+          })
+          .catch(function (e) {
+            listEl.innerHTML =
+              "<p class=\"text-red-300 text-xs px-2 py-3\">" +
+              escapeHtml(e.message || "Load failed.") +
+              "</p>";
+          });
+      }
+
+      function populateSportCenterSelects(names) {
+        var list = Array.isArray(names)
+          ? names
+              .map(function (n) {
+                return String(n || "").trim();
+              })
+              .filter(Boolean)
+          : [];
+        function fill(selId) {
+          var sel = document.getElementById(selId);
+          if (!sel) {
+            return;
+          }
+          sel.innerHTML =
+            '<option value="">— Select sport center —</option>';
+          list.forEach(function (name) {
+            var opt = document.createElement("option");
+            opt.value = name;
+            opt.textContent = name;
+            sel.appendChild(opt);
+          });
+        }
+        fill("newLessonSportCenter");
+        fill("tableEditSportCenter");
+      }
+
+      function populateCoachNameSelects(names) {
+        var list = Array.isArray(names)
+          ? names
+              .map(function (n) {
+                return String(n || "").trim();
+              })
+              .filter(Boolean)
+          : [];
+        function fill(selId) {
+          var sel = document.getElementById(selId);
+          if (!sel) {
+            return;
+          }
+          sel.innerHTML = '<option value="">— Select coach —</option>';
+          list.forEach(function (name) {
+            var opt = document.createElement("option");
+            opt.value = name;
+            opt.textContent = name;
+            sel.appendChild(opt);
+          });
+        }
+        fill("newLessonCoachName");
+        fill("tableEditCoachName");
+      }
+
+      function setSportCenterSelectValue(sel, value) {
+        if (!sel) {
+          return;
+        }
+        var v = value == null ? "" : String(value).trim();
+        sel.querySelectorAll("option[data-orphan]").forEach(function (o) {
+          o.remove();
+        });
+        sel.value = v;
+        if (v && sel.value !== v) {
+          var opt = document.createElement("option");
+          opt.value = v;
+          opt.textContent = v + " (not in ACTIVE list)";
+          opt.setAttribute("data-orphan", "1");
+          sel.appendChild(opt);
+          sel.value = v;
+        }
+      }
+
+      function syncNewLessonClubNameField() {
+        var el = document.getElementById("newLessonClubName");
+        if (!el) {
+          return;
+        }
+        var v = (cachedManagerClubName || "").trim();
+        if (v === "—") {
+          v = "";
+        }
+        el.value = v;
+      }
+
+      /** Main table column order (Actions column is prepended in render). */
+      var LESSON_TABLE_COLS = [
+        { key: "Year", label: "Year" },
+        { key: "class_id", label: "Class ID" },
+        { key: "class_info", label: "Class info" },
+        { key: "class_time", label: "Class time" },
+        { key: "class_fee", label: "Class fee" },
+        { key: "Coach Name", label: "Coach Name" },
+        { key: "Sport_center", label: "Sport Center" },
+        { key: "court_no", label: "Court no." },
+        { key: "max_number", label: "Max number" },
+        { key: "ReservedNumber", label: "Reserved #" },
+        { key: "lesson_start_date", label: "Lesson start date" },
+        { key: "lesson_end_date", label: "Lesson end date" },
+        { key: "SportType", label: "Sport Type" },
+      ];
+
+      function hideCreateLessonPanel() {
+        var p = document.getElementById("createLessonPanel");
+        if (p) {
+          p.classList.add("hidden");
+        }
+        var ce = document.getElementById("createLessonErr");
+        var co = document.getElementById("createLessonOk");
+        if (ce) {
+          ce.classList.add("hidden");
+          ce.textContent = "";
+        }
+        if (co) {
+          co.classList.add("hidden");
+          co.textContent = "";
+        }
+      }
+
+      function hideTableEditPanel() {
+        var p = document.getElementById("tableEditPanel");
+        if (p) {
+          p.classList.add("hidden");
+        }
+        var err = document.getElementById("tableEditErr");
+        var ok = document.getElementById("tableEditOk");
+        if (err) {
+          err.classList.add("hidden");
+          err.textContent = "";
+        }
+        if (ok) {
+          ok.classList.add("hidden");
+          ok.textContent = "";
+        }
+      }
+
+      function hideAllLessonPanels() {
+        hideTableEditPanel();
+        hideCreateLessonPanel();
+      }
+
+      function isoDateForPicker(s) {
+        var t = (s == null ? "" : String(s)).trim();
+        return /^\d{4}-\d{2}-\d{2}$/.test(t) ? t : "";
+      }
+
+      /** Lesson list / API day flags are Y/N (or common truthy strings). */
+      function lessonDayYnChecked(v) {
+        var t = String(v == null ? "" : v).trim().toUpperCase();
+        return (
+          t === "Y" ||
+          t === "1" ||
+          t === "TRUE" ||
+          t === "YES"
+        );
+      }
+
+      function collectNewLessonDayFlags() {
+        return {
+          class_sun: (document.getElementById("newDaySun") || {}).checked === true,
+          class_mon: (document.getElementById("newDayMon") || {}).checked === true,
+          class_tue: (document.getElementById("newDayTue") || {}).checked === true,
+          class_wed: (document.getElementById("newDayWed") || {}).checked === true,
+          class_thur: (document.getElementById("newDayThu") || {}).checked === true,
+          class_fri: (document.getElementById("newDayFri") || {}).checked === true,
+          class_sat: (document.getElementById("newDaySat") || {}).checked === true,
+        };
+      }
+
+      function collectTableEditDayFlags() {
+        return {
+          class_sun: (document.getElementById("tableEditDaySun") || {}).checked === true,
+          class_mon: (document.getElementById("tableEditDayMon") || {}).checked === true,
+          class_tue: (document.getElementById("tableEditDayTue") || {}).checked === true,
+          class_wed: (document.getElementById("tableEditDayWed") || {}).checked === true,
+          class_thur: (document.getElementById("tableEditDayThu") || {}).checked === true,
+          class_fri: (document.getElementById("tableEditDayFri") || {}).checked === true,
+          class_sat: (document.getElementById("tableEditDaySat") || {}).checked === true,
+        };
+      }
+
+      function bindSelectWithOrphan(sel, value) {
+        if (!sel) {
+          return;
+        }
+        sel.querySelectorAll("option[data-orphan]").forEach(function (o) {
+          o.remove();
+        });
+        var v = value == null ? "" : String(value).trim();
+        sel.value = v;
+        if (v && sel.value !== v) {
+          var opt = document.createElement("option");
+          opt.value = v;
+          opt.textContent = v;
+          opt.setAttribute("data-orphan", "1");
+          sel.appendChild(opt);
+          sel.value = v;
+        }
+      }
+
+      function initSportTypeSelectsFromBasicInfo() {
+        if (
+          !window.api ||
+          typeof window.api.fetchBasicInfo !== "function" ||
+          typeof window.api.fillSelectFromBasicList !== "function"
+        ) {
+          return Promise.resolve();
+        }
+        return window.api.fetchBasicInfo().then(function (info) {
+          window.api.fillSelectFromBasicList(
+            document.getElementById("newLessonSportType"),
+            info.sportTypes,
+            {}
+          );
+          window.api.fillSelectFromBasicList(
+            document.getElementById("tableEditSportType"),
+            info.sportTypes,
+            { leadEmpty: true, leadEmptyLabel: "—" }
+          );
+        });
+      }
+
+      function setNewLessonSportTypeToFirst() {
+        var el = document.getElementById("newLessonSportType");
+        if (el && el.options.length) {
+          el.selectedIndex = 0;
+        }
+      }
+
+      function openTableEditPanelFromLesson(L) {
+        hideCreateLessonPanel();
+        populateSportCenterSelects(cachedActiveSportCenters);
+        populateCoachNameSelects(cachedCoachNames);
+        document.getElementById("tableEditLessonId").value = L.LessonID || "";
+        bindSelectWithOrphan(
+          document.getElementById("tableEditSportType"),
+          L.SportType || ""
+        );
+        document.getElementById("tableEditYear").value = L.Year || "";
+        document.getElementById("tableEditClassId").value = L.class_id || "";
+        document.getElementById("tableEditClassInfo").value = L.class_info || "";
+        document.getElementById("tableEditClassTime").value = L.class_time || "";
+        document.getElementById("tableEditClassFee").value = L.class_fee || "";
+        var _ds = document.getElementById("tableEditDaySun");
+        if (_ds) {
+          _ds.checked = lessonDayYnChecked(L.class_sun);
+        }
+        _ds = document.getElementById("tableEditDayMon");
+        if (_ds) {
+          _ds.checked = lessonDayYnChecked(L.class_mon);
+        }
+        _ds = document.getElementById("tableEditDayTue");
+        if (_ds) {
+          _ds.checked = lessonDayYnChecked(L.class_tue);
+        }
+        _ds = document.getElementById("tableEditDayWed");
+        if (_ds) {
+          _ds.checked = lessonDayYnChecked(L.class_wed);
+        }
+        _ds = document.getElementById("tableEditDayThu");
+        if (_ds) {
+          _ds.checked = lessonDayYnChecked(L.class_thur);
+        }
+        _ds = document.getElementById("tableEditDayFri");
+        if (_ds) {
+          _ds.checked = lessonDayYnChecked(L.class_fri);
+        }
+        _ds = document.getElementById("tableEditDaySat");
+        if (_ds) {
+          _ds.checked = lessonDayYnChecked(L.class_sat);
+        }
+        document.getElementById("tableEditAgeGroup").value = L.Age_group || "";
+        document.getElementById("tableEditMaxNumber").value = L.max_number || "";
+        document.getElementById("tableEditReservedNumber").value =
+          L.ReservedNumber != null && String(L.ReservedNumber).trim() !== ""
+            ? String(L.ReservedNumber).trim()
+            : L.reservedNumber != null && String(L.reservedNumber).trim() !== ""
+              ? String(L.reservedNumber).trim()
+              : "0";
+        document.getElementById("tableEditFrequency").value = L.Frequency || "";
+        document.getElementById("tableEditLessonStart").value =
+          isoDateForPicker(L.lesson_start_date);
+        document.getElementById("tableEditLessonEnd").value =
+          isoDateForPicker(L.lesson_end_date);
+        setSportCenterSelectValue(
+          document.getElementById("tableEditSportCenter"),
+          L.Sport_center || ""
+        );
+        document.getElementById("tableEditCourtNo").value =
+          L.court_no != null ? String(L.court_no) : "";
+        bindSelectWithOrphan(
+          document.getElementById("tableEditCoachName"),
+          L["Coach Name"] || ""
+        );
+        var st = (L.status || "ACTIVE").toString().trim().toUpperCase();
+        document.getElementById("tableEditStatus").value =
+          st === "INACTIVE" ? "INACTIVE" : "ACTIVE";
+        document.getElementById("tableEditRemarks").value = L.Remarks || "";
+        document.getElementById("tableEditCreated").value = L.Created_at || "";
+        document.getElementById("tableEditLastUpdate").value =
+          L.LastUpdated_Date || "";
+        document.getElementById("tableEditErr").classList.add("hidden");
+        document.getElementById("tableEditOk").classList.add("hidden");
+        var panel = document.getElementById("tableEditPanel");
+        if (panel) {
+          panel.classList.remove("hidden");
+          try {
+            panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          } catch (se) {
+            /* ignore */
+          }
+        }
+      }
+
+      function renderLessonTableFromApi(lessons) {
+        var headRow = document.getElementById("fullLessonListHeadRow");
+        var tb = document.getElementById("fullLessonListBody");
+        if (!headRow || !tb) {
+          return;
+        }
+        if (!lessons || !lessons.length) {
+          headRow.innerHTML =
+            '<th class="py-2 pr-3 font-medium text-slate-400">—</th>';
+          tb.innerHTML =
+            '<tr><td class="py-4 text-slate-500">No lessons in list yet.</td></tr>';
+          return;
+        }
+        if (coachLessonsReadOnly) {
+          headRow.innerHTML =
+            '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap w-32">Actions</th>' +
+            LESSON_TABLE_COLS.map(function (col) {
+              return (
+                '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap max-w-[14rem]">' +
+                escapeHtml(col.label) +
+                "</th>"
+              );
+            }).join("");
+          tb.innerHTML = lessons
+            .map(function (L, idx) {
+              var tds = LESSON_TABLE_COLS.map(function (col) {
+                var v = L[col.key] != null ? String(L[col.key]) : "";
+                return (
+                  '<td class="py-2 pr-3 text-xs align-top whitespace-pre-wrap break-words max-w-[16rem]">' +
+                  escapeHtml(v) +
+                  "</td>"
+                );
+              }).join("");
+              return (
+                '<tr class="border-b border-white/5">' +
+                '<td class="py-2 pr-3 align-middle whitespace-nowrap">' +
+                '<button type="button" class="cm-row-reserved rounded-md bg-black hover:bg-neutral-900 text-white text-xs font-medium px-2.5 py-1.5 border border-white/10" data-idx="' +
+                idx +
+                '">Status</button></td>' +
+                tds +
+                "</tr>"
+              );
+            })
+            .join("");
+          return;
+        }
+        headRow.innerHTML =
+          '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap w-36">Actions</th>' +
+          LESSON_TABLE_COLS.map(function (col) {
+            return (
+              '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap max-w-[14rem]">' +
+              escapeHtml(col.label) +
+              "</th>"
+            );
+          }).join("");
+        tb.innerHTML = lessons
+          .map(function (L, idx) {
+            var tds = LESSON_TABLE_COLS.map(function (col) {
+              var v = L[col.key] != null ? String(L[col.key]) : "";
+              return (
+                '<td class="py-2 pr-3 text-xs align-top whitespace-pre-wrap break-words max-w-[16rem]">' +
+                escapeHtml(v) +
+                "</td>"
+              );
+            }).join("");
+            return (
+              '<tr class="border-b border-white/5">' +
+              '<td class="py-2 pr-3 align-middle whitespace-nowrap">' +
+              '<span class="inline-flex flex-nowrap items-center gap-1.5">' +
+              '<button type="button" class="cm-row-update rounded-md bg-teal-700/90 hover:bg-teal-600 text-white text-xs font-medium px-2.5 py-1.5" data-idx="' +
+              idx +
+              '">Update</button>' +
+              '<button type="button" class="cm-row-reserved rounded-md bg-black hover:bg-neutral-900 text-white text-xs font-medium px-2.5 py-1.5 border border-white/10" data-idx="' +
+              idx +
+              '">Status</button></span></td>' +
+              tds +
+              "</tr>"
+            );
+          })
+          .join("");
+      }
+
+      function lessonRawHeaderIsClubId(h) {
+        var t = String(h || "")
+          .trim()
+          .toLowerCase()
+          .replace(/\s+/g, "");
+        return t === "clubid" || t === "club_id";
+      }
+
+      /** Fallback table when lessons[] is empty: header/row grid from LessonList.json (API). */
+      function renderLessonListRawFallback(raw) {
+        var headRow = document.getElementById("fullLessonListHeadRow");
+        var tb = document.getElementById("fullLessonListBody");
+        if (!headRow || !tb) {
+          return;
+        }
+        if (!raw || !raw.headers || !raw.headers.length) {
+          headRow.innerHTML =
+            '<th class="py-2 pr-3 font-medium text-slate-400">—</th>';
+          tb.innerHTML =
+            '<tr><td class="py-4 text-slate-500">No lessons found.</td></tr>';
+          return;
+        }
+        var keepCol = raw.headers.map(function (h) {
+          return !lessonRawHeaderIsClubId(h);
+        });
+        var filteredHeaders = raw.headers.filter(function (h, i) {
+          return keepCol[i];
+        });
+        var colCount = filteredHeaders.length;
+        headRow.innerHTML = filteredHeaders
+          .map(function (h) {
+            return (
+              '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap max-w-[14rem]">' +
+              escapeHtml(h) +
+              "</th>"
+            );
+          })
+          .join("");
+        if (!raw.rows || !raw.rows.length) {
+          tb.innerHTML =
+            '<tr><td colspan="' +
+            Math.max(colCount, 1) +
+            '" class="py-4 text-slate-500">Header only — no data rows yet.</td></tr>';
+          return;
+        }
+        try {
+          tb.innerHTML = raw.rows
+            .map(function (row) {
+              var cells = Array.isArray(row) ? row : [];
+              var parts = [];
+              for (var ci = 0; ci < cells.length && ci < keepCol.length; ci++) {
+                if (!keepCol[ci]) {
+                  continue;
+                }
+                parts.push(
+                  '<td class="py-2 pr-3 text-xs align-top whitespace-pre-wrap break-words max-w-[16rem]">' +
+                    escapeHtml(cells[ci]) +
+                    "</td>"
+                );
+              }
+              return '<tr class="border-b border-white/5">' + parts.join("") + "</tr>";
+            })
+            .join("");
+        } catch (renderErr) {
+          tb.innerHTML =
+            '<tr><td colspan="' +
+            Math.max(colCount, 1) +
+            '" class="py-4 text-red-300">Could not render table: ' +
+            escapeHtml(
+              renderErr && renderErr.message ? renderErr.message : String(renderErr)
+            ) +
+            "</td></tr>";
+        }
+      }
+
+      function rawLessonTableFromResponse(data) {
+        if (!data) {
+          return null;
+        }
+        return data.lessonListRaw != null ? data.lessonListRaw : data.lessonCsv || null;
+      }
+
+      var lessonListLoadSeq = 0;
+      var lessonListLoadAbort = null;
+
+      /**
+       * Fill sport center selects from GET /lessons payload, or fall back to
+       * GET /lessons/sport-center-options if the array was omitted or empty.
+       */
+      function syncSportCenterDropdowns(data, fetchOpts, mySeq) {
+        var primary =
+          Array.isArray(data.activeSportCenters) && data.activeSportCenters.length
+            ? data.activeSportCenters
+                .map(function (n) {
+                  return String(n || "").trim();
+                })
+                .filter(Boolean)
+            : [];
+        if (primary.length > 0) {
+          cachedActiveSportCenters = primary.slice();
+          populateSportCenterSelects(cachedActiveSportCenters);
+          return Promise.resolve();
+        }
+        return window.api
+          .api("/coach-manager/lessons/sport-center-options", fetchOpts)
+          .then(function (sub) {
+            if (mySeq !== lessonListLoadSeq) {
+              return;
+            }
+            if (sub && sub.ok && Array.isArray(sub.names) && sub.names.length) {
+              cachedActiveSportCenters = sub.names
+                .map(function (n) {
+                  return String(n || "").trim();
+                })
+                .filter(Boolean);
+            } else {
+              cachedActiveSportCenters = [];
+            }
+            populateSportCenterSelects(cachedActiveSportCenters);
+          })
+          .catch(function () {
+            if (mySeq !== lessonListLoadSeq) {
+              return;
+            }
+            cachedActiveSportCenters = [];
+            populateSportCenterSelects([]);
+          });
+      }
+
+      /** Coach name dropdowns from GET /lessons `coachNameOptions` (UserList_Coach.json). */
+      function applyCoachNameOptionsFromLessonsPayload(data) {
+        var list =
+          data && Array.isArray(data.coachNameOptions) && data.coachNameOptions.length
+            ? data.coachNameOptions
+                .map(function (n) {
+                  return String(n || "").trim();
+                })
+                .filter(Boolean)
+            : [];
+        cachedCoachNames = list.slice();
+        populateCoachNameSelects(cachedCoachNames);
+      }
+
+      /** Loads lessons from GET /coach-manager/lessons (backed by LessonList.json). */
+      function loadLessonListFromApi() {
+        var errEl = document.getElementById("fullLessonListError");
+        var warnEl = document.getElementById("fullLessonListWarn");
+        hideAllLessonPanels();
+        if (errEl) {
+          errEl.classList.add("hidden");
+        }
+        if (warnEl) {
+          warnEl.classList.add("hidden");
+          warnEl.textContent = "";
+        }
+
+        if (!window.api || typeof window.api.api !== "function") {
+          if (errEl) {
+            errEl.textContent =
+              "Scripts failed to load. Open Coach Manager from the running Node server (same origin as the API), not file:// or a static server that omits /js/api.js.";
+            errEl.classList.remove("hidden");
+          }
+          cachedLessons = [];
+          cachedLessonReservations = [];
+          cachedActiveSportCenters = [];
+          cachedCoachNames = [];
+          populateSportCenterSelects([]);
+          populateCoachNameSelects([]);
+          renderLessonListRawFallback(null);
+          return;
+        }
+
+        lessonListLoadSeq += 1;
+        var mySeq = lessonListLoadSeq;
+        if (lessonListLoadAbort) {
+          try {
+            lessonListLoadAbort.abort();
+          } catch (abortErr) {
+            /* ignore */
+          }
+        }
+        lessonListLoadAbort =
+          typeof AbortController !== "undefined" ? new AbortController() : null;
+        var fetchOpts = lessonListLoadAbort ? { signal: lessonListLoadAbort.signal } : {};
+
+        window.api
+          .api("/coach-manager/lessons", fetchOpts)
+          .then(function (data) {
+            if (mySeq !== lessonListLoadSeq) {
+              return;
+            }
+            if (!data || data.ok === false) {
+              var failMsg =
+                (data && data.error) || "Could not load lesson list (server returned an error).";
+              if (errEl) {
+                errEl.textContent = failMsg;
+                errEl.classList.remove("hidden");
+              }
+              cachedLessons = [];
+              cachedLessonReservations = [];
+              cachedActiveSportCenters = [];
+              cachedCoachNames = [];
+              populateSportCenterSelects([]);
+              populateCoachNameSelects([]);
+              renderLessonListRawFallback(null);
+              return;
+            }
+            if (data.clubId) {
+              setUidLabels(data.clubId);
+            }
+            if (data.clubName != null && String(data.clubName).trim()) {
+              cachedManagerClubName = String(data.clubName).trim();
+            }
+            syncNewLessonClubNameField();
+            applyCoachNameOptionsFromLessonsPayload(data);
+            syncSportCenterDropdowns(data, fetchOpts, mySeq).then(function () {
+              if (mySeq !== lessonListLoadSeq) {
+                return;
+              }
+              var parts = [];
+              if (warnEl && data.activeSportCentersLoadError) {
+                parts.push(
+                  "Sport center list: " + String(data.activeSportCentersLoadError)
+                );
+              } else if (warnEl && cachedActiveSportCenters.length === 0) {
+                parts.push(
+                  "No active sport centers found for your club — add venues in club settings and mark them ACTIVE (e.g. 界限街一號體育館) so they appear in the dropdown."
+                );
+              }
+              if (warnEl && data.coachNameOptionsLoadError) {
+                parts.push(
+                  "Coach list: " + String(data.coachNameOptionsLoadError)
+                );
+              } else if (warnEl && cachedCoachNames.length === 0) {
+                parts.push(
+                  "No ACTIVE coaches in UserList_Coach.json — add coaches or set status ACTIVE so they appear in the Coach Name dropdown."
+                );
+              }
+              if (warnEl && data.lessonsParseWarning) {
+                parts.push(
+                  "Lesson list could not be read in full; check LessonList.json (Lesson ID and Sport Type). " +
+                    data.lessonsParseWarning
+                );
+              }
+              if (warnEl && parts.length) {
+                warnEl.textContent = parts.join(" ");
+                warnEl.classList.remove("hidden");
+              }
+              cachedLessons = Array.isArray(data.lessons) ? data.lessons.slice() : [];
+              cachedLessonReservations = Array.isArray(data.lessonReservations)
+                ? data.lessonReservations.slice()
+                : [];
+              try {
+                if (cachedLessons.length > 0) {
+                  renderLessonTableFromApi(cachedLessons);
+                } else {
+                  renderLessonListRawFallback(rawLessonTableFromResponse(data));
+                }
+              } catch (renderErr) {
+                if (errEl) {
+                  errEl.textContent =
+                    renderErr && renderErr.message
+                      ? renderErr.message
+                      : "Failed to render table.";
+                  errEl.classList.remove("hidden");
+                }
+                cachedLessons = [];
+                cachedLessonReservations = [];
+                renderLessonListRawFallback(rawLessonTableFromResponse(data));
+              }
+            });
+          })
+          .catch(function (e) {
+            if (mySeq !== lessonListLoadSeq) {
+              return;
+            }
+            if (e && (e.name === "AbortError" || (e.cause && e.cause.name === "AbortError"))) {
+              return;
+            }
+            var msg = e.message || "Could not load lessons.";
+            if (e.status === 401 || /Unauthorized|Invalid token/i.test(msg)) {
+              msg +=
+                " Sign in as Coach Manager on the same host you used to open this site (do not mix localhost and 127.0.0.1).";
+            }
+            if (errEl) {
+              errEl.textContent = msg;
+              errEl.classList.remove("hidden");
+            }
+            cachedLessons = [];
+            cachedLessonReservations = [];
+            cachedActiveSportCenters = [];
+            cachedCoachNames = [];
+            populateSportCenterSelects([]);
+            populateCoachNameSelects([]);
+            renderLessonListRawFallback(null);
+          });
+      }
+
+      (function bindLessonTableActions() {
+        var tb = document.getElementById("fullLessonListBody");
+        if (!tb || tb.dataset.cmRowBound === "1") {
+          return;
+        }
+        tb.dataset.cmRowBound = "1";
+        tb.addEventListener("click", function (ev) {
+          var btnUp =
+            ev.target && ev.target.closest && ev.target.closest("button.cm-row-update");
+          var btnRes =
+            ev.target && ev.target.closest && ev.target.closest("button.cm-row-reserved");
+          var btn = btnUp || btnRes;
+          if (!btn) {
+            return;
+          }
+          var idx = parseInt(btn.getAttribute("data-idx"), 10);
+          if (isNaN(idx) || idx < 0 || idx >= cachedLessons.length) {
+            return;
+          }
+          if (btnRes) {
+            openReservedStatusModal(cachedLessons[idx]);
+            return;
+          }
+          openTableEditPanelFromLesson(cachedLessons[idx]);
+        });
+      })();
+
+      var btnResFromEdit = document.getElementById("btnReservedStatusFromEdit");
+      if (btnResFromEdit) {
+        btnResFromEdit.addEventListener("click", function () {
+          var snap = lessonSnapshotFromEditForm();
+          if (!snap.LessonID) {
+            openReservedStatusModal({
+              LessonID: "",
+              class_info: snap.class_info,
+              lesson_start_date: snap.lesson_start_date,
+              lesson_end_date: snap.lesson_end_date,
+              class_time: snap.class_time,
+              Age_group: snap.Age_group,
+              Sport_center: snap.Sport_center,
+              "Coach Name": snap["Coach Name"],
+              max_number: snap.max_number,
+              ReservedNumber: snap.ReservedNumber,
+            });
+            return;
+          }
+          openReservedStatusModal(snap);
+        });
+      }
+
+      var reservedBackdrop = document.getElementById("reservedStatusBackdrop");
+      if (reservedBackdrop) {
+        reservedBackdrop.addEventListener("click", function (ev) {
+          if (ev.target === reservedBackdrop) {
+            closeReservedStatusModal();
+          }
+        });
+      }
+      var reservedClose = document.getElementById("reservedStatusClose");
+      if (reservedClose) {
+        reservedClose.addEventListener("click", function () {
+          closeReservedStatusModal();
+        });
+      }
+
+      var btnAssignStudent = document.getElementById("btnAssignStudentFromEdit");
+      if (btnAssignStudent) {
+        btnAssignStudent.addEventListener("click", function () {
+          var id = document.getElementById("tableEditLessonId").value.trim();
+          if (!id) {
+            var errBox = document.getElementById("tableEditErr");
+            if (errBox) {
+              errBox.textContent =
+                "Open a lesson with Update first (missing Lesson ID).";
+              errBox.classList.remove("hidden");
+            }
+            return;
+          }
+          var errBox = document.getElementById("tableEditErr");
+          if (errBox) {
+            errBox.classList.add("hidden");
+            errBox.textContent = "";
+          }
+          openAssignStudentModal();
+        });
+      }
+
+      var assignBackdrop = document.getElementById("assignStudentBackdrop");
+      if (assignBackdrop) {
+        assignBackdrop.addEventListener("click", function (ev) {
+          if (ev.target === assignBackdrop) {
+            closeAssignStudentModal();
+          }
+        });
+      }
+      var assignCancel = document.getElementById("assignStudentModalCancel");
+      if (assignCancel) {
+        assignCancel.addEventListener("click", function () {
+          closeAssignStudentModal();
+        });
+      }
+      var assignConfirm = document.getElementById("assignStudentModalConfirm");
+      if (assignConfirm) {
+        assignConfirm.addEventListener("click", function () {
+          var lessonId = document.getElementById("tableEditLessonId").value.trim();
+          var errEl = document.getElementById("assignStudentErr");
+          var okEl = document.getElementById("assignStudentOk");
+          var btn = document.getElementById("assignStudentModalConfirm");
+          if (!lessonId) {
+            if (errEl) {
+              errEl.textContent = "Missing Lesson ID.";
+              errEl.classList.remove("hidden");
+            }
+            return;
+          }
+          var ids = [];
+          document
+            .querySelectorAll(
+              "#assignStudentList input[type=checkbox]:checked:not(:disabled)"
+            )
+            .forEach(function (inp) {
+              var v = inp.getAttribute("data-student-id");
+              if (v && String(v).trim()) {
+                ids.push(String(v).trim());
+              }
+            });
+          if (!ids.length) {
+            if (errEl) {
+              errEl.textContent = "Select at least one student.";
+              errEl.classList.remove("hidden");
+            }
+            return;
+          }
+          if (errEl) {
+            errEl.classList.add("hidden");
+            errEl.textContent = "";
+          }
+          if (okEl) {
+            okEl.classList.add("hidden");
+            okEl.textContent = "";
+          }
+          btn.disabled = true;
+          window.api
+            .api("/coach-manager/lessons/assign-students", {
+              method: "POST",
+              body: JSON.stringify({
+                lessonId: lessonId,
+                studentIds: ids,
+              }),
+            })
+            .then(function (data) {
+              var parts = [];
+              if (data.reserved && data.reserved.length) {
+                parts.push(
+                  "Reserved " +
+                    data.reserved.length +
+                    ": " +
+                    data.reserved
+                      .map(function (r) {
+                        return r.Student_Name || r.studentId;
+                      })
+                      .join(", ") +
+                    "."
+                );
+              }
+              if (data.skipped && data.skipped.length) {
+                parts.push(
+                  "Skipped " +
+                    data.skipped.length +
+                    " (" +
+                    data.skipped
+                      .map(function (s) {
+                        return s.studentId + " — " + s.reason;
+                      })
+                      .join("; ") +
+                    ")."
+                );
+              }
+              if (okEl) {
+                okEl.textContent =
+                  parts.join(" ") ||
+                  "Done (no new reservations — see skipped list if any).";
+                okEl.classList.remove("hidden");
+              }
+              if (data.newReservedNumber != null) {
+                var rn = document.getElementById("tableEditReservedNumber");
+                if (rn) {
+                  rn.value = String(data.newReservedNumber);
+                }
+              }
+              loadLessonListFromApi();
+            })
+            .catch(function (e) {
+              if (errEl) {
+                errEl.textContent = e.message || "Assign failed.";
+                errEl.classList.remove("hidden");
+              }
+            })
+            .finally(function () {
+              btn.disabled = false;
+            });
+        });
+      }
+
+      document.getElementById("tableEditCancelBtn").addEventListener("click", function () {
+        hideTableEditPanel();
+      });
+
+      document.getElementById("tableEditConfirmBtn").addEventListener("click", function () {
+        var btn = document.getElementById("tableEditConfirmBtn");
+        var errBox = document.getElementById("tableEditErr");
+        var okBox = document.getElementById("tableEditOk");
+        errBox.classList.add("hidden");
+        okBox.classList.add("hidden");
+        var id = document.getElementById("tableEditLessonId").value.trim();
+        if (!id) {
+          errBox.textContent = "Missing LessonID.";
+          errBox.classList.remove("hidden");
+          return;
+        }
+        var st = document.getElementById("tableEditSportType").value.trim();
+        if (!st) {
+          errBox.textContent = "SportType is required.";
+          errBox.classList.remove("hidden");
+          return;
+        }
+        btn.disabled = true;
+        var putBody = {
+          LessonID: id,
+          SportType: st,
+          Year: document.getElementById("tableEditYear").value.trim(),
+          class_id: document.getElementById("tableEditClassId").value.trim(),
+          class_info: document.getElementById("tableEditClassInfo").value.trim(),
+          class_time: document.getElementById("tableEditClassTime").value.trim(),
+          class_fee: document.getElementById("tableEditClassFee").value.trim(),
+          Age_group: document.getElementById("tableEditAgeGroup").value.trim(),
+          max_number: document.getElementById("tableEditMaxNumber").value.trim(),
+          ReservedNumber: document.getElementById("tableEditReservedNumber").value.trim(),
+          Frequency: document.getElementById("tableEditFrequency").value.trim(),
+          lesson_start_date: document
+            .getElementById("tableEditLessonStart")
+            .value.trim(),
+          lesson_end_date: document
+            .getElementById("tableEditLessonEnd")
+            .value.trim(),
+          Sport_center: document
+            .getElementById("tableEditSportCenter")
+            .value.trim(),
+          court_no: document.getElementById("tableEditCourtNo").value.trim(),
+          "Coach Name": document
+            .getElementById("tableEditCoachName")
+            .value.trim(),
+          status: document.getElementById("tableEditStatus").value,
+          Remarks: document.getElementById("tableEditRemarks").value.trim(),
+        };
+        var dayFlags = collectTableEditDayFlags();
+        putBody.class_sun = dayFlags.class_sun;
+        putBody.class_mon = dayFlags.class_mon;
+        putBody.class_tue = dayFlags.class_tue;
+        putBody.class_wed = dayFlags.class_wed;
+        putBody.class_thur = dayFlags.class_thur;
+        putBody.class_fri = dayFlags.class_fri;
+        putBody.class_sat = dayFlags.class_sat;
+        window.api
+          .api("/coach-manager/lessons", {
+            method: "PUT",
+            body: JSON.stringify(putBody),
+          })
+          .then(function () {
+            loadLessonListFromApi();
+          })
+          .catch(function (e) {
+            errBox.textContent = e.message || "Save failed.";
+            errBox.classList.remove("hidden");
+          })
+          .finally(function () {
+            btn.disabled = false;
+          });
+      });
+
+      window.addEventListener("message", function (ev) {
+        if (ev.origin !== window.location.origin) {
+          return;
+        }
+        var d = ev.data;
+        if (!d || d.type !== "sportCoach.clubContext") {
+          return;
+        }
+        var cid = String(d.clubId || d.uid || "").trim();
+        if (cid) {
+          setUidLabels(cid);
+        }
+        if (
+          window.api &&
+          typeof window.api.setClubFolderContext === "function"
+        ) {
+          window.api.setClubFolderContext(
+            cid || null,
+            d.clubName != null && String(d.clubName).trim() !== ""
+              ? String(d.clubName).trim()
+              : null
+          );
+        }
+        loadLessonListFromApi();
+      });
+
+      if (window.api && typeof window.api.api === "function") {
+        window.api
+          .api("/me")
+          .then(function (d) {
+            var u = d.user || {};
+            var cfu =
+              u.club_folder_uid != null && String(u.club_folder_uid).trim() !== ""
+                ? String(u.club_folder_uid).trim()
+                : "";
+            setUidLabels(cfu || u.uid);
+            var cn =
+              u.club_name != null && String(u.club_name).trim() !== ""
+                ? String(u.club_name).trim()
+                : "";
+            if (cn && cn !== "—") {
+              cachedManagerClubName = cn;
+            }
+            syncNewLessonClubNameField();
+          })
+          .catch(function () {
+            /* keep UID from /me or postMessage */
+          });
+      }
+
+      initSportTypeSelectsFromBasicInfo()
+        .catch(function () {
+          /* dropdowns stay empty if API fails */
+        })
+        .finally(function () {
+          loadLessonListFromApi();
+        });
+
+      document.getElementById("btnLessonTimetable").addEventListener("click", function () {
+        var cid = getLessonModuleClubId();
+        var url = "/backend/lesson_modules/lesson_reservation/lesson-timetable.html";
+        if (cid) {
+          url += "?clubId=" + encodeURIComponent(cid);
+        }
+        window.open(url, "_blank", "noopener,noreferrer");
+      });
+
+      document.getElementById("btnCreateNewLesson").addEventListener("click", function () {
+        hideTableEditPanel();
+        var panel = document.getElementById("createLessonPanel");
+        var form = document.getElementById("createLessonForm");
+        var errEl = document.getElementById("createLessonErr");
+        var okEl = document.getElementById("createLessonOk");
+        if (errEl) {
+          errEl.classList.add("hidden");
+          errEl.textContent = "";
+        }
+        if (okEl) {
+          okEl.classList.add("hidden");
+          okEl.textContent = "";
+        }
+        if (form) {
+          form.reset();
+        }
+        var rnOpen = document.getElementById("newLessonReservedNumber");
+        if (rnOpen) {
+          rnOpen.value = "0";
+        }
+        setNewLessonSportTypeToFirst();
+        syncNewLessonClubNameField();
+        populateSportCenterSelects(cachedActiveSportCenters);
+        populateCoachNameSelects(cachedCoachNames);
+        var st = document.getElementById("newLessonStatus");
+        if (st) {
+          st.value = "ACTIVE";
+        }
+        if (panel) {
+          panel.classList.remove("hidden");
+          try {
+            panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          } catch (se) {
+            /* ignore */
+          }
+        }
+      });
+
+      document.getElementById("createLessonCancelBtn").addEventListener("click", function () {
+        hideCreateLessonPanel();
+      });
+
+      document.getElementById("createLessonForm").addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        var errBox = document.getElementById("createLessonErr");
+        var okBox = document.getElementById("createLessonOk");
+        var btn = document.getElementById("createLessonSubmitBtn");
+        errBox.classList.add("hidden");
+        okBox.classList.add("hidden");
+        errBox.textContent = "";
+        var sport = document.getElementById("newLessonSportType").value.trim();
+        if (!sport) {
+          errBox.textContent = "Sport Type is required.";
+          errBox.classList.remove("hidden");
+          return;
+        }
+        btn.disabled = true;
+        var dayNew = collectNewLessonDayFlags();
+        var body = {
+          SportType: sport,
+          Year: document.getElementById("newLessonYear").value.trim(),
+          class_id: document.getElementById("newLessonClassId").value.trim(),
+          class_info: document.getElementById("newLessonClassInfo").value.trim(),
+          class_time: document.getElementById("newLessonClassTime").value.trim(),
+          class_fee: document.getElementById("newLessonClassFee").value.trim(),
+          class_sun: dayNew.class_sun,
+          class_mon: dayNew.class_mon,
+          class_tue: dayNew.class_tue,
+          class_wed: dayNew.class_wed,
+          class_thur: dayNew.class_thur,
+          class_fri: dayNew.class_fri,
+          class_sat: dayNew.class_sat,
+          Age_group: document.getElementById("newLessonAgeGroup").value.trim(),
+          max_number: document.getElementById("newLessonMaxNumber").value.trim(),
+          Frequency: document.getElementById("newLessonFrequency").value.trim(),
+          lesson_start_date: document.getElementById("newLessonStart").value.trim(),
+          lesson_end_date: document.getElementById("newLessonEnd").value.trim(),
+          Sport_center: document.getElementById("newLessonSportCenter").value.trim(),
+          court_no: document.getElementById("newLessonCourtNo").value.trim(),
+          "Coach Name": document.getElementById("newLessonCoachName").value.trim(),
+          status: document.getElementById("newLessonStatus").value,
+          Remarks: document.getElementById("newLessonRemarks").value.trim(),
+        };
+        window.api
+          .api("/coach-manager/lessons", {
+            method: "POST",
+            body: JSON.stringify(body),
+          })
+          .then(function (data) {
+            okBox.textContent =
+              (data.message || "Created.") +
+              " Lesson ID: " +
+              (data.lessonId || "—");
+            okBox.classList.remove("hidden");
+            document.getElementById("createLessonForm").reset();
+            var rnDone = document.getElementById("newLessonReservedNumber");
+            if (rnDone) {
+              rnDone.value = "0";
+            }
+            setNewLessonSportTypeToFirst();
+            syncNewLessonClubNameField();
+            var st2 = document.getElementById("newLessonStatus");
+            if (st2) {
+              st2.value = "ACTIVE";
+            }
+            loadLessonListFromApi();
+          })
+          .catch(function (e) {
+            errBox.textContent = e.message || "Could not create lesson.";
+            errBox.classList.remove("hidden");
+          })
+          .finally(function () {
+            btn.disabled = false;
+          });
+      });
+    })();
+  </script>
+</body>
+</html>
