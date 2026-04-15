@@ -31,7 +31,10 @@ import { createUserLoginPaymentStatusRouter } from "./payment_modules/UserLogin_
 import { Student_payment } from "./payment_modules/Student_payment";
 import { createBasicInfoRouter } from "./routes/basicInfoRoutes";
 import { isValidClubFolderId } from "./coachListCsv";
-import { resolveStudentClubSession } from "./studentListCsv";
+import {
+  rebuildStudentIdClubIndex,
+  resolveStudentClubSession,
+} from "./studentListCsv";
 import { getDataFileCacheStats } from "./dataFileCache";
 import { getRdsPoolStats } from "./db/rdsPostgres";
 import {
@@ -74,6 +77,7 @@ const adminDataStatic = path.join(backendRoot, "data", "admin");
 ensureUserlistFileExists();
 ensureUserlistSchema();
 ensureCoachStudentLoginFilesExist();
+rebuildStudentIdClubIndex();
 
 startProductionMemoryLogging();
 

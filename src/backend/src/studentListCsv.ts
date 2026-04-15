@@ -519,27 +519,67 @@ export function loadStudents(clubId: string): StudentCsvRow[] {
   return readStudentRowsFromDisk(clubId);
 }
 
+/**
+ * Uppercase trimmed StudentID → club folder id. First occurrence in `data_club` readdir order
+ * wins (same semantics as the legacy linear scan).
+ */
+const studentIdToClubId = new Map<string, string>();
+let studentIdClubIndexReady = false;
+
+/**
+ * Rebuilds the StudentID → club folder index from disk (all `UserList_Student.json` files).
+ * Call on startup; also after purges that may change which club “owns” a StudentID.
+ */
+export function rebuildStudentIdClubIndex(): void {
+  const next = new Map<string, string>();
+  const root = dataClubRoot();
+  if (fs.existsSync(root)) {
+    for (const name of fs.readdirSync(root)) {
+      if (!isValidClubFolderId(name)) {
+        continue;
+      }
+      const students = loadStudents(name);
+      for (const s of students) {
+        const u = s.studentId.replace(/^\uFEFF/, "").trim().toUpperCase();
+        if (!u || next.has(u)) {
+          continue;
+        }
+        next.set(u, name);
+      }
+    }
+  }
+  studentIdToClubId.clear();
+  for (const [k, v] of next) {
+    studentIdToClubId.set(k, v);
+  }
+  studentIdClubIndexReady = true;
+}
+
+function ensureStudentIdClubIndex(): void {
+  if (!studentIdClubIndexReady) {
+    rebuildStudentIdClubIndex();
+  }
+}
+
+/** Register a newly added student; preserves first-wins if the ID already exists in the index. */
+function registerStudentIdInIndex(studentId: string, clubId: string): void {
+  const u = studentId.replace(/^\uFEFF/, "").trim().toUpperCase();
+  if (!u) {
+    return;
+  }
+  if (!studentIdToClubId.has(u)) {
+    studentIdToClubId.set(u, clubId);
+  }
+}
+
 /** First club folder id whose UserList_Student.json lists this StudentID, or null. */
 export function findClubUidForStudentId(studentId: string): string | null {
   const uid = studentId.trim();
   if (!uid) {
     return null;
   }
-  const root = dataClubRoot();
-  if (!fs.existsSync(root)) {
-    return null;
-  }
-  const upper = uid.toUpperCase();
-  for (const name of fs.readdirSync(root)) {
-    if (!isValidClubFolderId(name)) {
-      continue;
-    }
-    const students = loadStudents(name);
-    if (students.some((s) => s.studentId.trim().toUpperCase() === upper)) {
-      return name;
-    }
-  }
-  return null;
+  ensureStudentIdClubIndex();
+  return studentIdToClubId.get(uid.toUpperCase()) ?? null;
 }
 
 export type StudentClubSessionOk = {
@@ -727,6 +767,7 @@ export function appendStudentRow(
   };
   rows.push(newRow);
   writeStudentsArray(clubId, rows);
+  registerStudentIdInIndex(studentId, clubId);
   return { ok: true, studentId };
 }
 
@@ -795,8 +836,8 @@ export function updateStudentRow(
   return { ok: true };
 }
 
-/** Deletes the student record from UserList_Student.json. */
-export function purgeStudentRow(
+/** Deletes the student record from UserList_Student.json (disk only; no index rebuild). */
+function purgeStudentRowOnDisk(
   clubId: string,
   studentId: string,
 ): { ok: true } | { ok: false; error: string } {
@@ -818,6 +859,18 @@ export function purgeStudentRow(
   return { ok: true };
 }
 
+/** Deletes the student record from UserList_Student.json. */
+export function purgeStudentRow(
+  clubId: string,
+  studentId: string,
+): { ok: true } | { ok: false; error: string } {
+  const r = purgeStudentRowOnDisk(clubId, studentId);
+  if (r.ok) {
+    rebuildStudentIdClubIndex();
+  }
+  return r;
+}
+
 const PURGE_STUDENT_SKIP_ERRORS = new Set([
   "Student not found.",
   "Student list not found.",
@@ -828,7 +881,7 @@ function purgeStudentRowSafe(
   studentId: string,
 ): { ok: true } | { ok: false; error: string } {
   try {
-    return purgeStudentRow(clubId, studentId);
+    return purgeStudentRowOnDisk(clubId, studentId);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     if (
@@ -884,8 +937,8 @@ export function purgeStudentRowFromAllClubFolders(
     }
     return r;
   }
-  if (updatedClubIds.length === 0) {
-    return { ok: true, updatedClubIds: [] };
+  if (updatedClubIds.length > 0) {
+    rebuildStudentIdClubIndex();
   }
   return { ok: true, updatedClubIds };
 }
