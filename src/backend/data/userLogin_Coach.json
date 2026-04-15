@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "users": [
+    {
+      "uid": "C000001",
+      "usertype": "Coach",
+      "username": "felix",
+      "password_hash": "$2b$10$Ws7rjxltc5cgZ0vJ6q0KUeZXKEo/CsDUQmn/D4ePNj2YnVBxLr0ly",
+      "full_name": "Felix Fan",
+      "is_activated": "YES",
+      "creation_date": "2026-04-09",
+      "club_name": "流星羽毛球會",
+      "status": "ACTIVE",
+      "lastUpdate_date": "2026-04-12",
+      "Expiry_date": "2026-05-20",
+      "club_id": "CM00000003",
+      "club_folder_uid": "CM00000003",
+      "CoachID": "C000001"
+    },
+    {
+      "uid": "C000003",
+      "usertype": "Coach",
+      "username": "wongwaihong",
+      "password_hash": "$2b$10$ceCbjID1KMl3EyT.IEje3eKvQtZYLQuL3khpjt4hW95zt0K933DWG",
+      "full_name": "王偉康",
+      "is_activated": "YES",
+      "creation_date": "2026-04-10",
+      "club_name": "培立大中華",
+      "status": "ACTIVE",
+      "lastUpdate_date": "2026-04-12",
+      "Expiry_date": "2027-04-12",
+      "club_id": "CM00000005",
+      "club_folder_uid": "CM00000005",
+      "CoachID": "C000003"
+    }
+  ]
+}

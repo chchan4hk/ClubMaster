@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "payments": [
+    {
+      "paymentId": "PM000002",
+      "uid": "CM00000005",
+      "username": "aiko",
+      "full_name": "Aiko Fung",
+      "Expiry_date": "2027-04-12",
+      "subscription_option": "1 year",
+      "subscription_amount": 11600,
+      "paymentMethod": "PayMe",
+      "transactionRef": "",
+      "paymentDate": "2026-04-13 00:42",
+      "status": "COMPLETED",
+      "createdAt": "2026-04-12T16:42:58.696Z",
+      "confirm_payment_date": "2026-04-12"
+    }
+  ]
+}

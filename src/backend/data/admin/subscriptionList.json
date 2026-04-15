@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "subscriptions": [
+    {
+      "Sub_ID": "SUB000001",
+      "Sub_Option": "1 month",
+      "Sub_Amount": 1680
+    },
+    {
+      "Sub_ID": "SUB000002",
+      "Sub_Option": "3 months",
+      "Sub_Amount": 4580
+    },
+    {
+      "Sub_ID": "SUB000003",
+      "Sub_Option": "1 year",
+      "Sub_Amount": 11600
+    }
+  ]
+}
