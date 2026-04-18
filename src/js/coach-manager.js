@@ -15,7 +15,8 @@ if (window.dashboardInit("CoachManager", "Coach manager")) {
         src.indexOf("prize_modules") !== -1 ||
         src.indexOf("club_master") !== -1 ||
         src.indexOf("lesson_modules") !== -1 ||
-        src.indexOf("payment_modules") !== -1
+        src.indexOf("payment_modules") !== -1 ||
+        src.indexOf("coach_salary") !== -1
       ) {
         var ctx =
           window.api.getClubFolderContext &&

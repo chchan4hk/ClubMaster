@@ -26,6 +26,7 @@ import { createCoachManagerStudentRouter } from "./routes/coachManagerStudentRou
 import { createCoachManagerClubInfoRouter } from "./routes/coachManagerClubInfoRoutes";
 import { createCoachManagerSportCenterRouter } from "./routes/coachManagerSportCenterRoutes";
 import { createCoachManagerLessonRouter } from "./routes/coachManagerLessonRoutes";
+import { createCoachSalaryPaymentRouter } from "./routes/coachSalaryPaymentRoutes";
 import { Lesson_payment_status } from "./payment_modules/Lesson_payment_status";
 import { createUserLoginPaymentStatusRouter } from "./payment_modules/UserLogin_payment_status";
 import { Student_payment } from "./payment_modules/Student_payment";
@@ -99,6 +100,9 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(slowRequestLogger);
 
+const isProd = process.env.NODE_ENV === "production";
+const STATIC_MAX_AGE_MS = 86400000;
+
 /** Homepage: / → login page */
 app.get("/", (_req, res) => {
   res.redirect(302, "/main.html");
@@ -115,12 +119,6 @@ app.get("/student/payment", (_req, res) => {
   );
 });
 
-const isProd = process.env.NODE_ENV === "production";
-const STATIC_MAX_AGE_MS = 86400000;
-/** Long cache for HTML/JS/CSS; club JSON can change often — no long browser cache there. */
-app.use(
-  express.static(staticRoot, isProd ? { maxAge: STATIC_MAX_AGE_MS, etag: true } : {}),
-);
 /** Club assets & JSON — short cache in production to avoid stale API-backed files. */
 app.use(
   "/backend/data_club",
@@ -309,6 +307,15 @@ const userLoginPaymentStatusRouter = createUserLoginPaymentStatusRouter();
 app.use("/api/admin/userlogin-payment-status", userLoginPaymentStatusRouter);
 app.use("/api/admin/userloginpaymentstatus", userLoginPaymentStatusRouter);
 app.use("/api/student/payment", Student_payment());
+app.use("/api/coach/salary-payment", createCoachSalaryPaymentRouter());
+
+/**
+ * Web UI (main.html, js/, …). Mounted after /api routes so paths like `/api/coach-manager/coachsalary`
+ * are never shadowed by a static file under the web root.
+ */
+app.use(
+  express.static(staticRoot, isProd ? { maxAge: STATIC_MAX_AGE_MS, etag: true } : {}),
+);
 
 app.use("/api", (req, res) => {
   res.status(404).json({

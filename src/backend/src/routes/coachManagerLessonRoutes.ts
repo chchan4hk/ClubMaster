@@ -44,6 +44,7 @@ import {
 } from "../lessonReserveList";
 import { loadStudents, resolveStudentClubSession } from "../studentListCsv";
 import { listActiveSportCenterNames } from "../sportCenterListCsv";
+import { createCoachManagerSalaryRouter } from "./coachManagerSalaryRoutes";
 
 function readDayYn(b: Record<string, unknown>, key: string): string {
   if (!Object.prototype.hasOwnProperty.call(b, key)) {
@@ -319,6 +320,12 @@ export function createCoachManagerLessonRouter(): Router {
   const r = Router();
 
   r.use(requireAuth);
+
+  /**
+   * Coach salary + lesson fee allocation (Coach Manager). Nested here so the same
+   * `/api/coach-manager/lessons` mount that already works in production always reaches this API.
+   */
+  r.use("/coach-salary-data", createCoachManagerSalaryRouter());
 
   /** Lightweight list for lesson forms (Sport Center column, ACTIVE rows only). */
   r.get(

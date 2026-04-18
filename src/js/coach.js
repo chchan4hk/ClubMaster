@@ -11,7 +11,8 @@ if (window.dashboardInit("Coach", "Coach")) {
       src.indexOf("prize_modules") !== -1 ||
       src.indexOf("club_master") !== -1 ||
       src.indexOf("lesson_modules") !== -1 ||
-      src.indexOf("lesson_reservation") !== -1
+      src.indexOf("lesson_reservation") !== -1 ||
+      src.indexOf("coach_salary_payment") !== -1
     );
   }
 

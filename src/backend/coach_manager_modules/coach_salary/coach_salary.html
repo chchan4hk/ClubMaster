@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Coach Salary — Coach Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    body.coach-salary-page.dashboard-dynamic-bg {
+      background-color: #e6f4ec;
+      isolation: isolate;
+    }
+    body.coach-salary-page .dynamic-bg-photo {
+      opacity: 0.12;
+      filter: sepia(0.4) saturate(0.55) brightness(1.2) contrast(0.95);
+      mix-blend-mode: multiply;
+    }
+    body.coach-salary-page .dynamic-bg-overlay {
+      background:
+        linear-gradient(
+          165deg,
+          rgba(255, 252, 244, 0.98) 0%,
+          rgba(240, 236, 224, 0.97) 24%,
+          rgba(228, 224, 212, 0.96) 48%,
+          rgba(250, 246, 232, 0.97) 72%,
+          rgba(210, 232, 218, 0.96) 100%
+        ),
+        linear-gradient(
+          95deg,
+          transparent 0%,
+          rgba(209, 250, 229, 0.5) 40%,
+          transparent 58%
+        ),
+        radial-gradient(
+          ellipse 130% 100% at var(--spot-x, 50%) var(--spot-y, 50%),
+          rgba(255, 251, 235, 0.65) 0%,
+          rgba(232, 228, 215, 0.35) 42%,
+          transparent 68%
+        ),
+        radial-gradient(ellipse 75% 55% at 8% 92%, rgba(185, 180, 168, 0.4) 0%, transparent 52%),
+        radial-gradient(ellipse 65% 50% at 94% 8%, rgba(245, 238, 210, 0.55) 0%, transparent 50%);
+    }
+    body.coach-salary-page .dynamic-bg-spot-glow {
+      background: radial-gradient(
+        circle min(88vw, 760px) at var(--spot-x, 50%) var(--spot-y, 50%),
+        rgba(255, 252, 235, 0.42) 0%,
+        rgba(230, 225, 205, 0.18) 48%,
+        transparent 70%
+      );
+      mix-blend-mode: soft-light;
+    }
+    body.coach-salary-page .dynamic-bg-star-net {
+      opacity: 0.06;
+      filter: sepia(1) hue-rotate(25deg) saturate(0.25) brightness(1.2);
+    }
+    body.coach-salary-page .glass {
+      background: linear-gradient(
+        155deg,
+        rgba(6, 52, 44, 0.82) 0%,
+        rgba(15, 48, 42, 0.86) 50%,
+        rgba(10, 42, 36, 0.84) 100%
+      );
+      border-color: rgba(52, 211, 153, 0.28);
+      box-shadow:
+        inset 0 1px 0 rgba(167, 243, 208, 0.1),
+        0 10px 40px rgba(0, 45, 35, 0.18);
+      backdrop-filter: blur(12px);
+    }
+  </style>
+</head>
+<body
+  class="coach-salary-page dashboard-dynamic-bg min-h-screen text-emerald-950 p-6 pb-24"
+  style="--dashboard-bg-img: url('/Source/Image/coach-manager.jpg');">
+  <div class="dynamic-bg-stack" aria-hidden="true">
+    <div class="dynamic-bg-photo"></div>
+    <div class="dynamic-bg-overlay"></div>
+    <canvas class="dynamic-bg-star-net"></canvas>
+    <div class="dynamic-bg-spot-glow"></div>
+  </div>
+
+  <div id="toastHost" class="fixed top-4 right-4 z-[200] flex flex-col gap-2 pointer-events-none max-w-sm"></div>
+
+  <div class="max-w-7xl mx-auto relative z-[1] text-emerald-100">
+    <header class="mb-6 text-emerald-950">
+      <p id="backLinkWrap">
+        <a href="/coach-manager.html" target="_top"
+          class="text-sm text-teal-800 hover:text-teal-950 underline-offset-2 hover:underline font-medium">
+          ← Back to Coach Manager
+        </a>
+      </p>
+      <h1 class="text-2xl font-bold text-emerald-950 mt-2 tracking-tight">Coach Salary</h1>
+      <p id="loadError" class="hidden text-sm text-red-700 mt-2"></p>
+    </header>
+
+    <section class="glass rounded-xl border border-emerald-600/20 p-3 mb-4 flex flex-wrap gap-2 items-center text-xs">
+      <span class="text-emerald-100/75 font-medium uppercase tracking-wide">Integrations</span>
+      <a id="linkCoaches" href="#" target="_blank" rel="noopener"
+        class="rounded-lg bg-emerald-500/10 border border-emerald-600/25 px-3 py-1.5 text-emerald-200 hover:bg-emerald-500/20">Coach Information</a>
+      <a id="linkLessons" href="#" target="_blank" rel="noopener"
+        class="rounded-lg bg-emerald-500/10 border border-emerald-600/25 px-3 py-1.5 text-emerald-200 hover:bg-emerald-500/20">Lesson Reservation</a>
+      <a id="linkLessonPay" href="#" target="_blank" rel="noopener"
+        class="rounded-lg bg-emerald-500/10 border border-emerald-600/25 px-3 py-1.5 text-emerald-200 hover:bg-emerald-500/20">Lesson Payment Status</a>
+    </section>
+
+    <section class="glass rounded-xl border border-emerald-600/20 p-4 mb-4">
+      <div class="flex flex-wrap gap-3 gap-y-2 items-end">
+        <div class="mr-1">
+          <label for="filterCoachSalaryMonth" class="block text-xs text-emerald-200/70 mb-1">Month</label>
+          <input id="filterCoachSalaryMonth" type="month"
+            class="rounded-lg bg-emerald-950/50 border border-emerald-600/25 px-3 py-2 text-sm text-emerald-50 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-emerald-400/45" />
+        </div>
+        <button type="button" id="btnReload"
+          class="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-2">
+          Reload data
+        </button>
+        <button type="button" id="btnSaveAll"
+          class="rounded-lg bg-emerald-800 hover:bg-emerald-700 border border-emerald-600/30 text-emerald-50 text-sm px-4 py-2">
+          Save All
+        </button>
+        <p id="coachSalaryMonthHint" class="text-xs text-emerald-100/70 flex-1 min-w-[200px] pb-1"></p>
+        <span id="tableMeta" class="text-xs text-emerald-100/75 whitespace-nowrap pb-1"></span>
+      </div>
+    </section>
+
+    <section class="glass rounded-xl border border-emerald-600/25 p-4 overflow-x-auto mb-4">
+      <h2 class="text-lg font-semibold text-emerald-200 mb-1">Lesson Fee Allocation for Coach</h2>
+      <p class="text-xs text-emerald-100/75 mb-3">
+        Lesson fee (total) = max enrolment × class fee. Received = number of reservations with payment confirmed × class fee per student.
+        <strong>Update</strong> writes or creates a <code class="text-emerald-300/80">CoachSalary.json</code> row (ids <code class="text-emerald-300/80">CS000001</code>, …) for that lesson.
+        The <strong>Month</strong> control above filters this table and salary records to lessons whose schedule overlaps that month.
+      </p>
+      <table class="w-full text-sm text-left border-collapse min-w-[720px]">
+        <thead>
+          <tr class="border-b border-emerald-600/20 text-emerald-200/70">
+            <th class="py-2 pr-2 font-medium whitespace-nowrap">Lesson ID</th>
+            <th class="py-2 pr-2 font-medium text-right whitespace-nowrap">Lesson fee (Total)</th>
+            <th class="py-2 pr-2 font-medium text-right whitespace-nowrap">Received Lesson fee (Total)</th>
+            <th class="py-2 pr-2 font-medium whitespace-nowrap">Coach Name</th>
+            <th class="py-2 pr-2 font-medium whitespace-nowrap">Fee Allocation <span id="hdrFeeAllocCurrency">(HKD)</span></th>
+            <th class="py-2 pr-2 font-medium whitespace-nowrap">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="allocationTableBody">
+          <tr><td class="py-6 text-emerald-100/75" colspan="6">Loading…</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="glass rounded-xl border border-emerald-600/25 p-4 overflow-x-auto">
+      <h2 class="text-lg font-semibold text-emerald-200 mb-2">Salary records</h2>
+      <table class="w-full text-sm text-left border-collapse min-w-[960px]">
+        <thead>
+          <tr class="border-b border-emerald-600/20 text-emerald-200/70">
+            <th class="py-2 pr-2 font-medium whitespace-nowrap">Coach</th>
+            <th class="py-2 pr-2 font-medium">Lesson</th>
+            <th class="py-2 pr-2 font-medium whitespace-nowrap">Club</th>
+            <th class="py-2 pr-2 font-medium whitespace-nowrap text-right">Salary</th>
+            <th class="py-2 pr-2 font-medium whitespace-nowrap">Payment Method</th>
+            <th class="py-2 pr-2 font-medium whitespace-nowrap">Payment Status</th>
+            <th class="py-2 pr-2 font-medium whitespace-nowrap text-center">Confirm</th>
+            <th class="py-2 pr-2 font-medium whitespace-nowrap">Last Updated</th>
+            <th class="py-2 pr-2 font-medium whitespace-nowrap">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr><td class="py-6 text-emerald-100/75" colspan="9">Loading…</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="glass rounded-xl border border-emerald-600/25 p-4 mb-4">
+      <h2 class="text-lg font-semibold text-emerald-200 mb-1">Overview charts (selected month)</h2>
+      <p class="text-xs text-emerald-100/75 mb-4">
+        Figures match the filtered lessons and salary rows for the month chosen in the toolbar. The right chart partitions <strong>collected lesson fees</strong> (received) into coach salary marked <strong>Paid</strong> versus the remainder (treated as pending against that collected amount).
+      </p>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+        <div>
+          <h3 class="text-sm font-semibold text-emerald-200/90 mb-2">Lesson fee (total) — received vs unpaid</h3>
+          <p class="text-xs text-emerald-100/65 mb-2">Capacity (max enrolment × fee) split into fees collected from students vs still outstanding.</p>
+          <div class="h-56 max-w-sm mx-auto w-full mb-3">
+            <canvas id="lessonFeeReceivedPieChart" aria-label="Lesson fee received versus unpaid"></canvas>
+          </div>
+          <table class="w-full text-sm border-collapse">
+            <thead>
+              <tr class="border-b border-emerald-600/20 text-emerald-200/70">
+                <th class="py-2 pr-2 text-left font-medium">Category</th>
+                <th class="py-2 pr-2 text-right font-medium">Amount <span id="hdrPieLessonCurrency">(HKD)</span></th>
+              </tr>
+            </thead>
+            <tbody id="lessonFeePieSummaryBody">
+              <tr><td class="py-3 text-emerald-100/75" colspan="2">Load data and pick a month.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <h3 class="text-sm font-semibold text-emerald-200/90 mb-2">Salary payment overview — paid vs pending</h3>
+          <p class="text-xs text-emerald-100/65 mb-2">Uses the same <strong>received lesson fee</strong> total as the left chart. <strong>Paid</strong> sums salary amounts with payment status Paid (capped at collected fees). The rest is shown as pending.</p>
+          <div class="h-56 max-w-sm mx-auto w-full mb-3">
+            <canvas id="salaryPaymentPieChart" aria-label="Salary payment paid versus pending from received fees"></canvas>
+          </div>
+          <table class="w-full text-sm border-collapse">
+            <thead>
+              <tr class="border-b border-emerald-600/20 text-emerald-200/70">
+                <th class="py-2 pr-2 text-left font-medium">Category</th>
+                <th class="py-2 pr-2 text-right font-medium">Amount <span id="hdrPieSalaryCurrency">(HKD)</span></th>
+              </tr>
+            </thead>
+            <tbody id="salaryPaymentPieSummaryBody">
+              <tr><td class="py-3 text-emerald-100/75" colspan="2">Load data and pick a month.</td></tr>
+            </tbody>
+          </table>
+          <p id="salaryPieFootnote" class="text-xs text-amber-200/80 mt-2 hidden"></p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    (function () {
+      var isFramed = false;
+      try {
+        isFramed = window.self !== window.top;
+      } catch (e) {
+        isFramed = true;
+      }
+      if (isFramed) {
+        var bw = document.getElementById("backLinkWrap");
+        if (bw) {
+          bw.classList.add("hidden");
+        }
+      }
+
+      var COACH_SALARY_API = "/coach-manager/lessons/coach-salary-data";
+
+      function getClubIdFromUrl() {
+        var q = new URLSearchParams(window.location.search || "");
+        return (q.get("clubId") || q.get("uid") || "").trim();
+      }
+
+      function primeClubContext() {
+        var id = getClubIdFromUrl();
+        var ctx = window.api && window.api.getClubFolderContext && window.api.getClubFolderContext();
+        if (ctx && ctx.clubId) {
+          id = id || String(ctx.clubId).trim();
+        }
+        var qn = new URLSearchParams(window.location.search || "");
+        var nameRaw = qn.get("clubName");
+        var name = "";
+        if (nameRaw) {
+          try {
+            name = decodeURIComponent(String(nameRaw).replace(/\+/g, " ")).trim();
+          } catch (e) {
+            name = String(nameRaw).trim();
+          }
+        }
+        if (!name && ctx && ctx.clubName) {
+          name = String(ctx.clubName).trim();
+        }
+        if (id && window.api && window.api.setClubFolderContext) {
+          window.api.setClubFolderContext(id, name || null);
+        }
+        return { clubId: id, clubName: name };
+      }
+
+      primeClubContext();
+
+      if (!isFramed) {
+        if (!window.auth.guardPage("CoachManager")) {
+          return;
+        }
+      } else {
+        var token =
+          window.auth &&
+          typeof window.auth.getToken === "function" &&
+          window.auth.getToken();
+        var role = localStorage.getItem("userRole");
+        if (!token || role !== "CoachManager") {
+          var tb = document.getElementById("tableBody");
+          if (tb) {
+            tb.innerHTML =
+              '<tr><td colspan="9" class="py-6 text-red-300">Coach Manager session required.</td></tr>';
+          }
+          var ab = document.getElementById("allocationTableBody");
+          if (ab) {
+            ab.innerHTML =
+              '<tr><td colspan="6" class="py-6 text-red-300">Coach Manager session required.</td></tr>';
+          }
+          return;
+        }
+      }
+
+      var PAYMENT_METHODS = ["Bank Transfer", "Cash", "PayMe", "FPS", "Credit Card"];
+      var PAYMENT_STATUSES = ["Pending", "Paid", "Overdue", "Partial"];
+      var clubCurrencyCode = "HKD";
+      var clubCurrencySymbol = "$";
+
+      function applyClubCurrencyLabels() {
+        var paren = "(" + clubCurrencyCode + ")";
+        ["hdrFeeAllocCurrency", "hdrPieLessonCurrency", "hdrPieSalaryCurrency"].forEach(function (id) {
+          var el = document.getElementById(id);
+          if (el) {
+            el.textContent = paren;
+          }
+        });
+      }
+
+      function fmtMoney(n) {
+        var x = Number(n);
+        if (!isFinite(x)) {
+          return "—";
+        }
+        return x.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+      }
+
+      function formatMoneyWithCurrency(n) {
+        var x = Number(n);
+        if (!isFinite(x)) {
+          return "—";
+        }
+        return clubCurrencySymbol + fmtMoney(x);
+      }
+
+      function escapeHtml(s) {
+        if (s == null) {
+          return "";
+        }
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      /** Hide internal *.json filenames in strings shown for errors and alerts. */
+      function stripJsonFileWording(text) {
+        if (text == null) {
+          return "";
+        }
+        var s = String(text);
+        if (!/\.json\b/i.test(s)) {
+          return s;
+        }
+        return s
+          .replace(/\b[\w.-]+\.json\b/gi, "stored data")
+          .replace(/\s{2,}/g, " ")
+          .trim();
+      }
+
+      /** HTTP 404 from the app shell is shown as a Coach Salary–specific hint instead of the raw status line. */
+      function userFacingCoachSalaryError(e) {
+        var msg = e && typeof e.message === "string" ? e.message.trim() : "";
+        var fromBody =
+          e && e.data && typeof e.data.error === "string" ? e.data.error.trim() : "";
+        if (e && e.status === 404) {
+          return "Coach salary could not be loaded. Use the same site as the ClubMaster server, sign in as Coach Manager, then press Reload.";
+        }
+        return stripJsonFileWording(msg || fromBody || "Something went wrong.");
+      }
+
+      function methodOptionsHtml(selected) {
+        var sel = selected != null ? String(selected) : "";
+        var list = PAYMENT_METHODS.slice();
+        if (sel && list.indexOf(sel) < 0) {
+          list.unshift(sel);
+        }
+        var h = "";
+        list.forEach(function (m) {
+          h +=
+            '<option value="' +
+            escapeHtml(m) +
+            '"' +
+            (m === sel ? " selected" : "") +
+            ">" +
+            escapeHtml(m) +
+            "</option>";
+        });
+        return h;
+      }
+
+      function statusOptionsHtml(selected) {
+        var sel = selected != null ? String(selected) : "";
+        var list = PAYMENT_STATUSES.slice();
+        if (sel && list.indexOf(sel) < 0) {
+          list.unshift(sel);
+        }
+        var h = "";
+        list.forEach(function (m) {
+          h +=
+            '<option value="' +
+            escapeHtml(m) +
+            '"' +
+            (m === sel ? " selected" : "") +
+            ">" +
+            escapeHtml(m) +
+            "</option>";
+        });
+        return h;
+      }
+
+      function setIntegrationLinks(integration, clubId, clubName) {
+        var q = "clubId=" + encodeURIComponent(clubId);
+        if (clubName) {
+          q += "&clubName=" + encodeURIComponent(clubName);
+        }
+        var c = document.getElementById("linkCoaches");
+        var l = document.getElementById("linkLessons");
+        var p = document.getElementById("linkLessonPay");
+        if (c && integration && integration.coachInformationUrl) {
+          c.href = integration.coachInformationUrl + "?" + q;
+        }
+        if (l && integration && integration.lessonReservationUrl) {
+          l.href = integration.lessonReservationUrl + "?" + q;
+        }
+        if (p && integration && integration.lessonPaymentStatusUrl) {
+          p.href = integration.lessonPaymentStatusUrl + "?" + q;
+        }
+      }
+
+      function showLoadError(msg) {
+        var el = document.getElementById("loadError");
+        if (!el) {
+          return;
+        }
+        if (msg) {
+          el.textContent = msg;
+          el.classList.remove("hidden");
+        } else {
+          el.textContent = "";
+          el.classList.add("hidden");
+        }
+      }
+
+      function toast(msg, ok) {
+        var host = document.getElementById("toastHost");
+        if (!host) {
+          return;
+        }
+        var t = document.createElement("div");
+        t.className =
+          "pointer-events-auto rounded-lg border px-4 py-3 text-sm shadow-lg " +
+          (ok
+            ? "border-emerald-500/40 bg-emerald-950/90 text-emerald-100"
+            : "border-red-500/40 bg-red-950/90 text-red-100");
+        t.textContent = msg;
+        host.appendChild(t);
+        setTimeout(function () {
+          t.classList.add("opacity-0", "transition-opacity", "duration-300");
+          setTimeout(function () {
+            t.remove();
+          }, 320);
+        }, 3200);
+      }
+
+      var lastCtx = { clubId: "", clubName: "" };
+      var cachedAllocationRows = [];
+      var cachedSalaryRows = [];
+      var lessonFeePieChartInst = null;
+      var salaryPaymentPieChartInst = null;
+
+      function defaultMonthYm() {
+        var d = new Date();
+        return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+      }
+
+      function pad2(n) {
+        return n < 10 ? "0" + n : String(n);
+      }
+
+      /** @param {string} ym "YYYY-MM" */
+      function monthFirstLastIso(ym) {
+        var y = parseInt(ym.slice(0, 4), 10);
+        var mo = parseInt(ym.slice(5, 7), 10);
+        if (!y || !mo) {
+          return { first: "", last: "" };
+        }
+        var first = y + "-" + pad2(mo) + "-01";
+        var lastD = new Date(y, mo, 0).getDate();
+        var last = y + "-" + pad2(mo) + "-" + pad2(lastD);
+        return { first: first, last: last };
+      }
+
+      /** Lesson overlaps calendar month if [lessonStart, lessonEnd] intersects [monthFirst, monthLast]. */
+      function lessonOverlapsMonth(row, ym) {
+        if (!ym || String(ym).trim() === "") {
+          return true;
+        }
+        var r = monthFirstLastIso(ym);
+        if (!r.first) {
+          return true;
+        }
+        var s = (row.lessonStartDate || "").slice(0, 10);
+        var e = (row.lessonEndDate || "").slice(0, 10);
+        if (!s && !e) {
+          return false;
+        }
+        if (!s) {
+          s = e;
+        }
+        if (!e) {
+          e = s;
+        }
+        return s <= r.last && e >= r.first;
+      }
+
+      function filterAllocationRows(rows, ym) {
+        if (!ym || String(ym).trim() === "") {
+          return rows.slice();
+        }
+        return rows.filter(function (row) {
+          return lessonOverlapsMonth(row, ym);
+        });
+      }
+
+      function filterSalaryRows(rows, ym) {
+        if (!ym || String(ym).trim() === "") {
+          return rows.slice();
+        }
+        return rows.filter(function (row) {
+          return lessonOverlapsMonth(row, ym);
+        });
+      }
+
+      function parseFeeInput(s) {
+        var x = Number.parseFloat(String(s || "").replace(/[^0-9.-]/g, ""));
+        return Number.isFinite(x) ? Math.round(x * 100) / 100 : 0;
+      }
+
+      function lessonFeeCapacityTotals(allocRows) {
+        var lesson = 0;
+        var recv = 0;
+        allocRows.forEach(function (r) {
+          lesson += Number(r.lessonFeeTotal) || 0;
+          recv += Number(r.receivedLessonFeeTotal) || 0;
+        });
+        lesson = Math.round(lesson * 100) / 100;
+        recv = Math.round(recv * 100) / 100;
+        var unpaid = Math.max(0, Math.round((lesson - recv) * 100) / 100);
+        return { lesson: lesson, recv: recv, unpaid: unpaid };
+      }
+
+      function parseSalaryAmountCell(s) {
+        return parseFeeInput(s);
+      }
+
+      /**
+       * Right chart: partition received lesson fees into salary marked Paid vs remainder (pending).
+       * paidRecorded is sum of salary_amount for filtered rows with Payment_Status Paid.
+       */
+      function salaryPaidPendingFromReceived(recvTotal, salaryRowsFiltered) {
+        var paidRecorded = 0;
+        salaryRowsFiltered.forEach(function (r) {
+          var st = String(r.Payment_Status || "").trim().toLowerCase();
+          if (st === "paid") {
+            paidRecorded += parseSalaryAmountCell(r.salary_amount);
+          }
+        });
+        paidRecorded = Math.round(paidRecorded * 100) / 100;
+        recvTotal = Math.round(recvTotal * 100) / 100;
+        var paidShown = Math.min(recvTotal, paidRecorded);
+        var pendingShown = Math.max(0, Math.round((recvTotal - paidRecorded) * 100) / 100);
+        var excessPaid = Math.max(0, Math.round((paidRecorded - recvTotal) * 100) / 100);
+        return {
+          recvTotal: recvTotal,
+          paidRecorded: paidRecorded,
+          paidShown: paidShown,
+          pendingShown: pendingShown,
+          excessPaid: excessPaid,
+        };
+      }
+
+      function renderLessonFeePieSummary(t) {
+        var tb = document.getElementById("lessonFeePieSummaryBody");
+        if (!tb) {
+          return;
+        }
+        var rows = [
+          { label: "Lesson fee (total capacity)", v: t.lesson },
+          { label: "Received (collected)", v: t.recv },
+          { label: "Unpaid (outstanding)", v: t.unpaid },
+        ];
+        var html = "";
+        rows.forEach(function (r) {
+          html +=
+            "<tr class=\"border-b border-emerald-800/10\"><td class=\"py-2 pr-2 text-emerald-100/90\">" +
+            escapeHtml(r.label) +
+            "</td><td class=\"py-2 pr-2 text-right tabular-nums text-emerald-200\">" +
+            formatMoneyWithCurrency(r.v) +
+            "</td></tr>";
+        });
+        tb.innerHTML = html;
+      }
+
+      function renderSalaryPaymentPieSummary(s) {
+        var tb = document.getElementById("salaryPaymentPieSummaryBody");
+        if (!tb) {
+          return;
+        }
+        var rows = [
+          { label: "Collected lesson fees (received)", v: s.recvTotal },
+          { label: "Salary marked Paid (sum)", v: s.paidRecorded },
+          { label: "Paid slice (in chart)", v: s.paidShown },
+          { label: "Pending slice (in chart)", v: s.pendingShown },
+        ];
+        var html = "";
+        rows.forEach(function (r) {
+          html +=
+            "<tr class=\"border-b border-emerald-800/10\"><td class=\"py-2 pr-2 text-emerald-100/90\">" +
+            escapeHtml(r.label) +
+            "</td><td class=\"py-2 pr-2 text-right tabular-nums text-emerald-200\">" +
+            formatMoneyWithCurrency(r.v) +
+            "</td></tr>";
+        });
+        tb.innerHTML = html;
+        var fn = document.getElementById("salaryPieFootnote");
+        if (fn) {
+          if (s.excessPaid > 0) {
+            fn.textContent =
+              "Recorded salary marked Paid exceeds collected lesson fees by " +
+              formatMoneyWithCurrency(s.excessPaid) +
+              " (pie caps the Paid slice at collected fees).";
+            fn.classList.remove("hidden");
+          } else {
+            fn.textContent = "";
+            fn.classList.add("hidden");
+          }
+        }
+      }
+
+      function updateLessonFeePieChart(allocRows) {
+        var canvas = document.getElementById("lessonFeeReceivedPieChart");
+        var t = lessonFeeCapacityTotals(allocRows);
+        renderLessonFeePieSummary(t);
+        if (!canvas || typeof Chart === "undefined") {
+          if (lessonFeePieChartInst) {
+            lessonFeePieChartInst.destroy();
+            lessonFeePieChartInst = null;
+          }
+          return;
+        }
+        var recvSlice = Math.min(t.recv, t.lesson);
+        var unpaidSlice = Math.max(0, Math.round((t.lesson - recvSlice) * 100) / 100);
+        if (lessonFeePieChartInst) {
+          lessonFeePieChartInst.destroy();
+          lessonFeePieChartInst = null;
+        }
+        lessonFeePieChartInst = new Chart(canvas, {
+          type: "doughnut",
+          data: {
+            labels: ["Received", "Unpaid"],
+            datasets: [
+              {
+                data: recvSlice + unpaidSlice > 0 ? [recvSlice, unpaidSlice] : [0, 1],
+                backgroundColor: ["rgba(52, 211, 153, 0.78)", "rgba(251, 113, 133, 0.55)"],
+                borderWidth: 0,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: { color: "#d1fae5", boxWidth: 12, font: { size: 11 } },
+              },
+              tooltip: {
+                callbacks: {
+                  label: function (ctx) {
+                    var v = ctx.parsed;
+                    return (ctx.label || "") + ": " + formatMoneyWithCurrency(v);
+                  },
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function updateSalaryPaymentPieChart(allocRows, salaryRowsFiltered) {
+        var canvas = document.getElementById("salaryPaymentPieChart");
+        var recvTotal = 0;
+        allocRows.forEach(function (r) {
+          recvTotal += Number(r.receivedLessonFeeTotal) || 0;
+        });
+        recvTotal = Math.round(recvTotal * 100) / 100;
+        var s = salaryPaidPendingFromReceived(recvTotal, salaryRowsFiltered);
+        renderSalaryPaymentPieSummary(s);
+        if (!canvas || typeof Chart === "undefined") {
+          if (salaryPaymentPieChartInst) {
+            salaryPaymentPieChartInst.destroy();
+            salaryPaymentPieChartInst = null;
+          }
+          return;
+        }
+        var d0 = s.paidShown;
+        var d1 = s.pendingShown;
+        if (salaryPaymentPieChartInst) {
+          salaryPaymentPieChartInst.destroy();
+          salaryPaymentPieChartInst = null;
+        }
+        salaryPaymentPieChartInst = new Chart(canvas, {
+          type: "doughnut",
+          data: {
+            labels: ["Paid (salary)", "Pending"],
+            datasets: [
+              {
+                data: d0 + d1 > 0 ? [d0, d1] : [0, 1],
+                backgroundColor: ["rgba(96, 165, 250, 0.82)", "rgba(250, 204, 21, 0.72)"],
+                borderWidth: 0,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: { color: "#d1fae5", boxWidth: 12, font: { size: 11 } },
+              },
+              tooltip: {
+                callbacks: {
+                  label: function (ctx) {
+                    var v = ctx.parsed;
+                    return (ctx.label || "") + ": " + formatMoneyWithCurrency(v);
+                  },
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function updateBothPieCharts(filteredAlloc, filteredSalary) {
+        updateLessonFeePieChart(filteredAlloc);
+        updateSalaryPaymentPieChart(filteredAlloc, filteredSalary);
+      }
+
+      function refreshCoachSalaryMonthView() {
+        var sel = document.getElementById("filterCoachSalaryMonth");
+        var ym = sel && sel.value ? String(sel.value).trim() : "";
+        var filteredAlloc = filterAllocationRows(cachedAllocationRows, ym);
+        var filteredSalary = filterSalaryRows(cachedSalaryRows, ym);
+        var emptyAlloc = cachedAllocationRows.length
+          ? "No lessons overlap the selected month."
+          : "No active lessons for this club.";
+        renderAllocationTable(filteredAlloc, filteredAlloc.length ? null : emptyAlloc);
+        var emptySal = cachedSalaryRows.length
+          ? "No salary rows for lessons overlapping the selected month."
+          : "No salary records yet.";
+        renderTable(filteredSalary, filteredSalary.length ? null : emptySal);
+        updateBothPieCharts(filteredAlloc, filteredSalary);
+        var hint = document.getElementById("coachSalaryMonthHint");
+        if (hint) {
+          hint.textContent = ym
+            ? "Schedule overlaps " +
+              ym +
+              ": " +
+              filteredAlloc.length +
+              " lesson(s), " +
+              filteredSalary.length +
+              " salary row(s)."
+            : "No month selected — showing all lessons and all salary rows.";
+        }
+        var meta = document.getElementById("tableMeta");
+        if (meta) {
+          meta.textContent =
+            filteredAlloc.length +
+            "/" +
+            cachedAllocationRows.length +
+            " lessons · " +
+            filteredSalary.length +
+            "/" +
+            cachedSalaryRows.length +
+            " salary · " +
+            (lastCtx.clubId || "—");
+        }
+      }
+
+      function readRowFromTr(tr) {
+        var sid = tr.getAttribute("data-salary-id") || "";
+        var selM = tr.querySelector('select[data-field="Payment_Method"]');
+        var selS = tr.querySelector('select[data-field="Payment_Status"]');
+        var cb = tr.querySelector('input[data-field="Payment_Confirm"]');
+        return {
+          CoachSalaryID: sid,
+          Payment_Method: selM ? String(selM.value || "") : "",
+          Payment_Status: selS ? String(selS.value || "") : "",
+          Payment_Confirm: cb ? Boolean(cb.checked) : false,
+        };
+      }
+
+      function patchRowUi(tr, lastUpdated) {
+        var cell = tr.querySelector('[data-col="lastUpdated"]');
+        if (cell) {
+          cell.textContent = lastUpdated || "";
+        }
+      }
+
+      function renderAllocationTable(rows, emptyMessage) {
+        var tb = document.getElementById("allocationTableBody");
+        if (!tb) {
+          return;
+        }
+        if (!rows.length) {
+          tb.innerHTML =
+            '<tr><td class="py-6 text-emerald-100/75" colspan="6">' +
+            escapeHtml(emptyMessage || "No active lessons for this club.") +
+            "</td></tr>";
+          return;
+        }
+        var html = "";
+        rows.forEach(function (r) {
+          var lid = r.lessonId != null ? String(r.lessonId) : "";
+          var val =
+            r.feeAllocation != null && String(r.feeAllocation).trim() !== ""
+              ? String(r.feeAllocation).trim()
+              : "";
+          html += "<tr class=\"border-b border-emerald-800/15 hover:bg-emerald-500/[0.06]\" data-lesson-id=\"" + escapeHtml(lid) + "\">";
+          html += '<td class="py-2 pr-2 align-middle font-mono text-xs text-emerald-100">' + escapeHtml(lid) + "</td>";
+          html +=
+            '<td class="py-2 pr-2 align-middle text-right tabular-nums text-emerald-100/90">' +
+            formatMoneyWithCurrency(r.lessonFeeTotal) +
+            "</td>";
+          html +=
+            '<td class="py-2 pr-2 align-middle text-right tabular-nums text-emerald-200/90">' +
+            formatMoneyWithCurrency(r.receivedLessonFeeTotal) +
+            "</td>";
+          html += '<td class="py-2 pr-2 align-middle text-emerald-100/90">' + escapeHtml(r.coachName || "") + "</td>";
+          html +=
+            '<td class="py-2 pr-2 align-middle"><input type="number" step="0.01" min="0" data-field="feeAllocation" value="' +
+            escapeHtml(val) +
+            '" class="w-full max-w-[140px] rounded-lg bg-emerald-950/50 border border-emerald-600/25 px-2 py-1.5 text-emerald-50 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400/45" /></td>';
+          html +=
+            '<td class="py-2 pr-2 align-middle"><button type="button" data-action="alloc-update" class="rounded-md bg-emerald-600/90 hover:bg-emerald-500 text-white text-xs font-medium px-3 py-1.5">Update</button></td>';
+          html += "</tr>";
+        });
+        tb.innerHTML = html;
+      }
+
+      function renderTable(rows, emptyMessage) {
+        var tb = document.getElementById("tableBody");
+        if (!tb) {
+          return;
+        }
+        if (!rows.length) {
+          tb.innerHTML =
+            '<tr><td class="py-6 text-emerald-100/75" colspan="9">' +
+            escapeHtml(emptyMessage || "No salary records yet.") +
+            "</td></tr>";
+          return;
+        }
+        var html = "";
+        rows.forEach(function (r) {
+          var sid = r.CoachSalaryID != null ? String(r.CoachSalaryID) : "";
+          var confirm = Boolean(r.Payment_Confirm);
+          var defM =
+            r.Payment_Method != null && String(r.Payment_Method) !== ""
+              ? r.Payment_Method
+              : PAYMENT_METHODS[0];
+          var defS =
+            r.Payment_Status != null && String(r.Payment_Status) !== ""
+              ? r.Payment_Status
+              : PAYMENT_STATUSES[0];
+          html += "<tr class=\"border-b border-emerald-800/15 hover:bg-emerald-500/[0.06]\" data-salary-id=\"" + escapeHtml(sid) + "\">";
+          html += '<td class="py-2 pr-2 align-middle whitespace-nowrap text-emerald-100/90">' + escapeHtml(r.coachFullName || "") + "</td>";
+          html += '<td class="py-2 pr-2 align-middle text-emerald-100/85 text-xs">' + escapeHtml(r.lessonNameDate || "") + "</td>";
+          html += '<td class="py-2 pr-2 align-middle whitespace-nowrap">' + escapeHtml(r.club_name || "") + "</td>";
+          html +=
+            '<td class="py-2 pr-2 align-middle text-right tabular-nums">' +
+            escapeHtml(formatMoneyWithCurrency(parseSalaryAmountCell(r.salary_amount))) +
+            "</td>";
+          html +=
+            '<td class="py-2 pr-2 align-middle"><select data-field="Payment_Method" class="w-full min-w-[132px] rounded-lg bg-emerald-950/50 border border-emerald-600/25 px-2 py-1.5 text-emerald-50 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-400/45">' +
+            methodOptionsHtml(defM) +
+            "</select></td>";
+          html +=
+            '<td class="py-2 pr-2 align-middle"><select data-field="Payment_Status" class="w-full min-w-[100px] rounded-lg bg-emerald-950/50 border border-emerald-600/25 px-2 py-1.5 text-emerald-50 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-400/45">' +
+            statusOptionsHtml(defS) +
+            "</select></td>";
+          html +=
+            '<td class="py-2 pr-2 align-middle text-center"><label class="inline-flex items-center gap-1.5 cursor-pointer select-none text-xs text-emerald-100/80"><input type="checkbox" data-field="Payment_Confirm" class="rounded border-emerald-600/40 bg-emerald-950 text-emerald-500 focus:ring-emerald-400/40" ' +
+            (confirm ? "checked" : "") +
+            " /> Yes</label></td>";
+          html +=
+            '<td class="py-2 pr-2 align-middle whitespace-nowrap text-xs text-emerald-200/80 tabular-nums" data-col="lastUpdated">' +
+            escapeHtml(String(r.lastUpdatedDate || "")) +
+            "</td>";
+          html +=
+            '<td class="py-2 pr-2 align-middle"><button type="button" data-action="update-row" class="rounded-md bg-emerald-600/90 hover:bg-emerald-500 text-white text-xs font-medium px-3 py-1.5">Update</button></td>';
+          html += "</tr>";
+        });
+        tb.innerHTML = html;
+      }
+
+      async function loadData() {
+        showLoadError("");
+        try {
+          var data = await window.api.api(COACH_SALARY_API);
+          if (!data || !data.ok) {
+            throw new Error((data && data.error) || "Load failed.");
+          }
+          lastCtx.clubId = data.clubId || "";
+          lastCtx.clubName = data.clubName || "";
+          clubCurrencyCode =
+            (data.currencyCode && String(data.currencyCode).trim()) || "HKD";
+          clubCurrencySymbol =
+            data.currencySymbol != null && String(data.currencySymbol).trim() !== ""
+              ? String(data.currencySymbol).trim()
+              : "$";
+          applyClubCurrencyLabels();
+          setIntegrationLinks(data.integration, lastCtx.clubId, lastCtx.clubName);
+          cachedAllocationRows = Array.isArray(data.allocationRows) ? data.allocationRows.slice() : [];
+          cachedSalaryRows = Array.isArray(data.rows) ? data.rows.slice() : [];
+          var monEl = document.getElementById("filterCoachSalaryMonth");
+          if (monEl && !monEl.value) {
+            monEl.value = defaultMonthYm();
+          }
+          refreshCoachSalaryMonthView();
+        } catch (e) {
+          var msg = userFacingCoachSalaryError(e);
+          showLoadError(msg);
+          cachedAllocationRows = [];
+          cachedSalaryRows = [];
+          var ab = document.getElementById("allocationTableBody");
+          if (ab) {
+            ab.innerHTML =
+              '<tr><td colspan="6" class="py-6 text-red-300">' + escapeHtml(msg) + "</td></tr>";
+          }
+          updateBothPieCharts([], []);
+          document.getElementById("tableBody").innerHTML =
+            '<tr><td colspan="9" class="py-6 text-red-300">' + escapeHtml(msg) + "</td></tr>";
+          toast(msg, false);
+        }
+      }
+
+      document.getElementById("btnReload").addEventListener("click", function () {
+        primeClubContext();
+        loadData();
+      });
+
+      (function wireCoachSalaryMonthFilter() {
+        var el = document.getElementById("filterCoachSalaryMonth");
+        if (!el) {
+          return;
+        }
+        el.value = defaultMonthYm();
+        el.addEventListener("change", function () {
+          refreshCoachSalaryMonthView();
+        });
+        el.addEventListener("input", function () {
+          refreshCoachSalaryMonthView();
+        });
+      })();
+
+      document.getElementById("btnSaveAll").addEventListener("click", async function () {
+        var tb = document.getElementById("tableBody");
+        if (!tb) {
+          return;
+        }
+        var rows = tb.querySelectorAll("tr[data-salary-id]");
+        if (!rows.length) {
+          toast("Nothing to save.", false);
+          return;
+        }
+        var updates = [];
+        rows.forEach(function (tr) {
+          var p = readRowFromTr(tr);
+          if (p.CoachSalaryID) {
+            updates.push({
+              CoachSalaryID: p.CoachSalaryID,
+              Payment_Method: p.Payment_Method,
+              Payment_Status: p.Payment_Status,
+              Payment_Confirm: p.Payment_Confirm,
+            });
+          }
+        });
+        try {
+          var data = await window.api.api(COACH_SALARY_API + "/update", {
+            method: "POST",
+            body: JSON.stringify({ updates: updates }),
+          });
+          if (!data || !data.ok) {
+            throw new Error((data && data.error) || "Save failed.");
+          }
+          (data.results || []).forEach(function (item, idx) {
+            var tr = rows[idx];
+            if (!tr || !item || !item.success) {
+              return;
+            }
+            if (item.lastUpdatedDate) {
+              patchRowUi(tr, item.lastUpdatedDate);
+            }
+          });
+          toast("All rows saved.", true);
+        } catch (e) {
+          toast(userFacingCoachSalaryError(e), false);
+        }
+      });
+
+      document.getElementById("allocationTableBody").addEventListener("click", async function (ev) {
+        var btn = ev.target.closest("button[data-action='alloc-update']");
+        if (!btn) {
+          return;
+        }
+        var tr = btn.closest("tr[data-lesson-id]");
+        if (!tr) {
+          return;
+        }
+        var lid = tr.getAttribute("data-lesson-id") || "";
+        var inp = tr.querySelector('input[data-field="feeAllocation"]');
+        var raw = inp ? String(inp.value || "").trim() : "";
+        var fee = Number(raw);
+        if (!lid || !isFinite(fee)) {
+          toast("Enter a valid fee allocation amount.", false);
+          return;
+        }
+        btn.disabled = true;
+        try {
+          var data = await window.api.api(COACH_SALARY_API + "/fee-allocation", {
+            method: "POST",
+            body: JSON.stringify({ lessonId: lid, feeAllocation: fee }),
+          });
+          if (!data || !data.ok) {
+            throw new Error((data && data.error) || "Save failed.");
+          }
+          toast(
+            "Fee allocation saved to CoachSalary (" +
+              (data.created > 0 ? "new CS row" : "row updated") +
+              ").",
+            true,
+          );
+          await loadData();
+        } catch (e) {
+          toast(userFacingCoachSalaryError(e), false);
+        } finally {
+          btn.disabled = false;
+        }
+      });
+
+      document.getElementById("tableBody").addEventListener("click", async function (ev) {
+        var btn = ev.target.closest("button[data-action='update-row']");
+        if (!btn) {
+          return;
+        }
+        var tr = btn.closest("tr[data-salary-id]");
+        if (!tr) {
+          return;
+        }
+        var p = readRowFromTr(tr);
+        btn.disabled = true;
+        try {
+          var data = await window.api.api(COACH_SALARY_API + "/update", {
+            method: "POST",
+            body: JSON.stringify({
+              CoachSalaryID: p.CoachSalaryID,
+              Payment_Method: p.Payment_Method,
+              Payment_Status: p.Payment_Status,
+              Payment_Confirm: p.Payment_Confirm,
+            }),
+          });
+          if (!data || !data.ok) {
+            throw new Error((data && data.error) || "Update failed.");
+          }
+          var lu = data.lastUpdatedDate || (data.results && data.results[0] && data.results[0].lastUpdatedDate);
+          patchRowUi(tr, lu || "");
+          toast("Row updated.", true);
+        } catch (e) {
+          toast(userFacingCoachSalaryError(e), false);
+        } finally {
+          btn.disabled = false;
+        }
+      });
+
+      loadData();
+    })();
+  </script>
+</body>
+</html>
