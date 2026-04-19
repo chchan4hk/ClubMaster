@@ -6,6 +6,8 @@ import {
   findStudentRoleLoginByUsername,
 } from "../coachStudentLoginCsv";
 import { findUserByUsername } from "../userlistCsv";
+import { isMongoConfigured } from "../db/DBConnection";
+import { resolveFullNameAndExpiryMongo } from "../userListMongo";
 
 const dataDir = path.join(__dirname, "..", "..", "data", "admin");
 const requestsFile = path.join(dataDir, "subscription_payment_requests.jsonl");
@@ -85,6 +87,16 @@ function resolveFullNameAndExpiry(
   return { full_name: "", Expiry_date: "" };
 }
 
+async function resolveFullNameAndExpiryAsync(
+  username: string,
+  role: string,
+): Promise<{ full_name: string; Expiry_date: string }> {
+  if (!isMongoConfigured()) {
+    return resolveFullNameAndExpiry(username, role);
+  }
+  return resolveFullNameAndExpiryMongo(username, role);
+}
+
 function nextPaymentId(payments: { paymentId?: string }[]): string {
   let max = 0;
   for (const p of payments) {
@@ -146,7 +158,7 @@ function appendUserLoginPayment(entry: UserPaymentEntry): void {
 export function createSubscriptionRenewalRouter(): Router {
   const r = Router();
 
-  r.post("/payment-request", (req, res) => {
+  r.post("/payment-request", async (req, res) => {
     const paymentMethod = String(req.body?.paymentMethod ?? "").trim();
     const subscriptionPeriod = String(req.body?.subscriptionPeriod ?? "").trim();
     const transactionDetails = String(req.body?.transactionDetails ?? "").trim();
@@ -215,7 +227,7 @@ export function createSubscriptionRenewalRouter(): Router {
       return;
     }
 
-    const profile = resolveFullNameAndExpiry(username, role);
+    const profile = await resolveFullNameAndExpiryAsync(username, role);
     const full_name =
       profile.full_name ||
       String(req.body?.full_name ?? req.body?.fullName ?? "").trim();

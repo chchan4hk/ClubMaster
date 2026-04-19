@@ -3,42 +3,42 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>User account</title>
+  <title>User Profile</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="css/style.css" />
 </head>
-<body class="min-h-full bg-slate-900/90 text-slate-100 p-6">
-  <div class="glass rounded-xl border border-white/15 p-6 max-w-lg">
-    <h2 class="text-lg font-semibold text-teal-300 mb-4">User account</h2>
-    <p id="loadState" class="text-sm text-slate-400">Loading…</p>
+<body class="page-gold-ivory">
+  <div class="gold-ivory-panel rounded-xl p-6 max-w-lg">
+    <h2 class="text-lg font-semibold text-amber-900 mb-4">User Profile</h2>
+    <p id="loadState" class="text-sm text-stone-500">Loading…</p>
     <dl id="accountFields" class="hidden space-y-3 text-sm">
       <div class="flex flex-col sm:flex-row sm:gap-4">
-        <dt class="text-slate-500 shrink-0 w-40">User type</dt>
-        <dd id="fieldUserType" class="font-medium text-slate-200"></dd>
+        <dt class="text-amber-900/55 shrink-0 w-40">User Type</dt>
+        <dd id="fieldUserType" class="font-medium text-stone-800"></dd>
       </div>
       <div class="flex flex-col sm:flex-row sm:gap-4">
-        <dt class="text-slate-500 shrink-0 w-40">Username</dt>
-        <dd id="fieldUsername" class="font-medium text-slate-200"></dd>
+        <dt class="text-amber-900/55 shrink-0 w-40">Username</dt>
+        <dd id="fieldUsername" class="font-medium text-stone-800"></dd>
       </div>
       <div class="flex flex-col sm:flex-row sm:gap-4">
-        <dt class="text-slate-500 shrink-0 w-40">Full Name</dt>
-        <dd id="fieldFullName" class="font-medium text-slate-200"></dd>
+        <dt class="text-amber-900/55 shrink-0 w-40">Full Name</dt>
+        <dd id="fieldFullName" class="font-medium text-stone-800"></dd>
       </div>
       <div class="flex flex-col sm:flex-row sm:gap-4">
-        <dt id="labelClubName" class="text-slate-500 shrink-0 w-40">Club name</dt>
-        <dd id="fieldClubName" class="font-medium text-slate-200"></dd>
+        <dt id="labelClubName" class="text-amber-900/55 shrink-0 w-40">Club Name</dt>
+        <dd id="fieldClubName" class="font-medium text-stone-800"></dd>
       </div>
       <div class="flex flex-col sm:flex-row sm:gap-4">
-        <dt class="text-slate-500 shrink-0 w-40">Status</dt>
-        <dd id="fieldStatus" class="font-medium text-slate-200"></dd>
+        <dt class="text-amber-900/55 shrink-0 w-40">Status</dt>
+        <dd id="fieldStatus" class="font-medium text-stone-800"></dd>
       </div>
       <div class="flex flex-col sm:flex-row sm:gap-4">
-        <dt id="labelCreated" class="text-slate-500 shrink-0 w-40">Creation date</dt>
-        <dd id="fieldCreated" class="font-medium text-slate-200"></dd>
+        <dt id="labelCreated" class="text-amber-900/55 shrink-0 w-40">Creation Date</dt>
+        <dd id="fieldCreated" class="font-medium text-stone-800"></dd>
       </div>
       <div class="flex flex-col sm:flex-row sm:gap-4">
-        <dt class="text-slate-500 shrink-0 w-40">Expiry date</dt>
-        <dd id="fieldExpiryDate" class="font-medium text-slate-200"></dd>
+        <dt class="text-amber-900/55 shrink-0 w-40">Expiry Date</dt>
+        <dd id="fieldExpiryDate" class="font-medium text-stone-800"></dd>
       </div>
     </dl>
     <p id="errorBox" class="hidden text-sm text-red-300 mt-4"></p>
@@ -107,7 +107,7 @@
               lc.textContent = "Club Name";
             }
             if (ld) {
-              ld.textContent = "Creation_date";
+              ld.textContent = "Creation Date";
             }
           }
           loadState.classList.add("hidden");

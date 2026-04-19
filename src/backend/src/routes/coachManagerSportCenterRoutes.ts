@@ -1,6 +1,6 @@
 import { Router, type Request } from "express";
 import { requireAuth, requireRole } from "../middleware/requireAuth";
-import { findUserByUid } from "../userlistCsv";
+import { coachManagerClubContextAsync } from "../coachManagerSession";
 import { clubInfoFirstRowObject } from "../clubInfoJson";
 import {
   appendSportCenterRow,
@@ -11,30 +11,6 @@ import {
   sportCenterListPath,
   SPORT_CENTER_LIST_FILENAME,
 } from "../sportCenterListCsv";
-import { isValidClubFolderId } from "../coachListCsv";
-
-function coachManagerClubContext(req: Request):
-  | { ok: true; clubId: string; clubName: string }
-  | { ok: false; status: number; error: string } {
-  const clubId = String(req.user?.sub ?? "").trim();
-  if (!clubId || !isValidClubFolderId(clubId)) {
-    return { ok: false, status: 403, error: "Invalid club session." };
-  }
-  const row = findUserByUid(clubId);
-  if (!row || row.role !== "CoachManager") {
-    return { ok: false, status: 403, error: "Coach Manager access only." };
-  }
-  const clubName = (row.clubName && row.clubName.trim()) || "";
-  if (!clubName || clubName === "—") {
-    return {
-      ok: false,
-      status: 400,
-      error: "Your account has no club name; contact an administrator.",
-    };
-  }
-  return { ok: true, clubId, clubName };
-}
-
 function clubSportTypeFilter(clubId: string): string {
   const fields = clubInfoFirstRowObject(clubId);
   const st =
@@ -51,8 +27,8 @@ export function createCoachManagerSportCenterRouter(): Router {
 
   r.use(requireAuth, requireRole("CoachManager"));
 
-  r.post("/", (req, res) => {
-    const ctx = coachManagerClubContext(req);
+  r.post("/", async (req, res) => {
+    const ctx = await coachManagerClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
@@ -118,8 +94,8 @@ export function createCoachManagerSportCenterRouter(): Router {
     });
   });
 
-  r.get("/", (req, res) => {
-    const ctx = coachManagerClubContext(req);
+  r.get("/", async (req, res) => {
+    const ctx = await coachManagerClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
@@ -173,8 +149,8 @@ export function createCoachManagerSportCenterRouter(): Router {
     }
   });
 
-  r.put("/", (req, res) => {
-    const ctx = coachManagerClubContext(req);
+  r.put("/", async (req, res) => {
+    const ctx = await coachManagerClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;

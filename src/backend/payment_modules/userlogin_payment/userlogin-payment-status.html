@@ -72,7 +72,7 @@
   </style>
 </head>
 <body
-  class="userlogin-subscription-status-page dashboard-dynamic-bg min-h-screen text-teal-950 p-6 pb-24"
+  class="userlogin-subscription-status-page dashboard-dynamic-bg min-h-screen text-amber-950 p-6 pb-24"
   style="--dashboard-bg-img: url('/Source/Image/admin.jpg');">
   <div class="dynamic-bg-stack" aria-hidden="true">
     <div class="dynamic-bg-photo"></div>
@@ -81,60 +81,60 @@
     <div class="dynamic-bg-spot-glow"></div>
   </div>
 
-  <div class="max-w-7xl mx-auto relative z-[1] text-teal-100">
-    <header class="mb-6 text-teal-950">
+  <div class="max-w-7xl mx-auto relative z-[1] text-amber-100">
+    <header class="mb-6 text-amber-950">
       <p>
         <a href="/admin.html" target="_top"
-          class="text-sm text-teal-800 hover:text-teal-950 underline-offset-2 hover:underline font-medium">
+          class="text-sm text-amber-800 hover:text-amber-950 underline-offset-2 hover:underline font-medium">
           ← Back to Admin
         </a>
       </p>
-      <h1 class="text-2xl font-bold text-teal-950 mt-2 tracking-tight">User Account Subscription</h1>
-      <p class="text-sm text-teal-800/90 mt-1">Payment status · <code class="text-xs bg-teal-100/80 px-1 rounded">backend/data/admin/PaymentList_UserLogin.json</code></p>
+      <h1 class="text-2xl font-bold text-amber-950 mt-2 tracking-tight">User Account Subscription</h1>
+      <p class="text-sm text-amber-800/90 mt-1">Payment status · <code class="text-xs bg-amber-100/80 px-1 rounded">backend/data/admin/PaymentList_UserLogin.json</code></p>
       <p id="loadError" class="hidden text-sm text-red-700 mt-2"></p>
     </header>
 
-    <section class="glass rounded-xl border border-teal-600/20 p-3 mb-4 flex flex-wrap gap-2 items-center text-xs">
-      <span class="text-teal-100/75 font-medium uppercase tracking-wide">Shortcuts</span>
+    <section class="glass rounded-xl border border-amber-600/20 p-3 mb-4 flex flex-wrap gap-2 items-center text-xs">
+      <span class="text-amber-100/75 font-medium uppercase tracking-wide">Shortcuts</span>
       <a id="linkUserAccounts" href="/admin-user-account-management.html" target="_top" rel="noopener"
-        class="rounded-lg bg-teal-500/10 border border-teal-600/25 px-3 py-1.5 text-teal-200 hover:bg-teal-500/20">User Account Management</a>
+        class="rounded-lg bg-amber-500/10 border border-amber-600/25 px-3 py-1.5 text-amber-200 hover:bg-amber-500/20">User Account Management</a>
       <a id="linkAdminHome" href="/admin.html" target="_top" rel="noopener"
-        class="rounded-lg bg-teal-500/10 border border-teal-600/25 px-3 py-1.5 text-teal-200 hover:bg-teal-500/20">Admin home</a>
+        class="rounded-lg bg-amber-500/10 border border-amber-600/25 px-3 py-1.5 text-amber-200 hover:bg-amber-500/20">Admin home</a>
     </section>
 
     <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-      <div class="glass rounded-xl border border-teal-500/25 p-4">
-        <p class="text-xs text-teal-100/75 uppercase tracking-wide">Confirmed amount (period)</p>
-        <p id="kpiCollected" class="text-2xl font-semibold text-teal-300 mt-1">—</p>
-        <p id="kpiPeriodLabel" class="text-xs text-teal-100/75 mt-1">Period</p>
+      <div class="glass rounded-xl border border-amber-500/25 p-4">
+        <p class="text-xs text-amber-100/75 uppercase tracking-wide">Confirmed amount (period)</p>
+        <p id="kpiCollected" class="text-2xl font-semibold text-amber-300 mt-1">—</p>
+        <p id="kpiPeriodLabel" class="text-xs text-amber-100/75 mt-1">Period</p>
       </div>
       <div class="glass rounded-xl border border-amber-500/25 p-4">
-        <p class="text-xs text-teal-100/75 uppercase tracking-wide">Pending amount</p>
+        <p class="text-xs text-amber-100/75 uppercase tracking-wide">Pending amount</p>
         <p id="kpiOutstanding" class="text-2xl font-semibold text-amber-200 mt-1">—</p>
       </div>
-      <div class="glass rounded-xl border border-teal-500/30 p-4">
-        <p class="text-xs text-teal-100/75 uppercase tracking-wide">Pending count</p>
-        <p id="kpiPendingCount" class="text-2xl font-semibold text-teal-200 mt-1">—</p>
+      <div class="glass rounded-xl border border-amber-500/30 p-4">
+        <p class="text-xs text-amber-100/75 uppercase tracking-wide">Pending count</p>
+        <p id="kpiPendingCount" class="text-2xl font-semibold text-amber-200 mt-1">—</p>
       </div>
-      <div class="glass rounded-xl border border-teal-500/30 p-4">
-        <p class="text-xs text-teal-100/75 uppercase tracking-wide">Total records</p>
-        <p id="kpiTotalRows" class="text-2xl font-semibold text-teal-300 mt-1">—</p>
-        <p class="text-xs text-teal-100/75 mt-1">All subscription payment rows</p>
+      <div class="glass rounded-xl border border-amber-500/30 p-4">
+        <p class="text-xs text-amber-100/75 uppercase tracking-wide">Total records</p>
+        <p id="kpiTotalRows" class="text-2xl font-semibold text-amber-300 mt-1">—</p>
+        <p class="text-xs text-amber-100/75 mt-1">All subscription payment rows</p>
       </div>
     </section>
 
-    <section class="glass rounded-xl border border-teal-600/20 p-4 mb-4">
-      <h2 class="text-sm font-semibold text-teal-200 mb-3">Filter &amp; search</h2>
+    <section class="glass rounded-xl border border-amber-600/20 p-4 mb-4">
+      <h2 class="text-sm font-semibold text-amber-200 mb-3">Filter &amp; search</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         <div class="lg:col-span-2">
-          <label for="filterSearch" class="block text-xs text-teal-200/70 mb-1">Username, name, UID, or payment ID</label>
+          <label for="filterSearch" class="block text-xs text-amber-200/70 mb-1">Username, name, UID, or payment ID</label>
           <input id="filterSearch" type="search" placeholder="Search…"
-            class="w-full rounded-lg bg-teal-950/50 border border-teal-600/25 px-3 py-2 text-sm text-teal-50 focus:outline-none focus:ring-2 focus:ring-teal-400/45" />
+            class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
         </div>
         <div>
-          <label for="filterStatus" class="block text-xs text-teal-200/70 mb-1">Status</label>
+          <label for="filterStatus" class="block text-xs text-amber-200/70 mb-1">Status</label>
           <select id="filterStatus"
-            class="w-full rounded-lg bg-teal-950/50 border border-teal-600/25 px-3 py-2 text-sm text-teal-50 focus:outline-none focus:ring-2 focus:ring-teal-400/45">
+            class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/45">
             <option value="">All</option>
             <option value="PENDING">Pending</option>
             <option value="COMPLETED">Completed</option>
@@ -142,48 +142,48 @@
           </select>
         </div>
         <div>
-          <label for="filterDateFrom" class="block text-xs text-teal-200/70 mb-1">From (payment / created)</label>
+          <label for="filterDateFrom" class="block text-xs text-amber-200/70 mb-1">From (payment / created)</label>
           <input id="filterDateFrom" type="date"
-            class="w-full rounded-lg bg-teal-950/50 border border-teal-600/25 px-3 py-2 text-sm text-teal-50 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-400/45" />
+            class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
         </div>
         <div>
-          <label for="filterDateTo" class="block text-xs text-teal-200/70 mb-1">To</label>
+          <label for="filterDateTo" class="block text-xs text-amber-200/70 mb-1">To</label>
           <input id="filterDateTo" type="date"
-            class="w-full rounded-lg bg-teal-950/50 border border-teal-600/25 px-3 py-2 text-sm text-teal-50 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-400/45" />
+            class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
         </div>
       </div>
       <div class="flex flex-wrap gap-2 mt-4">
         <div class="flex items-center gap-2">
-          <label for="periodMonth" class="text-xs text-teal-200/70">KPI period (month)</label>
+          <label for="periodMonth" class="text-xs text-amber-200/70">KPI period (month)</label>
           <input id="periodMonth" type="month"
-            class="rounded-lg bg-teal-950/50 border border-teal-600/25 px-3 py-1.5 text-sm text-teal-50 [color-scheme:dark]" />
+            class="rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-1.5 text-sm text-amber-50 [color-scheme:dark]" />
         </div>
         <button type="button" id="btnReload"
-          class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-sm font-medium px-4 py-2">Reload data</button>
+          class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium px-4 py-2">Reload data</button>
         <button type="button" id="btnExportCsv"
-          class="rounded-lg bg-teal-800 hover:bg-teal-700 border border-teal-600/30 text-teal-50 text-sm px-4 py-2">Export CSV</button>
+          class="rounded-lg bg-amber-800 hover:bg-amber-700 border border-amber-600/30 text-amber-50 text-sm px-4 py-2">Export CSV</button>
       </div>
     </section>
 
     <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-      <div class="glass rounded-xl border border-teal-600/25 p-4">
-        <h3 class="text-sm font-semibold text-teal-200 mb-2">Confirmed subscription amount by month</h3>
-        <p class="text-xs text-teal-100/75 mb-2">Sum of <span class="text-teal-200/90">subscription_amount</span> for completed rows (by confirm or payment date).</p>
+      <div class="glass rounded-xl border border-amber-600/25 p-4">
+        <h3 class="text-sm font-semibold text-amber-200 mb-2">Confirmed subscription amount by month</h3>
+        <p class="text-xs text-amber-100/75 mb-2">Sum of <span class="text-amber-200/90">subscription_amount</span> for completed rows (by confirm or payment date).</p>
         <div class="h-56"><canvas id="chartBar"></canvas></div>
       </div>
-      <div class="glass rounded-xl border border-teal-600/25 p-4">
-        <h3 class="text-sm font-semibold text-teal-200 mb-2">Status mix</h3>
-        <p class="text-xs text-teal-100/75 mb-2">Filtered table rows (pie updates with filters).</p>
+      <div class="glass rounded-xl border border-amber-600/25 p-4">
+        <h3 class="text-sm font-semibold text-amber-200 mb-2">Status mix</h3>
+        <p class="text-xs text-amber-100/75 mb-2">Filtered table rows (pie updates with filters).</p>
         <div class="h-56 max-w-md mx-auto"><canvas id="chartPie"></canvas></div>
       </div>
     </section>
 
-    <section class="glass rounded-xl border border-teal-600/25 p-4 overflow-x-auto">
-      <h2 class="text-lg font-semibold text-teal-200 mb-2">Payment status</h2>
-      <p id="tableMeta" class="text-xs text-teal-100/75 mb-3"></p>
+    <section class="glass rounded-xl border border-amber-600/25 p-4 overflow-x-auto">
+      <h2 class="text-lg font-semibold text-amber-200 mb-2">Payment status</h2>
+      <p id="tableMeta" class="text-xs text-amber-100/75 mb-3"></p>
       <table class="w-full text-sm text-left border-collapse min-w-[1100px]">
         <thead>
-          <tr class="border-b border-teal-600/20 text-teal-200/70">
+          <tr class="border-b border-amber-600/20 text-amber-200/70">
             <th class="py-2 pr-2 w-8"></th>
             <th class="py-2 pr-3 font-medium">User</th>
             <th class="py-2 pr-3 font-medium">Subscription</th>
@@ -197,7 +197,7 @@
           </tr>
         </thead>
         <tbody id="tableBody">
-          <tr><td class="py-6 text-teal-100/75" colspan="10">Loading…</td></tr>
+          <tr><td class="py-6 text-amber-100/75" colspan="10">Loading…</td></tr>
         </tbody>
       </table>
     </section>
@@ -261,7 +261,7 @@
       function badgeClass(key) {
         switch (key) {
           case "COMPLETED":
-            return "bg-teal-500/20 text-teal-200 border-teal-500/40";
+            return "bg-amber-500/20 text-amber-200 border-amber-500/40";
           case "PENDING":
             return "bg-amber-500/20 text-amber-200 border-amber-500/40";
           default:
@@ -410,34 +410,34 @@
           return;
         }
         if (!rows.length) {
-          tb.innerHTML = '<tr><td class="py-6 text-teal-100/75" colspan="10">No matching rows.</td></tr>';
+          tb.innerHTML = '<tr><td class="py-6 text-amber-100/75" colspan="10">No matching rows.</td></tr>';
           return;
         }
         var html = "";
         rows.forEach(function (r) {
           var expandId = "ex-" + escapeHtml(r.paymentId).replace(/[^a-zA-Z0-9_-]/g, "");
           var sk = rowStatusKey(r);
-          html += "<tr class=\"border-b border-teal-800/15 hover:bg-teal-500/[0.06]\" data-pid=\"" + escapeHtml(r.paymentId) + "\">";
-          html += "<td class=\"py-1.5 pr-2 align-middle\"><button type=\"button\" class=\"text-teal-400 hover:text-teal-200 text-xs toggle-ex\" data-target=\"" + expandId + "\">▾</button></td>";
+          html += "<tr class=\"border-b border-amber-800/15 hover:bg-amber-500/[0.06]\" data-pid=\"" + escapeHtml(r.paymentId) + "\">";
+          html += "<td class=\"py-1.5 pr-2 align-middle\"><button type=\"button\" class=\"text-amber-400 hover:text-amber-200 text-xs toggle-ex\" data-target=\"" + expandId + "\">▾</button></td>";
           html +=
-            "<td class=\"py-1.5 pr-3 align-middle\"><div class=\"text-[11px] leading-tight text-teal-50/95\"><span class=\"font-medium\">" +
+            "<td class=\"py-1.5 pr-3 align-middle\"><div class=\"text-[11px] leading-tight text-amber-50/95\"><span class=\"font-medium\">" +
             escapeHtml(r.full_name || "—") +
-            "</span><span class=\"text-teal-100/70\"> · " +
+            "</span><span class=\"text-amber-100/70\"> · " +
             escapeHtml(r.username || "") +
-            "</span><br/><span class=\"text-teal-200/70 tabular-nums\">" +
+            "</span><br/><span class=\"text-amber-200/70 tabular-nums\">" +
             escapeHtml(r.uid || "") +
             "</span></div></td>";
           html +=
-            "<td class=\"py-1.5 pr-3 align-middle text-[11px] text-teal-100/90\">" +
+            "<td class=\"py-1.5 pr-3 align-middle text-[11px] text-amber-100/90\">" +
             escapeHtml(r.subscription_option || "—") +
             "</td>";
           html +=
-            "<td class=\"py-1.5 pr-3 text-right tabular-nums text-teal-200/95 align-middle\">$" +
+            "<td class=\"py-1.5 pr-3 text-right tabular-nums text-amber-200/95 align-middle\">$" +
             fmtMoney(r.subscription_amount) +
             "</td>";
           html += "<td class=\"py-1.5 pr-3 align-middle text-[11px]\">" + escapeHtml(r.paymentMethod || "—") + "</td>";
           html +=
-            "<td class=\"py-1.5 pr-3 align-middle max-w-[8rem]\"><div class=\"truncate text-[10px] text-teal-100/85\" title=\"" +
+            "<td class=\"py-1.5 pr-3 align-middle max-w-[8rem]\"><div class=\"truncate text-[10px] text-amber-100/85\" title=\"" +
             escapeHtml(r.transactionRef || "") +
             "\">" +
             escapeHtml(r.transactionRef || "—") +
@@ -475,9 +475,9 @@
               "\">Confirm Payment</button>";
           }
           html += "</div></td></tr>";
-          html += "<tr id=\"" + expandId + "\" class=\"hidden bg-teal-950/35\"><td colspan=\"10\" class=\"px-4 py-3 text-xs text-teal-200/75\">";
-          html += "<p class=\"font-semibold text-teal-200 mb-1\">Subscription payment detail</p>";
-          html += "<p>Payment ID: <strong class=\"text-teal-100\">" + escapeHtml(r.paymentId) + "</strong></p>";
+          html += "<tr id=\"" + expandId + "\" class=\"hidden bg-amber-950/35\"><td colspan=\"10\" class=\"px-4 py-3 text-xs text-amber-200/75\">";
+          html += "<p class=\"font-semibold text-amber-200 mb-1\">Subscription payment detail</p>";
+          html += "<p>Payment ID: <strong class=\"text-amber-100\">" + escapeHtml(r.paymentId) + "</strong></p>";
           html +=
             "<p>Account expiry (at request): " +
             escapeHtml(
@@ -519,7 +519,7 @@
             }
             if (
               !window.confirm(
-                "Confirm this subscription payment? The payer UID’s expiry will be extended by the subscription period in userLogin.json (if present), that login’s coach/student row (if any), and every coach/student login whose club_id matches that UID."
+                "Confirm this subscription payment? The payer UID’s expiry will be extended by the subscription period in userLogin.csv (if present), that login’s coach/student row (if any), and every coach/student login whose club_id matches that UID."
               )
             ) {
               return;

@@ -71,13 +71,13 @@
       <header class="mb-6 flex flex-wrap justify-between gap-4 items-start">
         <div>
           <p>
-            <a href="/student.html" class="text-sm text-emerald-700 hover:text-emerald-900 underline-offset-2 hover:underline font-medium">← Student home</a>
+            <a href="/student.html" class="text-sm text-amber-700 hover:text-amber-900 underline-offset-2 hover:underline font-medium">← Student home</a>
           </p>
-          <h1 class="text-2xl font-bold text-emerald-900 mt-2 tracking-tight">My payments</h1>
-          <p class="text-xs text-emerald-800/70 mt-1">After you pay, your coach manager will confirm receipt in <code class="text-emerald-900/80 bg-white/60 px-1 rounded">LessonReserveList</code> before <strong>Payment confirm</strong> is set.</p>
+          <h1 class="text-2xl font-bold text-amber-900 mt-2 tracking-tight">My payments</h1>
+          <p class="text-xs text-amber-800/70 mt-1">After you pay, your coach manager will confirm receipt in <code class="text-amber-900/80 bg-white/60 px-1 rounded">LessonReserveList</code> before <strong>Payment confirm</strong> is set.</p>
         </div>
         <button type="button" id="logoutBtn"
-          class="rounded-lg bg-white/80 border border-emerald-300/60 text-emerald-900 px-4 py-2 text-sm hover:bg-white shadow-sm">
+          class="rounded-lg bg-white/80 border border-amber-300/60 text-amber-900 px-4 py-2 text-sm hover:bg-white shadow-sm">
           Sign out
         </button>
       </header>
@@ -87,17 +87,17 @@
       <section class="student-pay-card rounded-xl p-5 mb-4">
         <div class="flex flex-wrap justify-between gap-4 items-start">
           <div>
-            <p class="text-xs text-emerald-800/60 uppercase tracking-wide font-medium">Student</p>
-            <p id="hdrName" class="text-xl font-semibold text-emerald-950">—</p>
-            <p class="text-sm text-emerald-900/80 mt-1">
-              ID <span id="hdrId" class="text-emerald-950 font-medium">—</span>
-              · Level <span id="hdrLevel" class="text-emerald-950 font-medium">—</span>
-              · Coach <span id="hdrCoach" class="text-emerald-950 font-medium">—</span>
+            <p class="text-xs text-amber-800/60 uppercase tracking-wide font-medium">Student</p>
+            <p id="hdrName" class="text-xl font-semibold text-amber-950">—</p>
+            <p class="text-sm text-amber-900/80 mt-1">
+              ID <span id="hdrId" class="text-amber-950 font-medium">—</span>
+              · Level <span id="hdrLevel" class="text-amber-950 font-medium">—</span>
+              · Coach <span id="hdrCoach" class="text-amber-950 font-medium">—</span>
             </p>
-            <p class="text-xs text-emerald-800/55 mt-1" id="hdrClub">—</p>
+            <p class="text-xs text-amber-800/55 mt-1" id="hdrClub">—</p>
           </div>
           <div class="text-right">
-            <p class="text-xs text-emerald-800/60 uppercase tracking-wide font-medium">Outstanding balance</p>
+            <p class="text-xs text-amber-800/60 uppercase tracking-wide font-medium">Outstanding balance</p>
             <p id="hdrOutstanding" class="text-3xl font-bold text-amber-800 tabular-nums">—</p>
             <span id="hdrOverdueBadge" class="hidden mt-2 inline-flex rounded-full bg-red-100 border border-red-300 text-red-800 text-xs px-3 py-1 font-medium">
               Payment due — please settle to avoid late fees
@@ -108,20 +108,20 @@
 
       <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <div class="student-pay-card rounded-xl p-3">
-          <p class="text-[10px] text-emerald-800/55 uppercase font-medium">Paid (lifetime)</p>
-          <p id="kpiLife" class="text-lg font-semibold text-emerald-800 tabular-nums">—</p>
+          <p class="text-[10px] text-amber-800/55 uppercase font-medium">Paid (lifetime)</p>
+          <p id="kpiLife" class="text-lg font-semibold text-amber-800 tabular-nums">—</p>
         </div>
         <div class="student-pay-card rounded-xl p-3">
-          <p class="text-[10px] text-emerald-800/55 uppercase font-medium">Paid (this month)</p>
-          <p id="kpiMonth" class="text-lg font-semibold text-teal-800 tabular-nums">—</p>
+          <p class="text-[10px] text-amber-800/55 uppercase font-medium">Paid (this month)</p>
+          <p id="kpiMonth" class="text-lg font-semibold text-amber-800 tabular-nums">—</p>
         </div>
         <div class="student-pay-card rounded-xl p-3">
-          <p class="text-[10px] text-emerald-800/55 uppercase font-medium">Next due</p>
-          <p id="kpiNextDue" class="text-lg font-semibold text-emerald-900">—</p>
+          <p class="text-[10px] text-amber-800/55 uppercase font-medium">Next due</p>
+          <p id="kpiNextDue" class="text-lg font-semibold text-amber-900">—</p>
         </div>
         <div class="student-pay-card rounded-xl p-3">
-          <p class="text-[10px] text-emerald-800/55 uppercase font-medium">Last payment</p>
-          <p id="kpiLast" class="text-lg font-semibold text-emerald-900 tabular-nums">—</p>
+          <p class="text-[10px] text-amber-800/55 uppercase font-medium">Last payment</p>
+          <p id="kpiLast" class="text-lg font-semibold text-amber-900 tabular-nums">—</p>
         </div>
       </section>
 
@@ -131,15 +131,15 @@
 
       <section class="student-pay-card rounded-xl p-4 mb-4 overflow-x-auto">
         <div class="flex flex-wrap justify-between gap-2 items-center mb-3">
-          <h2 class="text-lg font-semibold text-emerald-900">My lesson fees</h2>
+          <h2 class="text-lg font-semibold text-amber-900">My lesson fees</h2>
           <button type="button" id="btnOpenPay"
-            class="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2 shadow-sm">
+            class="rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium px-4 py-2 shadow-sm">
             Make a payment
           </button>
         </div>
-        <table class="w-full text-sm text-left border-collapse min-w-[860px] text-emerald-950">
+        <table class="w-full text-sm text-left border-collapse min-w-[860px] text-amber-950">
           <thead>
-            <tr class="border-b border-emerald-200/80 text-emerald-800/75">
+            <tr class="border-b border-amber-200/80 text-amber-800/75">
               <th class="py-2 pr-2 font-medium">Lesson / type</th>
               <th class="py-2 pr-2 font-medium">Coach</th>
               <th class="py-2 pr-2 font-medium text-right">Fee</th>
@@ -152,69 +152,69 @@
             </tr>
           </thead>
           <tbody id="lessonBody">
-            <tr><td class="py-6 text-emerald-700/70" colspan="9">Loading…</td></tr>
+            <tr><td class="py-6 text-amber-700/70" colspan="9">Loading…</td></tr>
           </tbody>
         </table>
       </section>
 
       <section class="student-pay-card rounded-xl p-4 mb-4">
-        <h2 class="text-lg font-semibold text-emerald-900 mb-3">Recent transactions</h2>
+        <h2 class="text-lg font-semibold text-amber-900 mb-3">Recent transactions</h2>
         <ul id="txList" class="space-y-2 text-sm"></ul>
-        <p id="txEmpty" class="text-emerald-800/60 text-sm hidden">No payments recorded yet.</p>
+        <p id="txEmpty" class="text-amber-800/60 text-sm hidden">No payments recorded yet.</p>
       </section>
     </div>
 
     <aside class="w-full lg:w-56 shrink-0 space-y-3 mt-6 lg:mt-0">
       <div class="student-pay-card rounded-xl p-4 space-y-2">
-        <h3 class="text-xs font-semibold text-emerald-900 uppercase tracking-wide">Quick actions</h3>
+        <h3 class="text-xs font-semibold text-amber-900 uppercase tracking-wide">Quick actions</h3>
         <button type="button" id="btnStmtPdf"
-          class="w-full text-left rounded-lg bg-white/70 hover:bg-white border border-emerald-200/80 text-emerald-900 px-3 py-2 text-sm shadow-sm">
+          class="w-full text-left rounded-lg bg-white/70 hover:bg-white border border-amber-200/80 text-amber-900 px-3 py-2 text-sm shadow-sm">
           Statement / PDF (print)
         </button>
         <a id="linkBookings" href="#" target="_blank" rel="noopener"
-          class="block rounded-lg bg-white/70 hover:bg-white border border-emerald-200/80 px-3 py-2 text-sm text-emerald-800 font-medium">
+          class="block rounded-lg bg-white/70 hover:bg-white border border-amber-200/80 px-3 py-2 text-sm text-amber-800 font-medium">
           My bookings
         </a>
         <a id="linkBrowse" href="#" target="_blank" rel="noopener"
-          class="block rounded-lg bg-white/70 hover:bg-white border border-emerald-200/80 px-3 py-2 text-sm text-emerald-800 font-medium">
+          class="block rounded-lg bg-white/70 hover:bg-white border border-amber-200/80 px-3 py-2 text-sm text-amber-800 font-medium">
           Browse lessons
         </a>
         <a id="linkContact" href="#"
-          class="block rounded-lg bg-white/70 hover:bg-white border border-emerald-200/80 px-3 py-2 text-sm text-emerald-800 font-medium">
+          class="block rounded-lg bg-white/70 hover:bg-white border border-amber-200/80 px-3 py-2 text-sm text-amber-800 font-medium">
           Contact club
         </a>
       </div>
     </aside>
   </div>
 
-  <div id="modalPay" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-emerald-950/25 backdrop-blur-sm overflow-y-auto" aria-modal="true">
+  <div id="modalPay" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-amber-950/25 backdrop-blur-sm overflow-y-auto" aria-modal="true">
     <div class="student-pay-modal-panel rounded-2xl max-w-xl w-full my-8 shadow-xl max-h-[min(92vh,920px)] overflow-y-auto">
       <div class="p-5 sm:p-6">
-        <h3 class="text-lg font-semibold text-emerald-950">Make a payment</h3>
-        <p class="text-xs text-emerald-800/70 mt-1">Choose lessons and amounts. Complete the transfer, enter your reference, then confirm.</p>
+        <h3 class="text-lg font-semibold text-amber-950">Make a payment</h3>
+        <p class="text-xs text-amber-800/70 mt-1">Choose lessons and amounts. Complete the transfer, enter your reference, then confirm.</p>
 
-        <div id="refLines" class="mt-3 text-xs text-emerald-800/80 space-y-1"></div>
+        <div id="refLines" class="mt-3 text-xs text-amber-800/80 space-y-1"></div>
 
         <form id="formPay" class="mt-4 space-y-4">
           <div>
-            <p class="text-xs font-semibold text-emerald-900 mb-2">Allocate to lesson(s)</p>
-            <div id="allocRows" class="space-y-2 max-h-48 overflow-y-auto text-sm border border-emerald-200/70 rounded-lg p-3 bg-white/50"></div>
-            <p class="text-xs text-emerald-800/60 mt-2">Check a lesson, then enter any amount up to its outstanding balance.</p>
+            <p class="text-xs font-semibold text-amber-900 mb-2">Allocate to lesson(s)</p>
+            <div id="allocRows" class="space-y-2 max-h-48 overflow-y-auto text-sm border border-amber-200/70 rounded-lg p-3 bg-white/50"></div>
+            <p class="text-xs text-amber-800/60 mt-2">Check a lesson, then enter any amount up to its outstanding balance.</p>
           </div>
           <div class="flex flex-wrap items-end gap-3">
             <div>
-              <label class="block text-xs text-emerald-800/80 mb-1">Total paying</label>
+              <label class="block text-xs text-amber-800/80 mb-1">Total paying</label>
               <input id="payTotal" type="number" step="0.01" min="0" readonly
-                class="w-40 rounded-lg bg-white border border-emerald-200/80 px-3 py-2 text-emerald-950 text-sm tabular-nums" />
+                class="w-40 rounded-lg bg-white border border-amber-200/80 px-3 py-2 text-amber-950 text-sm tabular-nums" />
             </div>
-            <button type="button" id="btnFillFull" class="rounded-lg bg-emerald-100 hover:bg-emerald-200/90 border border-emerald-300/60 text-emerald-900 text-xs px-3 py-2">
+            <button type="button" id="btnFillFull" class="rounded-lg bg-amber-100 hover:bg-amber-200/90 border border-amber-300/60 text-amber-900 text-xs px-3 py-2">
               Fill full outstanding (selected)
             </button>
           </div>
           <div>
-            <label class="block text-xs text-emerald-800/80 mb-1">Payment method</label>
+            <label class="block text-xs text-amber-800/80 mb-1">Payment method</label>
             <select id="payMethod" required
-              class="w-full rounded-lg bg-white border border-emerald-200/80 px-3 py-2 text-emerald-950 text-sm">
+              class="w-full rounded-lg bg-white border border-amber-200/80 px-3 py-2 text-amber-950 text-sm">
               <option value="">— Select method —</option>
               <option value="PayMe">PayMe</option>
               <option value="FPS">FPS</option>
@@ -224,28 +224,28 @@
             </select>
           </div>
           <div>
-            <p class="text-xs font-semibold text-emerald-900 uppercase tracking-wide mb-2">Payment QR</p>
-            <p id="qrSinglePlaceholder" class="text-sm text-emerald-800/65 py-2">
+            <p class="text-xs font-semibold text-amber-900 uppercase tracking-wide mb-2">Payment QR</p>
+            <p id="qrSinglePlaceholder" class="text-sm text-amber-800/65 py-2">
               Choose a payment method above to show the club’s QR code (from <code class="text-xs">ClubInfo.json</code>).
             </p>
             <div id="qrSingleWrap" class="hidden w-full max-w-xs student-pay-qr-frame rounded-xl p-4">
               <img id="qrSingleImg" alt="" class="w-full max-w-[220px] mx-auto object-contain rounded-lg border border-white/80 bg-white" />
-              <p id="qrSingleLabel" class="text-xs text-center text-emerald-900 font-medium mt-3"></p>
+              <p id="qrSingleLabel" class="text-xs text-center text-amber-900 font-medium mt-3"></p>
             </div>
           </div>
           <div>
-            <label class="block text-xs text-emerald-800/80 mb-1">Transaction reference</label>
+            <label class="block text-xs text-amber-800/80 mb-1">Transaction reference</label>
             <input id="payRef" type="text" placeholder="Bank / PayMe / FPS / WeChat / Alipay reference"
-              class="w-full rounded-lg bg-white border border-emerald-200/80 px-3 py-2 text-emerald-950 text-sm" />
+              class="w-full rounded-lg bg-white border border-amber-200/80 px-3 py-2 text-amber-950 text-sm" />
           </div>
           <div>
-            <label class="block text-xs text-emerald-800/80 mb-1">Payment date</label>
+            <label class="block text-xs text-amber-800/80 mb-1">Payment date</label>
             <input id="payDate" type="date" required
-              class="w-full rounded-lg bg-white border border-emerald-200/80 px-3 py-2 text-emerald-950 text-sm" />
+              class="w-full rounded-lg bg-white border border-amber-200/80 px-3 py-2 text-amber-950 text-sm" />
           </div>
           <div class="flex flex-wrap gap-2">
-            <button type="submit" class="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-2 shadow-sm">Confirm &amp; pay</button>
-            <button type="button" id="btnPayCancel" class="rounded-lg bg-white border border-emerald-300/70 text-emerald-900 text-sm px-4 py-2 hover:bg-emerald-50">Cancel</button>
+            <button type="submit" class="rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium px-4 py-2 shadow-sm">Confirm &amp; pay</button>
+            <button type="button" id="btnPayCancel" class="rounded-lg bg-white border border-amber-300/70 text-amber-900 text-sm px-4 py-2 hover:bg-amber-50">Cancel</button>
           </div>
           <p id="payErr" class="hidden text-sm text-red-700 font-medium"></p>
         </form>
@@ -286,7 +286,7 @@
 
       function badgeClass(st) {
         if (st === "PAID") {
-          return "bg-emerald-100 text-emerald-900 border-emerald-300/70";
+          return "bg-amber-100 text-amber-900 border-amber-300/70";
         }
         if (st === "PARTIALLY_PAID") {
           return "bg-amber-100 text-amber-900 border-amber-300/70";
@@ -299,7 +299,7 @@
 
       function paymentConfirmedBadgeClass(label) {
         if (label === "yes") {
-          return "bg-emerald-100 text-emerald-900 border-emerald-300/70";
+          return "bg-amber-100 text-amber-900 border-amber-300/70";
         }
         return "bg-amber-50 text-amber-900 border-amber-200/80";
       }
@@ -390,20 +390,20 @@
             return;
           }
           var row = document.createElement("div");
-          row.className = "alloc-row flex flex-wrap items-center gap-2 py-1 border-b border-emerald-100";
+          row.className = "alloc-row flex flex-wrap items-center gap-2 py-1 border-b border-amber-100";
           row.innerHTML =
-            "<label class=\"flex items-center gap-2 grow min-w-[200px] cursor-pointer select-none text-emerald-950\">" +
-            "<input type=\"checkbox\" class=\"alloc-chk rounded border-emerald-300 text-emerald-600\" data-rid=\"" +
+            "<label class=\"flex items-center gap-2 grow min-w-[200px] cursor-pointer select-none text-amber-950\">" +
+            "<input type=\"checkbox\" class=\"alloc-chk rounded border-amber-300 text-amber-600\" data-rid=\"" +
             escapeHtml(L.lessonReserveId) +
             "\" data-max=\"" +
             L.outstanding +
             "\" />" +
             "<span>" +
             escapeHtml(L.lessonId) +
-            " <span class=\"text-emerald-800/65\">(max $" +
+            " <span class=\"text-amber-800/65\">(max $" +
             fmtMoney(L.outstanding) +
             ")</span></span></label>" +
-            "<input type=\"number\" step=\"0.01\" min=\"0\" placeholder=\"Amount\" class=\"alloc-amt w-28 rounded bg-white border border-emerald-200/80 px-2 py-1 text-xs text-emerald-950\" disabled />";
+            "<input type=\"number\" step=\"0.01\" min=\"0\" placeholder=\"Amount\" class=\"alloc-amt w-28 rounded bg-white border border-amber-200/80 px-2 py-1 text-xs text-amber-950\" disabled />";
           box.appendChild(row);
           var chk = row.querySelector(".alloc-chk");
           var inp = row.querySelector(".alloc-amt");
@@ -419,7 +419,7 @@
           inp.addEventListener("input", recalcTotal);
         });
         if (!box.children.length) {
-          box.innerHTML = "<p class=\"text-emerald-800/65 text-sm\">No outstanding balances.</p>";
+          box.innerHTML = "<p class=\"text-amber-800/65 text-sm\">No outstanding balances.</p>";
         }
       }
 
@@ -480,7 +480,7 @@
           var tbody = document.getElementById("lessonBody");
           var lessons = data.lessons || [];
           if (!lessons.length) {
-            tbody.innerHTML = '<tr><td class="py-6 text-emerald-800/60" colspan="9">No active lesson bookings with fees.</td></tr>';
+            tbody.innerHTML = '<tr><td class="py-6 text-amber-800/60" colspan="9">No active lesson bookings with fees.</td></tr>';
           } else {
             tbody.innerHTML = lessons
               .map(function (L) {
@@ -489,12 +489,12 @@
                 var stLabel = String(L.displayStatus || "").replace(/_/g, " ");
                 var pcLabel = L.paymentConfirmed === "yes" ? "yes" : "In Progress";
                 return (
-                  "<tr class=\"border-b border-emerald-100/80 " +
+                  "<tr class=\"border-b border-amber-100/80 " +
                   rowClass(L) +
                   "\">" +
-                  "<td class=\"py-2 pr-2\"><div class=\"text-emerald-950 font-medium\">" +
+                  "<td class=\"py-2 pr-2\"><div class=\"text-amber-950 font-medium\">" +
                   escapeHtml(L.lessonLabel || "") +
-                  "</div><div class=\"text-xs text-emerald-800/65\">" +
+                  "</div><div class=\"text-xs text-amber-800/65\">" +
                   escapeHtml(typeLabel) +
                   "</div></td>" +
                   "<td class=\"py-2 pr-2\">" +
@@ -503,7 +503,7 @@
                   "<td class=\"py-2 pr-2 text-right tabular-nums\">$" +
                   fmtMoney(L.totalFee) +
                   "</td>" +
-                  "<td class=\"py-2 pr-2 text-right tabular-nums text-emerald-800\">$" +
+                  "<td class=\"py-2 pr-2 text-right tabular-nums text-amber-800\">$" +
                   fmtMoney(L.amountPaid) +
                   "</td>" +
                   "<td class=\"py-2 pr-2 text-right tabular-nums text-amber-800 font-medium\">$" +
@@ -529,7 +529,7 @@
                   "</span></td>" +
                   "<td class=\"py-2 pr-2\">" +
                   (L.canPay
-                    ? "<button type=\"button\" class=\"rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1.5 btn-pay shadow-sm\">Pay now</button>"
+                    ? "<button type=\"button\" class=\"rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs px-3 py-1.5 btn-pay shadow-sm\">Pay now</button>"
                     : "") +
                   "</td></tr>"
                 );
@@ -558,7 +558,7 @@
                         String(t.paidAt || "")
                     : String(t.paidAt || "");
                 return (
-                  "<li class=\"flex flex-wrap justify-between gap-2 rounded-lg border border-emerald-200/70 bg-white/60 px-3 py-2 text-emerald-950\">" +
+                  "<li class=\"flex flex-wrap justify-between gap-2 rounded-lg border border-amber-200/70 bg-white/60 px-3 py-2 text-amber-950\">" +
                   "<span>" +
                   escapeHtml(paidDisp) +
                   " · " +
@@ -566,7 +566,7 @@
                   " · $" +
                   fmtMoney(t.amount) +
                   "</span>" +
-                  "<span class=\"text-emerald-800/65 text-xs\">Ref: " +
+                  "<span class=\"text-amber-800/65 text-xs\">Ref: " +
                   escapeHtml(t.reference || "—") +
                   "</span></li>"
                 );

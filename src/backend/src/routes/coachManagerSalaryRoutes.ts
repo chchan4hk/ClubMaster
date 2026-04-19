@@ -1,7 +1,6 @@
 import { Router, type Request } from "express";
 import { requireAuth, requireRole } from "../middleware/requireAuth";
-import { findUserByUid } from "../userlistCsv";
-import { isValidClubFolderId } from "../coachListCsv";
+import { coachManagerClubContextAsync } from "../coachManagerSession";
 import { resolveLessonFileClubId } from "../lessonListCsv";
 import { clubInfoFirstRowObject } from "../clubInfoJson";
 import { clubCurrencyFromCountry } from "../countryCurrency";
@@ -15,28 +14,6 @@ import {
   saveCoachSalaryDocument,
 } from "../coachSalaryJson";
 
-function coachManagerClubContext(req: Request):
-  | { ok: true; clubId: string; clubName: string }
-  | { ok: false; status: number; error: string } {
-  const clubId = String(req.user?.sub ?? "").trim();
-  if (!clubId || !isValidClubFolderId(clubId)) {
-    return { ok: false, status: 403, error: "Invalid club session." };
-  }
-  const row = findUserByUid(clubId);
-  if (!row || row.role !== "CoachManager") {
-    return { ok: false, status: 403, error: "Coach Manager access only." };
-  }
-  const clubName = (row.clubName && row.clubName.trim()) || "";
-  if (!clubName || clubName === "—") {
-    return {
-      ok: false,
-      status: 400,
-      error: "Your account has no club name; contact an administrator.",
-    };
-  }
-  return { ok: true, clubId, clubName };
-}
-
 /**
  * Coach Manager: read/update CoachSalary.json under data_club.
  * Mounted at `/api/coach-manager/lessons/coach-salary-data` (see coachManagerLessonRoutes).
@@ -45,8 +22,8 @@ export function createCoachManagerSalaryRouter(): Router {
   const r = Router();
   r.use(requireAuth);
 
-  r.get("/", requireRole("CoachManager"), (req, res) => {
-    const ctx = coachManagerClubContext(req);
+  r.get("/", requireRole("CoachManager"), async (req, res) => {
+    const ctx = await coachManagerClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
@@ -100,8 +77,8 @@ export function createCoachManagerSalaryRouter(): Router {
     }
   });
 
-  r.post("/fee-allocation", requireRole("CoachManager"), (req, res) => {
-    const ctx = coachManagerClubContext(req);
+  r.post("/fee-allocation", requireRole("CoachManager"), async (req, res) => {
+    const ctx = await coachManagerClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
@@ -156,8 +133,8 @@ export function createCoachManagerSalaryRouter(): Router {
     }
   });
 
-  r.post("/update", requireRole("CoachManager"), (req, res) => {
-    const ctx = coachManagerClubContext(req);
+  r.post("/update", requireRole("CoachManager"), async (req, res) => {
+    const ctx = await coachManagerClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;

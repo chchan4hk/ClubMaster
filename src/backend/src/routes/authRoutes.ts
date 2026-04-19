@@ -17,6 +17,13 @@ import {
   findUserByUsername,
   verifyMainLoginPassword,
 } from "../userlistCsv";
+import { isMongoConfigured } from "../db/DBConnection";
+import {
+  findCoachManagerUidByClubNameMongo,
+  findCoachRoleLoginByUsernameMongo,
+  findStudentRoleLoginByUsernameMongo,
+  findUserByUsernameMongo,
+} from "../userListMongo";
 import { jwtSecret } from "../middleware/requireAuth";
 import { isLoginExpiryDatePast } from "../accountExpiry";
 
@@ -29,6 +36,26 @@ const ROLE_FORM_TO_JWT: Record<string, string> = {
 
 function normEqText(a: string, b: string): boolean {
   return a.trim().toLowerCase() === b.trim().toLowerCase();
+}
+
+/** Club folder UID from file, else Mongo `userLogin` when configured. */
+async function resolveCoachManagerClubUid(clubName: string): Promise<string | null> {
+  const trimmed = clubName.trim();
+  if (!trimmed) {
+    return null;
+  }
+  const fromFile = findCoachManagerClubUidByClubName(trimmed);
+  if (fromFile) {
+    return fromFile;
+  }
+  if (!isMongoConfigured()) {
+    return null;
+  }
+  try {
+    return await findCoachManagerUidByClubNameMongo(trimmed);
+  } catch {
+    return null;
+  }
 }
 
 function sendExpiredLogin(
@@ -69,10 +96,11 @@ export function createAuthRouter(): Router {
 
   /**
    * Login with explicit role + optional club name (sign-in page).
-   * Coach Manager / Admin → userLogin.csv only.
-   * Coach → userLogin_Coach (.json bcrypt or legacy CSV) + club roster; Student → userLogin_Student + club roster.
+   * When `MONGODB_URI` / `MONGO_PASSWORD` is set, credentials are checked against MongoDB
+   * `userLogin` via `getAuthUserLoginCollection()` (default DB `ClubMaster_DB`; env `MONGO_AUTH_USERLOGIN_DB`).
+   * Otherwise: `userLogin.json` / CSV + club roster files.
    */
-  r.post("/login-with-context", (req, res) => {
+  r.post("/login-with-context", async (req, res) => {
     const username = String(req.body?.username ?? "").trim();
     const password = String(req.body?.password ?? "");
     const roleInput = String(req.body?.role ?? "").trim();
@@ -123,7 +151,22 @@ export function createAuthRouter(): Router {
     };
 
     if (expectedRole === "Admin" || expectedRole === "CoachManager") {
-      const row = findUserByUsername(username);
+      let row: ReturnType<typeof findUserByUsername>;
+      try {
+        if (isMongoConfigured()) {
+          const mongoRow = await findUserByUsernameMongo(username);
+          row = mongoRow ?? undefined;
+        } else {
+          row = findUserByUsername(username);
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.status(503).json({
+          ok: false,
+          error: `Login database unavailable: ${msg}`,
+        });
+        return;
+      }
       if (!row || !verifyMainLoginPassword(row, password)) {
         res.status(401).json({ ok: false, error: "Invalid credentials." });
         return;
@@ -131,14 +174,14 @@ export function createAuthRouter(): Router {
       if (row.role !== expectedRole) {
         res.status(403).json({
           ok: false,
-          error: "That user is not the selected role in userLogin.csv.",
+          error: "That user is not the selected role for this account.",
         });
         return;
       }
       if (!row.isActivated || row.status.toUpperCase() !== "ACTIVE") {
         res.status(403).json({
           ok: false,
-          error: "Account is not activated or is INACTIVE in userLogin.csv.",
+          error: "Account is not activated or is INACTIVE.",
         });
         return;
       }
@@ -146,7 +189,7 @@ export function createAuthRouter(): Router {
         if (!normEqText(row.clubName, clubName)) {
           res.status(403).json({
             ok: false,
-            error: "Club name does not match this Coach Manager row in userLogin.csv.",
+            error: "Club name does not match this Coach Manager account.",
           });
           return;
         }
@@ -171,11 +214,25 @@ export function createAuthRouter(): Router {
     }
 
     if (expectedRole === "Coach") {
-      const login = findCoachRoleLoginByUsername(username);
+      let login: ReturnType<typeof findCoachRoleLoginByUsername> | undefined;
+      try {
+        if (isMongoConfigured()) {
+          login = (await findCoachRoleLoginByUsernameMongo(username)) ?? undefined;
+        } else {
+          login = findCoachRoleLoginByUsername(username);
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.status(503).json({
+          ok: false,
+          error: `Login database unavailable: ${msg}`,
+        });
+        return;
+      }
       if (!login || !verifyRoleLoginPassword(login, password)) {
         res.status(401).json({
           ok: false,
-          error: "Invalid coach username or password (userLogin_Coach).",
+          error: "Invalid coach username or password.",
         });
         return;
       }
@@ -186,11 +243,11 @@ export function createAuthRouter(): Router {
       } else {
         const reqClub = clubName.trim();
         if (reqClub) {
-          clubUid = findCoachManagerClubUidByClubName(reqClub);
+          clubUid = await resolveCoachManagerClubUid(reqClub);
         } else {
           const fromRow = login.clubName.trim();
           if (fromRow) {
-            clubUid = findCoachManagerClubUidByClubName(fromRow);
+            clubUid = await resolveCoachManagerClubUid(fromRow);
           }
           if (!clubUid) {
             clubUid = findClubUidForCoachId(login.uid);
@@ -201,7 +258,7 @@ export function createAuthRouter(): Router {
         res.status(404).json({
           ok: false,
           error:
-            "No Coach Manager / club folder found for that club name (userLogin.csv / data_club).",
+            "No Coach Manager / club folder found for that club name (user login / data_club).",
         });
         return;
       }
@@ -254,7 +311,21 @@ export function createAuthRouter(): Router {
     }
 
     if (expectedRole === "Student") {
-      const login = findStudentRoleLoginByUsername(username);
+      let login: ReturnType<typeof findStudentRoleLoginByUsername> | undefined;
+      try {
+        if (isMongoConfigured()) {
+          login = (await findStudentRoleLoginByUsernameMongo(username)) ?? undefined;
+        } else {
+          login = findStudentRoleLoginByUsername(username);
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.status(503).json({
+          ok: false,
+          error: `Login database unavailable: ${msg}`,
+        });
+        return;
+      }
       if (!login || !verifyRoleLoginPassword(login, password)) {
         res.status(401).json({
           ok: false,
@@ -278,11 +349,11 @@ export function createAuthRouter(): Router {
       } else {
         const reqClub = clubName.trim();
         if (reqClub) {
-          clubUid = findCoachManagerClubUidByClubName(reqClub);
+          clubUid = await resolveCoachManagerClubUid(reqClub);
         } else {
           const fromRow = login.clubName.trim();
           if (fromRow) {
-            clubUid = findCoachManagerClubUidByClubName(fromRow);
+            clubUid = await resolveCoachManagerClubUid(fromRow);
           }
           if (!clubUid) {
             clubUid = findClubUidForStudentId(rosterStudentId);
@@ -293,7 +364,7 @@ export function createAuthRouter(): Router {
         res.status(404).json({
           ok: false,
           error:
-            "No Coach Manager / club folder found for that club name (userLogin.csv / data_club).",
+            "No Coach Manager / club folder found for that club name (user login / data_club).",
         });
         return;
       }
@@ -329,7 +400,7 @@ export function createAuthRouter(): Router {
     res.status(400).json({ ok: false, error: "Unsupported role." });
   });
 
-  r.post("/login", (req, res) => {
+  r.post("/login", async (req, res) => {
     const username = String(
       req.body?.username ?? req.body?.userID ?? req.body?.email ?? ""
     ).trim();
@@ -338,7 +409,22 @@ export function createAuthRouter(): Router {
       res.status(400).json({ ok: false, error: "Username and password required" });
       return;
     }
-    const row = findUserByUsername(username);
+    let row: ReturnType<typeof findUserByUsername>;
+    try {
+      if (isMongoConfigured()) {
+        const mongoRow = await findUserByUsernameMongo(username);
+        row = mongoRow ?? undefined;
+      } else {
+        row = findUserByUsername(username);
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      res.status(503).json({
+        ok: false,
+        error: `Login database unavailable: ${msg}`,
+      });
+      return;
+    }
     if (!row) {
       res.status(401).json({ ok: false, error: "Invalid credentials" });
       return;

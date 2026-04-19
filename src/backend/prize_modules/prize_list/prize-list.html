@@ -21,15 +21,15 @@
     <header class="mb-6">
       <p id="backLinkWrap">
         <a href="/coach-manager.html" target="_top"
-          class="text-sm text-teal-400/90 hover:text-teal-300 underline-offset-2 hover:underline">
+          class="text-sm text-amber-400/90 hover:text-amber-300 underline-offset-2 hover:underline">
           ← Back to Coach Manager
         </a>
       </p>
-      <h1 class="text-2xl font-bold text-teal-300 mt-2">Prize List</h1>
+      <h1 class="text-2xl font-bold text-amber-300 mt-2">Prize List</h1>
     </header>
 
     <section class="glass rounded-xl border border-white/15 p-4 mb-6 overflow-x-auto">
-      <h2 class="text-lg font-semibold text-teal-200 mb-1">Prizes</h2>
+      <h2 class="text-lg font-semibold text-amber-200 mb-1">Prizes</h2>
       <p class="text-xs text-slate-500 mb-3">
         Use <strong>Update</strong> on a row to edit details, or <strong>Create New Prize</strong> below to add a prize.
       </p>
@@ -48,47 +48,47 @@
 
       <div class="mt-4 flex flex-wrap gap-2">
         <button type="button" id="btnCreateNewPrize"
-          class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm">
+          class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm">
           Create New Prize
         </button>
       </div>
 
       <div id="createPrizePanel" class="hidden mt-6 pt-6 border-t border-white/10 rounded-lg bg-slate-900/50 p-4">
-        <h3 class="text-base font-semibold text-teal-200 mb-4">New prize</h3>
+        <h3 class="text-base font-semibold text-amber-200 mb-4">New prize</h3>
         <form id="createPrizeForm" class="space-y-3 max-w-2xl">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label for="newPrizeSportType" class="block text-xs text-slate-400 mb-1">Sport Type</label>
               <select id="newPrizeSportType"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
               </select>
             </div>
             <div>
               <label for="newPrizeYear" class="block text-xs text-slate-400 mb-1">Year</label>
               <input id="newPrizeYear" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
           </div>
           <div>
             <label for="newPrizeAssociation" class="block text-xs text-slate-400 mb-1">Association</label>
             <input id="newPrizeAssociation" type="text"
-              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
           </div>
           <div>
             <label for="newPrizeCompetition" class="block text-xs text-slate-400 mb-1">Competition</label>
             <input id="newPrizeCompetition" type="text" required
-              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label for="newPrizeAgeGroup" class="block text-xs text-slate-400 mb-1">Age group</label>
               <input id="newPrizeAgeGroup" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="newPrizePrizeType" class="block text-xs text-slate-400 mb-1">Prize type</label>
               <select id="newPrizePrizeType" required
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
                 <option value="Men's Single">Men's Single</option>
                 <option value="Men's Double">Men's Double</option>
                 <option value="Women's Single">Women's Single</option>
@@ -102,18 +102,18 @@
           <div>
             <label for="newPrizeStudentName" class="block text-xs text-slate-400 mb-1">Student Name</label>
             <input id="newPrizeStudentName" type="text" required autocomplete="name"
-              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label for="newPrizeRanking" class="block text-xs text-slate-400 mb-1">Ranking</label>
               <input id="newPrizeRanking" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="newPrizeStatus" class="block text-xs text-slate-400 mb-1">Status</label>
               <select id="newPrizeStatus"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
                 <option value="ACTIVE" selected>ACTIVE</option>
                 <option value="INACTIVE">INACTIVE</option>
               </select>
@@ -122,18 +122,18 @@
           <div>
             <label for="newPrizeVerifiedBy" class="block text-xs text-slate-400 mb-1">Verified By</label>
             <input id="newPrizeVerifiedBy" type="text"
-              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
           </div>
           <div>
             <label for="newPrizeRemarks" class="block text-xs text-slate-400 mb-1">Remarks</label>
             <input id="newPrizeRemarks" type="text"
-              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
           </div>
           <p id="createPrizeErr" class="hidden text-sm text-red-300"></p>
-          <p id="createPrizeOk" class="hidden text-sm text-teal-300"></p>
+          <p id="createPrizeOk" class="hidden text-sm text-amber-300"></p>
           <div class="flex flex-wrap gap-2 pt-2">
             <button type="submit" id="createPrizeSubmitBtn"
-              class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
+              class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
               Confirm
             </button>
             <button type="button" id="createPrizeCancelBtn"
@@ -145,7 +145,7 @@
       </div>
 
       <div id="tableEditPanel" class="hidden mt-6 pt-6 border-t border-white/10 rounded-lg bg-slate-900/40 p-4">
-        <h3 class="text-base font-semibold text-teal-200 mb-4">Edit prize</h3>
+        <h3 class="text-base font-semibold text-amber-200 mb-4">Edit prize</h3>
         <form id="tableEditForm" class="space-y-3 max-w-2xl">
           <p class="text-[11px] uppercase tracking-wide text-slate-500 font-medium">Read-only</p>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -180,35 +180,35 @@
             <div>
               <label for="tableEditSportType" class="block text-xs text-slate-400 mb-1">Sport Type</label>
               <select id="tableEditSportType"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
               </select>
             </div>
             <div>
               <label for="tableEditYear" class="block text-xs text-slate-400 mb-1">Year</label>
               <input id="tableEditYear" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
           </div>
           <div>
             <label for="tableEditAssociation" class="block text-xs text-slate-400 mb-1">Association</label>
             <input id="tableEditAssociation" type="text"
-              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
           </div>
           <div>
             <label for="tableEditCompetition" class="block text-xs text-slate-400 mb-1">Competition</label>
             <input id="tableEditCompetition" type="text" required
-              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label for="tableEditAgeGroup" class="block text-xs text-slate-400 mb-1">Age group</label>
               <input id="tableEditAgeGroup" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="tableEditPrizeType" class="block text-xs text-slate-400 mb-1">Prize type</label>
               <select id="tableEditPrizeType"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
                 <option value="Men's Single">Men's Single</option>
                 <option value="Men's Double">Men's Double</option>
                 <option value="Women's Single">Women's Single</option>
@@ -222,18 +222,18 @@
           <div>
             <label for="tableEditStudentName" class="block text-xs text-slate-400 mb-1">Student Name</label>
             <input id="tableEditStudentName" type="text" required autocomplete="name"
-              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label for="tableEditRanking" class="block text-xs text-slate-400 mb-1">Ranking</label>
               <input id="tableEditRanking" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="tableEditStatus" class="block text-xs text-slate-400 mb-1">Status</label>
               <select id="tableEditStatus"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
                 <option value="ACTIVE">ACTIVE</option>
                 <option value="INACTIVE">INACTIVE</option>
               </select>
@@ -242,18 +242,18 @@
           <div>
             <label for="tableEditVerifiedBy" class="block text-xs text-slate-400 mb-1">Verified By</label>
             <input id="tableEditVerifiedBy" type="text"
-              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
           </div>
           <div>
             <label for="tableEditRemarks" class="block text-xs text-slate-400 mb-1">Remarks</label>
             <input id="tableEditRemarks" type="text"
-              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
           </div>
           <p id="tableEditErr" class="hidden text-sm text-red-300"></p>
-          <p id="tableEditOk" class="hidden text-sm text-teal-300"></p>
+          <p id="tableEditOk" class="hidden text-sm text-amber-300"></p>
           <div class="flex flex-wrap gap-2 pt-2">
             <button type="button" id="tableEditConfirmBtn"
-              class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
+              class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
               Confirm
             </button>
             <button type="button" id="tableEditCancelBtn"
@@ -546,7 +546,7 @@
             return (
               '<tr class="border-b border-white/5">' +
               '<td class="py-2 pr-3 align-top whitespace-nowrap">' +
-              '<button type="button" class="cm-row-update rounded-md bg-teal-700/90 hover:bg-teal-600 text-white text-xs font-medium px-2.5 py-1.5" data-idx="' +
+              '<button type="button" class="cm-row-update rounded-md bg-amber-700/90 hover:bg-amber-600 text-white text-xs font-medium px-2.5 py-1.5" data-idx="' +
               idx +
               '">Update</button></td>' +
               tds +

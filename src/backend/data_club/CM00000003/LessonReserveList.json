@@ -5,97 +5,97 @@
       "lessonReserveId": "LR000001",
       "lessonId": "LE000002",
       "ClubID": "CM00000003",
-      "StudentID": "S000002",
       "Student_Name": "Abby Yip",
       "status": "ACTIVE",
       "Payment_Status": "UNPAID",
       "Payment_Confirm": false,
       "createdAt": "2026-04-12",
-      "lastUpdatedDate": "2026-04-12"
+      "lastUpdatedDate": "2026-04-12",
+      "student_id": "S000002"
     },
     {
       "lessonReserveId": "LR000002",
       "lessonId": "LE000002",
       "ClubID": "CM00000003",
-      "StudentID": "S000003",
       "Student_Name": "Ayden Chan",
       "status": "ACTIVE",
       "Payment_Status": "UNPAID",
       "Payment_Confirm": false,
       "createdAt": "2026-04-12",
-      "lastUpdatedDate": "2026-04-12"
+      "lastUpdatedDate": "2026-04-12",
+      "student_id": "S000003"
     },
     {
       "lessonReserveId": "LR000003",
       "lessonId": "LE000002",
       "ClubID": "CM00000003",
-      "StudentID": "S000001",
       "Student_Name": "Eason Chan",
       "status": "ACTIVE",
       "Payment_Status": "PAID",
       "Payment_Confirm": true,
       "createdAt": "2026-04-12",
-      "lastUpdatedDate": "2026-04-12"
+      "lastUpdatedDate": "2026-04-12",
+      "student_id": "S000001"
     },
     {
       "lessonReserveId": "LR000004",
       "lessonId": "LE000003",
       "ClubID": "CM00000003",
-      "StudentID": "S000003",
       "Student_Name": "Ayden Chan",
       "status": "ACTIVE",
       "Payment_Status": "UNPAID",
       "Payment_Confirm": false,
       "createdAt": "2026-04-12",
-      "lastUpdatedDate": "2026-04-12"
+      "lastUpdatedDate": "2026-04-12",
+      "student_id": "S000003"
     },
     {
       "lessonReserveId": "LR000005",
       "lessonId": "LE000003",
       "ClubID": "CM00000003",
-      "StudentID": "S000001",
       "Student_Name": "Eason Chan",
       "status": "ACTIVE",
       "Payment_Status": "PAID",
       "Payment_Confirm": true,
       "createdAt": "2026-04-12",
-      "lastUpdatedDate": "2026-04-12"
+      "lastUpdatedDate": "2026-04-12",
+      "student_id": "S000001"
     },
     {
       "lessonReserveId": "LR000006",
       "lessonId": "LE000001",
       "ClubID": "CM00000003",
-      "StudentID": "S000002",
       "Student_Name": "Abby Yip",
       "status": "ACTIVE",
       "Payment_Status": "UNPAID",
       "Payment_Confirm": false,
       "createdAt": "2026-04-12",
-      "lastUpdatedDate": "2026-04-12"
+      "lastUpdatedDate": "2026-04-12",
+      "student_id": "S000002"
     },
     {
       "lessonReserveId": "LR000007",
       "lessonId": "LE000001",
       "ClubID": "CM00000003",
-      "StudentID": "S000003",
       "Student_Name": "Ayden Chan",
       "status": "ACTIVE",
       "Payment_Status": "UNPAID",
       "Payment_Confirm": false,
       "createdAt": "2026-04-12",
-      "lastUpdatedDate": "2026-04-12"
+      "lastUpdatedDate": "2026-04-12",
+      "student_id": "S000003"
     },
     {
       "lessonReserveId": "LR000008",
       "lessonId": "LE000001",
       "ClubID": "CM00000003",
-      "StudentID": "S000001",
       "Student_Name": "Eason Chan",
       "status": "ACTIVE",
       "Payment_Status": "PAID",
       "Payment_Confirm": false,
       "createdAt": "2026-04-12",
-      "lastUpdatedDate": "2026-04-12"
+      "lastUpdatedDate": "2026-04-12",
+      "student_id": "S000001"
     }
   ]
 }

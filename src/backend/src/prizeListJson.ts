@@ -139,28 +139,41 @@ function rowToJsonObject(p: PrizeCsvRow): Record<string, string> {
 
 function rowFromJsonObject(o: Record<string, unknown>): PrizeCsvRow | null {
   const g = (k: string) => String(o[k] ?? "").trim();
-  const prizeId = g("PrizeID");
-  const studentName = g("StudentName");
+  const first = (...keys: string[]) => {
+    for (const k of keys) {
+      const v = g(k);
+      if (v) {
+        return v;
+      }
+    }
+    return "";
+  };
+  const prizeId = first("PrizeID", "prize_id");
+  const studentName = first("StudentName", "student_name");
   if (!prizeId || !studentName) {
     return null;
   }
   return {
     prizeId,
-    clubId: g("ClubID"),
-    clubName: g("Club_name") || g("club_name"),
-    sportType: g("SportType"),
-    year: g("Year"),
-    association: g("Association"),
-    competition: g("Competition"),
-    ageGroup: g("Age_group"),
-    prizeType: g("Prize_type"),
+    clubId: first("ClubID", "club_id"),
+    clubName: first("Club_name", "club_name"),
+    sportType: first("SportType", "sport_type"),
+    year: first("Year", "year"),
+    association: first("Association", "association"),
+    competition: first("Competition", "competition"),
+    ageGroup: first("Age_group", "age_group"),
+    prizeType: first("Prize_type", "prize_type"),
     studentName,
-    ranking: g("Ranking"),
-    status: g("Status") || "ACTIVE",
-    createdAt: g("Created_at"),
-    lastUpdatedDate: g("LastUpdated_Date"),
-    verifiedBy: g("VerifiedBy"),
-    remarks: g("Remarks"),
+    ranking: first("Ranking", "ranking"),
+    status: first("Status", "status") || "ACTIVE",
+    createdAt: first("Created_at", "Creation_date", "created_at"),
+    lastUpdatedDate: first(
+      "LastUpdated_Date",
+      "lastUpdate_date",
+      "last_updated_date",
+    ),
+    verifiedBy: first("VerifiedBy", "verified_by"),
+    remarks: first("Remarks", "remarks"),
   };
 }
 

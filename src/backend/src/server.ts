@@ -12,13 +12,18 @@ import {
   coachProfileFromUserLoginCoachCsv,
   studentProfileFromUserLoginStudentCsv,
 } from "./routes/userAccountRoutes";
+import {
+  ensureClubInfoCollection,
+  ensureUserLoginCollection,
+  isMongoConfigured,
+} from "./db/DBConnection";
+import { loadMeProfileFromUserLoginMongo } from "./userLoginCollectionMongo";
 import { requireAuth } from "./middleware/requireAuth";
 import { ensureCoachStudentLoginFilesExist } from "./coachStudentLoginCsv";
 import {
   ensureUserlistFileExists,
   ensureUserlistSchema,
   findCoachManagerClubUidByClubName,
-  userlistPath,
 } from "./userlistCsv";
 import { createAdminRouter } from "./routes/adminRoutes";
 import { createCoachManagerCoachRouter } from "./routes/coachManagerCoachRoutes";
@@ -158,17 +163,39 @@ app.use("/api/auth", createAuthRouter());
 app.use("/api/subscription", createSubscriptionRenewalRouter());
 app.use("/api/payments/mock", createMockPaymentRouter());
 
-app.get("/api/me", requireAuth, (req, res) => {
+app.get("/api/me", requireAuth, async (req, res) => {
   const uid = req.user?.sub;
-  const fromCsv = uid != null ? accountPayloadForUid(uid) : null;
-  const studentLogin =
+  let fromCsv = uid != null ? accountPayloadForUid(uid) : null;
+  let studentLogin =
     req.user?.role === "Student" && uid != null
       ? studentProfileFromUserLoginStudentCsv(uid)
       : null;
-  const coachLogin =
+  let coachLogin =
     req.user?.role === "Coach" && uid != null
       ? coachProfileFromUserLoginCoachCsv(uid)
       : null;
+
+  if (isMongoConfigured() && uid != null) {
+    try {
+      const mongoMe = await loadMeProfileFromUserLoginMongo(
+        String(uid),
+        req.user?.role,
+      );
+      if (mongoMe) {
+        if (mongoMe.fromCsv) {
+          fromCsv = mongoMe.fromCsv;
+        }
+        if (mongoMe.coachLogin) {
+          coachLogin = mongoMe.coachLogin;
+        }
+        if (mongoMe.studentLogin) {
+          studentLogin = mongoMe.studentLogin;
+        }
+      }
+    } catch {
+      /* keep file-backed profile */
+    }
+  }
   const clubNameForFolder =
     coachLogin?.club_name ??
     studentLogin?.club_name ??
@@ -338,11 +365,20 @@ const server = app.listen(PORT, () => {
   console.log(`  Login: /main.html (same origin as this server)`);
   console.log(`Static root: ${staticRoot}`);
   console.log(`Backend root: ${backendRoot}`);
-  try {
-    console.log(`User login store: ${userlistPath()}`);
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    console.warn(`User login store: (could not resolve path) ${msg}`);
+  if (isMongoConfigured()) {
+    void Promise.all([
+      ensureUserLoginCollection(),
+      ensureClubInfoCollection(),
+    ])
+      .then(() => {
+        console.log(
+          "MongoDB: `userLogin` + `clubInfo` collections validated (see src/backend/src/db/DBConnection.ts).",
+        );
+      })
+      .catch((e) => {
+        const msg = e instanceof Error ? e.message : String(e);
+        console.warn("MongoDB collection init (userLogin / clubInfo):", msg);
+      });
   }
 });
 

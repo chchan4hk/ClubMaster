@@ -21,15 +21,15 @@
     <header class="mb-6">
       <p id="backLinkWrap">
         <a href="/coach-manager.html" target="_top"
-          class="text-sm text-teal-400/90 hover:text-teal-300 underline-offset-2 hover:underline">
+          class="text-sm text-amber-400/90 hover:text-amber-300 underline-offset-2 hover:underline">
           ← Back to Coach Manager
         </a>
       </p>
-      <h1 class="text-2xl font-bold text-teal-300 mt-2">Lesson Reservation</h1>
+      <h1 class="text-2xl font-bold text-amber-300 mt-2">Lesson Reservation</h1>
     </header>
 
     <section class="glass rounded-xl border border-white/15 p-4 mb-6 overflow-x-auto">
-      <h2 class="text-lg font-semibold text-teal-200 mb-1">Lesson list</h2>
+      <h2 class="text-lg font-semibold text-amber-200 mb-1">Lesson list</h2>
       <p class="text-xs text-slate-500 mb-3">
         Lessons are stored in <code class="text-slate-400">LessonList.json</code>. Use <strong>Update</strong> on a row to edit, or <strong>Create New Lesson</strong> below to add.
       </p>
@@ -48,7 +48,7 @@
 
       <div class="mt-4 flex flex-wrap gap-2">
         <button type="button" id="btnCreateNewLesson"
-          class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm">
+          class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm">
           Create New Lesson
         </button>
         <button type="button" id="btnLessonTimetable"
@@ -58,7 +58,7 @@
       </div>
 
       <div id="createLessonPanel" class="hidden mt-6 pt-6 border-t border-white/10 rounded-lg bg-slate-900/50 p-4">
-        <h3 class="text-base font-semibold text-teal-200 mb-2">New lesson</h3>
+        <h3 class="text-base font-semibold text-amber-200 mb-2">New lesson</h3>
         <p class="text-xs text-slate-500 mb-4">
           <strong>Lesson ID</strong> is assigned automatically. <strong>Created at</strong> and <strong>Last updated</strong> are set when you confirm.
         </p>
@@ -67,7 +67,7 @@
             <div>
               <label for="newLessonSportType" class="block text-xs text-slate-400 mb-1">Sport Type</label>
               <select id="newLessonSportType" required
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
               </select>
             </div>
             <div>
@@ -81,17 +81,17 @@
             <div>
               <label for="newLessonYear" class="block text-xs text-slate-400 mb-1">Year</label>
               <input id="newLessonYear" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="newLessonClassId" class="block text-xs text-slate-400 mb-1">Class ID</label>
               <input id="newLessonClassId" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="newLessonMaxNumber" class="block text-xs text-slate-400 mb-1">Max number</label>
               <input id="newLessonMaxNumber" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="newLessonReservedNumber" class="block text-xs text-slate-400 mb-1">Reserved number</label>
@@ -104,44 +104,44 @@
             <div>
               <label for="newLessonClassInfo" class="block text-xs text-slate-400 mb-1">Class info</label>
               <input id="newLessonClassInfo" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="newLessonClassTime" class="block text-xs text-slate-400 mb-1">Class time</label>
               <input id="newLessonClassTime" type="text" placeholder="e.g. 14:00–15:30"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
           </div>
           <div class="rounded-lg border border-white/10 bg-slate-900/40 p-4 space-y-3">
-            <p class="text-sm font-semibold text-teal-200">Class Time</p>
+            <p class="text-sm font-semibold text-amber-200">Class Time</p>
             <p class="text-xs text-slate-500">Which days does this class run?</p>
             <div class="flex flex-wrap gap-x-4 gap-y-2">
               <label class="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer select-none">
-                <input type="checkbox" id="newDaySun" class="rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50" />
+                <input type="checkbox" id="newDaySun" class="rounded border-white/25 bg-slate-900 text-amber-500 focus:ring-amber-500/50" />
                 Sun
               </label>
               <label class="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer select-none">
-                <input type="checkbox" id="newDayMon" class="rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50" />
+                <input type="checkbox" id="newDayMon" class="rounded border-white/25 bg-slate-900 text-amber-500 focus:ring-amber-500/50" />
                 Monday
               </label>
               <label class="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer select-none">
-                <input type="checkbox" id="newDayTue" class="rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50" />
+                <input type="checkbox" id="newDayTue" class="rounded border-white/25 bg-slate-900 text-amber-500 focus:ring-amber-500/50" />
                 Tuesday
               </label>
               <label class="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer select-none">
-                <input type="checkbox" id="newDayWed" class="rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50" />
+                <input type="checkbox" id="newDayWed" class="rounded border-white/25 bg-slate-900 text-amber-500 focus:ring-amber-500/50" />
                 Wednesday
               </label>
               <label class="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer select-none">
-                <input type="checkbox" id="newDayThu" class="rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50" />
+                <input type="checkbox" id="newDayThu" class="rounded border-white/25 bg-slate-900 text-amber-500 focus:ring-amber-500/50" />
                 Thursday
               </label>
               <label class="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer select-none">
-                <input type="checkbox" id="newDayFri" class="rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50" />
+                <input type="checkbox" id="newDayFri" class="rounded border-white/25 bg-slate-900 text-amber-500 focus:ring-amber-500/50" />
                 Friday
               </label>
               <label class="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer select-none">
-                <input type="checkbox" id="newDaySat" class="rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50" />
+                <input type="checkbox" id="newDaySat" class="rounded border-white/25 bg-slate-900 text-amber-500 focus:ring-amber-500/50" />
                 Saturday
               </label>
             </div>
@@ -150,36 +150,36 @@
             <div>
               <label for="newLessonAgeGroup" class="block text-xs text-slate-400 mb-1">Age group</label>
               <input id="newLessonAgeGroup" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="newLessonFrequency" class="block text-xs text-slate-400 mb-1">Frequency</label>
               <input id="newLessonFrequency" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="newLessonClassFee" class="block text-xs text-slate-400 mb-1">Class fee</label>
               <input id="newLessonClassFee" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label for="newLessonStart" class="block text-xs text-slate-400 mb-1">Lesson start date</label>
               <input id="newLessonStart" type="date"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="newLessonEnd" class="block text-xs text-slate-400 mb-1">Lesson end date</label>
               <input id="newLessonEnd" type="date"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <div>
               <label for="newLessonSportCenter" class="block text-xs text-slate-400 mb-1">Sport center</label>
               <select id="newLessonSportCenter"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
                 <option value="">— Select sport center —</option>
               </select>
               <p class="text-[10px] text-slate-500 mt-1">Options are active sport centers configured for your club (e.g. 界限街一號體育館, 界限街二號體育館).</p>
@@ -187,12 +187,12 @@
             <div>
               <label for="newLessonCourtNo" class="block text-xs text-slate-400 mb-1">Court no.</label>
               <input id="newLessonCourtNo" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="newLessonCoachName" class="block text-xs text-slate-400 mb-1">Coach Name</label>
               <select id="newLessonCoachName"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
                 <option value="">— Select coach —</option>
               </select>
               <p class="text-[10px] text-slate-500 mt-1">Options are ACTIVE coaches from <code class="text-slate-400">UserList_Coach.json</code> for your club.</p>
@@ -202,7 +202,7 @@
             <div>
               <label for="newLessonStatus" class="block text-xs text-slate-400 mb-1">Status</label>
               <select id="newLessonStatus"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
                 <option value="ACTIVE" selected>ACTIVE</option>
                 <option value="INACTIVE">INACTIVE</option>
               </select>
@@ -210,14 +210,14 @@
             <div>
               <label for="newLessonRemarks" class="block text-xs text-slate-400 mb-1">Remarks</label>
               <input id="newLessonRemarks" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
           </div>
           <p id="createLessonErr" class="hidden text-sm text-red-300"></p>
-          <p id="createLessonOk" class="hidden text-sm text-teal-300"></p>
+          <p id="createLessonOk" class="hidden text-sm text-amber-300"></p>
           <div class="flex flex-wrap gap-2 pt-2">
             <button type="submit" id="createLessonSubmitBtn"
-              class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
+              class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
               Confirm
             </button>
             <button type="button" id="createLessonCancelBtn"
@@ -229,7 +229,7 @@
       </div>
 
       <div id="tableEditPanel" class="hidden mt-6 pt-6 border-t border-white/10 rounded-lg bg-slate-900/40 p-4">
-        <h3 class="text-base font-semibold text-teal-200 mb-3">Edit lesson</h3>
+        <h3 class="text-base font-semibold text-amber-200 mb-3">Edit lesson</h3>
         <p class="text-xs text-slate-500 mb-4">
           Click <strong>Confirm</strong> to save your changes.
         </p>
@@ -253,74 +253,74 @@
             <div>
               <label for="tableEditSportType" class="block text-xs text-slate-400 mb-1">Sport Type</label>
               <select id="tableEditSportType"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
               </select>
             </div>
             <div>
               <label for="tableEditYear" class="block text-xs text-slate-400 mb-1">Year</label>
               <input id="tableEditYear" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <div>
               <label for="tableEditClassId" class="block text-xs text-slate-400 mb-1">Class ID</label>
               <input id="tableEditClassId" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="tableEditMaxNumber" class="block text-xs text-slate-400 mb-1">Max number</label>
               <input id="tableEditMaxNumber" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="tableEditReservedNumber" class="block text-xs text-slate-400 mb-1">Reserved number</label>
               <input id="tableEditReservedNumber" type="text" inputmode="numeric" pattern="[0-9]*"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label for="tableEditClassInfo" class="block text-xs text-slate-400 mb-1">Class info</label>
               <input id="tableEditClassInfo" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="tableEditClassTime" class="block text-xs text-slate-400 mb-1">Class time</label>
               <input id="tableEditClassTime" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
           </div>
           <div class="rounded-lg border border-white/10 bg-slate-900/40 p-4 space-y-3">
-            <p class="text-sm font-semibold text-teal-200">Class Time</p>
+            <p class="text-sm font-semibold text-amber-200">Class Time</p>
             <p class="text-xs text-slate-500">Days this class runs.</p>
             <div class="flex flex-wrap gap-x-4 gap-y-2">
               <label class="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer select-none">
-                <input type="checkbox" id="tableEditDaySun" class="rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50" />
+                <input type="checkbox" id="tableEditDaySun" class="rounded border-white/25 bg-slate-900 text-amber-500 focus:ring-amber-500/50" />
                 Sun
               </label>
               <label class="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer select-none">
-                <input type="checkbox" id="tableEditDayMon" class="rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50" />
+                <input type="checkbox" id="tableEditDayMon" class="rounded border-white/25 bg-slate-900 text-amber-500 focus:ring-amber-500/50" />
                 Monday
               </label>
               <label class="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer select-none">
-                <input type="checkbox" id="tableEditDayTue" class="rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50" />
+                <input type="checkbox" id="tableEditDayTue" class="rounded border-white/25 bg-slate-900 text-amber-500 focus:ring-amber-500/50" />
                 Tuesday
               </label>
               <label class="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer select-none">
-                <input type="checkbox" id="tableEditDayWed" class="rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50" />
+                <input type="checkbox" id="tableEditDayWed" class="rounded border-white/25 bg-slate-900 text-amber-500 focus:ring-amber-500/50" />
                 Wednesday
               </label>
               <label class="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer select-none">
-                <input type="checkbox" id="tableEditDayThu" class="rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50" />
+                <input type="checkbox" id="tableEditDayThu" class="rounded border-white/25 bg-slate-900 text-amber-500 focus:ring-amber-500/50" />
                 Thursday
               </label>
               <label class="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer select-none">
-                <input type="checkbox" id="tableEditDayFri" class="rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50" />
+                <input type="checkbox" id="tableEditDayFri" class="rounded border-white/25 bg-slate-900 text-amber-500 focus:ring-amber-500/50" />
                 Friday
               </label>
               <label class="inline-flex items-center gap-2 text-sm text-slate-200 cursor-pointer select-none">
-                <input type="checkbox" id="tableEditDaySat" class="rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50" />
+                <input type="checkbox" id="tableEditDaySat" class="rounded border-white/25 bg-slate-900 text-amber-500 focus:ring-amber-500/50" />
                 Saturday
               </label>
             </div>
@@ -329,36 +329,36 @@
             <div>
               <label for="tableEditAgeGroup" class="block text-xs text-slate-400 mb-1">Age group</label>
               <input id="tableEditAgeGroup" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="tableEditFrequency" class="block text-xs text-slate-400 mb-1">Frequency</label>
               <input id="tableEditFrequency" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="tableEditClassFee" class="block text-xs text-slate-400 mb-1">Class fee</label>
               <input id="tableEditClassFee" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label for="tableEditLessonStart" class="block text-xs text-slate-400 mb-1">Lesson start date</label>
               <input id="tableEditLessonStart" type="date"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="tableEditLessonEnd" class="block text-xs text-slate-400 mb-1">Lesson end date</label>
               <input id="tableEditLessonEnd" type="date"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <div>
               <label for="tableEditSportCenter" class="block text-xs text-slate-400 mb-1">Sport center</label>
               <select id="tableEditSportCenter"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
                 <option value="">— Select sport center —</option>
               </select>
               <p class="text-[10px] text-slate-500 mt-1"><strong>Sport Center</strong> column, ACTIVE rows only — same list as create.</p>
@@ -366,12 +366,12 @@
             <div>
               <label for="tableEditCourtNo" class="block text-xs text-slate-400 mb-1">Court no.</label>
               <input id="tableEditCourtNo" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="tableEditCoachName" class="block text-xs text-slate-400 mb-1">Coach Name</label>
               <select id="tableEditCoachName"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
                 <option value="">— Select coach —</option>
               </select>
               <p class="text-[10px] text-slate-500 mt-1"><strong>Coach Name</strong> — ACTIVE coaches from <code class="text-slate-400">UserList_Coach.json</code>; values not in the list stay selectable as a one-off row.</p>
@@ -382,7 +382,7 @@
               <div class="flex-1 min-w-0">
                 <label for="tableEditStatus" class="block text-xs text-slate-400 mb-1">Status</label>
                 <select id="tableEditStatus"
-                  class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+                  class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
                   <option value="ACTIVE">ACTIVE</option>
                   <option value="INACTIVE">INACTIVE</option>
                 </select>
@@ -397,18 +397,18 @@
             <div>
               <label for="tableEditRemarks" class="block text-xs text-slate-400 mb-1">Remarks</label>
               <input id="tableEditRemarks" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
           </div>
           <p id="tableEditErr" class="hidden text-sm text-red-300"></p>
-          <p id="tableEditOk" class="hidden text-sm text-teal-300"></p>
+          <p id="tableEditOk" class="hidden text-sm text-amber-300"></p>
           <div class="flex flex-wrap gap-2 pt-2">
             <button type="button" id="btnAssignStudentFromEdit"
-              class="rounded-lg bg-violet-600 hover:bg-violet-500 text-white font-medium px-4 py-2 text-sm">
+              class="rounded-lg bg-amber-700 hover:bg-amber-600 text-white font-medium px-4 py-2 text-sm">
               Assign Student
             </button>
             <button type="button" id="tableEditConfirmBtn"
-              class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
+              class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
               Confirm
             </button>
             <button type="button" id="tableEditCancelBtn"
@@ -445,9 +445,9 @@
   <div id="assignStudentBackdrop" class="hidden fixed inset-0 z-[102] flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4"
     aria-modal="true" role="dialog" aria-labelledby="assignStudentTitle">
     <div
-      class="relative w-full max-w-lg max-h-[min(88vh,640px)] flex flex-col rounded-xl border border-teal-500/30 bg-slate-900 shadow-xl text-slate-100">
+      class="relative w-full max-w-lg max-h-[min(88vh,640px)] flex flex-col rounded-xl border border-amber-500/30 bg-slate-900 shadow-xl text-slate-100">
       <div class="px-5 py-4 border-b border-white/10 shrink-0">
-        <h3 id="assignStudentTitle" class="text-lg font-semibold text-teal-200">Assign students</h3>
+        <h3 id="assignStudentTitle" class="text-lg font-semibold text-amber-200">Assign students</h3>
         <p class="text-xs text-slate-500 mt-1">Create reservations for this lesson (LessonReserveList.json).</p>
       </div>
       <div class="px-5 py-3 space-y-3 overflow-y-auto flex-1 min-h-0">
@@ -460,7 +460,7 @@
           </div>
         </div>
         <p id="assignStudentErr" class="hidden text-sm text-red-300"></p>
-        <p id="assignStudentOk" class="hidden text-sm text-teal-300"></p>
+        <p id="assignStudentOk" class="hidden text-sm text-amber-300"></p>
       </div>
       <div class="flex flex-wrap justify-end gap-2 px-5 py-3 border-t border-white/10 shrink-0">
         <button type="button" id="assignStudentModalCancel"
@@ -468,7 +468,7 @@
           Cancel
         </button>
         <button type="button" id="assignStudentModalConfirm"
-          class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
+          class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
           Confirm
         </button>
       </div>
@@ -740,7 +740,9 @@
             String(r.lessonId || "").trim().toUpperCase() === id &&
             String(r.status || "").trim().toUpperCase() === "ACTIVE"
           ) {
-            set.add(String(r.StudentID || "").trim().toUpperCase());
+            set.add(
+              String(r.student_id || r.StudentID || "").trim().toUpperCase(),
+            );
           }
         });
         return set;
@@ -836,7 +838,7 @@
             }
             students.forEach(function (st) {
               var sid = String(
-                st.StudentID || st.studentID || st.studentId || ""
+                st.student_id || st.StudentID || st.studentID || st.studentId || ""
               ).trim();
               var name = String(st.full_name || st.Full_name || "").trim();
               var status = String(st.status || "").trim().toUpperCase();
@@ -846,7 +848,7 @@
               var cb = document.createElement("input");
               cb.type = "checkbox";
               cb.className =
-                "mt-0.5 rounded border-white/25 bg-slate-900 text-teal-500 focus:ring-teal-500/50 shrink-0";
+                "mt-0.5 rounded border-white/25 bg-slate-900 text-amber-500 focus:ring-amber-500/50 shrink-0";
               cb.setAttribute("data-student-id", sid);
               var inactive = status !== "ACTIVE";
               var booked = sid && already.has(sid.toUpperCase());
@@ -1277,7 +1279,7 @@
               '<tr class="border-b border-white/5">' +
               '<td class="py-2 pr-3 align-middle whitespace-nowrap">' +
               '<span class="inline-flex flex-nowrap items-center gap-1.5">' +
-              '<button type="button" class="cm-row-update rounded-md bg-teal-700/90 hover:bg-teal-600 text-white text-xs font-medium px-2.5 py-1.5" data-idx="' +
+              '<button type="button" class="cm-row-update rounded-md bg-amber-700/90 hover:bg-amber-600 text-white text-xs font-medium px-2.5 py-1.5" data-idx="' +
               idx +
               '">Update</button>' +
               '<button type="button" class="cm-row-reserved rounded-md bg-black hover:bg-neutral-900 text-white text-xs font-medium px-2.5 py-1.5 border border-white/10" data-idx="' +

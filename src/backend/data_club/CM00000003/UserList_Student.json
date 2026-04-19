@@ -2,8 +2,8 @@
   "version": 1,
   "students": [
     {
-      "StudentID": "S000001",
-      "club_name": "流星羽毛球會",
+      "student_id": "S000000003",
+      "club_id": "CM00000003",
       "full_name": "Eason Chan",
       "sex": "M",
       "email": "EasonCHC@GMAIL.COM",
@@ -11,9 +11,9 @@
       "guardian": "陳裘大",
       "guardian_contact": "+85253880508",
       "school": "St Joseph College",
-      "student_coach": "Michael Frog",
+      "student_coach": "Felix Fan",
       "status": "ACTIVE",
-      "created_at": "2026-04-09",
+      "creation_date": "2026-04-09",
       "remark": "阿爸坐過監",
       "lastUpdate_date": "2026-04-09",
       "date_of_birth": "2016-08-07",

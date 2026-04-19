@@ -1,11 +1,10 @@
 import { Router, type Request } from "express";
 import { requireAuth, requireRole } from "../middleware/requireAuth";
-import { findUserByUid } from "../userlistCsv";
 import {
-  findClubUidForCoachId,
-  isValidClubFolderId,
-  loadCoaches,
-} from "../coachListCsv";
+  coachManagerClubContextAsync,
+  findCoachManagerUserRowForClubUid,
+} from "../coachManagerSession";
+import { findClubUidForCoachId, loadCoaches } from "../coachListCsv";
 import { loadStudents, resolveStudentClubSession } from "../studentListCsv";
 import {
   decrementLessonReservedNumber,
@@ -33,34 +32,16 @@ import {
 } from "./lessonPaymentLedger";
 import { removePaymentListRecordsForLessonReserve } from "../paymentListJson";
 
-function coachManagerClubContext(req: Request):
-  | { ok: true; clubId: string; clubName: string }
-  | { ok: false; status: number; error: string } {
-  const clubId = String(req.user?.sub ?? "").trim();
-  if (!clubId || !isValidClubFolderId(clubId)) {
-    return { ok: false, status: 403, error: "Invalid club session." };
-  }
-  const row = findUserByUid(clubId);
-  if (!row || row.role !== "CoachManager") {
-    return { ok: false, status: 403, error: "Coach Manager access only." };
-  }
-  const clubName = (row.clubName && row.clubName.trim()) || "";
-  if (!clubName || clubName === "—") {
-    return {
-      ok: false,
-      status: 400,
-      error: "Your account has no club name; contact an administrator.",
-    };
-  }
-  return { ok: true, clubId, clubName };
-}
-
-function resolvePaymentClubContext(req: Request):
-  | { ok: true; clubId: string; clubName: string }
-  | { ok: false; status: number; error: string } {
+async function resolvePaymentClubContextAsync(
+  req: Request,
+):
+  Promise<
+    | { ok: true; clubId: string; clubName: string }
+    | { ok: false; status: number; error: string }
+  > {
   const role = String(req.user?.role ?? "");
   if (role === "CoachManager") {
-    return coachManagerClubContext(req);
+    return coachManagerClubContextAsync(req);
   }
   if (role === "Coach") {
     const coachId = String(req.user?.sub ?? "").trim();
@@ -75,7 +56,7 @@ function resolvePaymentClubContext(req: Request):
         error: "No club roster found for this coach account.",
       };
     }
-    const managerRow = findUserByUid(clubId);
+    const managerRow = await findCoachManagerUserRowForClubUid(clubId);
     if (!managerRow || managerRow.role !== "CoachManager") {
       return { ok: false, status: 403, error: "Invalid club for payment access." };
     }
@@ -105,7 +86,7 @@ function resolvePaymentClubContext(req: Request):
       return { ok: false, status: 403, error: session.error };
     }
     const { clubId } = session;
-    const managerRow = findUserByUid(clubId);
+    const managerRow = await findCoachManagerUserRowForClubUid(clubId);
     if (!managerRow || managerRow.role !== "CoachManager") {
       return { ok: false, status: 403, error: "Invalid club for payment access." };
     }
@@ -233,7 +214,7 @@ function paymentInPeriod(paidAt: string, start: string, end: string): boolean {
 export type LessonPaymentStatusRow = {
   lessonReserveId: string;
   lessonId: string;
-  StudentID: string;
+  student_id: string;
   Student_Name: string;
   studentLevel: string;
   reservationStatus: string;
@@ -303,7 +284,7 @@ export function buildLessonPaymentSnapshot(
       dueDate,
       today,
     );
-    const stu = studentById.get(r.StudentID.trim().toUpperCase());
+    const stu = studentById.get(r.student_id.trim().toUpperCase());
     const studentLevel =
       (stu?.school && stu.school.trim()) ||
       (lesson?.ageGroup && lesson.ageGroup.trim()) ||
@@ -312,7 +293,7 @@ export function buildLessonPaymentSnapshot(
     rows.push({
       lessonReserveId: r.lessonReserveId,
       lessonId: r.lessonId,
-      StudentID: r.StudentID,
+      student_id: r.student_id,
       Student_Name: r.Student_Name,
       studentLevel,
       reservationStatus: r.status,
@@ -472,8 +453,8 @@ export function Lesson_payment_status(): Router {
   r.get(
     "/",
     requireRole("CoachManager", "Coach", "Student"),
-    (req, res) => {
-      const ctx = resolvePaymentClubContext(req);
+    async (req, res) => {
+      const ctx = await resolvePaymentClubContextAsync(req);
       if (!ctx.ok) {
         res.status(ctx.status).json({ ok: false, error: ctx.error });
         return;
@@ -500,7 +481,7 @@ export function Lesson_payment_status(): Router {
         if (req.user?.role === "Student") {
           const sid = String(req.user.sub ?? "").trim().toUpperCase();
           rows = rows.filter(
-            (x) => x.StudentID.trim().toUpperCase() === sid,
+            (x) => x.student_id.trim().toUpperCase() === sid,
           );
           let outstandingBalance = 0;
           let overdueAmount = 0;
@@ -561,8 +542,8 @@ export function Lesson_payment_status(): Router {
   r.post(
     "/record-payment",
     requireRole("CoachManager", "Coach"),
-    (req, res) => {
-      const ctx = resolvePaymentClubContext(req);
+    async (req, res) => {
+      const ctx = await resolvePaymentClubContextAsync(req);
       if (!ctx.ok) {
         res.status(ctx.status).json({ ok: false, error: ctx.error });
         return;
@@ -647,8 +628,8 @@ export function Lesson_payment_status(): Router {
   r.post(
     "/confirm-paid-payment",
     requireRole("CoachManager", "Coach"),
-    (req, res) => {
-      const ctx = resolvePaymentClubContext(req);
+    async (req, res) => {
+      const ctx = await resolvePaymentClubContextAsync(req);
       if (!ctx.ok) {
         res.status(ctx.status).json({ ok: false, error: ctx.error });
         return;
@@ -703,8 +684,8 @@ export function Lesson_payment_status(): Router {
   r.post(
     "/void-paid-payment",
     requireRole("CoachManager", "Coach"),
-    (req, res) => {
-      const ctx = resolvePaymentClubContext(req);
+    async (req, res) => {
+      const ctx = await resolvePaymentClubContextAsync(req);
       if (!ctx.ok) {
         res.status(ctx.status).json({ ok: false, error: ctx.error });
         return;
@@ -779,8 +760,8 @@ export function Lesson_payment_status(): Router {
   r.post(
     "/cancel-lesson-reservation",
     requireRole("CoachManager", "Coach"),
-    (req, res) => {
-      const ctx = resolvePaymentClubContext(req);
+    async (req, res) => {
+      const ctx = await resolvePaymentClubContextAsync(req);
       if (!ctx.ok) {
         res.status(ctx.status).json({ ok: false, error: ctx.error });
         return;
@@ -862,8 +843,8 @@ export function Lesson_payment_status(): Router {
   r.post(
     "/bulk-remind",
     requireRole("CoachManager", "Coach"),
-    (req, res) => {
-      const ctx = resolvePaymentClubContext(req);
+    async (req, res) => {
+      const ctx = await resolvePaymentClubContextAsync(req);
       if (!ctx.ok) {
         res.status(ctx.status).json({ ok: false, error: ctx.error });
         return;
@@ -887,7 +868,7 @@ export function Lesson_payment_status(): Router {
         channel: "stub",
         message:
           "Reminder dispatch is not wired to email/SMS yet. Hook your provider here.",
-        studentIds: targets.map((t) => t.StudentID),
+        studentIds: targets.map((t) => t.student_id),
       });
     },
   );
@@ -895,8 +876,8 @@ export function Lesson_payment_status(): Router {
   r.get(
     "/export.csv",
     requireRole("CoachManager", "Coach"),
-    (req, res) => {
-      const ctx = resolvePaymentClubContext(req);
+    async (req, res) => {
+      const ctx = await resolvePaymentClubContextAsync(req);
       if (!ctx.ok) {
         res.status(ctx.status).json({ ok: false, error: ctx.error });
         return;
@@ -907,7 +888,7 @@ export function Lesson_payment_status(): Router {
       const headers = [
         "lessonReserveId",
         "lessonId",
-        "StudentID",
+        "student_id",
         "Student_Name",
         "studentLevel",
         "totalFee",
@@ -933,7 +914,7 @@ export function Lesson_payment_status(): Router {
           [
             row.lessonReserveId,
             row.lessonId,
-            row.StudentID,
+            row.student_id,
             row.Student_Name,
             row.studentLevel,
             row.totalFee,

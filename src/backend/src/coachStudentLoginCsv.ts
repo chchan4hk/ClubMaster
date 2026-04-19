@@ -20,8 +20,8 @@ const COACH_LOGIN_UID_NUM_RE = /^(?:CH|C)(\d+)$/i;
 const STUDENT_ID_NUM_RE = /^S(\d+)$/i;
 /** New coach logins use C + 6 digits (e.g. C000001). */
 const COACH_LOGIN_UID_PAD = 6;
-/** New student logins use S + 6 digits (e.g. S000001). */
-const STUDENT_LOGIN_UID_PAD = 6;
+/** New student logins use S + 9 digits (e.g. S000000001). */
+const STUDENT_LOGIN_UID_PAD = 9;
 
 export type CoachStudentLoginRow = {
   uid: string;

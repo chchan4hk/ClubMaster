@@ -1,7 +1,7 @@
 {
-  "version": 1,
-  "Sport_type": "Badminton",
-  "Club_name": "流星羽毛球會",
+  "club_id": "CM00000003",
+  "sport_type": "Badminton",
+  "club_name": "流星羽毛球會",
   "country": "Hong Kong",
   "setup_date": "2023/7/26",
   "club_desc": "建立羽毛球聯誼交流平台, 增加波友之間的友誼, 將他們的羽毛球經驗和心得",

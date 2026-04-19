@@ -41,6 +41,39 @@ import {
   removeCoachManagerFromUserLoginStore,
   updateMainUserlistProfileByUid,
 } from "../userlistCsv";
+import { isMongoConfigured } from "../db/DBConnection";
+import {
+  activateCoachManagerMongo,
+  activateCoachRoleLoginMongo,
+  activateStudentRoleLoginMongo,
+  assertUsernameFreeForUidMongo,
+  allocateNextCoachLoginUidMongo,
+  allocateNextStudentLoginUidMongo,
+  deactivateCoachManagerMongo,
+  deactivateCoachRoleLoginMongo,
+  deactivateStudentRoleLoginMongo,
+  deleteCoachStudentForClubFolderMongo,
+  deleteMainLoginMongo,
+  deleteRoleLoginMongo,
+  findCoachManagerUidByClubNameMongo,
+  getCoachManagerExpiryDateForClubFolderUidMongo,
+  userLoginUidExistsMongo,
+  insertCoachManagerMongo,
+  insertCoachRoleMongo,
+  insertStudentRoleMongo,
+  listAdminLoginAccountsFromMongo,
+  searchCoachManagersMongo,
+  searchCoachRoleByUsernameOrClubMongo,
+  searchStudentRoleByUsernameOrClubMongo,
+  setMainActivationMongo,
+  setMainExpiryMongo,
+  setMainPasswordMongo,
+  setRoleActivationMongo,
+  setRolePasswordMongo,
+  setRoleExpiryOnlyMongo,
+  updateMainProfileMongo,
+  updateRoleProfileMongo,
+} from "../userListMongo";
 
 function dataClubRoot(): string {
   return path.join(__dirname, "..", "..", "data_club");
@@ -81,10 +114,13 @@ function safeClubDataDirForUid(uid: string, root: string): string | null {
 
 const upload = multer();
 
-function assertUsernameFreeForUid(
+async function assertUsernameFreeForUid(
   username: string,
   exceptUid: string,
-): { ok: true } | { ok: false; error: string } {
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (isMongoConfigured()) {
+    return assertUsernameFreeForUidMongo(username, exceptUid);
+  }
   const uq = username.trim();
   if (!uq) {
     return { ok: false, error: "Username is required." };
@@ -124,7 +160,17 @@ function assertUsernameFreeForUid(
 export function createAdminRouter(): Router {
   const r = Router();
 
-  r.get("/login-accounts", requireAuth, requireRole("Admin"), (_req, res) => {
+  r.get("/login-accounts", requireAuth, requireRole("Admin"), async (_req, res) => {
+    if (isMongoConfigured()) {
+      try {
+        const { userLogin, coach, student } = await listAdminLoginAccountsFromMongo();
+        res.json({ ok: true, userLogin, coach, student });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.status(503).json({ ok: false, error: msg });
+      }
+      return;
+    }
     const userLogin = loadUsersFromCsv().map((u) => ({
       uid: u.uid,
       usertype: u.usertype,
@@ -167,7 +213,7 @@ export function createAdminRouter(): Router {
     "/login-accounts/set-status",
     requireAuth,
     requireRole("Admin"),
-    (req, res) => {
+    async (req, res) => {
       const store = String(req.body?.store ?? "").trim().toLowerCase();
       const uid = String(req.body?.uid ?? "").trim();
       if (!uid) {
@@ -209,7 +255,7 @@ export function createAdminRouter(): Router {
           });
           return;
         }
-        const nameCheck = assertUsernameFreeForUid(username, uid);
+        const nameCheck = await assertUsernameFreeForUid(username, uid);
         if (!nameCheck.ok) {
           res.status(400).json({ ok: false, error: nameCheck.error });
           return;
@@ -217,7 +263,30 @@ export function createAdminRouter(): Router {
         let profileResult:
           | { ok: true }
           | { ok: false; error: string };
-        if (store === "userlogin" || store === "main") {
+        if (isMongoConfigured()) {
+          if (store === "userlogin" || store === "main") {
+            profileResult = await updateMainProfileMongo(uid, {
+              username,
+              fullName,
+              clubName,
+              expiryDate: expiryParsed.value,
+            });
+          } else if (store === "coach") {
+            profileResult = await updateRoleProfileMongo(uid, "coach", {
+              username,
+              fullName,
+              clubName,
+              expiryDate: expiryParsed.value,
+            });
+          } else {
+            profileResult = await updateRoleProfileMongo(uid, "student", {
+              username,
+              fullName,
+              clubName,
+              expiryDate: expiryParsed.value,
+            });
+          }
+        } else if (store === "userlogin" || store === "main") {
           profileResult = updateMainUserlistProfileByUid(uid, {
             username,
             fullName,
@@ -258,7 +327,23 @@ export function createAdminRouter(): Router {
           let onlyResult:
             | { ok: true }
             | { ok: false; error: string };
-          if (store === "userlogin" || store === "main") {
+          if (isMongoConfigured()) {
+            if (store === "userlogin" || store === "main") {
+              onlyResult = await setMainExpiryMongo(uid, expiryParsed.value);
+            } else if (store === "coach") {
+              onlyResult = await setRoleExpiryOnlyMongo(
+                uid,
+                "coach",
+                expiryParsed.value,
+              );
+            } else {
+              onlyResult = await setRoleExpiryOnlyMongo(
+                uid,
+                "student",
+                expiryParsed.value,
+              );
+            }
+          } else if (store === "userlogin" || store === "main") {
             onlyResult = setMainUserlistExpiryByUid(uid, expiryParsed.value);
           } else if (store === "coach") {
             onlyResult = setRoleLoginExpiryByUid(uid, "Coach", expiryParsed.value);
@@ -298,7 +383,15 @@ export function createAdminRouter(): Router {
         let pwdResult:
           | { ok: true }
           | { ok: false; error: string };
-        if (store === "userlogin" || store === "main") {
+        if (isMongoConfigured()) {
+          if (store === "userlogin" || store === "main") {
+            pwdResult = await setMainPasswordMongo(uid, pwd);
+          } else if (store === "coach") {
+            pwdResult = await setRolePasswordMongo(uid, "coach", pwd);
+          } else {
+            pwdResult = await setRolePasswordMongo(uid, "student", pwd);
+          }
+        } else if (store === "userlogin" || store === "main") {
           pwdResult = setMainLoginPasswordByUid(uid, pwd);
         } else if (store === "coach") {
           pwdResult = setRoleLoginPasswordByUid(uid, "Coach", pwd);
@@ -348,7 +441,15 @@ export function createAdminRouter(): Router {
       let result:
         | { ok: true }
         | { ok: false; error: string };
-      if (store === "userlogin" || store === "main") {
+      if (isMongoConfigured()) {
+        if (store === "userlogin" || store === "main") {
+          result = await setMainActivationMongo(uid, active);
+        } else if (store === "coach") {
+          result = await setRoleActivationMongo(uid, "coach", active);
+        } else {
+          result = await setRoleActivationMongo(uid, "student", active);
+        }
+      } else if (store === "userlogin" || store === "main") {
         result = setMainUserlistActivationByUid(uid, active);
       } else if (store === "coach") {
         result = setCoachRoleLoginActiveByUid(uid, active);
@@ -381,7 +482,7 @@ export function createAdminRouter(): Router {
     },
   );
 
-  r.post("/login-accounts/remove", requireAuth, requireRole("Admin"), (req, res) => {
+  r.post("/login-accounts/remove", requireAuth, requireRole("Admin"), async (req, res) => {
     const store = String(req.body?.store ?? "").trim().toLowerCase();
     const uid = String(req.body?.uid ?? "").trim();
     if (!uid) {
@@ -391,6 +492,64 @@ export function createAdminRouter(): Router {
     let result: { ok: true } | { ok: false; error: string };
     let message: string;
     let deleteCoachManagerFolder = false;
+
+    if (isMongoConfigured()) {
+      if (store === "coach") {
+        result = await deleteRoleLoginMongo(uid, "coach");
+        message = "Coach login removed from MongoDB userLogin.";
+      } else if (store === "student") {
+        result = await deleteRoleLoginMongo(uid, "student");
+        message = "Student login removed from MongoDB userLogin.";
+      } else if (store === "userlogin" || store === "main") {
+        const permanent =
+          req.body?.deleteCoachManager === true ||
+          req.body?.deleteCoachManager === "true";
+        if (permanent) {
+          deleteCoachManagerFolder = true;
+          const purge = await deleteCoachStudentForClubFolderMongo(uid);
+          result = await deleteMainLoginMongo(uid);
+          if (!result.ok) {
+            res.status(400).json({ ok: false, error: result.error });
+            return;
+          }
+          message =
+            `Coach Manager removed from userLogin; removed ${purge.removedCoach} coach and ${purge.removedStudent} student role login(s) for this club ID; club data folder deleted when present.`;
+        } else {
+          result = await setMainActivationMongo(uid, false);
+          message = "Account marked inactive in userLogin.";
+        }
+      } else {
+        res.status(400).json({
+          ok: false,
+          error: 'store must be "userLogin", "coach", or "student".',
+        });
+        return;
+      }
+      if (!result.ok) {
+        res.status(400).json({ ok: false, error: result.error });
+        return;
+      }
+      if (deleteCoachManagerFolder) {
+        const clubDir = safeClubDataDirForUid(uid, dataClubRoot());
+        if (clubDir && fs.existsSync(clubDir)) {
+          try {
+            fs.rmSync(clubDir, { recursive: true, force: true });
+            invalidateDataFileCacheUnderDir(clubDir);
+          } catch (e) {
+            const detail =
+              e instanceof Error ? e.message : "Unknown error deleting folder.";
+            res.status(500).json({
+              ok: false,
+              error: `userLogin row was removed but club folder could not be deleted: ${detail}`,
+            });
+            return;
+          }
+        }
+      }
+      res.json({ ok: true, message });
+      return;
+    }
+
     if (store === "coach") {
       result = deleteRoleLoginByUid(uid, "Coach");
       message = "Coach login removed from userLogin_Coach.";
@@ -451,7 +610,7 @@ export function createAdminRouter(): Router {
     requireAuth,
     requireRole("Admin"),
     upload.none(),
-    (req, res) => {
+    async (req, res) => {
       const username = String(req.body?.username ?? "").trim();
       const password = String(req.body?.password ?? "").trim();
       const clubName = String(req.body?.clubName ?? "").trim();
@@ -494,7 +653,18 @@ export function createAdminRouter(): Router {
           res.status(400).json({ ok: false, error: "Club name is required." });
           return;
         }
-        const cmUidForClub = findCoachManagerClubUidByClubName(clubName);
+        let cmUidForClub: string | null = null;
+        if (isMongoConfigured()) {
+          try {
+            cmUidForClub =
+              (await findCoachManagerUidByClubNameMongo(clubName)) ||
+              findCoachManagerClubUidByClubName(clubName);
+          } catch {
+            cmUidForClub = findCoachManagerClubUidByClubName(clubName);
+          }
+        } else {
+          cmUidForClub = findCoachManagerClubUidByClubName(clubName);
+        }
         if (!cmUidForClub) {
           res.status(400).json({
             ok: false,
@@ -502,8 +672,76 @@ export function createAdminRouter(): Router {
           });
           return;
         }
-        const cmExpiry = getCoachManagerExpiryDateForClubFolderUid(cmUidForClub);
+        let cmExpiry = "";
+        if (isMongoConfigured()) {
+          cmExpiry = await getCoachManagerExpiryDateForClubFolderUidMongo(
+            cmUidForClub,
+          );
+        }
+        if (!cmExpiry) {
+          cmExpiry = getCoachManagerExpiryDateForClubFolderUid(cmUidForClub);
+        }
         const roleLoginExpiry = cmExpiry || expiryDate;
+
+        if (isMongoConfigured()) {
+          const taken = await assertUsernameFreeForUidMongo(username, "");
+          if (!taken.ok) {
+            res.status(409).json({
+              ok: false,
+              error: "The user already existed !",
+            });
+            return;
+          }
+          const uid =
+            userRole === "Coach"
+              ? await allocateNextCoachLoginUidMongo()
+              : await allocateNextStudentLoginUidMongo();
+          const uidCollide = await userLoginUidExistsMongo(uid);
+          if (uidCollide) {
+            res.status(400).json({
+              ok: false,
+              error: "Could not allocate a new login UID; try again.",
+            });
+            return;
+          }
+          const ins =
+            userRole === "Coach"
+              ? await insertCoachRoleMongo({
+                  uid,
+                  username,
+                  password,
+                  fullName,
+                  clubName,
+                  clubFolderUid: cmUidForClub,
+                  expiryDate: roleLoginExpiry,
+                })
+              : await insertStudentRoleMongo({
+                  uid,
+                  username,
+                  password,
+                  fullName,
+                  clubName,
+                  clubFolderUid: cmUidForClub,
+                  expiryDate: roleLoginExpiry,
+                });
+          if (!ins.ok) {
+            const low = ins.error.toLowerCase();
+            const status =
+              low.includes("duplicate") || low.includes("e11000") ? 409 : 400;
+            res.status(status).json({ ok: false, error: ins.error });
+            return;
+          }
+          res.json({
+            ok: true,
+            loginUid: uid,
+            message:
+              userRole === "Coach"
+                ? `Coach login saved (UID ${uid}).`
+                : `Student login saved (UID ${uid}).`,
+          });
+          return;
+        }
+
         const csvResult =
           userRole === "Coach"
             ? appendCoachRoleLoginRow({
@@ -542,7 +780,16 @@ export function createAdminRouter(): Router {
         return;
       }
 
-      if (findUserByUsername(username)) {
+      if (isMongoConfigured()) {
+        const taken = await assertUsernameFreeForUidMongo(username, "");
+        if (!taken.ok) {
+          res.status(409).json({
+            ok: false,
+            error: "The user already existed !",
+          });
+          return;
+        }
+      } else if (findUserByUsername(username)) {
         res.status(409).json({
           ok: false,
           error: "The user already existed !",
@@ -590,6 +837,34 @@ export function createAdminRouter(): Router {
         return;
       }
 
+      if (isMongoConfigured()) {
+        const mongoResult = await insertCoachManagerMongo({
+          uid: clubId,
+          username,
+          password,
+          fullName,
+          clubName,
+          clubPhoto: clubPhotoRel,
+          expiryDate,
+        });
+        if (!mongoResult.ok) {
+          try {
+            fs.rmSync(clubDir, { recursive: true, force: true });
+            invalidateDataFileCacheUnderDir(clubDir);
+          } catch {
+            /* ignore */
+          }
+          res.status(400).json({ ok: false, error: mongoResult.error });
+          return;
+        }
+        res.json({
+          ok: true,
+          clubId,
+          message: `Coach Manager created with club ${clubId}.`,
+        });
+        return;
+      }
+
       const csvResult = appendCoachManagerRow({
         uid: clubId,
         username,
@@ -619,7 +894,7 @@ export function createAdminRouter(): Router {
     }
   );
 
-  r.post("/coach-managers/search", requireAuth, requireRole("Admin"), (req, res) => {
+  r.post("/coach-managers/search", requireAuth, requireRole("Admin"), async (req, res) => {
     const username = String(req.body?.username ?? "").trim();
     const clubName = String(req.body?.clubName ?? "").trim();
     const userRole = String(req.body?.userRole ?? "Coach Manager").trim();
@@ -631,7 +906,9 @@ export function createAdminRouter(): Router {
       return;
     }
     if (userRole === "Coach") {
-      const rows = searchCoachRoleByUsernameOrClub(username, clubName);
+      const rows = isMongoConfigured()
+        ? await searchCoachRoleByUsernameOrClubMongo(username, clubName)
+        : searchCoachRoleByUsernameOrClub(username, clubName);
       const results = rows.map((row) => ({
         uid: row.uid,
         username: row.username,
@@ -645,7 +922,9 @@ export function createAdminRouter(): Router {
       return;
     }
     if (userRole === "Student") {
-      const rows = searchStudentRoleByUsernameOrClub(username, clubName);
+      const rows = isMongoConfigured()
+        ? await searchStudentRoleByUsernameOrClubMongo(username, clubName)
+        : searchStudentRoleByUsernameOrClub(username, clubName);
       const results = rows.map((row) => ({
         uid: row.uid,
         username: row.username,
@@ -665,7 +944,9 @@ export function createAdminRouter(): Router {
       });
       return;
     }
-    const rows = searchCoachManagers(username, clubName);
+    const rows = isMongoConfigured()
+      ? await searchCoachManagersMongo(username, clubName)
+      : searchCoachManagers(username, clubName);
     const results = rows.map((row) => {
       return {
         uid: row.uid,
@@ -682,7 +963,7 @@ export function createAdminRouter(): Router {
     res.json({ ok: true, results });
   });
 
-  r.post("/coach-managers/activate", requireAuth, requireRole("Admin"), (req, res) => {
+  r.post("/coach-managers/activate", requireAuth, requireRole("Admin"), async (req, res) => {
     const username = String(req.body?.username ?? "").trim();
     const clubName = String(req.body?.clubName ?? "").trim();
     const userRole = String(req.body?.userRole ?? "Coach Manager").trim();
@@ -695,7 +976,9 @@ export function createAdminRouter(): Router {
     }
     const today = new Date().toISOString().slice(0, 10);
     if (userRole === "Coach") {
-      const result = activateCoachRoleLogin(username, clubName);
+      const result = isMongoConfigured()
+        ? await activateCoachRoleLoginMongo(username, clubName)
+        : activateCoachRoleLogin(username, clubName);
       if (!result.ok) {
         res.status(400).json({ ok: false, error: result.error });
         return;
@@ -709,7 +992,9 @@ export function createAdminRouter(): Router {
       return;
     }
     if (userRole === "Student") {
-      const result = activateStudentRoleLogin(username, clubName);
+      const result = isMongoConfigured()
+        ? await activateStudentRoleLoginMongo(username, clubName)
+        : activateStudentRoleLogin(username, clubName);
       if (!result.ok) {
         res.status(400).json({ ok: false, error: result.error });
         return;
@@ -729,7 +1014,9 @@ export function createAdminRouter(): Router {
       });
       return;
     }
-    const result = activateCoachManager(username, clubName);
+    const result = isMongoConfigured()
+      ? await activateCoachManagerMongo(username, clubName)
+      : activateCoachManager(username, clubName);
     if (!result.ok) {
       res.status(400).json({ ok: false, error: result.error });
       return;
@@ -742,7 +1029,7 @@ export function createAdminRouter(): Router {
     });
   });
 
-  r.post("/coach-managers/remove", requireAuth, requireRole("Admin"), (req, res) => {
+  r.post("/coach-managers/remove", requireAuth, requireRole("Admin"), async (req, res) => {
     const username = String(req.body?.username ?? "").trim();
     const clubName = String(req.body?.clubName ?? "").trim();
     const userRole = String(req.body?.userRole ?? "Coach Manager").trim();
@@ -755,7 +1042,9 @@ export function createAdminRouter(): Router {
     }
     const today = new Date().toISOString().slice(0, 10);
     if (userRole === "Coach") {
-      const result = deactivateCoachRoleLogin(username, clubName);
+      const result = isMongoConfigured()
+        ? await deactivateCoachRoleLoginMongo(username, clubName)
+        : deactivateCoachRoleLogin(username, clubName);
       if (!result.ok) {
         res.status(400).json({ ok: false, error: result.error });
         return;
@@ -769,7 +1058,9 @@ export function createAdminRouter(): Router {
       return;
     }
     if (userRole === "Student") {
-      const result = deactivateStudentRoleLogin(username, clubName);
+      const result = isMongoConfigured()
+        ? await deactivateStudentRoleLoginMongo(username, clubName)
+        : deactivateStudentRoleLogin(username, clubName);
       if (!result.ok) {
         res.status(400).json({ ok: false, error: result.error });
         return;
@@ -789,7 +1080,9 @@ export function createAdminRouter(): Router {
       });
       return;
     }
-    const result = deactivateCoachManager(username, clubName);
+    const result = isMongoConfigured()
+      ? await deactivateCoachManagerMongo(username, clubName)
+      : deactivateCoachManager(username, clubName);
     if (!result.ok) {
       res.status(400).json({ ok: false, error: result.error });
       return;

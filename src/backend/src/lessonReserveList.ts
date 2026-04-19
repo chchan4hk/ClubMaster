@@ -11,7 +11,7 @@ export type LessonReserveRecord = {
   lessonReserveId: string;
   lessonId: string;
   ClubID: string;
-  StudentID: string;
+  student_id: string;
   Student_Name: string;
   status: string;
   Payment_Status: string;
@@ -72,7 +72,7 @@ function rowFromUnknown(o: Record<string, unknown>): LessonReserveRecord | null 
     lessonReserveId: id,
     lessonId: lid,
     ClubID: s(o.ClubID ?? o.clubID ?? o.club_id),
-    StudentID: s(o.StudentID ?? o.studentID),
+    student_id: s(o.student_id ?? o.StudentID ?? o.studentID),
     Student_Name: s(o.Student_Name ?? o.student_name ?? o.StudentName),
     status: s(o.status) || "ACTIVE",
     Payment_Status: payStatus || "UNPAID",
@@ -96,6 +96,36 @@ function nextLessonReserveId(existing: LessonReserveRecord[]): string {
   return `LR${String(max + 1).padStart(LR_PAD, "0")}`;
 }
 
+function migrateLessonReserveJsonKeysInPlace(clubId: string): void {
+  const p = lessonReserveListPath(clubId);
+  if (!p || !fs.existsSync(p)) {
+    return;
+  }
+  let raw: string;
+  try {
+    raw = fs.readFileSync(p, "utf8");
+  } catch {
+    return;
+  }
+  let file: ReserveFileV1;
+  try {
+    file = parseReserveFile(raw);
+  } catch {
+    return;
+  }
+  let changed = false;
+  for (const o of file.reservations) {
+    if ("StudentID" in o && !("student_id" in o)) {
+      o.student_id = o.StudentID;
+      delete o.StudentID;
+      changed = true;
+    }
+  }
+  if (changed) {
+    fs.writeFileSync(p, JSON.stringify(file, null, 2) + "\n", "utf8");
+  }
+}
+
 export function ensureLessonReserveListFile(clubId: string): void {
   if (!isValidClubFolderId(clubId)) {
     throw new Error("Invalid club ID.");
@@ -109,6 +139,7 @@ export function ensureLessonReserveListFile(clubId: string): void {
     const body: ReserveFileV1 = { version: 1, reservations: [] };
     fs.writeFileSync(p, JSON.stringify(body, null, 2) + "\n", "utf8");
   }
+  migrateLessonReserveJsonKeysInPlace(clubId);
 }
 
 export function loadLessonReservations(clubId: string): LessonReserveRecord[] {
@@ -119,6 +150,7 @@ export function loadLessonReservations(clubId: string): LessonReserveRecord[] {
   if (!fs.existsSync(p)) {
     return [];
   }
+  migrateLessonReserveJsonKeysInPlace(clubId);
   try {
     const raw = fs.readFileSync(p, "utf8");
     const file = parseReserveFile(raw);
@@ -145,18 +177,26 @@ export function hasActiveReservationForStudentLesson(
   return loadLessonReservations(clubId).some(
     (r) =>
       r.lessonId.trim().toUpperCase() === lid &&
-      r.StudentID.trim().toUpperCase() === sid &&
+      r.student_id.trim().toUpperCase() === sid &&
       r.status.toUpperCase() === "ACTIVE",
   );
 }
 
 export type LessonReserveAppendInput = Omit<
   LessonReserveRecord,
-  "lessonReserveId" | "createdAt" | "lastUpdatedDate" | "Payment_Status" | "Payment_Confirm"
+  | "lessonReserveId"
+  | "createdAt"
+  | "lastUpdatedDate"
+  | "Payment_Status"
+  | "Payment_Confirm"
+  | "student_id"
 > & {
   lessonReserveId?: string;
   Payment_Status?: string;
   Payment_Confirm?: boolean;
+  student_id?: string;
+  /** @deprecated use student_id */
+  StudentID?: string;
 };
 
 export function appendLessonReservation(
@@ -169,11 +209,15 @@ export function appendLessonReservation(
   const today = new Date().toISOString().slice(0, 10);
   const lessonReserveId =
     rec.lessonReserveId?.trim() || nextLessonReserveId(existing);
+  const sid = String(rec.student_id ?? rec.StudentID ?? "").trim();
+  if (!sid) {
+    return { ok: false, error: "student_id is required." };
+  }
   const row: LessonReserveRecord = {
     lessonReserveId,
     lessonId: rec.lessonId.trim(),
     ClubID: rec.ClubID.trim(),
-    StudentID: rec.StudentID.trim(),
+    student_id: sid,
     Student_Name: rec.Student_Name.trim(),
     status: (rec.status && rec.status.trim()) || "ACTIVE",
     Payment_Status:
@@ -193,7 +237,7 @@ export function appendLessonReservation(
     lessonReserveId: row.lessonReserveId,
     lessonId: row.lessonId,
     ClubID: row.ClubID,
-    StudentID: row.StudentID,
+    student_id: row.student_id,
     Student_Name: row.Student_Name,
     status: row.status,
     Payment_Status: row.Payment_Status,
@@ -237,7 +281,7 @@ export function removeActiveReservationForStudentLesson(
     if (
       r &&
       r.lessonId.trim().toUpperCase() === lid &&
-      r.StudentID.trim().toUpperCase() === sid &&
+      r.student_id.trim().toUpperCase() === sid &&
       r.status.toUpperCase() === "ACTIVE"
     ) {
       if (!removedId) {

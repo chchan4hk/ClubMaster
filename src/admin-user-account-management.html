@@ -21,15 +21,15 @@
     <header class="flex flex-wrap items-center justify-between gap-4 mb-6">
       <div>
         <a href="admin.html"
-          class="text-sm text-teal-400/90 hover:text-teal-300 underline-offset-2 hover:underline">
+          class="text-sm text-amber-400/90 hover:text-amber-300 underline-offset-2 hover:underline">
           ← Back to Admin
         </a>
-        <h1 class="text-2xl font-bold text-teal-300 mt-2">User Account Management</h1>
+        <h1 class="text-2xl font-bold text-amber-300 mt-2">User Account Management</h1>
         <p class="text-slate-400 text-sm mt-1">Coach Manager, Coach and Student</p>
       </div>
       <div class="flex flex-wrap items-center gap-2 shrink-0">
         <button type="button" id="addUserBtn"
-          class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm">
+          class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm">
           Add User
         </button>
         <button type="button" id="refreshBtn"
@@ -46,34 +46,34 @@
     <p id="pageLoadError" class="hidden mb-4 text-sm text-red-300"></p>
 
     <!-- Add user (collapsible) -->
-    <section id="addUserPanel" class="hidden glass rounded-xl border border-teal-500/20 p-6 mb-6">
-      <h2 class="text-lg font-semibold text-teal-200 mb-4">Create new account</h2>
+    <section id="addUserPanel" class="hidden glass rounded-xl border border-amber-500/20 p-6 mb-6">
+      <h2 class="text-lg font-semibold text-amber-200 mb-4">Create new account</h2>
       <form id="createForm" class="space-y-4 max-w-xl">
         <div>
           <label for="createFullName" class="block text-sm text-slate-400 mb-1">Full name</label>
           <input id="createFullName" name="full_name" type="text" required autocomplete="name"
-            class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
         </div>
         <div>
           <label for="createUsername" class="block text-sm text-slate-400 mb-1">Username</label>
           <input id="createUsername" name="username" type="text" required autocomplete="username"
-            class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
         </div>
         <div>
           <label for="createPassword" class="block text-sm text-slate-400 mb-1">Default password</label>
           <input id="createPassword" name="password" type="password" required autocomplete="new-password"
-            class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label for="createClubName" class="block text-sm text-slate-400 mb-1">Club name</label>
             <input id="createClubName" name="clubName" type="text" required
-              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
           </div>
           <div>
             <label for="createUserRole" class="block text-sm text-slate-400 mb-1">User role</label>
             <select id="createUserRole" name="userRole" required
-              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500/50">
               <option value="Student">Student</option>
               <option value="Coach Manager" selected>Coach Manager</option>
               <option value="Coach">Coach</option>
@@ -83,20 +83,20 @@
         <div>
           <label for="createExpiryDate" class="block text-sm text-slate-400 mb-1">Expiry_Date <span class="text-slate-600 font-normal">(optional)</span></label>
           <input id="createExpiryDate" name="Expiry_Date" type="date"
-            class="w-full max-w-xs rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+            class="w-full max-w-xs rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
         </div>
         <p id="createFormError" class="hidden text-sm text-red-300"></p>
-        <p id="createFormSuccess" class="hidden text-sm text-teal-300"></p>
+        <p id="createFormSuccess" class="hidden text-sm text-amber-300"></p>
         <button type="submit" id="createSubmitBtn"
-          class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2.5 disabled:opacity-50 disabled:pointer-events-none">
+          class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2.5 disabled:opacity-50 disabled:pointer-events-none">
           Create
         </button>
       </form>
     </section>
 
-    <section class="glass rounded-xl border border-teal-500/20 p-6 mb-6">
+    <section class="glass rounded-xl border border-amber-500/20 p-6 mb-6">
       <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <h2 class="text-lg font-semibold text-teal-200">UserLogin - Coach Manager</h2>
+        <h2 class="text-lg font-semibold text-amber-200">UserLogin - Coach Manager</h2>
         <span id="countUserLogin" class="text-xs text-slate-500"></span>
       </div>
       <div class="overflow-x-auto rounded-lg border border-white/10">
@@ -120,9 +120,9 @@
       <p id="emptyUserLogin" class="hidden text-sm text-slate-500 mt-2">No accounts.</p>
     </section>
 
-    <section class="glass rounded-xl border border-teal-500/20 p-6 mb-6">
+    <section class="glass rounded-xl border border-amber-500/20 p-6 mb-6">
       <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <h2 class="text-lg font-semibold text-teal-200">UserLogin - Coach</h2>
+        <h2 class="text-lg font-semibold text-amber-200">UserLogin - Coach</h2>
         <span id="countCoach" class="text-xs text-slate-500"></span>
       </div>
       <div class="overflow-x-auto rounded-lg border border-white/10">
@@ -145,9 +145,9 @@
       <p id="emptyCoach" class="hidden text-sm text-slate-500 mt-2">No accounts.</p>
     </section>
 
-    <section class="glass rounded-xl border border-teal-500/20 p-6 mb-6">
+    <section class="glass rounded-xl border border-amber-500/20 p-6 mb-6">
       <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <h2 class="text-lg font-semibold text-teal-200">UserLogin - Student</h2>
+        <h2 class="text-lg font-semibold text-amber-200">UserLogin - Student</h2>
         <span id="countStudent" class="text-xs text-slate-500"></span>
       </div>
       <div class="overflow-x-auto rounded-lg border border-white/10">
@@ -173,31 +173,31 @@
 
   <!-- Update status modal -->
   <div id="updateModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" role="dialog" aria-modal="true" aria-labelledby="updateModalTitle">
-    <div class="glass max-w-lg w-full rounded-xl border border-teal-500/30 p-6 shadow-xl max-h-[90vh] overflow-y-auto">
-      <h3 id="updateModalTitle" class="text-lg font-semibold text-teal-200 mb-4">Update account</h3>
+    <div class="glass max-w-lg w-full rounded-xl border border-amber-500/30 p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+      <h3 id="updateModalTitle" class="text-lg font-semibold text-amber-200 mb-4">Update account</h3>
       <p class="text-sm text-slate-400 mb-2"><span class="text-slate-500">Store:</span> <span id="modalStoreLabel"></span></p>
       <p class="text-sm text-slate-300 mb-4 font-mono" id="modalUidLine"></p>
       <label for="modalUsername" class="block text-sm text-slate-400 mb-1">Username</label>
       <input id="modalUsername" type="text" autocomplete="off"
-        class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-3 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+        class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-3 focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
       <label for="modalFullName" class="block text-sm text-slate-400 mb-1">Full name</label>
       <input id="modalFullName" type="text" autocomplete="name"
-        class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-3 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+        class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-3 focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
       <label for="modalClubName" class="block text-sm text-slate-400 mb-1">Club</label>
       <input id="modalClubName" type="text" autocomplete="organization"
-        class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-3 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+        class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-3 focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
       <label for="modalExpiryDate" class="block text-sm text-slate-400 mb-1">Expiry_date <span class="text-slate-600 font-normal">(optional)</span></label>
       <input id="modalExpiryDate" type="date"
-        class="w-full max-w-xs rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-3 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+        class="w-full max-w-xs rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-3 focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
       <label for="modalPassword" class="block text-sm text-slate-400 mb-1">New password <span class="text-slate-600 font-normal">(optional)</span></label>
       <input id="modalPassword" type="password" autocomplete="new-password"
-        class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-3 focus:outline-none focus:ring-2 focus:ring-teal-500/50" placeholder="Leave blank to keep current" />
+        class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-3 focus:outline-none focus:ring-2 focus:ring-amber-500/50" placeholder="Leave blank to keep current" />
       <label for="modalPasswordConfirm" class="block text-sm text-slate-400 mb-1">Re-enter password</label>
       <input id="modalPasswordConfirm" type="password" autocomplete="new-password"
-        class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-3 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+        class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-3 focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
       <label for="modalStatus" class="block text-sm text-slate-400 mb-1">Status</label>
       <select id="modalStatus"
-        class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-4 focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+        class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-4 focus:outline-none focus:ring-2 focus:ring-amber-500/50">
         <option value="ACTIVE">ACTIVE</option>
         <option value="INACTIVE">INACTIVE</option>
       </select>
@@ -208,7 +208,7 @@
           Cancel
         </button>
         <button type="button" id="modalSave"
-          class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50">
+          class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50">
           Save
         </button>
       </div>
@@ -268,7 +268,7 @@
       function statusBadge(st) {
         var u = (st || "").toString().trim().toUpperCase();
         if (u === "ACTIVE") {
-          return '<span class="text-teal-300">ACTIVE</span>';
+          return '<span class="text-amber-300">ACTIVE</span>';
         }
         if (u === "INACTIVE") {
           return '<span class="text-slate-500">INACTIVE</span>';
@@ -452,7 +452,7 @@
             ? ' data-coach-manager-remove="1"'
             : "";
         return (
-          '<button type="button" class="row-update text-teal-400 hover:text-teal-300 text-xs font-medium mr-2" ' +
+          '<button type="button" class="row-update text-amber-400 hover:text-amber-300 text-xs font-medium mr-2" ' +
           'data-store="' +
           esc(store) +
           '" data-uid="' +

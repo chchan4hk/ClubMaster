@@ -1,6 +1,6 @@
 import { Router, type Request } from "express";
 import { requireAuth, requireRole } from "../middleware/requireAuth";
-import { findUserByUid } from "../userlistCsv";
+import { findCoachManagerUserRowForClubUid } from "../coachManagerSession";
 import {
   findClubUidForCoachId,
   isValidClubFolderId,
@@ -18,9 +18,13 @@ import {
 /**
  * Coach login (JWT sub = CoachID): read-only salary rows from CoachSalary.json for that coach only.
  */
-function coachSalaryPaymentContext(req: Request):
-  | { ok: true; coachId: string; clubId: string; clubName: string }
-  | { ok: false; status: number; error: string } {
+async function coachSalaryPaymentContextAsync(
+  req: Request,
+):
+  Promise<
+    | { ok: true; coachId: string; clubId: string; clubName: string }
+    | { ok: false; status: number; error: string }
+  > {
   if (String(req.user?.role ?? "") !== "Coach") {
     return { ok: false, status: 403, error: "Coach access only." };
   }
@@ -36,7 +40,7 @@ function coachSalaryPaymentContext(req: Request):
       error: "No club roster found for this coach account.",
     };
   }
-  const managerRow = findUserByUid(clubId);
+  const managerRow = await findCoachManagerUserRowForClubUid(clubId);
   if (!managerRow || managerRow.role !== "CoachManager") {
     return { ok: false, status: 403, error: "Club folder is not available." };
   }
@@ -56,8 +60,8 @@ export function createCoachSalaryPaymentRouter(): Router {
   const r = Router();
   r.use(requireAuth);
 
-  r.get("/", requireRole("Coach"), (req, res) => {
-    const ctx = coachSalaryPaymentContext(req);
+  r.get("/", requireRole("Coach"), async (req, res) => {
+    const ctx = await coachSalaryPaymentContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
@@ -71,7 +75,7 @@ export function createCoachSalaryPaymentRouter(): Router {
     }
     const mine = rows.filter(
       (row) =>
-        row.CoachID.trim().toUpperCase() === ctx.coachId.toUpperCase(),
+        row.coach_id.trim().toUpperCase() === ctx.coachId.toUpperCase(),
     );
     let clubCountry = "";
     try {
@@ -98,8 +102,8 @@ export function createCoachSalaryPaymentRouter(): Router {
   /**
    * Coach confirms receipt for their own salary row only (sets Payment_Confirm = true).
    */
-  r.post("/confirm", requireRole("Coach"), (req, res) => {
-    const ctx = coachSalaryPaymentContext(req);
+  r.post("/confirm", requireRole("Coach"), async (req, res) => {
+    const ctx = await coachSalaryPaymentContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
@@ -121,7 +125,7 @@ export function createCoachSalaryPaymentRouter(): Router {
           continue;
         }
         if (
-          row.CoachID.trim().toUpperCase() !== ctx.coachId.toUpperCase()
+          row.coach_id.trim().toUpperCase() !== ctx.coachId.toUpperCase()
         ) {
           res.status(403).json({
             ok: false,

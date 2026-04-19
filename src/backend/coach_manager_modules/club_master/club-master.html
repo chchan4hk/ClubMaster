@@ -21,11 +21,11 @@
     <header class="mb-6">
       <p id="backLinkWrap">
         <a href="/coach-manager.html" target="_top"
-          class="text-sm text-teal-400/90 hover:text-teal-300 underline-offset-2 hover:underline">
+          class="text-sm text-amber-400/90 hover:text-amber-300 underline-offset-2 hover:underline">
           ← Back to Coach Manager
         </a>
       </p>
-      <h1 class="text-2xl font-bold text-teal-300 mt-2">Club Master</h1>
+      <h1 class="text-2xl font-bold text-amber-300 mt-2">Club Master</h1>
       <div class="mt-4">
         <button type="button" id="btnOpenSportCenters"
           class="rounded-lg bg-yellow-100 hover:bg-yellow-200 border border-yellow-300/80 text-black font-medium px-4 py-2 text-sm shadow-sm">
@@ -37,11 +37,11 @@
     <section class="glass rounded-xl border border-white/15 p-5 mb-6">
       <p id="loadErr" class="hidden text-sm text-red-300 mb-3"></p>
       <p id="saveErr" class="hidden text-sm text-red-300 mb-3"></p>
-      <p id="saveOk" class="hidden text-sm text-teal-300 mb-3"></p>
+      <p id="saveOk" class="hidden text-sm text-amber-300 mb-3"></p>
 
       <div id="btnRowView" class="flex flex-wrap gap-2 mb-5">
         <button type="button" id="btnUpdate"
-          class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm">
+          class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm">
           Update
         </button>
         <button type="button" id="btnCancelView"
@@ -52,7 +52,7 @@
 
       <div id="btnRowEdit" class="hidden flex flex-wrap gap-2 mb-5">
         <button type="button" id="btnConfirm"
-          class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
+          class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
           Confirm
         </button>
         <button type="button" id="btnCancelEdit"
@@ -119,13 +119,13 @@
                 Upload a photo: it is center-cropped and saved as a <strong class="text-slate-400">310×240</strong> JPEG.
               </p>
               <input id="fClubLogoFile" type="file" accept="image/jpeg,image/png,image/webp,image/gif" disabled
-                class="club-logo-input block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-teal-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-teal-600 disabled:opacity-50 disabled:pointer-events-none" />
+                class="club-logo-input block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-amber-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-amber-600 disabled:opacity-50 disabled:pointer-events-none" />
             </div>
           </div>
         </div>
 
         <div class="rounded-xl border border-white/10 bg-slate-950/40 p-4">
-          <h2 class="text-sm font-semibold text-teal-200/95 mb-1">Payment QR codes</h2>
+          <h2 class="text-sm font-semibold text-amber-200/95 mb-1">Payment QR codes</h2>
           <p class="text-[11px] text-slate-500 leading-relaxed mb-4">
             Upload QR images for PayMe, FPS, WeChat Pay, Alipay, and 支付寶.
           </p>
@@ -139,7 +139,7 @@
                 <span id="qrPlaceholder-payme" class="text-[11px] text-slate-500 px-3 text-center">No QR yet</span>
               </div>
               <input type="file" id="fPayQrFile-payme" data-channel="payme" accept="image/jpeg,image/png,image/webp,image/gif" disabled
-                class="payment-qr-input block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-teal-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-teal-600 disabled:opacity-50 disabled:pointer-events-none" />
+                class="payment-qr-input block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-amber-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-amber-600 disabled:opacity-50 disabled:pointer-events-none" />
             </div>
             <div class="payment-qr-block space-y-2" data-channel="fps">
               <span class="block text-xs text-slate-400">FPS</span>
@@ -150,7 +150,7 @@
                 <span id="qrPlaceholder-fps" class="text-[11px] text-slate-500 px-3 text-center">No QR yet</span>
               </div>
               <input type="file" id="fPayQrFile-fps" data-channel="fps" accept="image/jpeg,image/png,image/webp,image/gif" disabled
-                class="payment-qr-input block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-teal-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-teal-600 disabled:opacity-50 disabled:pointer-events-none" />
+                class="payment-qr-input block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-amber-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-amber-600 disabled:opacity-50 disabled:pointer-events-none" />
             </div>
             <div class="payment-qr-block space-y-2" data-channel="wechat">
               <span class="block text-xs text-slate-400">WeChat Pay</span>
@@ -161,7 +161,7 @@
                 <span id="qrPlaceholder-wechat" class="text-[11px] text-slate-500 px-3 text-center">No QR yet</span>
               </div>
               <input type="file" id="fPayQrFile-wechat" data-channel="wechat" accept="image/jpeg,image/png,image/webp,image/gif" disabled
-                class="payment-qr-input block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-teal-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-teal-600 disabled:opacity-50 disabled:pointer-events-none" />
+                class="payment-qr-input block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-amber-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-amber-600 disabled:opacity-50 disabled:pointer-events-none" />
             </div>
             <div class="payment-qr-block space-y-2" data-channel="alipay">
               <span class="block text-xs text-slate-400">Alipay</span>
@@ -172,7 +172,7 @@
                 <span id="qrPlaceholder-alipay" class="text-[11px] text-slate-500 px-3 text-center">No QR yet</span>
               </div>
               <input type="file" id="fPayQrFile-alipay" data-channel="alipay" accept="image/jpeg,image/png,image/webp,image/gif" disabled
-                class="payment-qr-input block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-teal-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-teal-600 disabled:opacity-50 disabled:pointer-events-none" />
+                class="payment-qr-input block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-amber-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-amber-600 disabled:opacity-50 disabled:pointer-events-none" />
             </div>
             <div class="payment-qr-block space-y-2" data-channel="zhifubao">
               <span class="block text-xs text-slate-400">支付寶</span>
@@ -183,7 +183,7 @@
                 <span id="qrPlaceholder-zhifubao" class="text-[11px] text-slate-500 px-3 text-center">No QR yet</span>
               </div>
               <input type="file" id="fPayQrFile-zhifubao" data-channel="zhifubao" accept="image/jpeg,image/png,image/webp,image/gif" disabled
-                class="payment-qr-input block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-teal-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-teal-600 disabled:opacity-50 disabled:pointer-events-none" />
+                class="payment-qr-input block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-amber-700 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-amber-600 disabled:opacity-50 disabled:pointer-events-none" />
             </div>
           </div>
         </div>
@@ -198,7 +198,7 @@
         class="pointer-events-auto w-full max-w-3xl max-h-[min(92vh,880px)] flex flex-col rounded-xl border border-white/15 bg-slate-900/95 shadow-xl text-slate-100">
         <div class="flex items-start justify-between gap-3 px-4 py-3 border-b border-white/10 shrink-0">
           <div>
-            <h2 class="text-lg font-semibold text-teal-200">Select Sport Center</h2>
+            <h2 class="text-lg font-semibold text-amber-200">Select Sport Center</h2>
             <p id="sportCenterModalSub" class="text-xs text-slate-500 mt-1"></p>
           </div>
           <button type="button" id="sportCenterModalCloseX"
@@ -211,7 +211,7 @@
         </div>
         <div class="flex flex-wrap gap-2 justify-end px-4 py-3 border-t border-white/10 shrink-0">
           <button type="button" id="sportCenterBtnCreateVenue"
-            class="rounded-lg bg-violet-300 hover:bg-violet-200 border border-violet-400/70 text-slate-900 font-medium px-4 py-2 text-sm shadow-sm">
+            class="rounded-lg bg-amber-300 hover:bg-amber-200 border border-amber-400/70 text-slate-900 font-medium px-4 py-2 text-sm shadow-sm">
             Create New Venue
           </button>
           <button type="button" id="sportCenterBtnClose"
@@ -219,7 +219,7 @@
           <button type="button" id="sportCenterBtnCancelEdit"
             class="hidden rounded-lg bg-slate-600 hover:bg-slate-500 border border-white/10 px-4 py-2 text-sm">Cancel</button>
           <button type="button" id="sportCenterBtnUpdate"
-            class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50">Update</button>
+            class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50">Update</button>
         </div>
       </div>
     </div>
@@ -231,28 +231,28 @@
     <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
       <div
         class="pointer-events-auto w-full max-w-lg rounded-xl border border-white/15 bg-slate-900/95 shadow-xl p-5 text-slate-100 max-h-[min(90vh,640px)] overflow-y-auto">
-        <h2 id="createVenueModalTitle" class="text-lg font-semibold text-teal-200 mb-1">Create New Venue</h2>
+        <h2 id="createVenueModalTitle" class="text-lg font-semibold text-amber-200 mb-1">Create New Venue</h2>
         <p class="text-xs text-slate-500 mb-4">Adds one ACTIVE row to your club&rsquo;s SportCenterList.csv.</p>
         <p id="createVenueModalErr" class="hidden text-sm text-red-300 mb-3"></p>
         <div class="space-y-3 text-sm">
           <div>
             <label for="newVenueCountry" class="block text-xs text-slate-400 mb-1">Country</label>
             <select id="newVenueCountry"
-              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-500/50">
               <option value="">— Select —</option>
             </select>
           </div>
           <div>
             <label for="newVenueSportType" class="block text-xs text-slate-400 mb-1">SportType</label>
             <select id="newVenueSportType"
-              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-500/50">
               <option value="">— Select —</option>
             </select>
           </div>
           <div>
             <label for="newVenueLocation" class="block text-xs text-slate-400 mb-1">Location</label>
             <select id="newVenueLocation"
-              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-500/50">
               <option value="">— Select —</option>
               <option value="Clubhouse">Clubhouse</option>
               <option value="School">School</option>
@@ -262,24 +262,24 @@
           <div>
             <label for="newVenueSportCenter" class="block text-xs text-slate-400 mb-1">Sport center</label>
             <input id="newVenueSportCenter" type="text" placeholder="Venue name"
-              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
           </div>
           <div>
             <label for="newVenueAddress" class="block text-xs text-slate-400 mb-1">Address</label>
             <textarea id="newVenueAddress" rows="2" placeholder="Address"
-              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm resize-y min-h-[2.5rem] focus:outline-none focus:ring-2 focus:ring-teal-500/50"></textarea>
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm resize-y min-h-[2.5rem] focus:outline-none focus:ring-2 focus:ring-amber-500/50"></textarea>
           </div>
           <div>
             <label for="newVenueLink" class="block text-xs text-slate-400 mb-1">Link</label>
             <input id="newVenueLink" type="url" inputmode="url" placeholder="https://…"
-              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
           </div>
         </div>
         <div class="flex flex-wrap gap-2 justify-end mt-6">
           <button type="button" id="createVenueBtnCancel"
             class="rounded-lg bg-slate-700 hover:bg-slate-600 border border-white/15 px-4 py-2 text-sm">Cancel</button>
           <button type="button" id="createVenueBtnConfirm"
-            class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50">Confirm</button>
+            class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50">Confirm</button>
         </div>
       </div>
     </div>
@@ -534,10 +534,10 @@
           }
           if (on) {
             el.classList.remove("bg-slate-950/80", "cursor-not-allowed");
-            el.classList.add("bg-slate-900/60", "border-white/15", "focus:outline-none", "focus:ring-2", "focus:ring-teal-500/50");
+            el.classList.add("bg-slate-900/60", "border-white/15", "focus:outline-none", "focus:ring-2", "focus:ring-amber-500/50");
           } else {
             el.classList.add("bg-slate-950/80", "cursor-not-allowed");
-            el.classList.remove("bg-slate-900/60", "border-white/15", "focus:outline-none", "focus:ring-2", "focus:ring-teal-500/50");
+            el.classList.remove("bg-slate-900/60", "border-white/15", "focus:outline-none", "focus:ring-2", "focus:ring-amber-500/50");
           }
         }
         var fi = document.getElementById("fClubLogoFile");
@@ -1043,7 +1043,7 @@
           var sec = sections[s];
           var loc = sec.location || "—";
           html +=
-            '<section class="mb-6 last:mb-2"><h3 class="text-sm font-semibold text-teal-200/90 mb-2 border-b border-white/10 pb-1">' +
+            '<section class="mb-6 last:mb-2"><h3 class="text-sm font-semibold text-amber-200/90 mb-2 border-b border-white/10 pb-1">' +
             escapeHtmlSc(loc) +
             '</h3><div class="grid grid-cols-1 sm:grid-cols-2 gap-2">';
           var centers = sec.centers || [];
@@ -1061,16 +1061,16 @@
             var addrClass = active ? "text-black" : "text-slate-500";
             var mapClass = active
               ? "text-black underline decoration-black/50 hover:text-neutral-800"
-              : "text-teal-500/80 hover:text-teal-400";
+              : "text-amber-500/80 hover:text-amber-400";
             var chkClass = active
               ? "border-black/35 bg-white accent-yellow-500"
-              : "border-white/20 bg-slate-900 text-teal-600";
+              : "border-white/20 bg-slate-900 text-amber-600";
             var href = safeMapHref(row.link);
             html +=
               '<div class="flex gap-2.5 items-start rounded-lg border px-2.5 py-2 min-w-0 ' +
               cardClass +
               '">' +
-              '<input type="checkbox" class="sc-check mt-0.5 h-4 w-4 shrink-0 rounded focus:ring-teal-500/50 ' +
+              '<input type="checkbox" class="sc-check mt-0.5 h-4 w-4 shrink-0 rounded focus:ring-amber-500/50 ' +
               chkClass +
               '" data-row-index="' +
               row.rowIndex +

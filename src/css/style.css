@@ -1,7 +1,16 @@
-/* Optional overrides on top of Tailwind CDN */
+/* Optional overrides on top of Tailwind CDN — warm panels (aligned with main.html gold-on-black tone) */
 .glass {
-  background: rgba(15, 23, 42, 0.72);
+  background: linear-gradient(
+    165deg,
+    rgba(8, 6, 4, 0.88) 0%,
+    rgba(18, 14, 10, 0.78) 45%,
+    rgba(10, 8, 6, 0.85) 100%
+  );
+  border-color: rgba(196, 155, 72, 0.18);
   backdrop-filter: blur(10px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 230, 180, 0.06),
+    0 12px 40px -18px rgba(0, 0, 0, 0.5);
 }
 
 /**
@@ -10,7 +19,7 @@
  */
 body.dashboard-dynamic-bg {
   position: relative;
-  background-color: #0d1117;
+  background-color: #000000;
   isolation: isolate;
   --spot-x: 50%;
   --spot-y: 50%;
@@ -60,29 +69,29 @@ body.dashboard-dynamic-bg .dynamic-bg-overlay {
   background:
     radial-gradient(
       ellipse 90% 75% at var(--spot-x, 50%) var(--spot-y, 50%),
-      rgba(20, 35, 55, 0.28) 0%,
-      rgba(12, 18, 38, 0.62) 45%,
-      rgba(8, 12, 26, 0.88) 100%
+      rgba(55, 40, 18, 0.32) 0%,
+      rgba(18, 12, 8, 0.72) 45%,
+      rgba(4, 3, 2, 0.92) 100%
     ),
     radial-gradient(
       circle at 20% 80%,
-      rgba(30, 58, 90, 0.15) 0%,
+      rgba(120, 75, 28, 0.12) 0%,
       transparent 42%
     ),
     radial-gradient(
       circle at 85% 25%,
-      rgba(25, 45, 75, 0.12) 0%,
+      rgba(180, 130, 45, 0.1) 0%,
       transparent 40%
     );
 }
 
-/* Very subtle cool haze (no strong teal spotlight) */
+/* Warm gold haze (matches main.html login metal highlights) */
 body.dashboard-dynamic-bg .dynamic-bg-spot-glow {
   position: absolute;
   inset: 0;
   background: radial-gradient(
     circle min(70vw, 560px) at var(--spot-x, 50%) var(--spot-y, 50%),
-    rgba(100, 180, 220, 0.04) 0%,
+    rgba(212, 175, 55, 0.09) 0%,
     transparent 55%
   );
   mix-blend-mode: screen;
@@ -118,7 +127,7 @@ a.cm-hotspot:hover {
 }
 
 a.cm-hotspot:focus-visible {
-  outline: 2px solid rgba(45, 212, 191, 0.55);
+  outline: 2px solid rgba(212, 175, 55, 0.65);
   outline-offset: 2px;
 }
 
@@ -143,4 +152,50 @@ body {
   body {
     max-width: 960px;
   }
+}
+
+/**
+ * My Profile / Password change (iframe panels): warm gold–ivory page + card.
+ * Overrides generic body width so embedded pages fill the frame.
+ */
+body.page-gold-ivory {
+  font-size: 16px;
+  max-width: none;
+  margin: 0;
+  padding: 1.5rem;
+  min-height: 100vh;
+  box-sizing: border-box;
+  color: #44403c;
+  background-color: #faf7f0;
+  background-image:
+    radial-gradient(ellipse 115% 75% at 50% -18%, rgba(212, 175, 55, 0.22), transparent 52%),
+    radial-gradient(ellipse 68% 50% at 96% 32%, rgba(196, 155, 72, 0.14), transparent 46%),
+    radial-gradient(ellipse 58% 44% at 6% 82%, rgba(167, 124, 58, 0.1), transparent 50%),
+    linear-gradient(170deg, #fffefb 0%, #faf6ee 38%, #f3ebe0 72%, #fefcf9 100%);
+}
+
+@media (min-width: 768px) {
+  body.page-gold-ivory {
+    max-width: none;
+    margin: 0;
+    padding: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  body.page-gold-ivory {
+    max-width: none;
+  }
+}
+
+body.page-gold-ivory .gold-ivory-panel {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.94) 0%,
+    rgba(255, 252, 245, 0.98) 100%
+  );
+  border: 1px solid rgba(201, 168, 90, 0.38);
+  box-shadow:
+    0 8px 32px rgba(80, 60, 30, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }

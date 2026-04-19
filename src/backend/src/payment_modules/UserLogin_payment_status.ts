@@ -203,19 +203,19 @@ function applySubscriptionExpiryOnConfirm(
     if (!m.ok) {
       return { ok: false, error: m.error };
     }
-    updates.push(`userLogin.json (${uidTrim})`);
+    updates.push(`userLogin.csv (${uidTrim})`);
   }
 
   const c = setRoleLoginExpiryByUid(uidTrim, "Coach", newExpiry);
   if (c.ok) {
-    updates.push(`userLogin_Coach.json (login ${uidTrim})`);
+    updates.push(`userLogin_Coach.csv (login ${uidTrim})`);
   } else if (!/no coach login found/i.test(c.error)) {
     return { ok: false, error: c.error };
   }
 
   const s = setRoleLoginExpiryByUid(uidTrim, "Student", newExpiry);
   if (s.ok) {
-    updates.push(`userLogin_Student.json (login ${uidTrim})`);
+    updates.push(`userLogin_Student.csv (login ${uidTrim})`);
   } else if (!/no student login found/i.test(s.error)) {
     return { ok: false, error: s.error };
   }
@@ -226,12 +226,12 @@ function applySubscriptionExpiryOnConfirm(
   }
   if (club.coachUpdated > 0) {
     updates.push(
-      `userLogin_Coach.json (club_id=${uidTrim}, ${club.coachUpdated} row(s))`,
+      `userLogin_Coach.csv (club_id=${uidTrim}, ${club.coachUpdated} row(s))`,
     );
   }
   if (club.studentUpdated > 0) {
     updates.push(
-      `userLogin_Student.json (club_id=${uidTrim}, ${club.studentUpdated} row(s))`,
+      `userLogin_Student.csv (club_id=${uidTrim}, ${club.studentUpdated} row(s))`,
     );
   }
 

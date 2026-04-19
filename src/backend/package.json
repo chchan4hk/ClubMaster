@@ -7,7 +7,21 @@
     "start": "node ./dist/server.js",
     "start:tsx": "node ./node_modules/tsx/dist/cli.mjs ./src/server.ts",
     "build": "tsc",
-    "rds:download-ca": "node ./scripts/download-rds-global-bundle.mjs"
+    "rds:download-ca": "node ./scripts/download-rds-global-bundle.mjs",
+    "mongo:seed-user-login": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-userLogin-first-user.ts",
+    "mongo:migrate-user-list": "node ./node_modules/tsx/dist/cli.mjs ./scripts/migrate-userList-to-userLogin.ts",
+    "mongo:clone-userlogin": "node ./node_modules/tsx/dist/cli.mjs ./scripts/clone-userLogin-to-clubmaster-db.ts",
+    "mongo:clone-clubinfo": "node ./node_modules/tsx/dist/cli.mjs ./scripts/clone-clubInfo-to-clubmaster-db.ts",
+    "mongo:seed-basicinfo-json": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-basicInfo-json-to-mongo.ts",
+    "mongo:seed-lessonlist-json": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-lessonList-json-to-mongo.ts",
+    "mongo:seed-club-info-cm3": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-clubInfo-CM00000003.ts",
+    "mongo:seed-userlist-student-cm3": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-userList-student-CM00000003.ts",
+    "mongo:seed-userlist-student": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-userList-student-CM00000003.ts",
+    "mongo:migrate-userlist-student-field": "node ./node_modules/tsx/dist/cli.mjs ./scripts/migrate-userlist-student-mongo-studentid-to-student_id.ts",
+    "mongo:seed-lesson-reserve-list-cm3": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-lessonReserveList-CM00000003.ts",
+    "mongo:seed-coach-salary-cm3": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-coachSalary-CM00000003.ts",
+    "mongo:seed-prize-list-cm3": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-prizeList-CM00000003.ts",
+    "mongo:seed-userlist-coach": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-userlist-coach-json-to-mongo.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -17,6 +31,8 @@
     "express": "^4.21.0",
     "jsonwebtoken": "^9.0.2",
     "lru-cache": "^11.3.5",
+    "mongodb": "^6.21.0",
+    "mongoose": "^8.23.0",
     "multer": "^2.1.1",
     "pg": "^8.20.0"
   },

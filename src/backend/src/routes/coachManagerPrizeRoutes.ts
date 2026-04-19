@@ -1,6 +1,9 @@
 import { Router, type Request } from "express";
 import { requireAuth, requireRole } from "../middleware/requireAuth";
-import { findUserByUid } from "../userlistCsv";
+import {
+  coachManagerClubContextAsync,
+  findCoachManagerUserRowForClubUid,
+} from "../coachManagerSession";
 import {
   csvCoachFieldMatchesLoggedCoach,
   filterRawRowsByIdColumn,
@@ -58,35 +61,17 @@ function readPrizeWriteBody(body: unknown): {
   };
 }
 
-function coachManagerClubContext(req: Request):
-  | { ok: true; clubId: string; clubName: string }
-  | { ok: false; status: number; error: string } {
-  const clubId = String(req.user?.sub ?? "").trim();
-  if (!clubId || !isValidClubFolderId(clubId)) {
-    return { ok: false, status: 403, error: "Invalid club session." };
-  }
-  const row = findUserByUid(clubId);
-  if (!row || row.role !== "CoachManager") {
-    return { ok: false, status: 403, error: "Coach Manager access only." };
-  }
-  const clubName = (row.clubName && row.clubName.trim()) || "";
-  if (!clubName || clubName === "—") {
-    return {
-      ok: false,
-      status: 400,
-      error: "Your account has no club name; contact an administrator.",
-    };
-  }
-  return { ok: true, clubId, clubName };
-}
-
 /** Coach Manager: JWT sub is club folder id. Coach: JWT sub is CoachID → resolve club via roster. */
-function resolvePrizeClubContext(req: Request):
-  | { ok: true; clubId: string; clubName: string }
-  | { ok: false; status: number; error: string } {
+async function resolvePrizeClubContextAsync(
+  req: Request,
+):
+  Promise<
+    | { ok: true; clubId: string; clubName: string }
+    | { ok: false; status: number; error: string }
+  > {
   const role = String(req.user?.role ?? "");
   if (role === "CoachManager") {
-    return coachManagerClubContext(req);
+    return coachManagerClubContextAsync(req);
   }
   if (role !== "Coach") {
     return { ok: false, status: 403, error: "Forbidden" };
@@ -103,7 +88,7 @@ function resolvePrizeClubContext(req: Request):
       error: "No club roster found for this coach account.",
     };
   }
-  const managerRow = findUserByUid(clubId);
+  const managerRow = await findCoachManagerUserRowForClubUid(clubId);
   if (!managerRow || managerRow.role !== "CoachManager") {
     return { ok: false, status: 403, error: "Invalid club for prize access." };
   }
@@ -129,8 +114,8 @@ export function createCoachManagerPrizeRouter(): Router {
 
   r.use(requireAuth, requireRole("CoachManager", "Coach"));
 
-  r.get("/", (_req, res) => {
-    const ctx = resolvePrizeClubContext(_req);
+  r.get("/", async (_req, res) => {
+    const ctx = await resolvePrizeClubContextAsync(_req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
@@ -191,8 +176,8 @@ export function createCoachManagerPrizeRouter(): Router {
     }
   });
 
-  r.post("/", (req, res) => {
-    const ctx = resolvePrizeClubContext(req);
+  r.post("/", async (req, res) => {
+    const ctx = await resolvePrizeClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
@@ -216,8 +201,8 @@ export function createCoachManagerPrizeRouter(): Router {
     res.json({ ok: true, prizeId: result.prizeId, message: "Prize created." });
   });
 
-  r.put("/", (req, res) => {
-    const ctx = resolvePrizeClubContext(req);
+  r.put("/", async (req, res) => {
+    const ctx = await resolvePrizeClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;

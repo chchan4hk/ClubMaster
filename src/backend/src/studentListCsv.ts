@@ -10,8 +10,8 @@ import { findStudentRoleLoginByUid } from "./coachStudentLoginCsv";
 import { readFileCached } from "./dataFileCache";
 
 const STUDENT_ID_RE = /^S(\d+)$/i;
-/** New StudentID allocations: S + 6 digits (e.g. S000001), aligned with student login UID. */
-const STUDENT_NEW_ID_PAD = 6;
+/** New StudentID allocations: S + 9 digits (e.g. S000000001), aligned with student login UID. */
+const STUDENT_NEW_ID_PAD = 9;
 
 /** Legacy filename; migrated to JSON on first access. */
 const LEGACY_STUDENT_LIST_CSV = "UserList_Student.csv";
@@ -41,7 +41,8 @@ function normalizeStudentIdInput(raw: string): string | null {
 
 export type StudentCsvRow = {
   studentId: string;
-  clubName: string;
+  /** Club folder UID (e.g. `CM00000003`), same as `club_id` in `UserList_Student.json`. */
+  clubId: string;
   studentName: string;
   sex: string;
   email: string;
@@ -68,8 +69,8 @@ type StudentListFileV1 = {
 };
 
 export const STUDENT_LIST_COLUMNS: string[] = [
-  "StudentID",
-  "club_name",
+  "student_id",
+  "club_id",
   "full_name",
   "sex",
   "email",
@@ -79,7 +80,7 @@ export const STUDENT_LIST_COLUMNS: string[] = [
   "school",
   "student_coach",
   "status",
-  "created_at",
+  "creation_date",
   "remark",
   "lastUpdate_date",
   "date_of_birth",
@@ -92,8 +93,8 @@ export const STUDENT_LIST_HEADER = STUDENT_LIST_COLUMNS.join(",");
 
 export function studentCsvRowToApiFields(c: StudentCsvRow): Record<string, string> {
   return {
-    StudentID: c.studentId,
-    club_name: c.clubName,
+    student_id: c.studentId,
+    club_id: c.clubId,
     full_name: c.studentName,
     sex: c.sex,
     email: c.email,
@@ -103,7 +104,7 @@ export function studentCsvRowToApiFields(c: StudentCsvRow): Record<string, strin
     school: c.school,
     student_coach: c.studentCoach,
     status: c.status,
-    created_at: c.createdDate,
+    creation_date: c.createdDate,
     remark: c.remark,
     lastUpdate_date: c.lastUpdateDate,
     date_of_birth: c.dateOfBirth,
@@ -168,7 +169,7 @@ function colIndex(headerCells: string[], candidates: string[]): number {
 
 type StudentColIdx = {
   studentId: number;
-  clubName: number;
+  clubId: number;
   studentName: number;
   sex: number;
   email: number;
@@ -190,12 +191,17 @@ type StudentColIdx = {
 function resolveStudentColumnIndices(headerCells: string[]): StudentColIdx {
   return {
     studentId: colIndex(headerCells, [
+      "student_id",
       "StudentID",
       "studentid",
       "Student ID",
       "student id",
     ]),
-    clubName: colIndex(headerCells, [
+    clubId: colIndex(headerCells, [
+      "club_id",
+      "ClubID",
+      "Club Id",
+      "club id",
       "club_name",
       "Club Name",
       "ClubName",
@@ -235,6 +241,7 @@ function resolveStudentColumnIndices(headerCells: string[]): StudentColIdx {
     ]),
     status: colIndex(headerCells, ["status", "Status"]),
     createdDate: colIndex(headerCells, [
+      "creation_date",
       "created_at",
       "Created At",
       "created_date",
@@ -270,7 +277,7 @@ function resolveStudentColumnIndices(headerCells: string[]): StudentColIdx {
 function ensureStudentCsvIndices(idx: StudentColIdx): void {
   if (idx.studentId < 0 || idx.studentName < 0) {
     throw new Error(
-      "UserList_Student.csv: need StudentID and a name column (full_name).",
+      "UserList_Student.csv: need student_id (or StudentID) and a name column (full_name).",
     );
   }
 }
@@ -307,7 +314,7 @@ function parseAllStudentsFromCsvPath(csvPath: string): StudentCsvRow[] {
     }
     out.push({
       studentId,
-      clubName: get(cells, idx.clubName),
+      clubId: get(cells, idx.clubId),
       studentName: get(cells, idx.studentName),
       sex: get(cells, idx.sex),
       email: get(cells, idx.email),
@@ -337,13 +344,13 @@ function strVal(x: unknown): string {
 }
 
 function recordToStudentRow(o: Record<string, unknown>): StudentCsvRow | null {
-  const studentId = strVal(o.StudentID ?? o.studentID);
+  const studentId = strVal(o.student_id ?? o.StudentID ?? o.studentID);
   if (!studentId) {
     return null;
   }
   return {
     studentId,
-    clubName: strVal(o.club_name),
+    clubId: strVal(o.club_id ?? o.club_name ?? o.Club_name),
     studentName: strVal(o.full_name),
     sex: strVal(o.sex),
     email: strVal(o.email),
@@ -353,7 +360,9 @@ function recordToStudentRow(o: Record<string, unknown>): StudentCsvRow | null {
     school: strVal(o.school),
     studentCoach: strVal(o.student_coach),
     status: strVal(o.status) || "ACTIVE",
-    createdDate: strVal(o.created_at),
+    createdDate: strVal(
+      o.creation_date ?? o.created_at ?? o.Created_at ?? o.created_date,
+    ),
     remark: strVal(o.remark),
     lastUpdateDate: strVal(o.lastUpdate_date),
     dateOfBirth: strVal(o.date_of_birth),
@@ -402,6 +411,58 @@ function stripCredentialKeysFromStudentObjects(
   return changed;
 }
 
+function migrateLegacyStudentFieldNamesInObjects(
+  students: Record<string, unknown>[],
+): boolean {
+  let changed = false;
+  for (const o of students) {
+    if ("StudentID" in o && !("student_id" in o)) {
+      o.student_id = strVal(o.StudentID);
+      delete o.StudentID;
+      changed = true;
+    }
+    if ("created_at" in o && !("creation_date" in o)) {
+      o.creation_date = strVal(o.created_at);
+      delete o.created_at;
+      changed = true;
+    }
+  }
+  return changed;
+}
+
+/** `club_name` / `Club_name` → `club_id` (folder UID); drops legacy name keys. */
+function migrateStudentClubIdInObjects(
+  clubFolderId: string,
+  students: Record<string, unknown>[],
+): boolean {
+  let changed = false;
+  for (const o of students) {
+    const cid = strVal(o.club_id);
+    if (cid) {
+      if ("club_name" in o || "Club_name" in o) {
+        delete o.club_name;
+        delete o.Club_name;
+        changed = true;
+      }
+      continue;
+    }
+    const legacy = strVal(o.club_name ?? o.Club_name);
+    const resolved =
+      legacy && isValidClubFolderId(legacy) ? legacy : clubFolderId;
+    o.club_id = resolved;
+    if ("club_name" in o) {
+      delete o.club_name;
+      changed = true;
+    }
+    if ("Club_name" in o) {
+      delete o.Club_name;
+      changed = true;
+    }
+    changed = true;
+  }
+  return changed;
+}
+
 function ensureCanonicalKeysOnStudentObjects(
   students: Record<string, unknown>[],
 ): boolean {
@@ -445,6 +506,9 @@ function normalizeStudentListJsonInPlace(clubId: string): void {
     return;
   }
   let changed = stripCredentialKeysFromStudentObjects(data.students);
+  changed = migrateLegacyStudentFieldNamesInObjects(data.students) || changed;
+  changed =
+    migrateStudentClubIdInObjects(clubId, data.students) || changed;
   changed = ensureCanonicalKeysOnStudentObjects(data.students) || changed;
   if (changed) {
     writeStudentListFile(clubId, data);
@@ -492,6 +556,7 @@ function readStudentRowsFromDisk(clubId: string): StudentCsvRow[] {
   if (!fs.existsSync(p)) {
     return [];
   }
+  normalizeStudentListJsonInPlace(clubId);
   return readFileCached(p, (raw) => parseStudentListJsonToRows(raw), []);
 }
 
@@ -747,7 +812,7 @@ export function appendStudentRow(
 
   const newRow: StudentCsvRow = {
     studentId,
-    clubName: sanitizeCell(clubName),
+    clubId: sanitizeCell(clubId),
     studentName: name,
     sex: sanitizeCell(input.sex ?? ""),
     email,
@@ -815,7 +880,7 @@ export function updateStudentRow(
   const cur = rows[idx]!;
   rows[idx] = {
     ...cur,
-    clubName: sanitizeCell(clubName),
+    clubId: sanitizeCell(clubId),
     studentName: name,
     sex: sanitizeCell(input.sex ?? ""),
     email,

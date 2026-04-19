@@ -118,7 +118,7 @@
   </style>
 </head>
 <body
-  class="lesson-payment-status-page dashboard-dynamic-bg min-h-screen text-emerald-950 p-6 pb-24"
+  class="lesson-payment-status-page dashboard-dynamic-bg min-h-screen text-amber-950 p-6 pb-24"
   style="--dashboard-bg-img: url('/Source/Image/coach-manager.jpg');">
   <div class="dynamic-bg-stack" aria-hidden="true">
     <div class="dynamic-bg-photo"></div>
@@ -127,64 +127,64 @@
     <div class="dynamic-bg-spot-glow"></div>
   </div>
 
-  <div class="max-w-7xl mx-auto relative z-[1] text-emerald-100">
-    <header class="mb-6 text-emerald-950">
+  <div class="max-w-7xl mx-auto relative z-[1] text-amber-100">
+    <header class="mb-6 text-amber-950">
       <p>
         <a href="/coach-manager.html" target="_top"
-          class="text-sm text-teal-800 hover:text-teal-950 underline-offset-2 hover:underline font-medium">
+          class="text-sm text-amber-800 hover:text-amber-950 underline-offset-2 hover:underline font-medium">
           ← Back to Coach Manager
         </a>
       </p>
-      <h1 class="text-2xl font-bold text-emerald-950 mt-2 tracking-tight">Lesson Payment Status</h1>
+      <h1 class="text-2xl font-bold text-amber-950 mt-2 tracking-tight">Lesson Payment Status</h1>
       <p id="loadError" class="hidden text-sm text-red-700 mt-2"></p>
     </header>
 
     <!-- Integration hooks -->
-    <section class="glass rounded-xl border border-emerald-600/20 p-3 mb-4 flex flex-wrap gap-2 items-center text-xs">
-      <span class="text-emerald-100/75 font-medium uppercase tracking-wide">Integrations</span>
+    <section class="glass rounded-xl border border-amber-600/20 p-3 mb-4 flex flex-wrap gap-2 items-center text-xs">
+      <span class="text-amber-100/75 font-medium uppercase tracking-wide">Integrations</span>
       <a id="linkStudents" href="#" target="_blank" rel="noopener"
-        class="rounded-lg bg-emerald-500/10 border border-emerald-600/25 px-3 py-1.5 text-emerald-200 hover:bg-emerald-500/20">Student Information</a>
+        class="rounded-lg bg-amber-500/10 border border-amber-600/25 px-3 py-1.5 text-amber-200 hover:bg-amber-500/20">Student Information</a>
       <a id="linkLessons" href="#" target="_blank" rel="noopener"
-        class="rounded-lg bg-emerald-500/10 border border-emerald-600/25 px-3 py-1.5 text-emerald-200 hover:bg-emerald-500/20">Lesson Reservation</a>
+        class="rounded-lg bg-amber-500/10 border border-amber-600/25 px-3 py-1.5 text-amber-200 hover:bg-amber-500/20">Lesson Reservation</a>
       <a id="linkRevenue" href="/coming_soon.html?m=revenue" target="_blank" rel="noopener"
-        class="rounded-lg bg-emerald-500/10 border border-emerald-600/25 px-3 py-1.5 text-amber-200/90 hover:bg-emerald-500/15">Revenue module</a>
+        class="rounded-lg bg-amber-500/10 border border-amber-600/25 px-3 py-1.5 text-amber-200/90 hover:bg-amber-500/15">Revenue module</a>
     </section>
 
     <!-- KPI cards -->
     <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-      <div class="glass rounded-xl border border-emerald-500/25 p-4">
-        <p class="text-xs text-emerald-100/75 uppercase tracking-wide">Total collected</p>
-        <p id="kpiCollected" class="text-2xl font-semibold text-emerald-300 mt-1">—</p>
-        <p id="kpiPeriodLabel" class="text-xs text-emerald-100/75 mt-1">Period</p>
+      <div class="glass rounded-xl border border-amber-500/25 p-4">
+        <p class="text-xs text-amber-100/75 uppercase tracking-wide">Total collected</p>
+        <p id="kpiCollected" class="text-2xl font-semibold text-amber-300 mt-1">—</p>
+        <p id="kpiPeriodLabel" class="text-xs text-amber-100/75 mt-1">Period</p>
       </div>
       <div class="glass rounded-xl border border-amber-500/25 p-4">
-        <p class="text-xs text-emerald-100/75 uppercase tracking-wide">Outstanding balance</p>
+        <p class="text-xs text-amber-100/75 uppercase tracking-wide">Outstanding balance</p>
         <p id="kpiOutstanding" class="text-2xl font-semibold text-amber-200 mt-1">—</p>
       </div>
       <div class="glass rounded-xl border border-red-500/30 p-4">
-        <p class="text-xs text-emerald-100/75 uppercase tracking-wide">Overdue amount</p>
+        <p class="text-xs text-amber-100/75 uppercase tracking-wide">Overdue amount</p>
         <p id="kpiOverdue" class="text-2xl font-semibold text-red-300 mt-1">—</p>
       </div>
-      <div class="glass rounded-xl border border-emerald-500/30 p-4">
-        <p class="text-xs text-emerald-100/75 uppercase tracking-wide">Collection rate</p>
-        <p id="kpiRate" class="text-2xl font-semibold text-emerald-300 mt-1">—</p>
-        <p class="text-xs text-emerald-100/75 mt-1">Paid ÷ total fee (active rows)</p>
+      <div class="glass rounded-xl border border-amber-500/30 p-4">
+        <p class="text-xs text-amber-100/75 uppercase tracking-wide">Collection rate</p>
+        <p id="kpiRate" class="text-2xl font-semibold text-amber-300 mt-1">—</p>
+        <p class="text-xs text-amber-100/75 mt-1">Paid ÷ total fee (active rows)</p>
       </div>
     </section>
 
     <!-- Filters -->
-    <section class="glass rounded-xl border border-emerald-600/20 p-4 mb-4">
-      <h2 class="text-sm font-semibold text-emerald-200 mb-3">Filter &amp; search</h2>
+    <section class="glass rounded-xl border border-amber-600/20 p-4 mb-4">
+      <h2 class="text-sm font-semibold text-amber-200 mb-3">Filter &amp; search</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
         <div class="xl:col-span-2">
-          <label for="filterSearch" class="block text-xs text-emerald-200/70 mb-1">Student name or ID</label>
+          <label for="filterSearch" class="block text-xs text-amber-200/70 mb-1">Student name or ID</label>
           <input id="filterSearch" type="search" placeholder="Search…"
-            class="w-full rounded-lg bg-emerald-950/50 border border-emerald-600/25 px-3 py-2 text-sm text-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-400/45" />
+            class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
         </div>
         <div>
-          <label for="filterStatus" class="block text-xs text-emerald-200/70 mb-1">Payment status</label>
+          <label for="filterStatus" class="block text-xs text-amber-200/70 mb-1">Payment status</label>
           <select id="filterStatus"
-            class="w-full rounded-lg bg-emerald-950/50 border border-emerald-600/25 px-3 py-2 text-sm text-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-400/45">
+            class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/45">
             <option value="">All</option>
             <option value="PAID">Paid</option>
             <option value="UNPAID">Unpaid</option>
@@ -192,52 +192,52 @@
           </select>
         </div>
         <div>
-          <label for="filterDateFrom" class="block text-xs text-emerald-200/70 mb-1">From</label>
+          <label for="filterDateFrom" class="block text-xs text-amber-200/70 mb-1">From</label>
           <input id="filterDateFrom" type="date"
-            class="w-full rounded-lg bg-emerald-950/50 border border-emerald-600/25 px-3 py-2 text-sm text-emerald-50 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-emerald-400/45" />
+            class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
         </div>
         <div>
-          <label for="filterDateTo" class="block text-xs text-emerald-200/70 mb-1">To</label>
+          <label for="filterDateTo" class="block text-xs text-amber-200/70 mb-1">To</label>
           <input id="filterDateTo" type="date"
-            class="w-full rounded-lg bg-emerald-950/50 border border-emerald-600/25 px-3 py-2 text-sm text-emerald-50 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-emerald-400/45" />
+            class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
         </div>
       </div>
       <div class="flex flex-wrap gap-2 mt-4">
         <div class="flex items-center gap-2">
-          <label for="periodMonth" class="text-xs text-emerald-200/70">KPI period (month)</label>
+          <label for="periodMonth" class="text-xs text-amber-200/70">KPI period (month)</label>
           <input id="periodMonth" type="month"
-            class="rounded-lg bg-emerald-950/50 border border-emerald-600/25 px-3 py-1.5 text-sm text-emerald-50 [color-scheme:dark]" />
+            class="rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-1.5 text-sm text-amber-50 [color-scheme:dark]" />
         </div>
         <button type="button" id="btnReload"
-          class="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-2">Reload data</button>
+          class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium px-4 py-2">Reload data</button>
         <button type="button" id="btnExportCsv"
-          class="hidden rounded-lg bg-emerald-800 hover:bg-emerald-700 border border-emerald-600/30 text-emerald-50 text-sm px-4 py-2">Export CSV</button>
+          class="hidden rounded-lg bg-amber-800 hover:bg-amber-700 border border-amber-600/30 text-amber-50 text-sm px-4 py-2">Export CSV</button>
         <button type="button" id="btnBulkRemind"
-          class="hidden rounded-lg bg-amber-700/80 hover:bg-amber-600 border border-amber-500/30 text-emerald-50 text-sm px-4 py-2">Send bulk reminders</button>
+          class="hidden rounded-lg bg-amber-700/80 hover:bg-amber-600 border border-amber-500/30 text-amber-50 text-sm px-4 py-2">Send bulk reminders</button>
       </div>
     </section>
 
     <!-- Charts (hidden for Student — club-level aggregates) -->
     <section id="chartSection" class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-      <div class="glass rounded-xl border border-emerald-600/25 p-4">
-        <h3 class="text-sm font-semibold text-emerald-200 mb-2">Collections by month</h3>
-        <p class="text-xs text-emerald-100/75 mb-2">Sum of recorded payments per calendar month (ledger).</p>
+      <div class="glass rounded-xl border border-amber-600/25 p-4">
+        <h3 class="text-sm font-semibold text-amber-200 mb-2">Collections by month</h3>
+        <p class="text-xs text-amber-100/75 mb-2">Sum of recorded payments per calendar month (ledger).</p>
         <div class="h-56"><canvas id="chartBar"></canvas></div>
       </div>
-      <div class="glass rounded-xl border border-emerald-600/25 p-4">
-        <h3 class="text-sm font-semibold text-emerald-200 mb-2">Status mix</h3>
-        <p class="text-xs text-emerald-100/75 mb-2">Share of active reservations by computed status (after filters: table only; pie uses loaded rows).</p>
+      <div class="glass rounded-xl border border-amber-600/25 p-4">
+        <h3 class="text-sm font-semibold text-amber-200 mb-2">Status mix</h3>
+        <p class="text-xs text-amber-100/75 mb-2">Share of active reservations by computed status (after filters: table only; pie uses loaded rows).</p>
         <div class="h-56 max-w-md mx-auto"><canvas id="chartPie"></canvas></div>
       </div>
     </section>
 
     <!-- Table -->
-    <section class="glass rounded-xl border border-emerald-600/25 p-4 overflow-x-auto">
-      <h2 class="text-lg font-semibold text-emerald-200 mb-2">Payment status</h2>
-      <p id="tableMeta" class="text-xs text-emerald-100/75 mb-3"></p>
+    <section class="glass rounded-xl border border-amber-600/25 p-4 overflow-x-auto">
+      <h2 class="text-lg font-semibold text-amber-200 mb-2">Payment status</h2>
+      <p id="tableMeta" class="text-xs text-amber-100/75 mb-3"></p>
       <table class="w-full text-sm text-left border-collapse min-w-[1180px]">
         <thead>
-          <tr class="border-b border-emerald-600/20 text-emerald-200/70">
+          <tr class="border-b border-amber-600/20 text-amber-200/70">
             <th class="py-2 pr-2 w-8"></th>
             <th class="py-2 pr-3 font-medium max-w-[11rem]">Student</th>
             <th class="py-2 pr-3 font-medium max-w-[10rem]">Lesson / period</th>
@@ -251,7 +251,7 @@
           </tr>
         </thead>
         <tbody id="tableBody">
-          <tr><td class="py-6 text-emerald-100/75" colspan="10">Loading…</td></tr>
+          <tr><td class="py-6 text-amber-100/75" colspan="10">Loading…</td></tr>
         </tbody>
       </table>
     </section>
@@ -259,29 +259,29 @@
 
   <!-- Record payment modal -->
   <div id="modalPay" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" aria-modal="true">
-    <div class="glass rounded-xl border border-emerald-500/35 max-w-lg w-full max-h-[90vh] overflow-y-auto p-5 shadow-xl">
-      <h3 id="modalPayTitle" class="text-lg font-semibold text-emerald-200 mb-1">Record payment</h3>
-      <p id="modalPaySubtitle" class="text-xs text-emerald-100/75 mb-4"></p>
+    <div class="glass rounded-xl border border-amber-500/35 max-w-lg w-full max-h-[90vh] overflow-y-auto p-5 shadow-xl">
+      <h3 id="modalPayTitle" class="text-lg font-semibold text-amber-200 mb-1">Record payment</h3>
+      <p id="modalPaySubtitle" class="text-xs text-amber-100/75 mb-4"></p>
       <form id="formPay" class="space-y-3">
         <input type="hidden" id="payPrimaryReserveId" />
         <input type="hidden" id="payModalMode" value="edit" />
 
         <div id="payFlowPaidVerify" class="hidden space-y-3">
-          <p class="text-xs text-emerald-200/70">Recorded payment details (ledger). Confirm to mark <span class="text-emerald-300/90">Payment_Confirm</span> in the reservation, or cancel payment to remove ledger and PaymentList rows and set status to UNPAID.</p>
-          <div id="paidVerifySummary" class="rounded-lg border border-emerald-600/20 bg-emerald-950/45 p-3 text-sm text-emerald-50 space-y-2"></div>
+          <p class="text-xs text-amber-200/70">Recorded payment details (ledger). Confirm to mark <span class="text-amber-300/90">Payment_Confirm</span> in the reservation, or cancel payment to remove ledger and PaymentList rows and set status to UNPAID.</p>
+          <div id="paidVerifySummary" class="rounded-lg border border-amber-600/20 bg-amber-950/45 p-3 text-sm text-amber-50 space-y-2"></div>
           <p id="paidVerifyEmpty" class="hidden text-xs text-amber-200/90">No ledger lines found; you can still confirm or void this PAID row.</p>
         </div>
 
         <div id="payFlowEdit" class="space-y-3">
           <div>
-            <label class="block text-xs text-emerald-200/70 mb-1">Amount</label>
+            <label class="block text-xs text-amber-200/70 mb-1">Amount</label>
             <input id="payAmount" type="number" step="0.01" min="0" required
-              class="w-full rounded-lg bg-emerald-950/50 border border-emerald-600/25 px-3 py-2 text-emerald-50 text-sm" />
+              class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-amber-50 text-sm" />
           </div>
           <div>
-            <label class="block text-xs text-emerald-200/70 mb-1">Payment method</label>
+            <label class="block text-xs text-amber-200/70 mb-1">Payment method</label>
             <select id="payMethod"
-              class="w-full rounded-lg bg-emerald-950/50 border border-emerald-600/25 px-3 py-2 text-emerald-50 text-sm">
+              class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-amber-50 text-sm">
               <option value="PayMe">PayMe</option>
               <option value="FPS">FPS</option>
               <option value="Credit Card">Credit Card</option>
@@ -289,32 +289,32 @@
             </select>
           </div>
           <div>
-            <label class="block text-xs text-emerald-200/70 mb-1">Reference / transaction ID</label>
+            <label class="block text-xs text-amber-200/70 mb-1">Reference / transaction ID</label>
             <input id="payReference" type="text"
-              class="w-full rounded-lg bg-emerald-950/50 border border-emerald-600/25 px-3 py-2 text-emerald-50 text-sm" />
+              class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-amber-50 text-sm" />
           </div>
           <div>
-            <label class="block text-xs text-emerald-200/70 mb-1">Date of payment</label>
+            <label class="block text-xs text-amber-200/70 mb-1">Date of payment</label>
             <input id="payDate" type="date"
-              class="w-full rounded-lg bg-emerald-950/50 border border-emerald-600/25 px-3 py-2 text-emerald-50 text-sm [color-scheme:dark]" />
+              class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-amber-50 text-sm [color-scheme:dark]" />
           </div>
-          <div id="splitWrap" class="rounded-lg border border-emerald-600/20 bg-emerald-950/35 p-3 space-y-2">
-            <p class="text-xs font-semibold text-emerald-200">Split across lessons (same student)</p>
-            <p class="text-xs text-emerald-100/75">Allocate part of this payment to other outstanding reservations.</p>
+          <div id="splitWrap" class="rounded-lg border border-amber-600/20 bg-amber-950/35 p-3 space-y-2">
+            <p class="text-xs font-semibold text-amber-200">Split across lessons (same student)</p>
+            <p class="text-xs text-amber-100/75">Allocate part of this payment to other outstanding reservations.</p>
             <div id="splitList" class="space-y-2 max-h-40 overflow-y-auto text-xs"></div>
           </div>
         </div>
 
         <div id="payActionsEdit" class="flex flex-wrap gap-2 pt-2">
-          <button type="submit" id="btnPaySave" class="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium px-4 py-2">Save payment</button>
-          <button type="button" id="btnPayCancel" class="rounded-lg bg-emerald-800 hover:bg-emerald-700 text-sm px-4 py-2">Cancel</button>
+          <button type="submit" id="btnPaySave" class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium px-4 py-2">Save payment</button>
+          <button type="button" id="btnPayCancel" class="rounded-lg bg-amber-800 hover:bg-amber-700 text-sm px-4 py-2">Cancel</button>
         </div>
         <div id="payActionsPaid" class="hidden gap-3 pt-2">
           <div class="flex flex-wrap gap-2">
             <button type="button" id="btnConfirmPaidPayment" class="btn-metal-gold rounded-lg text-sm px-4 py-2.5">Confirm Payment</button>
             <button type="button" id="btnVoidPaidPayment" class="btn-metal-red rounded-lg text-sm px-4 py-2.5">Cancel Payment</button>
           </div>
-          <button type="button" id="btnPayDismiss" class="text-left text-xs text-emerald-100/75 hover:text-emerald-50/90 underline-offset-2 hover:underline w-fit">Close without changes</button>
+          <button type="button" id="btnPayDismiss" class="text-left text-xs text-amber-100/75 hover:text-amber-50/90 underline-offset-2 hover:underline w-fit">Close without changes</button>
         </div>
         <p id="payFormError" class="hidden text-sm text-red-300"></p>
       </form>
@@ -401,13 +401,13 @@
       function badgeClass(status) {
         switch (status) {
           case "PAID":
-            return "bg-emerald-500/20 text-emerald-200 border-emerald-500/40";
+            return "bg-amber-500/20 text-amber-200 border-amber-500/40";
           case "PARTIALLY_PAID":
             return "bg-amber-500/20 text-amber-200 border-amber-500/40";
           case "OVERDUE":
             return "bg-red-500/20 text-red-200 border-red-500/40";
           default:
-            return "bg-emerald-400/20 text-emerald-100 border-emerald-400/45";
+            return "bg-amber-400/20 text-amber-100 border-amber-400/45";
         }
       }
 
@@ -422,7 +422,7 @@
 
       function confirmPaymentBadgeClass(r) {
         return r && r.paymentConfirmedByCoach === true
-          ? "bg-emerald-500/25 text-emerald-100 border-emerald-400/45"
+          ? "bg-amber-500/25 text-amber-100 border-amber-400/45"
           : "bg-amber-500/15 text-amber-100 border-amber-400/35";
       }
 
@@ -465,7 +465,7 @@
         return rows.filter(function (r) {
           if (search) {
             var nm = (r.Student_Name || "").toLowerCase();
-            var id = (r.StudentID || "").toLowerCase();
+            var id = (r.student_id || r.StudentID || "").toLowerCase();
             if (nm.indexOf(search) < 0 && id.indexOf(search) < 0) {
               return false;
             }
@@ -578,45 +578,45 @@
           return;
         }
         if (!rows.length) {
-          tb.innerHTML = '<tr><td class="py-6 text-emerald-100/75" colspan="10">No matching reservations.</td></tr>';
+          tb.innerHTML = '<tr><td class="py-6 text-amber-100/75" colspan="10">No matching reservations.</td></tr>';
           return;
         }
         var html = "";
         rows.forEach(function (r) {
           var expandId = "ex-" + escapeHtml(r.lessonReserveId).replace(/[^a-zA-Z0-9_-]/g, "");
           var studentUrl = studentProfileUrl(ctx.clubId, ctx.clubName);
-          html += "<tr class=\"border-b border-emerald-800/15 hover:bg-emerald-500/[0.06]\" data-rid=\"" + escapeHtml(r.lessonReserveId) + "\">";
-          html += "<td class=\"py-1.5 pr-2 align-middle\"><button type=\"button\" class=\"text-emerald-400 hover:text-emerald-200 text-xs toggle-ex\" data-target=\"" + expandId + "\">▾</button></td>";
+          html += "<tr class=\"border-b border-amber-800/15 hover:bg-amber-500/[0.06]\" data-rid=\"" + escapeHtml(r.lessonReserveId) + "\">";
+          html += "<td class=\"py-1.5 pr-2 align-middle\"><button type=\"button\" class=\"text-amber-400 hover:text-amber-200 text-xs toggle-ex\" data-target=\"" + expandId + "\">▾</button></td>";
           var studentLine =
             escapeHtml(r.Student_Name) +
             " · " +
-            escapeHtml(r.StudentID) +
+            escapeHtml(r.student_id || r.StudentID) +
             " · " +
             escapeHtml(r.studentLevel);
           html +=
-            "<td class=\"py-1.5 pr-3 align-middle max-w-[11rem]\"><div class=\"min-w-0 text-[10px] leading-tight text-emerald-100/85 truncate\" title=\"" +
+            "<td class=\"py-1.5 pr-3 align-middle max-w-[11rem]\"><div class=\"min-w-0 text-[10px] leading-tight text-amber-100/85 truncate\" title=\"" +
             escapeHtml(studentLine) +
             "\"><a href=\"" +
             escapeHtml(studentUrl) +
-            "\" target=\"_blank\" rel=\"noopener\" class=\"text-emerald-300/95 hover:underline font-medium\">" +
+            "\" target=\"_blank\" rel=\"noopener\" class=\"text-amber-300/95 hover:underline font-medium\">" +
             escapeHtml(r.Student_Name) +
-            "</a><span class=\"text-emerald-100/70\"> · " +
-            escapeHtml(r.StudentID) +
+            "</a><span class=\"text-amber-100/70\"> · " +
+            escapeHtml(r.student_id || r.StudentID) +
             " · " +
             escapeHtml(r.studentLevel) +
             "</span></div></td>";
           var lessonLine = escapeHtml(r.lessonId) + " · " + escapeHtml(r.lessonPeriodLabel);
           html +=
-            "<td class=\"py-1.5 pr-3 align-middle max-w-[10rem]\"><div class=\"min-w-0 text-[10px] leading-tight text-emerald-100/90 truncate tabular-nums\" title=\"" +
+            "<td class=\"py-1.5 pr-3 align-middle max-w-[10rem]\"><div class=\"min-w-0 text-[10px] leading-tight text-amber-100/90 truncate tabular-nums\" title=\"" +
             lessonLine +
             "\">" +
             lessonLine +
             "</div></td>";
           html += "<td class=\"py-1.5 pr-3 text-right tabular-nums align-middle\">$" + fmtMoney(r.totalFee) + "</td>";
-          html += "<td class=\"py-1.5 pr-3 text-right tabular-nums text-emerald-200/90 align-middle\">$" + fmtMoney(r.amountPaid) + "</td>";
+          html += "<td class=\"py-1.5 pr-3 text-right tabular-nums text-amber-200/90 align-middle\">$" + fmtMoney(r.amountPaid) + "</td>";
           html += "<td class=\"py-1.5 pr-3 text-right tabular-nums text-amber-200/90 align-middle\">$" + fmtMoney(r.outstanding) + "</td>";
           html +=
-            "<td class=\"py-1.5 pr-3 align-middle whitespace-nowrap\"><span class=\"text-[10px] leading-tight tabular-nums text-emerald-50/90\">" +
+            "<td class=\"py-1.5 pr-3 align-middle whitespace-nowrap\"><span class=\"text-[10px] leading-tight tabular-nums text-amber-50/90\">" +
             escapeHtml(
               window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
                 ? window.api.formatDateDisplayDdMmYyyy(String(r.dueDate || "")) ||
@@ -635,7 +635,7 @@
           if (userRole === "CoachManager" || userRole === "Coach") {
             html += "<div class=\"lesson-pay-actions\">";
             html +=
-              "<button type=\"button\" class=\"rounded-md bg-emerald-600/90 hover:bg-emerald-500 btn-action-compact text-white shadow-sm btn-record\" data-id=\"" +
+              "<button type=\"button\" class=\"rounded-md bg-amber-600/90 hover:bg-amber-500 btn-action-compact text-white shadow-sm btn-record\" data-id=\"" +
               escapeHtml(r.lessonReserveId) +
               "\">Payment Record</button>";
             html +=
@@ -643,16 +643,16 @@
               escapeHtml(r.lessonReserveId) +
               "\">Cancel Lesson</button>";
             html +=
-              "<button type=\"button\" class=\"rounded-md bg-emerald-800/90 hover:bg-emerald-700 btn-action-compact text-emerald-50 btn-remind\" data-id=\"" +
+              "<button type=\"button\" class=\"rounded-md bg-amber-800/90 hover:bg-amber-700 btn-action-compact text-amber-50 btn-remind\" data-id=\"" +
               escapeHtml(r.lessonReserveId) +
               "\" data-sid=\"" +
-              escapeHtml(r.StudentID) +
+              escapeHtml(r.student_id || r.StudentID) +
               "\">Remind</button>";
             html += "</div>";
           }
           html += "</td></tr>";
-          html += "<tr id=\"" + expandId + "\" class=\"hidden bg-emerald-950/35\"><td colspan=\"10\" class=\"px-4 py-3 text-xs text-emerald-200/70\">";
-          html += "<p class=\"font-semibold text-emerald-200 mb-1\">Lesson breakdown</p>";
+          html += "<tr id=\"" + expandId + "\" class=\"hidden bg-amber-950/35\"><td colspan=\"10\" class=\"px-4 py-3 text-xs text-amber-200/70\">";
+          html += "<p class=\"font-semibold text-amber-200 mb-1\">Lesson breakdown</p>";
           html += "<p>Class time: " + escapeHtml(r.class_time || "—") + " · Fee basis: LessonList class fee</p>";
           html += "<p>Remaining for this reservation: <strong class=\"text-amber-200\">$" + fmtMoney(r.outstanding) + "</strong></p>";
           if (r.paymentHistory && r.paymentHistory.length) {
@@ -667,7 +667,7 @@
             });
             html += "</ul>";
           } else {
-            html += "<p class=\"mt-1 text-emerald-100/75\">No ledger payments yet.</p>";
+            html += "<p class=\"mt-1 text-amber-100/75\">No ledger payments yet.</p>";
           }
           html += "</td></tr>";
         });
@@ -778,19 +778,19 @@
                         String(p.paidAt || "")
                     : String(p.paidAt || "");
                 return (
-                  "<div class=\"rounded border border-emerald-600/20 bg-emerald-950/55 px-3 py-2\">" +
-                  "<div class=\"text-emerald-200 font-medium\">$" +
+                  "<div class=\"rounded border border-amber-600/20 bg-amber-950/55 px-3 py-2\">" +
+                  "<div class=\"text-amber-200 font-medium\">$" +
                   fmtMoney(p.amount) +
                   " · " +
                   escapeHtml(p.method) +
                   "</div>" +
-                  "<div class=\"text-xs text-emerald-200/70 mt-1\">Date: " +
+                  "<div class=\"text-xs text-amber-200/70 mt-1\">Date: " +
                   escapeHtml(paidDisp) +
                   "</div>" +
-                  "<div class=\"text-xs text-emerald-200/70\">Reference / transaction ID: " +
+                  "<div class=\"text-xs text-amber-200/70\">Reference / transaction ID: " +
                   escapeHtml(p.reference || "—") +
                   "</div>" +
-                  "<div class=\"text-xs text-emerald-100/75\">Ledger ID: " +
+                  "<div class=\"text-xs text-amber-100/75\">Ledger ID: " +
                   escapeHtml(p.paymentId) +
                   "</div></div>"
                 );
@@ -813,16 +813,20 @@
         var splitList = document.getElementById("splitList");
         splitList.innerHTML = "";
         var sameStudent = (lastPayload.rows || []).filter(function (x) {
-          return x.StudentID === r.StudentID && x.lessonReserveId !== r.lessonReserveId && x.outstanding > 0.009;
+          return (
+            (x.student_id || x.StudentID) === (r.student_id || r.StudentID) &&
+            x.lessonReserveId !== r.lessonReserveId &&
+            x.outstanding > 0.009
+          );
         });
         sameStudent.forEach(function (o) {
           var row = document.createElement("div");
           row.className = "flex items-center gap-2";
           row.innerHTML =
             "<label class=\"flex items-center gap-2 cursor-pointer select-none\">" +
-            "<input type=\"checkbox\" class=\"split-chk rounded border-emerald-500/30 bg-emerald-950\" data-rid=\"" + escapeHtml(o.lessonReserveId) + "\" />" +
+            "<input type=\"checkbox\" class=\"split-chk rounded border-amber-500/30 bg-amber-950\" data-rid=\"" + escapeHtml(o.lessonReserveId) + "\" />" +
             "<span>" + escapeHtml(o.lessonId) + " (owe $" + fmtMoney(o.outstanding) + ")</span></label>" +
-            "<input type=\"number\" step=\"0.01\" min=\"0\" class=\"split-amt hidden w-24 rounded bg-emerald-950 border border-emerald-600/25 px-2 py-1 text-xs\" placeholder=\"Amt\" data-rid=\"" + escapeHtml(o.lessonReserveId) + "\" />";
+            "<input type=\"number\" step=\"0.01\" min=\"0\" class=\"split-amt hidden w-24 rounded bg-amber-950 border border-amber-600/25 px-2 py-1 text-xs\" placeholder=\"Amt\" data-rid=\"" + escapeHtml(o.lessonReserveId) + "\" />";
           splitList.appendChild(row);
           var chk = row.querySelector(".split-chk");
           var amt = row.querySelector(".split-amt");
@@ -831,7 +835,7 @@
           });
         });
         if (!sameStudent.length) {
-          splitList.innerHTML = "<p class=\"text-emerald-100/75\">No other outstanding lessons for this student.</p>";
+          splitList.innerHTML = "<p class=\"text-amber-100/75\">No other outstanding lessons for this student.</p>";
         }
         modal.classList.remove("hidden");
       }

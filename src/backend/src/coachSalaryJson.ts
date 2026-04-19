@@ -31,7 +31,7 @@ export type CoachSalaryRecord = {
   lessonId: string;
   ClubID: string;
   club_name: string;
-  CoachID: string;
+  coach_id: string;
   salary_amount: number | string;
   Payment_Method: string;
   Payment_Status: string;
@@ -43,7 +43,7 @@ export type CoachSalaryRecord = {
 export type CoachSalaryTableRow = {
   CoachSalaryID: string;
   lessonId: string;
-  CoachID: string;
+  coach_id: string;
   club_name: string;
   coachFullName: string;
   lessonNameDate: string;
@@ -104,7 +104,7 @@ function parseFile(raw: string): CoachSalaryFileV1 {
         lessonId: String(o.lessonId ?? "").trim(),
         ClubID: String(o.ClubID ?? "").trim(),
         club_name: String(o.club_name ?? "").trim(),
-        CoachID: String(o.CoachID ?? "").trim(),
+        coach_id: String(o.coach_id ?? o.CoachID ?? "").trim(),
         salary_amount:
           typeof o.salary_amount === "number" && Number.isFinite(o.salary_amount)
             ? o.salary_amount
@@ -120,6 +120,47 @@ function parseFile(raw: string): CoachSalaryFileV1 {
   return { version: 1, coachSalaries };
 }
 
+function migrateCoachSalaryJsonKeysOnDisk(clubId: string): void {
+  const p = coachSalaryPath(clubId);
+  if (!p || !fs.existsSync(p)) {
+    return;
+  }
+  let raw: string;
+  try {
+    raw = fs.readFileSync(p, "utf8");
+  } catch {
+    return;
+  }
+  let data: Record<string, unknown>;
+  try {
+    data = JSON.parse(raw) as Record<string, unknown>;
+  } catch {
+    return;
+  }
+  const arr = data.coachSalaries;
+  if (!Array.isArray(arr)) {
+    return;
+  }
+  let changed = false;
+  for (const x of arr) {
+    if (!x || typeof x !== "object") {
+      continue;
+    }
+    const o = x as Record<string, unknown>;
+    if ("CoachID" in o && !("coach_id" in o)) {
+      o.coach_id = String(o.CoachID ?? "").trim();
+      delete o.CoachID;
+      changed = true;
+    } else if ("CoachID" in o && "coach_id" in o) {
+      delete o.CoachID;
+      changed = true;
+    }
+  }
+  if (changed) {
+    fs.writeFileSync(p, JSON.stringify(data, null, 2) + "\n", "utf8");
+  }
+}
+
 export function loadCoachSalaryDocument(clubId: string): CoachSalaryFileV1 {
   if (!isValidClubFolderId(clubId)) {
     throw new Error("Invalid club ID.");
@@ -128,6 +169,7 @@ export function loadCoachSalaryDocument(clubId: string): CoachSalaryFileV1 {
   if (!p || !fs.existsSync(p)) {
     throw new Error("CoachSalary.json was not found for this club.");
   }
+  migrateCoachSalaryJsonKeysOnDisk(clubId);
   return parseFile(fs.readFileSync(p, "utf8"));
 }
 
@@ -235,7 +277,7 @@ export type LessonFeeAllocationRow = {
   /** Current value from CoachSalary.json (editable). */
   feeAllocation: string;
   coachSalaryId: string | null;
-  coachID: string;
+  coach_id: string;
 };
 
 function resolveCoachIdFromLessonCoachName(
@@ -334,8 +376,8 @@ export function buildLessonFeeAllocationRows(fileClub: string): LessonFeeAllocat
       coachSalaryId: existing?.CoachSalaryID?.trim()
         ? existing.CoachSalaryID.trim()
         : null,
-      coachID:
-        (existing?.CoachID?.trim() || "") ||
+      coach_id:
+        (existing?.coach_id?.trim() || "") ||
         resolveCoachIdFromLessonCoachName(coaches, coachName),
     });
   }
@@ -390,7 +432,7 @@ export function applyLessonFeeAllocations(
       const row = doc.coachSalaries[idx]!;
       row.salary_amount = amt;
       if (coachId) {
-        row.CoachID = coachId;
+        row.coach_id = coachId;
       }
       row.club_name = clubName;
       row.ClubID = clubId;
@@ -405,7 +447,7 @@ export function applyLessonFeeAllocations(
         lessonId: lid,
         ClubID: clubId,
         club_name: clubName,
-        CoachID: coachId,
+        coach_id: coachId,
         salary_amount: amt,
         Payment_Method: "Bank Transfer",
         Payment_Status: "Pending",
@@ -435,7 +477,7 @@ export function buildCoachSalaryTableRows(fileClub: string): CoachSalaryTableRow
 
   const out: CoachSalaryTableRow[] = [];
   for (const raw of doc.coachSalaries) {
-    const coachId = raw.CoachID.trim();
+    const coachId = raw.coach_id.trim();
     const lessonId = raw.lessonId.trim();
     let coachFullName = "N/A";
     if (coachId) {
@@ -476,7 +518,7 @@ export function buildCoachSalaryTableRows(fileClub: string): CoachSalaryTableRow
     out.push({
       CoachSalaryID: raw.CoachSalaryID.trim(),
       lessonId,
-      CoachID: coachId,
+      coach_id: coachId,
       club_name: clubName,
       coachFullName,
       lessonNameDate,

@@ -7,6 +7,10 @@ import {
   removeMainUserlistCoachOrStudentByUid,
 } from "../userlistCsv";
 import {
+  coachManagerClubContextAsync,
+  findCoachManagerUserRowForClubUid,
+} from "../coachManagerSession";
+import {
   appendStudentRoleLoginRow,
   deleteRoleLoginByUidOrMissing,
   findStudentRoleLoginByUid,
@@ -144,34 +148,16 @@ function studentLoadDebugExtra(
   };
 }
 
-function coachManagerClubContext(req: Request):
-  | { ok: true; clubId: string; clubName: string }
-  | { ok: false; status: number; error: string } {
-  const clubId = String(req.user?.sub ?? "").trim();
-  if (!clubId || !isValidClubFolderId(clubId)) {
-    return { ok: false, status: 403, error: "Invalid club session." };
-  }
-  const row = findUserByUid(clubId);
-  if (!row || row.role !== "CoachManager") {
-    return { ok: false, status: 403, error: "Coach Manager access only." };
-  }
-  const clubName = (row.clubName && row.clubName.trim()) || "";
-  if (!clubName || clubName === "—") {
-    return {
-      ok: false,
-      status: 400,
-      error: "Your account has no club name; contact an administrator.",
-    };
-  }
-  return { ok: true, clubId, clubName };
-}
-
-function resolveStudentClubContext(req: Request):
-  | { ok: true; clubId: string; clubName: string }
-  | { ok: false; status: number; error: string } {
+async function resolveStudentClubContextAsync(
+  req: Request,
+):
+  Promise<
+    | { ok: true; clubId: string; clubName: string }
+    | { ok: false; status: number; error: string }
+  > {
   const role = String(req.user?.role ?? "");
   if (role === "CoachManager") {
-    return coachManagerClubContext(req);
+    return coachManagerClubContextAsync(req);
   }
   if (role !== "Coach") {
     return { ok: false, status: 403, error: "Forbidden" };
@@ -188,7 +174,7 @@ function resolveStudentClubContext(req: Request):
       error: "No club roster found for this coach account.",
     };
   }
-  const managerRow = findUserByUid(clubId);
+  const managerRow = await findCoachManagerUserRowForClubUid(clubId);
   if (!managerRow || managerRow.role !== "CoachManager") {
     return { ok: false, status: 403, error: "Invalid club for student access." };
   }
@@ -214,8 +200,8 @@ export function createCoachManagerStudentRouter(): Router {
 
   r.use(requireAuth, requireRole("CoachManager", "Coach"));
 
-  r.get("/", (_req, res) => {
-    const ctx = resolveStudentClubContext(_req);
+  r.get("/", async (_req, res) => {
+    const ctx = await resolveStudentClubContextAsync(_req);
     if (!ctx.ok) {
       const body: Record<string, unknown> = { ok: false, error: ctx.error };
       if (sportCoachDebugOn()) {
@@ -253,7 +239,7 @@ export function createCoachManagerStudentRouter(): Router {
           ...studentCsv,
           rows: filterRawRowsByIdColumn(
             studentCsv,
-            ["StudentID", "studentid", "STUDENTID"],
+            ["StudentID", "student_id", "studentid", "STUDENTID"],
             keep,
           ).rows,
         };
@@ -302,8 +288,8 @@ export function createCoachManagerStudentRouter(): Router {
     }
   });
 
-  r.post("/", (req, res) => {
-    const ctx = resolveStudentClubContext(req);
+  r.post("/", async (req, res) => {
+    const ctx = await resolveStudentClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
@@ -351,12 +337,12 @@ export function createCoachManagerStudentRouter(): Router {
       ok: true,
       studentId: result.studentId,
       message:
-        "Student roster row created. No entry was added to userLogin.json — use New Login Account (Coach Manager) or an admin tool to add login when needed.",
+        "Student roster row created. No entry was added to userLogin.csv — use New Login Account (Coach Manager) or an admin tool to add login when needed.",
     });
   });
 
   /** Standalone student login row in userLogin_Student only (Coach Manager). */
-  r.post("/role-login-account", (req, res) => {
+  r.post("/role-login-account", async (req, res) => {
     if (req.user?.role !== "CoachManager") {
       res.status(403).json({
         ok: false,
@@ -364,7 +350,7 @@ export function createCoachManagerStudentRouter(): Router {
       });
       return;
     }
-    const ctx = coachManagerClubContext(req);
+    const ctx = await coachManagerClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
@@ -465,14 +451,17 @@ export function createCoachManagerStudentRouter(): Router {
     });
   });
 
-  r.put("/", (req, res) => {
-    const ctx = resolveStudentClubContext(req);
+  r.put("/", async (req, res) => {
+    const ctx = await resolveStudentClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
     }
     const studentId = String(
-      req.body?.StudentID ?? req.body?.studentId ?? "",
+      req.body?.student_id ??
+      req.body?.StudentID ??
+      req.body?.studentId ??
+      "",
     ).trim();
     const w = readStudentWriteBody(req.body);
     if (req.user?.role === "Coach") {
@@ -523,8 +512,8 @@ export function createCoachManagerStudentRouter(): Router {
     res.json({ ok: true, message: "Student updated." });
   });
 
-  r.post("/remove", (req, res) => {
-    const ctx = resolveStudentClubContext(req);
+  r.post("/remove", async (req, res) => {
+    const ctx = await resolveStudentClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
@@ -537,10 +526,13 @@ export function createCoachManagerStudentRouter(): Router {
       return;
     }
     const studentId = String(
-      req.body?.StudentID ?? req.body?.studentId ?? "",
+      req.body?.student_id ??
+      req.body?.StudentID ??
+      req.body?.studentId ??
+      "",
     ).trim();
     if (!studentId) {
-      res.status(400).json({ ok: false, error: "StudentID is required." });
+      res.status(400).json({ ok: false, error: "student_id is required." });
       return;
     }
     const loginBefore = !!findStudentRoleLoginByUid(studentId);

@@ -5,25 +5,25 @@
       "lessonReserveId": "LR000004",
       "lessonId": "LE000001",
       "ClubID": "CM00000005",
-      "StudentID": "S000005",
       "Student_Name": "陳奕橋",
       "status": "ACTIVE",
       "Payment_Status": "PAID",
       "Payment_Confirm": true,
       "createdAt": "2026-04-14",
-      "lastUpdatedDate": "2026-04-14"
+      "lastUpdatedDate": "2026-04-14",
+      "student_id": "S000005"
     },
     {
       "lessonReserveId": "LR000005",
       "lessonId": "LE000002",
       "ClubID": "CM00000005",
-      "StudentID": "S000005",
       "Student_Name": "陳奕橋",
       "status": "ACTIVE",
       "Payment_Status": "PAID",
       "Payment_Confirm": true,
       "createdAt": "2026-04-14",
-      "lastUpdatedDate": "2026-04-14"
+      "lastUpdatedDate": "2026-04-14",
+      "student_id": "S000005"
     }
   ]
 }

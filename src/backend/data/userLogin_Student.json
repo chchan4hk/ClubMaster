@@ -1,37 +1,4 @@
 {
   "version": 1,
-  "users": [
-    {
-      "uid": "S000001",
-      "usertype": "Student",
-      "username": "eason",
-      "password_hash": "$2b$10$Qr6cErrur/zmYYpcbqHlduVPtEQdbqwRanaKrUNJhdtnrKQcsiy/m",
-      "full_name": "Eason Chan",
-      "is_activated": "YES",
-      "creation_date": "2026-04-09",
-      "club_name": "流星羽毛球會",
-      "status": "ACTIVE",
-      "lastUpdate_date": "2026-04-09",
-      "Expiry_date": "2026-05-20",
-      "club_id": "CM00000003",
-      "club_folder_uid": "CM00000003",
-      "StudentID": "S000001"
-    },
-    {
-      "uid": "S000002",
-      "usertype": "Student",
-      "username": "123",
-      "password_hash": "$2b$10$rFTRQUL1BNFt5eJ9AVk/DehCmGeqxWYEQtii31QOHWqxmm2rhd4uG",
-      "full_name": "方嘗在",
-      "is_activated": "YES",
-      "creation_date": "2026-04-14",
-      "club_name": "培立大中華",
-      "status": "ACTIVE",
-      "lastUpdate_date": "2026-04-14",
-      "Expiry_date": "2027-04-12",
-      "club_id": "CM00000005",
-      "club_folder_uid": "CM00000005",
-      "StudentID": "S000002"
-    }
-  ]
+  "users": []
 }

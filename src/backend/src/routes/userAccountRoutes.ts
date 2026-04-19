@@ -11,6 +11,10 @@ import {
 } from "../coachStudentLoginCsv";
 import type { CsvUser } from "../userlistCsv";
 import { findUserByUid, updateUserPasswordInCsv } from "../userlistCsv";
+import {
+  changeAuthenticatedUserLoginPasswordMongo,
+  isMongoConfigured,
+} from "../userListMongo";
 
 /**
  * Turn CSV values that may be absolute file paths or file:// URLs into a path
@@ -128,7 +132,7 @@ export function resolveClubPhotoRelForServing(
 export function createUserAccountRouter(): Router {
   const r = Router();
 
-  r.post("/password", requireAuth, (req, res) => {
+  r.post("/password", requireAuth, async (req, res) => {
     const uid = req.user?.sub;
     if (uid == null || String(uid).trim() === "") {
       res.status(401).json({ ok: false, error: "Invalid session." });
@@ -145,6 +149,32 @@ export function createUserAccountRouter(): Router {
       return;
     }
     const role = req.user?.role ?? "";
+
+    if (isMongoConfigured()) {
+      try {
+        const mongo = await changeAuthenticatedUserLoginPasswordMongo(
+          String(uid),
+          role,
+          oldPassword,
+          newPassword,
+          String(req.user?.username ?? "").trim(),
+        );
+        if (mongo.ok) {
+          res.json({ ok: true, message: "Password updated." });
+          return;
+        }
+        res.status(400).json({ ok: false, error: mongo.error });
+        return;
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.status(503).json({
+          ok: false,
+          error: `Login database unavailable: ${msg}`,
+        });
+        return;
+      }
+    }
+
     const result =
       role === "Coach"
         ? updateCoachLoginPasswordInCsv(uid, oldPassword, newPassword)
@@ -170,7 +200,7 @@ export function accountPayloadForUid(uid: string | number) {
   return accountPayloadFromCsvRow(row);
 }
 
-/** Club name + creation_date + full_name + expiry from `userLogin_Student` (JSON or CSV) for JWT sub = StudentID. */
+/** Club name + creation_date + full_name + expiry from `userLogin_Student.csv` for JWT sub = StudentID. */
 export function studentProfileFromUserLoginStudentCsv(uid: string | number): {
   club_name: string;
   creation_date: string;
@@ -197,7 +227,7 @@ export function studentProfileFromUserLoginStudentCsv(uid: string | number): {
   };
 }
 
-/** `club_name` + `creation_date` + `full_name` + expiry from `userLogin_Coach` (JSON or CSV) for JWT sub = CoachID. */
+/** `club_name` + `creation_date` + `full_name` + expiry from `userLogin_Coach.csv` for JWT sub = CoachID. */
 export function coachProfileFromUserLoginCoachCsv(uid: string | number): {
   club_name: string;
   creation_date: string;

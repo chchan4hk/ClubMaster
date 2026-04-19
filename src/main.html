@@ -3,10 +3,34 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Sign in — Sport Court Booking</title>
+  <title>Sign in — ClubMaster</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="css/style.css" />
   <style>
+    html {
+      background-color: #000000;
+    }
+    /* Page shell — pure black base with warm gold highlights (no blue-gray) */
+    .login-page-metal-bg {
+      background-color: #000000;
+      background-image:
+        radial-gradient(ellipse 100% 55% at 50% -15%, rgba(212, 175, 55, 0.22), transparent 52%),
+        radial-gradient(ellipse 70% 45% at 95% 40%, rgba(180, 120, 55, 0.1), transparent 42%),
+        radial-gradient(ellipse 55% 40% at 5% 75%, rgba(140, 90, 30, 0.08), transparent 45%),
+        linear-gradient(168deg, #000000 0%, #030303 28%, #050505 52%, #020202 78%, #000000 100%);
+    }
+    @keyframes login-page-metal-glow {
+      0%,
+      100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.88;
+      }
+    }
+    .login-page-root.login-page-metal-bg {
+      animation: login-page-metal-glow 10s ease-in-out infinite;
+    }
     /* Fill visible viewport on phones (address bar) and desktops; fallback for older browsers */
     .login-page-root {
       min-height: 100vh;
@@ -118,24 +142,70 @@
     }
     .login-card-outer {
       background: linear-gradient(
-        120deg,
-        #0d9488,
-        #06b6d4,
-        #10b981,
-        #2dd4bf,
-        #0d9488
+        118deg,
+        #3d2e14 0%,
+        #c9a227 14%,
+        #8b6914 28%,
+        #e8d48a 42%,
+        #6b5220 56%,
+        #d4af37 70%,
+        #2a1f0e 84%,
+        #a67c1a 100%
       );
       background-size: 280% 100%;
       animation: login-border-flow 5s ease infinite;
       box-shadow:
-        0 0 40px -10px rgba(45, 212, 191, 0.35),
-        0 12px 40px -20px rgba(6, 182, 212, 0.25);
+        0 0 36px -8px rgba(212, 175, 55, 0.35),
+        0 14px 40px -18px rgba(0, 0, 0, 0.55);
     }
     .login-card-inner {
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 230, 180, 0.1),
+        inset 0 -12px 32px rgba(0, 0, 0, 0.45);
+      border-color: rgba(196, 155, 72, 0.35) !important;
+      background: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.96) 0%,
+        rgba(6, 6, 6, 0.98) 100%
+      );
     }
     .login-card-glow {
       animation: login-glow-breathe 4s ease-in-out infinite;
+    }
+    /* Lower hero: gold-black brushed metal over optional photo */
+    @keyframes login-bg-metal-sheen {
+      0%,
+      100% {
+        background-position: 0% 40%, 0% 0%, 50% 0%;
+      }
+      50% {
+        background-position: 100% 60%, 100% 100%, 50% 100%;
+      }
+    }
+    .login-bg-metal-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(
+          152deg,
+          rgba(0, 0, 0, 0.94) 0%,
+          rgba(10, 10, 10, 0.9) 24%,
+          rgba(0, 0, 0, 0.93) 48%,
+          rgba(14, 14, 14, 0.88) 72%,
+          rgba(0, 0, 0, 0.96) 100%
+        ),
+        linear-gradient(
+          35deg,
+          transparent 0%,
+          rgba(201, 168, 90, 0.14) 42%,
+          rgba(255, 248, 220, 0.1) 50%,
+          transparent 58%
+        ),
+        radial-gradient(ellipse 100% 70% at 50% 0%, rgba(184, 134, 11, 0.2), transparent 58%);
+      background-size: 100% 100%, 220% 220%, 100% 100%;
+      animation: login-bg-metal-sheen 22s ease-in-out infinite;
     }
     .login-field {
       transition:
@@ -144,34 +214,46 @@
         transform 0.2s ease;
     }
     .login-field:hover:not(:focus) {
-      border-color: rgba(45, 212, 191, 0.35);
+      border-color: rgba(196, 155, 72, 0.45);
     }
     .login-field:focus {
-      border-color: rgba(45, 212, 191, 0.65);
+      border-color: rgba(212, 175, 55, 0.65);
       box-shadow:
-        0 0 0 1px rgba(45, 212, 191, 0.35),
-        0 8px 28px -12px rgba(34, 211, 238, 0.45);
+        0 0 0 1px rgba(212, 175, 55, 0.35),
+        0 8px 28px -12px rgba(180, 120, 40, 0.35);
       transform: translateY(-1px);
     }
     .login-signin-btn {
       position: relative;
-      background: linear-gradient(120deg, #0d9488, #0891b2, #059669, #0d9488);
-      background-size: 200% 100%;
+      color: #0c0a06;
+      background: linear-gradient(
+        125deg,
+        #2a1f0e 0%,
+        #c9a227 18%,
+        #f5e6a8 38%,
+        #a67c1a 58%,
+        #e8c547 78%,
+        #3d2e14 100%
+      );
+      background-size: 220% 100%;
       transition:
         background-position 0.35s ease,
         transform 0.15s ease,
         box-shadow 0.25s ease,
         filter 0.2s ease;
+      border: 1px solid rgba(255, 224, 160, 0.35);
       box-shadow:
-        0 4px 16px -4px rgba(20, 184, 166, 0.55),
-        0 0 24px -8px rgba(6, 182, 212, 0.35);
+        inset 0 1px 0 rgba(255, 255, 255, 0.35),
+        0 4px 18px -4px rgba(0, 0, 0, 0.55),
+        0 0 28px -6px rgba(212, 175, 55, 0.25);
     }
     .login-signin-btn:hover {
       background-position: 100% 50%;
-      filter: brightness(1.08);
+      filter: brightness(1.07);
       box-shadow:
-        0 8px 28px -6px rgba(45, 212, 191, 0.5),
-        0 0 32px -6px rgba(34, 211, 238, 0.35);
+        inset 0 1px 0 rgba(255, 255, 255, 0.4),
+        0 8px 28px -6px rgba(0, 0, 0, 0.5),
+        0 0 32px -4px rgba(251, 191, 36, 0.28);
     }
     .login-signin-btn:active {
       transform: scale(0.97);
@@ -183,9 +265,9 @@
       z-index: 0;
       background: linear-gradient(
         105deg,
-        transparent 40%,
-        rgba(255, 255, 255, 0.22) 50%,
-        transparent 60%
+        transparent 38%,
+        rgba(255, 255, 255, 0.35) 50%,
+        transparent 62%
       );
       transform: translateX(-120%) skewX(-12deg);
       animation: login-btn-shine 3.5s ease-in-out infinite;
@@ -237,7 +319,7 @@
       box-shadow: inset 0 0 100px rgba(255, 255, 255, 0.35);
     }
     .renewal-payment-inner {
-      background: rgba(15, 23, 42, 0.82);
+      background: rgba(0, 0, 0, 0.88);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       border: 1px solid rgba(251, 191, 36, 0.22);
@@ -319,16 +401,16 @@
       text-shadow: 0 0 18px rgba(251, 146, 60, 0.22);
     }
     .renewal-plan-card.selected {
-      border-color: rgba(45, 212, 191, 0.75);
+      border-color: rgba(251, 191, 36, 0.75);
       box-shadow:
-        0 0 0 2px rgba(45, 212, 191, 0.35),
-        0 10px 28px -8px rgba(20, 184, 166, 0.45),
+        0 0 0 2px rgba(251, 191, 36, 0.3),
+        0 10px 28px -8px rgba(0, 0, 0, 0.5),
         inset 0 1px 0 rgba(255, 255, 255, 0.08);
     }
     .renewal-method-btn.selected {
-      background: rgba(45, 212, 191, 0.2);
-      border-color: rgba(45, 212, 191, 0.55);
-      color: #99f6e4;
+      background: rgba(251, 191, 36, 0.15);
+      border-color: rgba(251, 191, 36, 0.5);
+      color: #fde68a;
     }
     /* Match Coach Manager → Payment → Verify Payment Table “Confirm Payment” */
     .renewal-btn-metal-gold {
@@ -358,12 +440,20 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
+      .login-page-root.login-page-metal-bg {
+        animation: none;
+      }
+      .login-bg-metal-layer {
+        animation: none;
+        background-position: center;
+        background-size: 100% 100%, 100% 100%, 100% 100%;
+      }
       .login-card-outer,
       .login-card-glow {
         animation: none;
       }
       .login-card-outer {
-        background: linear-gradient(120deg, #0d9488, #0891b2, #059669);
+        background: linear-gradient(120deg, #6b5220, #c9a227, #8b6914, #d4af37);
       }
       .login-card-glow {
         opacity: 0.5;
@@ -384,13 +474,13 @@
     }
   </style>
 </head>
-<body class="login-page-root flex flex-col bg-slate-950 text-slate-100 overflow-x-hidden pb-[env(safe-area-inset-bottom,0px)]">
-  <header class="login-top-frame shrink-0 border-b border-slate-800/80 pb-2 sm:pb-3 sm:px-4 md:px-6">
+<body class="login-page-root login-page-metal-bg flex flex-col bg-black text-neutral-100 overflow-x-hidden pb-[env(safe-area-inset-bottom,0px)]">
+  <header class="login-top-frame shrink-0 border-b border-amber-950/45 pb-2 sm:pb-3 sm:px-4 md:px-6">
     <div class="login-card-outer w-full max-w-6xl mx-auto rounded-xl p-[2px] sm:rounded-2xl">
       <div
-        class="login-card-inner glass relative overflow-hidden rounded-[11px] border border-white/10 sm:rounded-[14px]">
+        class="login-card-inner glass relative overflow-hidden rounded-[11px] border sm:rounded-[14px]">
         <div
-          class="login-card-glow pointer-events-none absolute -top-20 left-1/2 h-40 w-[130%] -translate-x-1/2 rounded-full bg-gradient-to-r from-teal-400/25 via-cyan-400/20 to-emerald-400/25 blur-3xl"
+          class="login-card-glow pointer-events-none absolute -top-20 left-1/2 h-40 w-[130%] -translate-x-1/2 rounded-full bg-gradient-to-r from-amber-400/30 via-yellow-200/20 to-amber-600/25 blur-3xl"
           aria-hidden="true"></div>
         <div class="relative z-[1] px-3 py-2.5 sm:px-4 sm:py-3 md:px-5 md:py-3">
           <p id="err" class="mb-2 rounded-lg border border-red-500/30 bg-red-950/40 px-2.5 py-1.5 text-sm text-red-200 hidden"></p>
@@ -398,23 +488,23 @@
             <div
               class="flex flex-col gap-1 min-w-0 w-full sm:w-auto flex-1 basis-full sm:basis-auto sm:flex-initial sm:min-w-[10.5rem] md:min-w-[11rem]">
               <label for="username"
-                class="text-[10px] font-semibold uppercase tracking-wider text-teal-300/90 sm:text-[11px]">Username</label>
+                class="text-[10px] font-semibold uppercase tracking-wider text-amber-200/90 sm:text-[11px]">Username</label>
               <input type="text" id="username" required autocomplete="username"
-                class="login-field w-full min-h-10 rounded-lg border border-slate-600/90 bg-slate-950/80 px-3 py-2 text-white text-base shadow-inner shadow-black/20 backdrop-blur-sm sm:min-h-9 sm:text-sm focus:outline-none focus:ring-0" />
+                class="login-field w-full min-h-10 rounded-lg border border-neutral-700/90 bg-black/85 px-3 py-2 text-white text-base shadow-inner shadow-black/20 backdrop-blur-sm sm:min-h-9 sm:text-sm focus:outline-none focus:ring-0" />
             </div>
             <div
               class="flex flex-col gap-1 min-w-0 w-full sm:w-auto flex-1 basis-full sm:basis-auto sm:flex-initial sm:min-w-[10.5rem] md:min-w-[11rem]">
               <label for="password"
-                class="text-[10px] font-semibold uppercase tracking-wider text-teal-300/90 sm:text-[11px]">Password</label>
+                class="text-[10px] font-semibold uppercase tracking-wider text-amber-200/90 sm:text-[11px]">Password</label>
               <input type="password" id="password" required autocomplete="current-password"
-                class="login-field w-full min-h-10 rounded-lg border border-slate-600/90 bg-slate-950/80 px-3 py-2 text-white text-base shadow-inner shadow-black/20 backdrop-blur-sm sm:min-h-9 sm:text-sm focus:outline-none focus:ring-0" />
+                class="login-field w-full min-h-10 rounded-lg border border-neutral-700/90 bg-black/85 px-3 py-2 text-white text-base shadow-inner shadow-black/20 backdrop-blur-sm sm:min-h-9 sm:text-sm focus:outline-none focus:ring-0" />
             </div>
             <div
               class="flex flex-col gap-1 min-w-0 w-full sm:w-auto flex-1 basis-full sm:basis-auto sm:flex-initial sm:min-w-[11rem] md:min-w-[12rem]">
               <label for="userRole"
-                class="text-[10px] font-semibold uppercase tracking-wider text-teal-300/90 sm:text-[11px]">User Role</label>
+                class="text-[10px] font-semibold uppercase tracking-wider text-amber-200/90 sm:text-[11px]">User Role</label>
               <select id="userRole" required
-                class="login-field w-full min-h-10 cursor-pointer rounded-lg border border-slate-600/90 bg-slate-950/80 px-3 py-2 text-white text-base shadow-inner shadow-black/20 backdrop-blur-sm sm:min-h-9 sm:text-sm focus:outline-none focus:ring-0">
+                class="login-field w-full min-h-10 cursor-pointer rounded-lg border border-neutral-700/90 bg-black/85 px-3 py-2 text-white text-base shadow-inner shadow-black/20 backdrop-blur-sm sm:min-h-9 sm:text-sm focus:outline-none focus:ring-0">
                 <option value="" selected disabled>Please select</option>
                 <option value="Coach Manager">Coach Manager</option>
                 <option value="Coach">Coach</option>
@@ -423,7 +513,7 @@
               </select>
             </div>
             <button type="submit"
-              class="login-signin-btn shrink-0 min-h-10 w-full overflow-hidden rounded-lg px-5 py-2 text-sm font-bold uppercase tracking-wide text-white sm:min-h-9 sm:w-auto">
+              class="login-signin-btn shrink-0 min-h-10 w-full overflow-hidden rounded-lg px-5 py-2 text-sm font-bold uppercase tracking-wide sm:min-h-9 sm:w-auto">
               <span class="login-signin-label">Sign in</span>
             </button>
           </form>
@@ -433,15 +523,16 @@
   </header>
   <div
     id="loginBgStage"
-    class="login-bottom-frame relative flex min-h-0 w-full cursor-pointer bg-slate-900 overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-teal-500/50"
+    class="login-bottom-frame relative flex min-h-0 w-full cursor-pointer overflow-hidden bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-500/45"
     role="button"
     tabindex="0"
     aria-label="Click on the background to play the welcome video">
+    <div class="login-bg-metal-layer" aria-hidden="true"></div>
     <img
       id="loginBgImage"
-      src="Source/Image/default.jpg"
-      alt="Welcome"
-      class="pointer-events-none h-full min-h-0 w-full object-cover object-center select-none"
+      src="source/image/main.jpg"
+      alt=""
+      class="pointer-events-none absolute inset-0 z-[2] h-full min-h-0 w-full object-cover object-center opacity-100 select-none"
       width="1920"
       height="1080"
       sizes="100vw"
@@ -449,16 +540,19 @@
     />
     <p
       id="loginBgVideoHint"
-      class="login-video-hint pointer-events-none absolute left-1/2 top-2 z-[5] max-w-[min(100%,22rem)] -translate-x-1/2 px-2 text-center text-xs font-medium leading-snug sm:top-3 sm:max-w-xl sm:text-sm [text-shadow:0_1px_2px_rgba(0,0,0,0.9),0_0_12px_rgba(0,0,0,0.65)]"
-      aria-hidden="true">
+      tabindex="0"
+      role="button"
+      class="login-video-hint pointer-events-auto cursor-pointer absolute left-1/2 top-2 z-[5] max-w-[min(100%,22rem)] -translate-x-1/2 px-2 text-center text-xs font-medium leading-snug sm:top-3 sm:max-w-xl sm:text-sm [text-shadow:0_1px_2px_rgba(0,0,0,0.9),0_0_12px_rgba(0,0,0,0.65)] focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black/50 rounded-md"
+      aria-label="Play welcome video">
       Click on this ⬇ to show the video
     </p>
     <video
       id="openingVideo"
       class="absolute inset-0 z-10 hidden h-full w-full bg-black object-cover object-center"
       playsinline
+      webkit-playsinline="true"
       preload="none"
-      src="Source/Image/opening.mp4"
+      data-stream-src="../src/Source/Image/opening.MP4"
       aria-hidden="true"></video>
   </div>
 
@@ -466,7 +560,7 @@
   <div id="renewalExpiredModal" class="hidden fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70" role="dialog" aria-modal="true" aria-labelledby="renewalExpiredTitle">
     <div class="renewal-metallic-panel max-w-md w-full rounded-2xl p-8 text-center">
       <h2 id="renewalExpiredTitle" class="text-lg font-semibold text-white mb-3">Account expired</h2>
-      <p class="text-slate-200/95 text-sm leading-relaxed mb-6">
+      <p class="text-neutral-200/95 text-sm leading-relaxed mb-6">
         Your account is expired, please proceed payment
       </p>
       <button type="button" id="renewalExpiredOk"
@@ -479,25 +573,25 @@
   <!-- Subscription renewal flow -->
   <div id="renewalPaymentPanel" class="hidden fixed inset-0 z-[190] renewal-payment-shell overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="renewalPayTitle">
     <div class="renewal-payment-inner max-w-4xl mx-4 sm:mx-auto my-6 sm:my-8 rounded-2xl px-4 py-6 sm:px-8 sm:py-8 pb-12">
-      <h2 id="renewalPayTitle" class="text-xl font-bold text-teal-300 mb-6 text-center">Subscription Renewal</h2>
+      <h2 id="renewalPayTitle" class="text-xl font-bold text-amber-200 mb-6 text-center">Subscription Renewal</h2>
 
       <p class="renewal-section-label mb-4">Payment Method</p>
       <div class="flex flex-wrap gap-2 mb-8">
-        <button type="button" class="renewal-method-btn rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800" data-method="PayMe">PayMe</button>
-        <button type="button" class="renewal-method-btn rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800" data-method="FPS">FPS</button>
-        <button type="button" class="renewal-method-btn rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800" data-method="AliPay">AliPay</button>
-        <button type="button" class="renewal-method-btn rounded-lg border border-slate-600 px-4 py-2 text-sm text-slate-200 hover:bg-slate-800" data-method="支付寶">支付寶</button>
+        <button type="button" class="renewal-method-btn rounded-lg border border-neutral-700 px-4 py-2 text-sm text-neutral-200 hover:bg-neutral-900" data-method="PayMe">PayMe</button>
+        <button type="button" class="renewal-method-btn rounded-lg border border-neutral-700 px-4 py-2 text-sm text-neutral-200 hover:bg-neutral-900" data-method="FPS">FPS</button>
+        <button type="button" class="renewal-method-btn rounded-lg border border-neutral-700 px-4 py-2 text-sm text-neutral-200 hover:bg-neutral-900" data-method="AliPay">AliPay</button>
+        <button type="button" class="renewal-method-btn rounded-lg border border-neutral-700 px-4 py-2 text-sm text-neutral-200 hover:bg-neutral-900" data-method="支付寶">支付寶</button>
       </div>
 
       <p class="renewal-section-label mb-3">Subscription Options</p>
       <p id="renewalPlanLoadErr" class="hidden text-sm text-amber-200/95 mb-3" role="alert"></p>
       <div id="renewalPlanGrid" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8" role="group" aria-label="Subscription options"></div>
 
-      <div class="rounded-xl border border-slate-600 bg-slate-900/40 p-4 mb-6">
-        <p class="text-slate-400 text-sm mb-3">Scan to pay</p>
+      <div class="rounded-xl border border-neutral-700 bg-black/50 p-4 mb-6">
+        <p class="text-neutral-400 text-sm mb-3">Scan to pay</p>
         <div class="flex justify-center bg-white/5 rounded-lg p-4 min-h-[200px] items-center">
           <img id="renewalQrImg" src="" alt="Payment QR code" class="max-w-[220px] w-full h-auto rounded-md hidden" />
-          <p id="renewalQrPlaceholder" class="text-slate-500 text-sm text-center px-4">Select a payment method to show QR code</p>
+          <p id="renewalQrPlaceholder" class="text-neutral-500 text-sm text-center px-4">Select a payment method to show QR code</p>
         </div>
       </div>
 
@@ -505,19 +599,19 @@
         <div class="flex flex-col min-h-0">
           <label for="renewalTxDetails" class="renewal-section-label block mb-1">Transaction Details (Sender/Important Nots)</label>
           <textarea id="renewalTxDetails" rows="4" placeholder="Optional"
-            class="w-full min-h-[7rem] flex-1 rounded-lg border border-slate-600 bg-slate-950/80 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/40 resize-y"></textarea>
+            class="w-full min-h-[7rem] flex-1 rounded-lg border border-neutral-700 bg-black/85 px-3 py-2 text-neutral-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40 resize-y"></textarea>
         </div>
         <div class="flex flex-col">
           <label for="renewalTxDate" class="renewal-section-label block mb-1">Transaction Date</label>
           <input type="datetime-local" id="renewalTxDate"
-            class="w-full rounded-lg border border-slate-600 bg-slate-950/80 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/40" />
+            class="w-full rounded-lg border border-neutral-700 bg-black/85 px-3 py-2 text-neutral-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40" />
         </div>
       </div>
 
       <p id="renewalPayErr" class="hidden text-sm text-red-300 mb-4"></p>
       <div class="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
         <button type="button" id="renewalCancelBtn"
-          class="rounded-lg border border-slate-500 bg-slate-800/80 hover:bg-slate-700 text-slate-100 text-sm px-4 py-3 sm:min-w-[8rem]">
+          class="rounded-lg border border-neutral-600 bg-neutral-950/90 hover:bg-neutral-900 text-neutral-100 text-sm px-4 py-3 sm:min-w-[8rem]">
           Cancel
         </button>
         <button type="button" id="renewalConfirmBtn"
@@ -530,12 +624,12 @@
 
   <!-- Thank you -->
   <div id="renewalThanksModal" class="hidden fixed inset-0 z-[210] flex items-center justify-center p-4 bg-black/75" role="dialog" aria-modal="true">
-    <div class="bg-slate-900 border border-slate-600 rounded-2xl max-w-md w-full p-8 text-center shadow-xl">
-      <p class="text-slate-100 text-sm leading-relaxed mb-6">
+    <div class="bg-black border border-neutral-700 rounded-2xl max-w-md w-full p-8 text-center shadow-xl">
+      <p class="text-neutral-100 text-sm leading-relaxed mb-6">
         Thank you for your payment, we will keep you posted. GoodBye!
       </p>
       <button type="button" id="renewalThanksOk"
-        class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-8 py-2.5">
+        class="rounded-lg bg-amber-600 hover:bg-amber-500 text-black font-medium px-8 py-2.5">
         OK
       </button>
     </div>
@@ -667,7 +761,7 @@
             errEl.classList.add("hidden");
           }
           grid.innerHTML =
-            '<p class="text-slate-500 text-sm col-span-full py-4 text-center">Loading subscription options…</p>';
+            '<p class="text-neutral-500 text-sm col-span-full py-4 text-center">Loading subscription options…</p>';
           try {
             if (!cachedSubscriptionRows) {
               var url = qrBaseUrl() + SUBSCRIPTION_LIST_PATH;
@@ -903,7 +997,29 @@
           return;
         }
 
+          var OPENING_STREAM_URL =
+          (video.getAttribute("data-stream-src") || "../src/Source/Image/opening.MP4").trim();
+
         var playing = false;
+
+        /**
+         * Attach MP4 URL on first play only (`preload="none"` + no src until click).
+         * The browser then fetches via HTTP progressive byte-range streaming (native data stream),
+         * so playback can start before the full file is downloaded (requires moov early enough + server ranges).
+         */
+        function attachStreamingSrcIfNeeded() {
+          if (video.getAttribute("data-stream-bound") === "1") {
+            return;np
+          }
+          video.preload = "none";
+          video.src = OPENING_STREAM_URL;
+          video.setAttribute("data-stream-bound", "1");
+          try {
+            video.load();
+          } catch (e) {
+            /* ignore */
+          }
+        }
 
         function showPhoto() {
           playing = false;
@@ -924,6 +1040,10 @@
         }
 
         function showVideo() {
+          if (playing) {
+            return;
+          }
+          attachStreamingSrcIfNeeded();
           playing = true;
           imgEl.classList.add("hidden");
           video.classList.remove("hidden");
@@ -959,6 +1079,20 @@
 
         stage.addEventListener("click", onActivate);
         stage.addEventListener("keydown", onActivate);
+
+        if (hint) {
+          hint.addEventListener("click", function (ev) {
+            ev.stopPropagation();
+            onActivate(ev);
+          });
+          hint.addEventListener("keydown", function (ev) {
+            if (ev.key === "Enter" || ev.key === " ") {
+              ev.preventDefault();
+              ev.stopPropagation();
+              onActivate(ev);
+            }
+          });
+        }
       })();
     })();
   </script>

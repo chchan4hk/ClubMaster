@@ -196,7 +196,7 @@ export function Student_payment(): Router {
       const snapshot = buildLessonPaymentSnapshot(ctx.fileClub, undefined);
       const sid = ctx.studentId.trim().toUpperCase();
       const rows = snapshot.rows.filter(
-        (x) => x.StudentID.trim().toUpperCase() === sid,
+        (x) => x.student_id.trim().toUpperCase() === sid,
       );
 
       let outstandingBalance = 0;
@@ -348,7 +348,7 @@ export function Student_payment(): Router {
     const snap = buildLessonPaymentSnapshot(ctx.fileClub, undefined);
     const rowByRid = new Map(
       snap.rows
-        .filter((x) => x.StudentID.trim().toUpperCase() === sid)
+        .filter((x) => x.student_id.trim().toUpperCase() === sid)
         .map((x) => [x.lessonReserveId.trim().toUpperCase(), x]),
     );
 
@@ -367,7 +367,7 @@ export function Student_payment(): Router {
       if (
         !resv ||
         resv.status.toUpperCase() !== "ACTIVE" ||
-        resv.StudentID.trim().toUpperCase() !== sid
+        resv.student_id.trim().toUpperCase() !== sid
       ) {
         res.status(400).json({
           ok: false,

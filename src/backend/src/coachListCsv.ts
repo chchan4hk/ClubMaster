@@ -81,7 +81,7 @@ type CoachListFileJson = {
 
 /** Canonical column order for new files and for JSON / raw table rows. */
 export const COACH_LIST_COLUMNS: string[] = [
-  "CoachID",
+  "coach_id",
   "club_name",
   "full_name",
   "sex",
@@ -92,7 +92,7 @@ export const COACH_LIST_COLUMNS: string[] = [
   "email",
   "contact_number",
   "status",
-  "created_at",
+  "creation_date",
   "remark",
   "lastUpdate_date",
   "hourly_rate (HKD)",
@@ -103,7 +103,7 @@ export const COACH_LIST_HEADER = COACH_LIST_COLUMNS.join(",");
 /** API / UI shape matching UserList_Coach.json field names. */
 export function coachCsvRowToApiFields(c: CoachCsvRow): Record<string, string> {
   return {
-    CoachID: c.coachId,
+    coach_id: c.coachId,
     club_name: c.clubName,
     full_name: c.coachName,
     sex: c.sex,
@@ -114,7 +114,7 @@ export function coachCsvRowToApiFields(c: CoachCsvRow): Record<string, string> {
     email: c.email,
     contact_number: c.phone,
     status: c.status,
-    created_at: c.createdDate,
+    creation_date: c.createdDate,
     remark: c.remark,
     lastUpdate_date: c.lastUpdateDate,
     "hourly_rate (HKD)": c.hourlyRate,
@@ -251,7 +251,7 @@ function coachRowToRecord(c: CoachCsvRow): Record<string, string> {
   for (const col of COACH_LIST_COLUMNS) {
     rec[col] = "";
   }
-  rec.CoachID = c.coachId;
+  rec.coach_id = c.coachId;
   rec.club_name = c.clubName;
   rec.full_name = c.coachName;
   rec.sex = c.sex;
@@ -262,7 +262,7 @@ function coachRowToRecord(c: CoachCsvRow): Record<string, string> {
   rec.email = c.email;
   rec.contact_number = c.phone;
   rec.status = c.status;
-  rec.created_at = c.createdDate;
+  rec.creation_date = c.createdDate;
   rec.remark = c.remark;
   rec.lastUpdate_date = c.lastUpdateDate;
   rec["hourly_rate (HKD)"] = c.hourlyRate;
@@ -280,7 +280,7 @@ function getRecStr(rec: Record<string, unknown>, ...keys: string[]): string {
 }
 
 function recordToCoachRow(rec: Record<string, unknown>): CoachCsvRow | null {
-  const coachId = getRecStr(rec, "CoachID", "coachID");
+  const coachId = getRecStr(rec, "coach_id", "CoachID", "coachID");
   if (!coachId) {
     return null;
   }
@@ -303,7 +303,13 @@ function recordToCoachRow(rec: Record<string, unknown>): CoachCsvRow | null {
       "Hourly_rate (HKD)",
     ),
     status: getRecStr(rec, "status", "Status") || "ACTIVE",
-    createdDate: getRecStr(rec, "created_at", "Created_at", "created_date"),
+    createdDate: getRecStr(
+      rec,
+      "creation_date",
+      "created_at",
+      "Created_at",
+      "created_date",
+    ),
     lastUpdateDate: getRecStr(
       rec,
       "lastUpdate_date",
@@ -392,6 +398,19 @@ function upgradeCoachListJsonColumns(clubId: string): void {
     return;
   }
   let changed = false;
+  for (const rec of data.coaches) {
+    const r = rec as Record<string, unknown>;
+    if ("CoachID" in r && !("coach_id" in r)) {
+      r.coach_id = String(r.CoachID ?? "");
+      delete r.CoachID;
+      changed = true;
+    }
+    if ("created_at" in r && !("creation_date" in r)) {
+      r.creation_date = String(r.created_at ?? "");
+      delete r.created_at;
+      changed = true;
+    }
+  }
   for (const rec of data.coaches) {
     for (const col of COACH_LIST_COLUMNS) {
       if (rec[col] === undefined || rec[col] === null) {
@@ -548,6 +567,7 @@ export type CoachColIdx = {
 export function resolveCoachColumnIndices(headerCells: string[]): CoachColIdx {
   return {
     coachId: colIndex(headerCells, [
+      "coach_id",
       "CoachID",
       "coachid",
       "Coach ID",
@@ -611,6 +631,7 @@ export function resolveCoachColumnIndices(headerCells: string[]): CoachColIdx {
     ]),
     status: colIndex(headerCells, ["status", "Status"]),
     createdDate: colIndex(headerCells, [
+      "creation_date",
       "created_at",
       "Created At",
       "created_date",
@@ -630,7 +651,7 @@ export function resolveCoachColumnIndices(headerCells: string[]): CoachColIdx {
 function ensureIndices(idx: CoachColIdx): void {
   if (idx.coachId < 0 || idx.coachName < 0) {
     throw new Error(
-      "UserList_Coach (CSV import): need CoachID and a name column (full_name or CoachName)."
+      "UserList_Coach (CSV import): need coach_id (or CoachID) and a name column (full_name or CoachName).",
     );
   }
 }
@@ -1064,7 +1085,7 @@ export function purgeCoachRow(
 const PURGE_COACH_SKIP_ERRORS = new Set([
   "Coach not found.",
   "Coach list not found.",
-  "UserList_Coach.json: missing CoachID column.",
+  "UserList_Coach.json: missing coach_id column.",
   "Invalid CSV header.",
 ]);
 

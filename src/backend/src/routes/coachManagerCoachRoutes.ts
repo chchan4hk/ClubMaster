@@ -9,6 +9,10 @@ import {
   setLoginUsernameByUid,
 } from "../userlistCsv";
 import {
+  coachManagerClubContextAsync,
+  findCoachManagerUserRowForClubUid,
+} from "../coachManagerSession";
+import {
   appendCoachRoleLoginRow,
   coachRoleLoginExistsForCoachIdAndClub,
   deleteRoleLoginByUidOrMissing,
@@ -141,35 +145,17 @@ function coachLoadDebugExtra(
   };
 }
 
-function coachManagerClubContext(req: Request):
-  | { ok: true; clubId: string; clubName: string }
-  | { ok: false; status: number; error: string } {
-  const clubId = String(req.user?.sub ?? "").trim();
-  if (!clubId || !isValidClubFolderId(clubId)) {
-    return { ok: false, status: 403, error: "Invalid club session." };
-  }
-  const row = findUserByUid(clubId);
-  if (!row || row.role !== "CoachManager") {
-    return { ok: false, status: 403, error: "Coach Manager access only." };
-  }
-  const clubName = (row.clubName && row.clubName.trim()) || "";
-  if (!clubName || clubName === "—") {
-    return {
-      ok: false,
-      status: 400,
-      error: "Your account has no club name; contact an administrator.",
-    };
-  }
-  return { ok: true, clubId, clubName };
-}
-
 /** Coach Manager, Coach, or Student (read-only roster). */
-function resolveCoachListReadContext(req: Request):
-  | { ok: true; clubId: string; clubName: string }
-  | { ok: false; status: number; error: string } {
+async function resolveCoachListReadContextAsync(
+  req: Request,
+):
+  Promise<
+    | { ok: true; clubId: string; clubName: string }
+    | { ok: false; status: number; error: string }
+  > {
   const role = String(req.user?.role ?? "");
   if (role === "CoachManager") {
-    return coachManagerClubContext(req);
+    return coachManagerClubContextAsync(req);
   }
   if (role === "Coach") {
     const coachId = String(req.user?.sub ?? "").trim();
@@ -184,7 +170,7 @@ function resolveCoachListReadContext(req: Request):
         error: "No club roster found for this coach account.",
       };
     }
-    const managerRow = findUserByUid(clubId);
+    const managerRow = await findCoachManagerUserRowForClubUid(clubId);
     if (!managerRow || managerRow.role !== "CoachManager") {
       return { ok: false, status: 403, error: "Invalid club for coach access." };
     }
@@ -214,7 +200,7 @@ function resolveCoachListReadContext(req: Request):
       return { ok: false, status: 403, error: session.error };
     }
     const { clubId } = session;
-    const managerRow = findUserByUid(clubId);
+    const managerRow = await findCoachManagerUserRowForClubUid(clubId);
     if (!managerRow || managerRow.role !== "CoachManager") {
       return { ok: false, status: 403, error: "Invalid club for student access." };
     }
@@ -229,8 +215,8 @@ export function createCoachManagerCoachRouter(): Router {
 
   r.use(requireAuth);
 
-  r.get("/", requireRole("CoachManager", "Coach", "Student"), (_req, res) => {
-    const ctx = resolveCoachListReadContext(_req);
+  r.get("/", requireRole("CoachManager", "Coach", "Student"), async (_req, res) => {
+    const ctx = await resolveCoachListReadContextAsync(_req);
     if (!ctx.ok) {
       const body: Record<string, unknown> = { ok: false, error: ctx.error };
       if (sportCoachDebugOn()) {
@@ -296,8 +282,8 @@ export function createCoachManagerCoachRouter(): Router {
     }
   });
 
-  r.post("/", requireRole("CoachManager"), (req, res) => {
-    const ctx = coachManagerClubContext(req);
+  r.post("/", requireRole("CoachManager"), async (req, res) => {
+    const ctx = await coachManagerClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
@@ -333,13 +319,13 @@ export function createCoachManagerCoachRouter(): Router {
       ok: true,
       coachId: result.coachId,
       message:
-        "Coach roster row created. No entry was added to userLogin.json — use New Login Account or an admin tool to add login when needed.",
+        "Coach roster row created. No entry was added to userLogin.csv — use New Login Account or an admin tool to add login when needed.",
     });
   });
 
   /** Standalone coach login row in userLogin_Coach only (not main userLogin / no roster row). */
-  r.post("/role-login-account", requireRole("CoachManager"), (req, res) => {
-    const ctx = coachManagerClubContext(req);
+  r.post("/role-login-account", requireRole("CoachManager"), async (req, res) => {
+    const ctx = await coachManagerClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
@@ -438,13 +424,15 @@ export function createCoachManagerCoachRouter(): Router {
     });
   });
 
-  r.put("/", requireRole("CoachManager"), (req, res) => {
-    const ctx = coachManagerClubContext(req);
+  r.put("/", requireRole("CoachManager"), async (req, res) => {
+    const ctx = await coachManagerClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
     }
-    const coachId = String(req.body?.CoachID ?? req.body?.coachId ?? "").trim();
+    const coachId = String(
+      req.body?.coach_id ?? req.body?.CoachID ?? req.body?.coachId ?? "",
+    ).trim();
     const w = readCoachWriteBody(req.body);
     const result = updateCoachRow(ctx.clubId, ctx.clubName, coachId, {
       coachName: w.coachName,
@@ -496,15 +484,17 @@ export function createCoachManagerCoachRouter(): Router {
     res.json({ ok: true, message: "Coach updated." });
   });
 
-  r.post("/remove", requireRole("CoachManager"), (req, res) => {
-    const ctx = coachManagerClubContext(req);
+  r.post("/remove", requireRole("CoachManager"), async (req, res) => {
+    const ctx = await coachManagerClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
     }
-    const coachId = String(req.body?.CoachID ?? req.body?.coachId ?? "").trim();
+    const coachId = String(
+      req.body?.coach_id ?? req.body?.CoachID ?? req.body?.coachId ?? "",
+    ).trim();
     if (!coachId) {
-      res.status(400).json({ ok: false, error: "CoachID is required." });
+      res.status(400).json({ ok: false, error: "coach_id is required." });
       return;
     }
     const loginBefore = !!findCoachRoleLoginByUid(coachId);
@@ -544,8 +534,8 @@ export function createCoachManagerCoachRouter(): Router {
     });
   });
 
-  r.post("/search", requireRole("CoachManager"), (req, res) => {
-    const ctx = coachManagerClubContext(req);
+  r.post("/search", requireRole("CoachManager"), async (req, res) => {
+    const ctx = await coachManagerClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
@@ -577,15 +567,17 @@ export function createCoachManagerCoachRouter(): Router {
     }
   });
 
-  r.post("/activate", requireRole("CoachManager"), (req, res) => {
-    const ctx = coachManagerClubContext(req);
+  r.post("/activate", requireRole("CoachManager"), async (req, res) => {
+    const ctx = await coachManagerClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
     }
-    const coachId = String(req.body?.CoachID ?? req.body?.coachId ?? "").trim();
+    const coachId = String(
+      req.body?.coach_id ?? req.body?.CoachID ?? req.body?.coachId ?? "",
+    ).trim();
     if (!coachId) {
-      res.status(400).json({ ok: false, error: "CoachID is required." });
+      res.status(400).json({ ok: false, error: "coach_id is required." });
       return;
     }
     ensureCoachListFile(ctx.clubId);
@@ -625,8 +617,8 @@ export function createCoachManagerCoachRouter(): Router {
     });
   });
 
-  r.post("/remove-by-lookup", requireRole("CoachManager"), (req, res) => {
-    const ctx = coachManagerClubContext(req);
+  r.post("/remove-by-lookup", requireRole("CoachManager"), async (req, res) => {
+    const ctx = await coachManagerClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;

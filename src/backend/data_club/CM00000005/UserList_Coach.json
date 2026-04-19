@@ -2,7 +2,6 @@
   "version": 1,
   "coaches": [
     {
-      "CoachID": "C000001",
       "club_name": "培立大中華",
       "full_name": "王偉強",
       "sex": "M",
@@ -13,13 +12,13 @@
       "email": "wongwaikeung@hotmail.com",
       "contact_number": "+852 92349354",
       "status": "ACTIVE",
-      "created_at": "2026-04-10",
       "remark": "總教練 – 大王Sir – 前港隊",
       "lastUpdate_date": "2026-04-10",
-      "hourly_rate (HKD)": "1000"
+      "hourly_rate (HKD)": "1000",
+      "coach_id": "C000001",
+      "creation_date": "2026-04-10"
     },
     {
-      "CoachID": "C000003",
       "club_name": "培立大中華",
       "full_name": "王偉康",
       "sex": "M",
@@ -30,13 +29,13 @@
       "email": "wongwaihong@hotmail.com",
       "contact_number": "+852 65458758",
       "status": "ACTIVE",
-      "created_at": "2026-04-10",
       "remark": "專業資格 :​ 香港羽毛球代表隊退役運動員 培立羽毛球會 教練 香港羽毛球總會註冊教練 2014年開始教授羽毛球至今(教學超過17年)",
       "lastUpdate_date": "2026-04-10",
-      "hourly_rate (HKD)": "1000"
+      "hourly_rate (HKD)": "1000",
+      "coach_id": "C000003",
+      "creation_date": "2026-04-10"
     },
     {
-      "CoachID": "C000004",
       "club_name": "培立大中華",
       "full_name": "麥喜俊",
       "sex": "M",
@@ -47,13 +46,13 @@
       "email": "Maksir@hotmail.com",
       "contact_number": "+852 65459877",
       "status": "ACTIVE",
-      "created_at": "2026-04-10",
       "remark": "麥Sir 自2004年起受訓於馬來西亞羽毛國家隊馬來西亞國家隊，對馬來西亞國家隊的訓練方式，有深厚的認識和了解。",
       "lastUpdate_date": "2026-04-10",
-      "hourly_rate (HKD)": "600"
+      "hourly_rate (HKD)": "600",
+      "coach_id": "C000004",
+      "creation_date": "2026-04-10"
     },
     {
-      "CoachID": "C000005",
       "club_name": "培立大中華",
       "full_name": "黃國徫",
       "sex": "M",
@@ -64,10 +63,11 @@
       "email": "Wongkwongwai@hotmail.com",
       "contact_number": "+852 95647856",
       "status": "ACTIVE",
-      "created_at": "2026-04-10",
       "remark": "帶領聖保羅書院中學連續23年獲得「港島區學 界第一組別團體overall排名三甲內」",
       "lastUpdate_date": "2026-04-10",
-      "hourly_rate (HKD)": "700"
+      "hourly_rate (HKD)": "700",
+      "coach_id": "C000005",
+      "creation_date": "2026-04-10"
     }
   ]
 }

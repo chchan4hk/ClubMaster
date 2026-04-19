@@ -3,25 +3,28 @@ import path from "path";
 import multer from "multer";
 import { Router, type Request } from "express";
 import { requireAuth, requireRole } from "../middleware/requireAuth";
-import { findUserByUid } from "../userlistCsv";
+import { coachManagerClubContextAsync } from "../coachManagerSession";
 import {
   clubAssetPublicUrl,
   clubImageDir,
-  clubInfoFirstRowObject,
-  clubInfoResolvedPath,
-  CLUB_INFO_FILENAME,
   CLUB_LOGO_FILENAME,
   clubLogoRelativePath,
   clubPaymentQrRelativePath,
   CLUB_PAYMENT_QR_JSON_KEYS,
   isClubPaymentQrChannel,
-  loadClubInfoExtended,
-  loadClubInfoRaw,
   todaySlashYmd,
-  writeClubInfoFromPatch,
   type ClubPaymentQrChannel,
 } from "../clubInfoJson";
-import { clubDataDir, isValidClubFolderId } from "../coachListCsv";
+import {
+  clubInfoDocumentToCoachFields,
+  clubInfoDocumentToRaw,
+  getOrCreateClubInfoDocument,
+  patchClubInfoFields,
+  updateClubInfoFromBodyPatch,
+} from "../clubInfoMongo";
+import { isMongoConfigured } from "../db/DBConnection";
+import { clubDataDir } from "../coachListCsv";
+import type { ClubInfoDocument } from "../db/DBConnection";
 
 const logoUpload = multer({
   storage: multer.memoryStorage(),
@@ -57,22 +60,11 @@ function paymentQrDiskPath(clubId: string, rel: string): string {
   );
 }
 
-function mergePaymentFieldsIntoCoachFields(
-  fields: Record<string, string>,
-  clubId: string,
-): void {
-  const ext = loadClubInfoExtended(clubId);
-  for (const ch of Object.keys(CLUB_PAYMENT_QR_JSON_KEYS) as ClubPaymentQrChannel[]) {
-    const key = CLUB_PAYMENT_QR_JSON_KEYS[ch];
-    const v = ext[key];
-    fields[key] = v == null ? "" : String(v).trim();
-  }
-}
-
 function paymentQrPublicUrls(
   clubId: string,
+  doc: ClubInfoDocument,
 ): Record<ClubPaymentQrChannel, string | null> {
-  const ext = loadClubInfoExtended(clubId);
+  const ext = doc as unknown as Record<string, unknown>;
   const out = {} as Record<ClubPaymentQrChannel, string | null>;
   for (const ch of Object.keys(CLUB_PAYMENT_QR_JSON_KEYS) as ClubPaymentQrChannel[]) {
     const key = CLUB_PAYMENT_QR_JSON_KEYS[ch];
@@ -93,26 +85,12 @@ function clubLogoRelFromFields(fields: Record<string, string>): string {
   return b;
 }
 
-function coachManagerClubContext(req: Request):
-  | { ok: true; clubId: string; clubName: string }
-  | { ok: false; status: number; error: string } {
-  const clubId = String(req.user?.sub ?? "").trim();
-  if (!clubId || !isValidClubFolderId(clubId)) {
-    return { ok: false, status: 403, error: "Invalid club session." };
-  }
-  const row = findUserByUid(clubId);
-  if (!row || row.role !== "CoachManager") {
-    return { ok: false, status: 403, error: "Coach Manager access only." };
-  }
-  const clubName = (row.clubName && row.clubName.trim()) || "";
-  if (!clubName || clubName === "—") {
-    return {
-      ok: false,
-      status: 400,
-      error: "Your account has no club name; contact an administrator.",
-    };
-  }
-  return { ok: true, clubId, clubName };
+function mongoRequiredResponse(res: import("express").Response): void {
+  res.status(503).json({
+    ok: false,
+    error:
+      "MongoDB is not configured. Club Master stores club profile in the `clubInfo` collection; set MONGODB_URI / MONGO_URI or MONGO_PASSWORD.",
+  });
 }
 
 export function createCoachManagerClubInfoRouter(): Router {
@@ -120,16 +98,19 @@ export function createCoachManagerClubInfoRouter(): Router {
 
   r.use(requireAuth, requireRole("CoachManager"));
 
-  r.get("/", (_req, res) => {
-    const ctx = coachManagerClubContext(_req);
+  r.get("/", async (req, res) => {
+    const ctx = await coachManagerClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
     }
+    if (!isMongoConfigured()) {
+      mongoRequiredResponse(res);
+      return;
+    }
     try {
-      const raw = loadClubInfoRaw(ctx.clubId);
-      const fields = clubInfoFirstRowObject(ctx.clubId);
-      mergePaymentFieldsIntoCoachFields(fields, ctx.clubId);
+      const doc = await getOrCreateClubInfoDocument(ctx.clubId, ctx.clubName);
+      const fields = clubInfoDocumentToCoachFields(doc);
       const logoRel = clubLogoRelFromFields(fields);
       const clubRoot = clubDataDir(ctx.clubId);
       const logoDisk =
@@ -141,16 +122,15 @@ export function createCoachManagerClubInfoRouter(): Router {
       const logoExists = Boolean(logoDisk && fs.existsSync(logoDisk));
       const club_logo_url =
         logoRel && logoExists ? clubAssetPublicUrl(ctx.clubId, logoRel) : null;
-      const idEnc = encodeURIComponent(ctx.clubId);
-      const fileEnc = encodeURIComponent(CLUB_INFO_FILENAME);
+      const raw = clubInfoDocumentToRaw(doc);
       res.json({
         ok: true,
         clubId: ctx.clubId,
         clubName: ctx.clubName,
-        clubInfoFileUrl: `/backend/data_club/${idEnc}/${fileEnc}`,
-        clubInfoResolvedPath: clubInfoResolvedPath(ctx.clubId),
+        storage: "mongodb",
+        clubInfoCollection: "clubInfo",
         club_logo_url,
-        paymentQrUrls: paymentQrPublicUrls(ctx.clubId),
+        paymentQrUrls: paymentQrPublicUrls(ctx.clubId, doc),
         fields,
         clubInfoJson: {
           headers: raw.headers,
@@ -164,10 +144,14 @@ export function createCoachManagerClubInfoRouter(): Router {
     }
   });
 
-  r.post("/logo", logoUpload.single("logo"), (req, res) => {
-    const ctx = coachManagerClubContext(req);
+  r.post("/logo", logoUpload.single("logo"), async (req, res) => {
+    const ctx = await coachManagerClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
+      return;
+    }
+    if (!isMongoConfigured()) {
+      mongoRequiredResponse(res);
       return;
     }
     const file = req.file;
@@ -185,20 +169,20 @@ export function createCoachManagerClubInfoRouter(): Router {
       fs.writeFileSync(outPath, file.buffer);
       const rel = clubLogoRelativePath();
       const lastUpdate = todaySlashYmd();
-      writeClubInfoFromPatch(
+      const doc = await patchClubInfoFields(
         ctx.clubId,
-        { club_logo: rel, clubLogo: rel },
+        ctx.clubName,
+        { club_logo: rel },
         lastUpdate,
       );
-      const fields = clubInfoFirstRowObject(ctx.clubId);
-      mergePaymentFieldsIntoCoachFields(fields, ctx.clubId);
+      const fields = clubInfoDocumentToCoachFields(doc);
       res.json({
         ok: true,
         clubId: ctx.clubId,
         lastUpdate_date: lastUpdate,
         club_logo: rel,
         club_logo_url: clubAssetPublicUrl(ctx.clubId, rel),
-        paymentQrUrls: paymentQrPublicUrls(ctx.clubId),
+        paymentQrUrls: paymentQrPublicUrls(ctx.clubId, doc),
         fields,
       });
     } catch (e) {
@@ -207,10 +191,14 @@ export function createCoachManagerClubInfoRouter(): Router {
     }
   });
 
-  r.post("/payment-qr", paymentQrUpload.single("qr"), (req, res) => {
-    const ctx = coachManagerClubContext(req);
+  r.post("/payment-qr", paymentQrUpload.single("qr"), async (req, res) => {
+    const ctx = await coachManagerClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
+      return;
+    }
+    if (!isMongoConfigured()) {
+      mongoRequiredResponse(res);
       return;
     }
     const channelRaw = String(req.body?.channel ?? req.body?.type ?? "").trim();
@@ -240,10 +228,13 @@ export function createCoachManagerClubInfoRouter(): Router {
       fs.writeFileSync(outPath, file.buffer);
       const jsonKey = CLUB_PAYMENT_QR_JSON_KEYS[channel];
       const lastUpdate = todaySlashYmd();
-      const patch: Record<string, unknown> = { [jsonKey]: rel };
-      writeClubInfoFromPatch(ctx.clubId, patch, lastUpdate);
-      const fields = clubInfoFirstRowObject(ctx.clubId);
-      mergePaymentFieldsIntoCoachFields(fields, ctx.clubId);
+      const doc = await patchClubInfoFields(
+        ctx.clubId,
+        ctx.clubName,
+        { [jsonKey]: rel },
+        lastUpdate,
+      );
+      const fields = clubInfoDocumentToCoachFields(doc);
       res.json({
         ok: true,
         clubId: ctx.clubId,
@@ -252,7 +243,7 @@ export function createCoachManagerClubInfoRouter(): Router {
         relPath: rel,
         jsonKey,
         url: clubAssetPublicUrl(ctx.clubId, rel),
-        paymentQrUrls: paymentQrPublicUrls(ctx.clubId),
+        paymentQrUrls: paymentQrPublicUrls(ctx.clubId, doc),
         fields,
       });
     } catch (e) {
@@ -261,10 +252,14 @@ export function createCoachManagerClubInfoRouter(): Router {
     }
   });
 
-  r.put("/", (req, res) => {
-    const ctx = coachManagerClubContext(req);
+  r.put("/", async (req, res) => {
+    const ctx = await coachManagerClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
+      return;
+    }
+    if (!isMongoConfigured()) {
+      mongoRequiredResponse(res);
       return;
     }
     try {
@@ -273,17 +268,23 @@ export function createCoachManagerClubInfoRouter(): Router {
           ? (req.body as Record<string, unknown>)
           : {};
       const lastUpdate = todaySlashYmd();
-      writeClubInfoFromPatch(ctx.clubId, body, lastUpdate);
-      const fields = clubInfoFirstRowObject(ctx.clubId);
-      mergePaymentFieldsIntoCoachFields(fields, ctx.clubId);
+      const doc = await updateClubInfoFromBodyPatch(
+        ctx.clubId,
+        ctx.clubName,
+        body,
+        lastUpdate,
+      );
+      const fields = clubInfoDocumentToCoachFields(doc);
       const logoRel = clubLogoRelFromFields(fields);
-      const club_logo_url = logoRel ? clubAssetPublicUrl(ctx.clubId, logoRel) : null;
+      const club_logo_url = logoRel
+        ? clubAssetPublicUrl(ctx.clubId, logoRel)
+        : null;
       res.json({
         ok: true,
         clubId: ctx.clubId,
         lastUpdate_date: lastUpdate,
         club_logo_url,
-        paymentQrUrls: paymentQrPublicUrls(ctx.clubId),
+        paymentQrUrls: paymentQrPublicUrls(ctx.clubId, doc),
         fields,
       });
     } catch (e) {

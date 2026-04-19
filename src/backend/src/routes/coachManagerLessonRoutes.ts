@@ -3,6 +3,10 @@ import { Router, type Request } from "express";
 import { findStudentRoleLoginByUid } from "../coachStudentLoginCsv";
 import { requireAuth, requireRole } from "../middleware/requireAuth";
 import { findUserByUid } from "../userlistCsv";
+import {
+  coachManagerClubContextAsync,
+  findCoachManagerUserRowForClubUid,
+} from "../coachManagerSession";
 import { sportCoachDebugOn } from "../sportCoachDebug";
 import {
   csvCoachFieldMatchesLoggedCoach,
@@ -234,34 +238,16 @@ function lessonLoadDebugExtra(
   };
 }
 
-function coachManagerClubContext(req: Request):
-  | { ok: true; clubId: string; clubName: string }
-  | { ok: false; status: number; error: string } {
-  const clubId = String(req.user?.sub ?? "").trim();
-  if (!clubId || !isValidClubFolderId(clubId)) {
-    return { ok: false, status: 403, error: "Invalid club session." };
-  }
-  const row = findUserByUid(clubId);
-  if (!row || row.role !== "CoachManager") {
-    return { ok: false, status: 403, error: "Coach Manager access only." };
-  }
-  const clubName = (row.clubName && row.clubName.trim()) || "";
-  if (!clubName || clubName === "—") {
-    return {
-      ok: false,
-      status: 400,
-      error: "Your account has no club name; contact an administrator.",
-    };
-  }
-  return { ok: true, clubId, clubName };
-}
-
-function resolveLessonClubContext(req: Request):
-  | { ok: true; clubId: string; clubName: string }
-  | { ok: false; status: number; error: string } {
+async function resolveLessonClubContextAsync(
+  req: Request,
+):
+  Promise<
+    | { ok: true; clubId: string; clubName: string }
+    | { ok: false; status: number; error: string }
+  > {
   const role = String(req.user?.role ?? "");
   if (role === "CoachManager") {
-    return coachManagerClubContext(req);
+    return coachManagerClubContextAsync(req);
   }
   if (role === "Coach") {
     const coachId = String(req.user?.sub ?? "").trim();
@@ -276,7 +262,7 @@ function resolveLessonClubContext(req: Request):
         error: "No club roster found for this coach account.",
       };
     }
-    const managerRow = findUserByUid(clubId);
+    const managerRow = await findCoachManagerUserRowForClubUid(clubId);
     if (!managerRow || managerRow.role !== "CoachManager") {
       return { ok: false, status: 403, error: "Invalid club for lesson access." };
     }
@@ -306,7 +292,7 @@ function resolveLessonClubContext(req: Request):
       return { ok: false, status: 403, error: session.error };
     }
     const { clubId } = session;
-    const managerRow = findUserByUid(clubId);
+    const managerRow = await findCoachManagerUserRowForClubUid(clubId);
     if (!managerRow || managerRow.role !== "CoachManager") {
       return { ok: false, status: 403, error: "Invalid club for lesson access." };
     }
@@ -331,8 +317,8 @@ export function createCoachManagerLessonRouter(): Router {
   r.get(
     "/sport-center-options",
     requireRole("CoachManager", "Coach"),
-    (req, res) => {
-    const ctx = resolveLessonClubContext(req);
+    async (req, res) => {
+    const ctx = await resolveLessonClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
@@ -351,8 +337,8 @@ export function createCoachManagerLessonRouter(): Router {
   );
 
   /** Student: ACTIVE rows in LessonReserveList.json for JWT sub, joined with LessonList.json. */
-  r.get("/student-bookings", requireRole("Student"), (req, res) => {
-    const ctx = resolveLessonClubContext(req);
+  r.get("/student-bookings", requireRole("Student"), async (req, res) => {
+    const ctx = await resolveLessonClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
@@ -377,7 +363,7 @@ export function createCoachManagerLessonRouter(): Router {
     }
     const reservations = loadLessonReservations(fileClub).filter(
       (r) =>
-        r.StudentID.trim().toUpperCase() === studentId.toUpperCase() &&
+        r.student_id.trim().toUpperCase() === studentId.toUpperCase() &&
         r.status.toUpperCase() === "ACTIVE",
     );
     let lessons: ReturnType<typeof loadLessons> = [];
@@ -413,8 +399,8 @@ export function createCoachManagerLessonRouter(): Router {
     });
   });
 
-  r.get("/", requireRole("CoachManager", "Coach", "Student"), (_req, res) => {
-    const ctx = resolveLessonClubContext(_req);
+  r.get("/", requireRole("CoachManager", "Coach", "Student"), async (_req, res) => {
+    const ctx = await resolveLessonClubContextAsync(_req);
     if (!ctx.ok) {
       const body: Record<string, unknown> = { ok: false, error: ctx.error };
       if (sportCoachDebugOn()) {
@@ -519,7 +505,7 @@ export function createCoachManagerLessonRouter(): Router {
       let lessonReservationsPayload: {
         lessonId: string;
         lessonReserveId: string;
-        StudentID: string;
+        student_id: string;
         Student_Name: string;
         status: string;
         Payment_Status: string;
@@ -532,7 +518,7 @@ export function createCoachManagerLessonRouter(): Router {
             (resv) => ({
               lessonId: resv.lessonId,
               lessonReserveId: resv.lessonReserveId,
-              StudentID: resv.StudentID,
+              student_id: resv.student_id,
               Student_Name: resv.Student_Name,
               status: resv.status,
               Payment_Status: resv.Payment_Status,
@@ -557,7 +543,7 @@ export function createCoachManagerLessonRouter(): Router {
           reservations
             .filter(
               (r) =>
-                r.StudentID.trim().toUpperCase() === studentSub.toUpperCase() &&
+                r.student_id.trim().toUpperCase() === studentSub.toUpperCase() &&
                 r.status.toUpperCase() === "ACTIVE",
             )
             .map((r) => r.lessonId.trim().toUpperCase()),
@@ -623,8 +609,8 @@ export function createCoachManagerLessonRouter(): Router {
     }
   });
 
-  r.post("/reserve", requireRole("Student"), (req, res) => {
-    const ctx = resolveLessonClubContext(req);
+  r.post("/reserve", requireRole("Student"), async (req, res) => {
+    const ctx = await resolveLessonClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
@@ -686,7 +672,7 @@ export function createCoachManagerLessonRouter(): Router {
     const append = appendLessonReservation(fileClub, {
       lessonId,
       ClubID: ctx.clubId,
-      StudentID: studentId,
+      student_id: studentId,
       Student_Name: studentName,
       status: "ACTIVE",
     });
@@ -711,8 +697,8 @@ export function createCoachManagerLessonRouter(): Router {
    * Coach Manager: create ACTIVE lesson reservations for selected roster students
    * (UserList_Student.json). Skips invalid / inactive / already-reserved / when full.
    */
-  r.post("/assign-students", requireRole("CoachManager"), (req, res) => {
-    const ctx = resolveLessonClubContext(req);
+  r.post("/assign-students", requireRole("CoachManager"), async (req, res) => {
+    const ctx = await resolveLessonClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
@@ -821,7 +807,7 @@ export function createCoachManagerLessonRouter(): Router {
       const append = appendLessonReservation(fileClub, {
         lessonId,
         ClubID: ctx.clubId,
-        StudentID: stu.studentId,
+        student_id: stu.studentId,
         Student_Name: studentName,
         status: "ACTIVE",
       });
@@ -851,8 +837,8 @@ export function createCoachManagerLessonRouter(): Router {
     });
   });
 
-  r.post("/cancel-reserve", requireRole("Student"), (req, res) => {
-    const ctx = resolveLessonClubContext(req);
+  r.post("/cancel-reserve", requireRole("Student"), async (req, res) => {
+    const ctx = await resolveLessonClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
@@ -902,8 +888,8 @@ export function createCoachManagerLessonRouter(): Router {
     });
   });
 
-  r.post("/", requireRole("CoachManager"), (req, res) => {
-    const ctx = coachManagerClubContext(req);
+  r.post("/", requireRole("CoachManager"), async (req, res) => {
+    const ctx = await coachManagerClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
@@ -946,8 +932,8 @@ export function createCoachManagerLessonRouter(): Router {
     res.json({ ok: true, lessonId: result.lessonId, message: "Lesson created." });
   });
 
-  r.put("/", requireRole("CoachManager"), (req, res) => {
-    const ctx = coachManagerClubContext(req);
+  r.put("/", requireRole("CoachManager"), async (req, res) => {
+    const ctx = await coachManagerClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
@@ -1000,8 +986,8 @@ export function createCoachManagerLessonRouter(): Router {
     res.json({ ok: true, message: "Lesson updated." });
   });
 
-  r.post("/remove", requireRole("CoachManager"), (req, res) => {
-    const ctx = coachManagerClubContext(req);
+  r.post("/remove", requireRole("CoachManager"), async (req, res) => {
+    const ctx = await coachManagerClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
@@ -1021,8 +1007,8 @@ export function createCoachManagerLessonRouter(): Router {
     });
   });
 
-  r.post("/search", requireRole("CoachManager"), (req, res) => {
-    const ctx = coachManagerClubContext(req);
+  r.post("/search", requireRole("CoachManager"), async (req, res) => {
+    const ctx = await coachManagerClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
@@ -1055,8 +1041,8 @@ export function createCoachManagerLessonRouter(): Router {
     }
   });
 
-  r.post("/activate", requireRole("CoachManager"), (req, res) => {
-    const ctx = coachManagerClubContext(req);
+  r.post("/activate", requireRole("CoachManager"), async (req, res) => {
+    const ctx = await coachManagerClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
@@ -1124,8 +1110,8 @@ export function createCoachManagerLessonRouter(): Router {
     });
   });
 
-  r.post("/remove-by-lookup", requireRole("CoachManager"), (req, res) => {
-    const ctx = coachManagerClubContext(req);
+  r.post("/remove-by-lookup", requireRole("CoachManager"), async (req, res) => {
+    const ctx = await coachManagerClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;

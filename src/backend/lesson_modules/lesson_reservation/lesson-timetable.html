@@ -52,11 +52,11 @@
     <header class="mb-4">
       <p>
         <a href="/coach-manager.html" target="_top"
-          class="text-sm text-teal-400/90 hover:text-teal-300 underline-offset-2 hover:underline">
+          class="text-sm text-amber-400/90 hover:text-amber-300 underline-offset-2 hover:underline">
           ← Back to Coach Manager
         </a>
       </p>
-      <h1 class="text-2xl font-bold text-teal-300 mt-2">Lesson Time Table</h1>
+      <h1 class="text-2xl font-bold text-amber-300 mt-2">Lesson Time Table</h1>
       <p class="text-xs text-slate-500 mt-1">
         Club: <span id="hdrUid" class="text-slate-400">…</span>
         <span class="text-slate-600"> · </span>
@@ -77,7 +77,7 @@
             class="rounded-lg bg-slate-900/70 border border-white/15 px-3 py-2 text-sm text-slate-100 min-w-[9rem]"></select>
         </div>
         <button type="button" id="ttGo"
-          class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm">
+          class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm">
           Go
         </button>
         <button type="button" id="ttPrev"
@@ -89,7 +89,7 @@
           Next Week
         </button>
       </div>
-      <p id="ttWeekLabel" class="text-sm text-teal-200/90 mt-3 font-medium"></p>
+      <p id="ttWeekLabel" class="text-sm text-amber-200/90 mt-3 font-medium"></p>
     </section>
 
     <p id="ttError" class="hidden rounded-lg border border-red-500/40 bg-red-950/40 text-red-200 text-sm px-4 py-3 mb-4"></p>
@@ -457,10 +457,10 @@
                 var item = list[k];
                 var payload = encodeURIComponent(JSON.stringify(item));
                 cellInner +=
-                  "<li><button type=\"button\" class=\"tt-course text-left hover:text-teal-300 underline decoration-white/20 underline-offset-2\" data-payload=\"" +
+                  "<li><button type=\"button\" class=\"tt-course text-left hover:text-amber-300 underline decoration-white/20 underline-offset-2\" data-payload=\"" +
                   payload +
                   "\">" +
-                  "<span class=\"font-semibold text-teal-200/90\">" +
+                  "<span class=\"font-semibold text-amber-200/90\">" +
                   escapeHtml(item.class_id || item.LessonID || "—") +
                   "</span><br/>" +
                   "<span class=\"text-slate-300\">" +

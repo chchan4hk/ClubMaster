@@ -8,7 +8,7 @@ window.initDashboardPanels = function initDashboardPanels() {
   var navProfile = document.getElementById("navProfile");
   var navSettings = document.getElementById("navSettings");
 
-  var activeClasses = ["ring-2", "ring-teal-500/60", "bg-white/10"];
+  var activeClasses = ["ring-2", "ring-amber-500/60", "bg-white/10"];
 
   function clearNavActive() {
     [navOverview, navProfile, navSettings].forEach(function (el) {

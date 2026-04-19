@@ -1,11 +1,7 @@
 import fs from "fs";
 import path from "path";
-import {
-  hashPassword,
-  looksLikeBcrypt,
-  verifyPassword,
-} from "./userLoginPassword";
-import { readFileCached, readFileCachedStrict } from "./dataFileCache";
+import { looksLikeBcrypt, verifyPassword } from "./userLoginPassword";
+import { readFileCached } from "./dataFileCache";
 
 export type CsvUser = {
   uid: string;
@@ -13,7 +9,7 @@ export type CsvUser = {
   usertype: string;
   username: string;
   password: string;
-  /** Bcrypt hash when using userLogin.json or bcrypt in CSV cell; otherwise null/undefined. */
+  /** Bcrypt hash when password is stored as bcrypt in CSV; otherwise null/undefined. */
   passwordHash?: string | null;
   fullName: string;
   isActivated: boolean;
@@ -29,211 +25,40 @@ export type CsvUser = {
 };
 
 const dataDir = path.join(__dirname, "..", "data");
-/** Default secure store (bcrypt hashes, JSON). */
-const defaultUserLoginJsonFile = "userLogin.json";
-/** Legacy CSV filename on disk (migrated once into JSON unless env forces CSV). */
-const legacyUserLoginCsvFile = "userLogin.csv";
+/** Default login store on disk (`userLogin.csv`). */
+const defaultUserLoginCsvFile = "userLogin.csv";
 const legacyUserlistFile = "userlist.csv";
 
-export const defaultUserLoginPath = path.join(dataDir, defaultUserLoginJsonFile);
+export const defaultUserLoginPath = path.join(dataDir, defaultUserLoginCsvFile);
 /** @deprecated use defaultUserLoginPath */
 export const defaultUserlistPath = defaultUserLoginPath;
 
-/** Stored CSV header (exact) — legacy CSV mode only. */
+/** Stored CSV header (exact). */
 export const USERLIST_CANONICAL_HEADER =
   "UID,usertype,Username,password,full_name,is_activated,creation_date,club_name,club_photo,status,lastUpdate_date";
 
-/** True when the login store path points at a `.json` file (default). */
-export function loginStoreUsesJson(): boolean {
-  return userlistPath().toLowerCase().endsWith(".json");
-}
-
 /**
- * Resolved login store path.
- * - Default: `backend/data/userLogin.json` (bcrypt hashes).
- * - `USERLOGIN_JSON_PATH`: explicit JSON file.
- * - `USERLOGIN_CSV_PATH` / `USERLIST_CSV_PATH`: legacy plaintext CSV mode (not recommended).
+ * Resolved main login CSV path.
+ * - Default: `backend/data/userLogin.csv`.
+ * - `USERLOGIN_CSV_PATH` / `USERLIST_CSV_PATH`: override path (absolute or relative to cwd).
  */
 export function userlistPath(): string {
-  const jsonEnv = process.env.USERLOGIN_JSON_PATH?.trim();
-  if (jsonEnv) {
-    return path.isAbsolute(jsonEnv) ? jsonEnv : path.resolve(process.cwd(), jsonEnv);
-  }
   const csvEnv =
     process.env.USERLOGIN_CSV_PATH?.trim() || process.env.USERLIST_CSV_PATH?.trim();
   if (csvEnv) {
     return path.isAbsolute(csvEnv) ? csvEnv : path.resolve(process.cwd(), csvEnv);
   }
-  return path.join(dataDir, defaultUserLoginJsonFile);
+  return path.join(dataDir, defaultUserLoginCsvFile);
 }
 
 function legacyCsvOnDiskPath(): string {
-  return path.join(dataDir, legacyUserLoginCsvFile);
+  return path.join(dataDir, defaultUserLoginCsvFile);
 }
 
 export function verifyMainLoginPassword(user: CsvUser, plain: string): boolean {
   const h = user.passwordHash != null ? String(user.passwordHash).trim() : "";
   const stored = h !== "" ? h : user.password;
   return verifyPassword(plain, stored);
-}
-
-function normalizeUserCredentialForJson(u: CsvUser): CsvUser {
-  let hash = (u.passwordHash ?? "").trim();
-  if (hash && looksLikeBcrypt(hash)) {
-    return { ...u, password: "", passwordHash: hash };
-  }
-  const p = (u.password ?? "").trim();
-  if (p && looksLikeBcrypt(p)) {
-    return { ...u, password: "", passwordHash: p };
-  }
-  if (p) {
-    return { ...u, password: "", passwordHash: hashPassword(p) };
-  }
-  throw new Error(`User ${u.uid} has no password credential`);
-}
-
-type JsonLoginFileV1 = {
-  version: 1;
-  users: Array<Record<string, string>>;
-};
-
-function parseUsersFromLoginJsonRaw(raw: string): CsvUser[] {
-  let data: JsonLoginFileV1;
-  try {
-    data = JSON.parse(raw) as JsonLoginFileV1;
-  } catch {
-    throw new Error("userLogin.json is not valid JSON.");
-  }
-  if (!data.users || !Array.isArray(data.users)) {
-    throw new Error("userLogin.json must contain a users array.");
-  }
-  const out: CsvUser[] = [];
-  for (let i = 0; i < data.users.length; i++) {
-    const r = data.users[i]!;
-    const uid = String(r.uid ?? "").trim();
-    if (!uid) {
-      continue;
-    }
-    const usertype = String(r.usertype ?? "");
-    const username = String(r.username ?? "").trim();
-    const role = mapUserTypeToRole(usertype);
-    if (!role || !username) {
-      continue;
-    }
-    const ph =
-      String(r.password_hash ?? r.passwordHash ?? "").trim() ||
-      String(r.password ?? "").trim();
-    const passwordHash = ph && looksLikeBcrypt(ph) ? ph : "";
-    const passwordPlain = ph && !looksLikeBcrypt(ph) ? ph : "";
-    if (!passwordHash && !passwordPlain) {
-      continue;
-    }
-    const isActivated = parseBoolCell(String(r.is_activated ?? r.isActivated ?? ""));
-    let status = String(r.status ?? "").trim();
-    if (!status) {
-      status = isActivated ? "ACTIVE" : "INACTIVE";
-    }
-    let isAct = isActivated;
-    if (status.toUpperCase() === "INACTIVE") {
-      isAct = false;
-    }
-    out.push({
-      uid,
-      lineIndex: i + 1,
-      usertype,
-      username,
-      password: passwordPlain,
-      passwordHash: passwordHash || null,
-      fullName: String(r.full_name ?? r.fullName ?? "").trim(),
-      isActivated: isAct,
-      role,
-      creationDate: String(r.creation_date ?? r.creationDate ?? "").trim(),
-      clubName: String(r.club_name ?? r.clubName ?? "").trim(),
-      clubPhoto: String(r.club_photo ?? r.clubPhoto ?? "").trim(),
-      status,
-      lastUpdateDate: String(
-        r.lastUpdate_date ?? r.last_update_date ?? r.lastUpdateDate ?? ""
-      ).trim(),
-      expiryDate: String(
-        r.Expiry_date ?? r.expiry_date ?? r.ExpiryDate ?? r.expiryDate ?? "",
-      ).trim(),
-    });
-  }
-  return out;
-}
-
-export function saveJsonLoginStore(users: CsvUser[]): void {
-  if (!loginStoreUsesJson()) {
-    throw new Error("saveJsonLoginStore: login store path must be a .json file.");
-  }
-  const p = userlistPath();
-  const normalized = users.map((u) => normalizeUserCredentialForJson(u));
-  const body: JsonLoginFileV1 = {
-    version: 1,
-    users: normalized.map((u) => ({
-      uid: u.uid,
-      usertype: u.usertype,
-      username: u.username,
-      password_hash: String(u.passwordHash ?? "").trim(),
-      full_name: u.fullName,
-      is_activated: u.isActivated ? "YES" : "NO",
-      creation_date: u.creationDate,
-      club_name: u.clubName,
-      club_photo: u.clubPhoto,
-      status: u.status,
-      lastUpdate_date: u.lastUpdateDate,
-      Expiry_date: u.expiryDate ?? "",
-    })),
-  };
-  fs.writeFileSync(p, JSON.stringify(body, null, 2) + "\n", "utf8");
-}
-
-function migrateCsvFileToJson(csvPath: string, jsonPath: string): void {
-  const raw = fs.readFileSync(csvPath, "utf8");
-  const users = parseCsvRawToUsers(raw).map(normalizeUserCredentialForJson);
-  const body: JsonLoginFileV1 = {
-    version: 1,
-    users: users.map((u) => ({
-      uid: u.uid,
-      usertype: u.usertype,
-      username: u.username,
-      password_hash: String(u.passwordHash ?? "").trim(),
-      full_name: u.fullName,
-      is_activated: u.isActivated ? "YES" : "NO",
-      creation_date: u.creationDate,
-      club_name: u.clubName,
-      club_photo: u.clubPhoto,
-      status: u.status,
-      lastUpdate_date: u.lastUpdateDate,
-      Expiry_date: u.expiryDate ?? "",
-    })),
-  };
-  fs.writeFileSync(jsonPath, JSON.stringify(body, null, 2) + "\n", "utf8");
-}
-
-function writeFreshDefaultJsonStore(jsonPath: string): void {
-  const today = new Date().toISOString().slice(0, 10);
-  const adminHash = hashPassword("admin123");
-  const body: JsonLoginFileV1 = {
-    version: 1,
-    users: [
-      {
-        uid: "C0000",
-        usertype: "administrator",
-        username: "admin",
-        password_hash: adminHash,
-        full_name: "System Admin",
-        is_activated: "YES",
-        creation_date: today,
-        club_name: "",
-        club_photo: "",
-        status: "ACTIVE",
-        lastUpdate_date: "",
-        Expiry_date: "",
-      },
-    ],
-  };
-  fs.writeFileSync(jsonPath, JSON.stringify(body, null, 2) + "\n", "utf8");
 }
 
 function ensureDataDir(): void {
@@ -263,22 +88,6 @@ export function ensureUserlistFileExists(): void {
     }
   }
   const p = userlistPath();
-  if (loginStoreUsesJson()) {
-    if (!fs.existsSync(p)) {
-      const csvOnDisk = legacyCsvOnDiskPath();
-      if (fs.existsSync(csvOnDisk)) {
-        migrateCsvFileToJson(csvOnDisk, p);
-        try {
-          fs.renameSync(csvOnDisk, `${csvOnDisk}.legacy-backup`);
-        } catch {
-          /* JSON already written */
-        }
-      } else {
-        writeFreshDefaultJsonStore(p);
-      }
-    }
-    return;
-  }
   if (!fs.existsSync(p)) {
     fs.writeFileSync(p, DEFAULT_CSV, "utf8");
   }
@@ -362,9 +171,6 @@ function migrateUserLoginFullNameAndClubPhoto(p: string): void {
  * UID,usertype,Username,password,full_name,is_activated,creation_date,club_name,club_photo,status,lastUpdate_date
  */
 export function ensureUserlistSchema(): void {
-  if (loginStoreUsesJson()) {
-    return;
-  }
   const p = userlistPath();
   if (!fs.existsSync(p)) {
     return;
@@ -570,9 +376,6 @@ export function loadUsersFromCsv(): CsvUser[] {
   if (!fs.existsSync(p)) {
     return [];
   }
-  if (loginStoreUsesJson()) {
-    return readFileCachedStrict(p, (raw) => parseUsersFromLoginJsonRaw(raw));
-  }
   return readFileCached(p, (raw) => parseCsvRawToUsers(raw), []);
 }
 
@@ -694,22 +497,6 @@ export function deactivateCoachManager(
   const today = new Date().toISOString().slice(0, 10);
   const uidKey = target.uid;
 
-  if (loginStoreUsesJson()) {
-    const users = loadUsersFromCsv();
-    const i = users.findIndex((u) => u.uid === uidKey);
-    if (i < 0) {
-      return { ok: false, error: "Could not update user row." };
-    }
-    users[i] = {
-      ...users[i]!,
-      isActivated: false,
-      status: "INACTIVE",
-      lastUpdateDate: today,
-    };
-    saveJsonLoginStore(users);
-    return { ok: true };
-  }
-
   const p = userlistPath();
   const raw = fs.readFileSync(p, "utf8");
   const lines = raw.split(/\r?\n/);
@@ -776,22 +563,6 @@ export function activateCoachManager(
   const today = new Date().toISOString().slice(0, 10);
   const uidKey = target.uid;
 
-  if (loginStoreUsesJson()) {
-    const users = loadUsersFromCsv();
-    const i = users.findIndex((u) => u.uid === uidKey);
-    if (i < 0) {
-      return { ok: false, error: "Could not update user row." };
-    }
-    users[i] = {
-      ...users[i]!,
-      isActivated: true,
-      status: "ACTIVE",
-      lastUpdateDate: today,
-    };
-    saveJsonLoginStore(users);
-    return { ok: true };
-  }
-
   const p = userlistPath();
   const raw = fs.readFileSync(p, "utf8");
   const lines = raw.split(/\r?\n/);
@@ -835,7 +606,7 @@ export function activateCoachManager(
 }
 
 /**
- * Set ACTIVE/INACTIVE for any row in the main user login store (userLogin.json / CSV) by UID.
+ * Set ACTIVE/INACTIVE for any row in the main user login store (`userLogin.csv`) by UID.
  * Used by admin account lists (Admin, Coach Manager, and legacy rows in the main file).
  */
 export function setMainUserlistActivationByUid(
@@ -851,31 +622,6 @@ export function setMainUserlistActivationByUid(
     return { ok: false, error: "User list file is missing." };
   }
   const today = new Date().toISOString().slice(0, 10);
-
-  if (loginStoreUsesJson()) {
-    const users = loadUsersFromCsv();
-    const i = users.findIndex((u) => normalizeUid(u.uid) === uidKey);
-    if (i < 0) {
-      return { ok: false, error: "No user found with that UID in UserLogin." };
-    }
-    const row = users[i]!;
-    const st = row.status.trim().toUpperCase();
-    if (activate) {
-      if (st === "ACTIVE" && row.isActivated) {
-        return { ok: true };
-      }
-    } else if (st === "INACTIVE" && !row.isActivated) {
-      return { ok: true };
-    }
-    users[i] = {
-      ...row,
-      isActivated: activate,
-      status: activate ? "ACTIVE" : "INACTIVE",
-      lastUpdateDate: today,
-    };
-    saveJsonLoginStore(users);
-    return { ok: true };
-  }
 
   const raw = fs.readFileSync(p, "utf8");
   const lines = raw.split(/\r?\n/);
@@ -931,7 +677,7 @@ export function setMainUserlistActivationByUid(
 }
 
 /**
- * Permanently delete a Coach Manager row from the main login store (userLogin.json / CSV).
+ * Permanently delete a Coach Manager row from the main login store (`userLogin.csv`).
  * Rejects Admin, Coach, Student, and other roles.
  */
 export function removeCoachManagerFromUserLoginStore(
@@ -956,16 +702,6 @@ export function removeCoachManagerFromUserLoginStore(
   const p = userlistPath();
   if (!fs.existsSync(p)) {
     return { ok: false, error: "User list file is missing." };
-  }
-
-  if (loginStoreUsesJson()) {
-    const users = loadUsersFromCsv();
-    const next = users.filter((u) => normalizeUid(u.uid) !== normalizeUid(uidKey));
-    if (next.length === users.length) {
-      return { ok: false, error: "Could not remove user row." };
-    }
-    saveJsonLoginStore(next);
-    return { ok: true };
   }
 
   const raw = fs.readFileSync(p, "utf8");
@@ -1006,7 +742,7 @@ export function removeCoachManagerFromUserLoginStore(
 }
 
 /**
- * Removes a Coach or Student row from the main userLogin store (JSON/CSV) when UID and role match.
+ * Removes a Coach or Student row from the main userLogin store when UID and role match.
  * No-op if no row exists for that UID.
  */
 export function removeMainUserlistCoachOrStudentByUid(
@@ -1030,16 +766,6 @@ export function removeMainUserlistCoachOrStudentByUid(
 
   const p = userlistPath();
   if (!fs.existsSync(p)) {
-    return { ok: true };
-  }
-
-  if (loginStoreUsesJson()) {
-    const users = loadUsersFromCsv();
-    const next = users.filter((u) => normalizeUid(u.uid) !== normalizeUid(uidKey));
-    if (next.length === users.length) {
-      return { ok: true };
-    }
-    saveJsonLoginStore(next);
     return { ok: true };
   }
 
@@ -1117,24 +843,6 @@ export function updateMainUserlistProfileByUid(
   }
   const today = new Date().toISOString().slice(0, 10);
 
-  if (loginStoreUsesJson()) {
-    const users = loadUsersFromCsv();
-    const i = users.findIndex((u) => normalizeUid(u.uid) === uidKey);
-    if (i < 0) {
-      return { ok: false, error: "No user found with that UID in UserLogin." };
-    }
-    users[i] = {
-      ...users[i]!,
-      username: safeUser,
-      fullName: safeFull,
-      clubName: safeClub,
-      lastUpdateDate: today,
-      expiryDate: safeExpiry,
-    };
-    saveJsonLoginStore(users);
-    return { ok: true };
-  }
-
   const raw = fs.readFileSync(p, "utf8");
   const lines = raw.split(/\r?\n/);
   const headerCells = parseLine(lines[0]!.trim());
@@ -1185,7 +893,7 @@ export function updateMainUserlistProfileByUid(
 }
 
 /**
- * Update only `Expiry_date` (JSON) / `expiry_date` (CSV) for a main userLogin row.
+ * Update only `expiry_date` for a main userLogin row (`userLogin.csv`).
  */
 export function setMainUserlistExpiryByUid(
   uid: string,
@@ -1202,21 +910,6 @@ export function setMainUserlistExpiryByUid(
   }
   const today = new Date().toISOString().slice(0, 10);
 
-  if (loginStoreUsesJson()) {
-    const users = loadUsersFromCsv();
-    const i = users.findIndex((u) => normalizeUid(u.uid) === uidKey);
-    if (i < 0) {
-      return { ok: false, error: "No user found with that UID in UserLogin." };
-    }
-    users[i] = {
-      ...users[i]!,
-      expiryDate: safeExpiry,
-      lastUpdateDate: today,
-    };
-    saveJsonLoginStore(users);
-    return { ok: true };
-  }
-
   const raw = fs.readFileSync(p, "utf8");
   const lines = raw.split(/\r?\n/);
   const headerCells = parseLine(lines[0]!.trim());
@@ -1226,7 +919,7 @@ export function setMainUserlistExpiryByUid(
     return {
       ok: false,
       error:
-        "userLogin.csv has no expiry_date column; use JSON store or add the column.",
+        "userLogin.csv has no expiry_date column; add an expiry_date column to the file.",
     };
   }
 
@@ -1275,24 +968,6 @@ export function updateUserPasswordInCsv(
   }
 
   const uidKey = String(uid).trim();
-
-  if (loginStoreUsesJson()) {
-    const users = loadUsersFromCsv();
-    const i = users.findIndex((u) => normalizeUid(u.uid) === uidKey);
-    if (i < 0) {
-      return { ok: false, error: "User not found in user list." };
-    }
-    if (!verifyMainLoginPassword(users[i]!, oldPassword)) {
-      return { ok: false, error: "Old password does not match our records." };
-    }
-    users[i] = {
-      ...users[i]!,
-      password: "",
-      passwordHash: hashPassword(newPassword),
-    };
-    saveJsonLoginStore(users);
-    return { ok: true };
-  }
 
   const raw = fs.readFileSync(p, "utf8");
   const lines = raw.split(/\r?\n/);
@@ -1364,21 +1039,6 @@ export function setMainLoginPasswordByUid(
   const p = userlistPath();
   if (!fs.existsSync(p)) {
     return { ok: false, error: "User list file is missing." };
-  }
-
-  if (loginStoreUsesJson()) {
-    const users = loadUsersFromCsv();
-    const i = users.findIndex((u) => normalizeUid(u.uid) === uidKey);
-    if (i < 0) {
-      return { ok: false, error: "User not found in user list." };
-    }
-    users[i] = {
-      ...users[i]!,
-      password: "",
-      passwordHash: hashPassword(safePass),
-    };
-    saveJsonLoginStore(users);
-    return { ok: true };
   }
 
   const raw = fs.readFileSync(p, "utf8");
@@ -1477,17 +1137,6 @@ export function setLoginUsernameByUid(
     return { ok: false, error: "User list file is missing." };
   }
 
-  if (loginStoreUsesJson()) {
-    const users = loadUsersFromCsv();
-    const i = users.findIndex((u) => normalizeUid(u.uid) === uidKey);
-    if (i < 0) {
-      return { ok: false, error: "User not found in user list." };
-    }
-    users[i] = { ...users[i]!, username: safeUser };
-    saveJsonLoginStore(users);
-    return { ok: true };
-  }
-
   const raw = fs.readFileSync(p, "utf8");
   const lines = raw.split(/\r?\n/);
   if (lines.length < 2) {
@@ -1557,34 +1206,6 @@ export function appendCoachManagerRow(input: {
   if (!safeFull) {
     return { ok: false, error: "Full name is required." };
   }
-  const safeExpiry = String(input.expiryDate ?? "")
-    .trim()
-    .replace(/,/g, "");
-
-  if (loginStoreUsesJson()) {
-    const users = loadUsersFromCsv();
-    const newRow: CsvUser = {
-      uid: input.uid.trim(),
-      lineIndex: users.length + 1,
-      usertype: "Coach Manager",
-      username: username.replace(/,/g, " "),
-      password: "",
-      passwordHash: hashPassword(safePass),
-      fullName: safeFull,
-      isActivated: true,
-      role: "CoachManager",
-      creationDate: today,
-      clubName: safeClub,
-      clubPhoto: safePhoto,
-      status: "ACTIVE",
-      lastUpdateDate: "",
-      expiryDate: safeExpiry,
-    };
-    users.push(newRow);
-    saveJsonLoginStore(users);
-    return { ok: true };
-  }
-
   const line = [
     input.uid.trim(),
     "Coach Manager",
@@ -1602,7 +1223,7 @@ export function appendCoachManagerRow(input: {
   return { ok: true };
 }
 
-/** Appends a Coach row to userLogin.csv (UID should match CoachID in UserList_Coach.json, e.g. CH0001). */
+/** Appends a Coach row to userLogin.csv (UID should match CoachID in the club roster, e.g. CH0001). */
 export function appendCoachUserRow(input: {
   uid: string;
   username: string;
@@ -1633,30 +1254,6 @@ export function appendCoachUserRow(input: {
   }
   const safeClub = input.clubName.replace(/,/g, " ").trim();
 
-  if (loginStoreUsesJson()) {
-    const users = loadUsersFromCsv();
-    const newRow: CsvUser = {
-      uid,
-      lineIndex: users.length + 1,
-      usertype: "Coach",
-      username: username.replace(/,/g, " "),
-      password: "",
-      passwordHash: hashPassword(safePass),
-      fullName: "",
-      isActivated: true,
-      role: "Coach",
-      creationDate: today,
-      clubName: safeClub,
-      clubPhoto: "",
-      status: "ACTIVE",
-      lastUpdateDate: today,
-      expiryDate: "",
-    };
-    users.push(newRow);
-    saveJsonLoginStore(users);
-    return { ok: true };
-  }
-
   const line = [
     uid,
     "Coach",
@@ -1674,7 +1271,7 @@ export function appendCoachUserRow(input: {
   return { ok: true };
 }
 
-/** Appends a Student row to userLogin.csv (UID should match StudentID in UserList_Student.json, e.g. S000001). */
+/** Appends a Student row to userLogin.csv (UID should match StudentID in the club roster, e.g. S000000001). */
 export function appendStudentUserRow(input: {
   uid: string;
   username: string;
@@ -1704,30 +1301,6 @@ export function appendStudentUserRow(input: {
     return { ok: false, error: "Password is required." };
   }
   const safeClub = input.clubName.replace(/,/g, " ").trim();
-
-  if (loginStoreUsesJson()) {
-    const users = loadUsersFromCsv();
-    const newRow: CsvUser = {
-      uid,
-      lineIndex: users.length + 1,
-      usertype: "Student",
-      username: username.replace(/,/g, " "),
-      password: "",
-      passwordHash: hashPassword(safePass),
-      fullName: "",
-      isActivated: true,
-      role: "Student",
-      creationDate: today,
-      clubName: safeClub,
-      clubPhoto: "",
-      status: "ACTIVE",
-      lastUpdateDate: today,
-      expiryDate: "",
-    };
-    users.push(newRow);
-    saveJsonLoginStore(users);
-    return { ok: true };
-  }
 
   const line = [
     uid,
