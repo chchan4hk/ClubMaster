@@ -359,9 +359,8 @@ app.use("/api", (req, res) => {
   });
 });
 
-const server = app.listen(PORT, () => {
-  const mode = process.env.NODE_ENV ?? "development";
-  console.log(`Server running on port ${PORT} in ${mode} mode.`);
+const server = app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on port ${PORT} in production mode.`);
   console.log(`  Login: /main.html (same origin as this server)`);
   console.log(`Static root: ${staticRoot}`);
   console.log(`Backend root: ${backendRoot}`);
