@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "path";
 import express from "express";
 import cors from "cors";
@@ -103,9 +104,14 @@ app.use(slowRequestLogger);
 const isProd = process.env.NODE_ENV === "production";
 const STATIC_MAX_AGE_MS = 86400000;
 
-/** Homepage: / → login page */
+/** Homepage: serve login UI (avoid redirect — some proxies/CDNs mishandle `/` → `/main.html`). */
 app.get("/", (_req, res) => {
-  res.redirect(302, "/main.html");
+  const mainHtml = path.join(staticRoot, "main.html");
+  if (fs.existsSync(mainHtml)) {
+    res.sendFile(mainHtml);
+    return;
+  }
+  res.type("text/plain").send("Welcome to ClubMaster");
 });
 
 app.get("/student/payment", (_req, res) => {
