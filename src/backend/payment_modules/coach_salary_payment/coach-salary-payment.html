@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -763,7 +763,12 @@
           html += "</td>";
           html +=
             '<td class="py-2 pr-2 align-middle whitespace-nowrap text-xs text-emerald-200/80 tabular-nums">' +
-            escapeHtml(String(r.lastUpdatedDate || "")) +
+            escapeHtml(
+              window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                ? window.api.formatDateDisplayDdMmYyyy(String(r.lastUpdatedDate || "")) ||
+                    String(r.lastUpdatedDate || "")
+                : String(r.lastUpdatedDate || "")
+            ) +
             "</td>";
           html += "</tr>";
         });

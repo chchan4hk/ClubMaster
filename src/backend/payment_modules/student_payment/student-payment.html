@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -456,9 +456,26 @@
           var k = data.kpis || {};
           document.getElementById("kpiLife").textContent = "$" + fmtMoney(k.totalPaidLifetime);
           document.getElementById("kpiMonth").textContent = "$" + fmtMoney(k.totalPaidThisMonth);
-          document.getElementById("kpiNextDue").textContent = k.nextPaymentDueDate || "—";
-          document.getElementById("kpiLast").textContent =
-            k.lastPaymentDate ? "$" + fmtMoney(k.lastPaymentAmount) + " · " + k.lastPaymentDate : "—";
+          document.getElementById("kpiNextDue").textContent = (function () {
+            var s = k.nextPaymentDueDate || "";
+            if (!s) {
+              return "—";
+            }
+            return window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+              ? window.api.formatDateDisplayDdMmYyyy(String(s)) || s
+              : s;
+          })();
+          document.getElementById("kpiLast").textContent = (function () {
+            if (!k.lastPaymentDate) {
+              return "—";
+            }
+            var d = k.lastPaymentDate;
+            var dDisp =
+              window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                ? window.api.formatDateDisplayDdMmYyyy(String(d)) || d
+                : d;
+            return "$" + fmtMoney(k.lastPaymentAmount) + " · " + dDisp;
+          })();
 
           var tbody = document.getElementById("lessonBody");
           var lessons = data.lessons || [];
@@ -493,7 +510,12 @@
                   fmtMoney(L.outstanding) +
                   "</td>" +
                   "<td class=\"py-2 pr-2\">" +
-                  escapeHtml(L.dueDate || "—") +
+                  escapeHtml(
+                    window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                      ? window.api.formatDateDisplayDdMmYyyy(String(L.dueDate || "—")) ||
+                          String(L.dueDate || "—")
+                      : String(L.dueDate || "—")
+                  ) +
                   "</td>" +
                   "<td class=\"py-2 pr-2\"><span class=\"inline-flex rounded-full border px-2 py-0.5 text-xs " +
                   badgeClass(L.displayStatus) +
@@ -530,10 +552,15 @@
             txEmpty.classList.add("hidden");
             txList.innerHTML = txs
               .map(function (t) {
+                var paidDisp =
+                  window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                    ? window.api.formatDateDisplayDdMmYyyy(String(t.paidAt || "")) ||
+                        String(t.paidAt || "")
+                    : String(t.paidAt || "");
                 return (
                   "<li class=\"flex flex-wrap justify-between gap-2 rounded-lg border border-emerald-200/70 bg-white/60 px-3 py-2 text-emerald-950\">" +
                   "<span>" +
-                  escapeHtml(t.paidAt) +
+                  escapeHtml(paidDisp) +
                   " · " +
                   escapeHtml(t.method) +
                   " · $" +

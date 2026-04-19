@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -354,9 +354,13 @@
           .map(function (L) {
             var tds = LESSON_TABLE_COLS.map(function (col) {
               var v = L[col.key] != null ? String(L[col.key]) : "";
+              var disp =
+                window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                  ? window.api.formatDateDisplayDdMmYyyy(v)
+                  : v;
               return (
                 '<td class="py-2 pr-3 text-xs align-top whitespace-pre-wrap break-words max-w-[16rem]">' +
-                escapeHtml(v) +
+                escapeHtml(disp) +
                 "</td>"
               );
             }).join("");
@@ -442,9 +446,15 @@
                 '<tr class="border-b border-white/5">' +
                 cells
                   .map(function (cell) {
+                    var cStr = cell != null ? String(cell) : "";
+                    var disp =
+                      window.api &&
+                      typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                        ? window.api.formatDateDisplayDdMmYyyy(cStr)
+                        : cStr;
                     return (
                       '<td class="py-2 pr-3 text-xs align-top whitespace-pre-wrap break-words max-w-[16rem]">' +
-                      escapeHtml(cell) +
+                      escapeHtml(disp) +
                       "</td>"
                     );
                   })

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -568,10 +568,20 @@
               statusBadge(r.status) +
               "</td>" +
               "<td class='px-3 py-2 text-slate-400'>" +
-              esc(r.expiryDate || "—") +
+              esc(
+                window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                  ? window.api.formatDateDisplayDdMmYyyy(String(r.expiryDate || "—")) ||
+                      String(r.expiryDate || "—")
+                  : String(r.expiryDate || "—")
+              ) +
               "</td>" +
               "<td class='px-3 py-2 text-slate-400'>" +
-              esc(r.lastUpdateDate || "—") +
+              esc(
+                window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                  ? window.api.formatDateDisplayDdMmYyyy(String(r.lastUpdateDate || "—")) ||
+                      String(r.lastUpdateDate || "—")
+                  : String(r.lastUpdateDate || "—")
+              ) +
               "</td>" +
               "<td class='px-3 py-2 text-right whitespace-nowrap'>" +
               actionButtons("userLogin", r) +
@@ -613,10 +623,20 @@
               statusBadge(r.status) +
               "</td>" +
               "<td class='px-3 py-2 text-slate-400'>" +
-              esc(r.expiryDate || "—") +
+              esc(
+                window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                  ? window.api.formatDateDisplayDdMmYyyy(String(r.expiryDate || "—")) ||
+                      String(r.expiryDate || "—")
+                  : String(r.expiryDate || "—")
+              ) +
               "</td>" +
               "<td class='px-3 py-2 text-slate-400'>" +
-              esc(r.lastUpdateDate || "—") +
+              esc(
+                window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                  ? window.api.formatDateDisplayDdMmYyyy(String(r.lastUpdateDate || "—")) ||
+                      String(r.lastUpdateDate || "—")
+                  : String(r.lastUpdateDate || "—")
+              ) +
               "</td>" +
               "<td class='px-3 py-2 text-right whitespace-nowrap'>" +
               actionButtons(storeKey, r) +

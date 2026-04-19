@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -617,7 +617,12 @@
           html += "<td class=\"py-1.5 pr-3 text-right tabular-nums text-amber-200/90 align-middle\">$" + fmtMoney(r.outstanding) + "</td>";
           html +=
             "<td class=\"py-1.5 pr-3 align-middle whitespace-nowrap\"><span class=\"text-[10px] leading-tight tabular-nums text-emerald-50/90\">" +
-            escapeHtml(r.dueDate) +
+            escapeHtml(
+              window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                ? window.api.formatDateDisplayDdMmYyyy(String(r.dueDate || "")) ||
+                    String(r.dueDate || "")
+                : String(r.dueDate || "")
+            ) +
             "</span></td>";
           html += "<td class=\"py-1.5 pr-3 align-middle\"><span class=\"inline-flex rounded-full border px-2 py-0.5 text-[10px] " + badgeClass(r.displayStatus) + "\">" + escapeHtml(statusLabel(r.displayStatus)) + "</span></td>";
           html +=
@@ -653,7 +658,12 @@
           if (r.paymentHistory && r.paymentHistory.length) {
             html += "<ul class=\"mt-2 space-y-1 list-disc list-inside\">";
             r.paymentHistory.forEach(function (p) {
-              html += "<li>" + escapeHtml(p.paidAt) + " · " + escapeHtml(p.method) + " · $" + fmtMoney(p.amount) + " · ref " + escapeHtml(p.reference || "—") + "</li>";
+              var paidDisp =
+                window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                  ? window.api.formatDateDisplayDdMmYyyy(String(p.paidAt || "")) ||
+                      String(p.paidAt || "")
+                  : String(p.paidAt || "");
+              html += "<li>" + escapeHtml(paidDisp) + " · " + escapeHtml(p.method) + " · $" + fmtMoney(p.amount) + " · ref " + escapeHtml(p.reference || "—") + "</li>";
             });
             html += "</ul>";
           } else {
@@ -762,6 +772,11 @@
             emptyEl.classList.add("hidden");
             var rows = hist
               .map(function (p) {
+                var paidDisp =
+                  window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                    ? window.api.formatDateDisplayDdMmYyyy(String(p.paidAt || "")) ||
+                        String(p.paidAt || "")
+                    : String(p.paidAt || "");
                 return (
                   "<div class=\"rounded border border-emerald-600/20 bg-emerald-950/55 px-3 py-2\">" +
                   "<div class=\"text-emerald-200 font-medium\">$" +
@@ -770,7 +785,7 @@
                   escapeHtml(p.method) +
                   "</div>" +
                   "<div class=\"text-xs text-emerald-200/70 mt-1\">Date: " +
-                  escapeHtml(p.paidAt) +
+                  escapeHtml(paidDisp) +
                   "</div>" +
                   "<div class=\"text-xs text-emerald-200/70\">Reference / transaction ID: " +
                   escapeHtml(p.reference || "—") +

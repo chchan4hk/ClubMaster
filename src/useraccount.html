@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -82,10 +82,24 @@
             u.status != null && String(u.status).trim() !== ""
               ? String(u.status)
               : "—";
-          document.getElementById("fieldCreated").textContent =
-            u.creation_date != null ? String(u.creation_date) : "—";
-          document.getElementById("fieldExpiryDate").textContent =
-            u.expiry_date != null ? String(u.expiry_date) : "—";
+          document.getElementById("fieldCreated").textContent = (function () {
+            if (u.creation_date == null) {
+              return "—";
+            }
+            var s = String(u.creation_date);
+            return window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+              ? window.api.formatDateDisplayDdMmYyyy(s) || s
+              : s;
+          })();
+          document.getElementById("fieldExpiryDate").textContent = (function () {
+            if (u.expiry_date == null) {
+              return "—";
+            }
+            var s = String(u.expiry_date);
+            return window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+              ? window.api.formatDateDisplayDdMmYyyy(s) || s
+              : s;
+          })();
           if (u.role === "Student" || u.role === "Coach") {
             var lc = document.getElementById("labelClubName");
             var ld = document.getElementById("labelCreated");

@@ -247,6 +247,24 @@ function clearBasicInfoCache() {
  * @param {string[]} values
  * @param {{ leadEmpty?: boolean; leadEmptyLabel?: string; selectedValue?: string | null }} [opts]
  */
+/**
+ * Display calendar dates as DD/MM/YYYY. Accepts yyyy-mm-dd or an ISO datetime
+ * starting with that date; other strings are returned unchanged.
+ * @param {unknown} raw
+ * @returns {string}
+ */
+function formatDateDisplayDdMmYyyy(raw) {
+  const t = raw == null ? "" : String(raw).trim();
+  if (!t) {
+    return "";
+  }
+  const m = /^(\d{4})-(\d{2})-(\d{2})(?:$|[T\s])/.exec(t);
+  if (!m) {
+    return t;
+  }
+  return `${m[3]}/${m[2]}/${m[1]}`;
+}
+
 function fillSelectFromBasicList(sel, values, opts) {
   if (!sel) {
     return;
@@ -290,4 +308,5 @@ window.api = {
   fetchBasicInfo,
   clearBasicInfoCache,
   fillSelectFromBasicList,
+  formatDateDisplayDdMmYyyy,
 };

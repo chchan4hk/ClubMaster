@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -444,7 +444,12 @@
             "</div></td>";
           html +=
             "<td class=\"py-1.5 pr-3 align-middle whitespace-nowrap text-[10px] tabular-nums\">" +
-            escapeHtml(r.paymentDate || "—") +
+            escapeHtml(
+              window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                ? window.api.formatDateDisplayDdMmYyyy(String(r.paymentDate || "—")) ||
+                    String(r.paymentDate || "—")
+                : String(r.paymentDate || "—")
+            ) +
             "</td>";
           html +=
             "<td class=\"py-1.5 pr-3 align-middle\"><span class=\"inline-flex rounded-full border px-2 py-0.5 text-[10px] " +
@@ -454,7 +459,12 @@
             "</span></td>";
           html +=
             "<td class=\"py-1.5 pr-3 align-middle text-[10px] tabular-nums\">" +
-            escapeHtml(r.confirm_payment_date || "—") +
+            escapeHtml(
+              window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                ? window.api.formatDateDisplayDdMmYyyy(String(r.confirm_payment_date || "—")) ||
+                    String(r.confirm_payment_date || "—")
+                : String(r.confirm_payment_date || "—")
+            ) +
             "</td>";
           html += "<td class=\"py-1.5 pr-2 align-middle\">";
           html += "<div class=\"userlogin-pay-actions\">";
@@ -468,8 +478,24 @@
           html += "<tr id=\"" + expandId + "\" class=\"hidden bg-teal-950/35\"><td colspan=\"10\" class=\"px-4 py-3 text-xs text-teal-200/75\">";
           html += "<p class=\"font-semibold text-teal-200 mb-1\">Subscription payment detail</p>";
           html += "<p>Payment ID: <strong class=\"text-teal-100\">" + escapeHtml(r.paymentId) + "</strong></p>";
-          html += "<p>Account expiry (at request): " + escapeHtml(r.Expiry_date || "—") + "</p>";
-          html += "<p>Created: " + escapeHtml(r.createdAt || "—") + "</p>";
+          html +=
+            "<p>Account expiry (at request): " +
+            escapeHtml(
+              window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                ? window.api.formatDateDisplayDdMmYyyy(String(r.Expiry_date || "—")) ||
+                    String(r.Expiry_date || "—")
+                : String(r.Expiry_date || "—")
+            ) +
+            "</p>";
+          html +=
+            "<p>Created: " +
+            escapeHtml(
+              window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                ? window.api.formatDateDisplayDdMmYyyy(String(r.createdAt || "—")) ||
+                    String(r.createdAt || "—")
+                : String(r.createdAt || "—")
+            ) +
+            "</p>";
           html += "</td></tr>";
         });
         tb.innerHTML = html;

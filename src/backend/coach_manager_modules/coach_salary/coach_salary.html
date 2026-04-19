@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -786,7 +786,11 @@
       function patchRowUi(tr, lastUpdated) {
         var cell = tr.querySelector('[data-col="lastUpdated"]');
         if (cell) {
-          cell.textContent = lastUpdated || "";
+          var raw = lastUpdated || "";
+          cell.textContent =
+            window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+              ? window.api.formatDateDisplayDdMmYyyy(raw) || raw
+              : raw;
         }
       }
 
@@ -877,7 +881,12 @@
             " /> Yes</label></td>";
           html +=
             '<td class="py-2 pr-2 align-middle whitespace-nowrap text-xs text-emerald-200/80 tabular-nums" data-col="lastUpdated">' +
-            escapeHtml(String(r.lastUpdatedDate || "")) +
+            escapeHtml(
+              window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                ? window.api.formatDateDisplayDdMmYyyy(String(r.lastUpdatedDate || "")) ||
+                    String(r.lastUpdatedDate || "")
+                : String(r.lastUpdatedDate || "")
+            ) +
             "</td>";
           html +=
             '<td class="py-2 pr-2 align-middle"><button type="button" data-action="update-row" class="rounded-md bg-emerald-600/90 hover:bg-emerald-500 text-white text-xs font-medium px-3 py-1.5">Update</button></td>';

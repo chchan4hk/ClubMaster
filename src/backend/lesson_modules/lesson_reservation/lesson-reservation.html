@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1179,9 +1179,14 @@
         document.getElementById("tableEditStatus").value =
           st === "INACTIVE" ? "INACTIVE" : "ACTIVE";
         document.getElementById("tableEditRemarks").value = L.Remarks || "";
-        document.getElementById("tableEditCreated").value = L.Created_at || "";
+        document.getElementById("tableEditCreated").value =
+          (window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+            ? window.api.formatDateDisplayDdMmYyyy(L.Created_at || "")
+            : "") || (L.Created_at || "");
         document.getElementById("tableEditLastUpdate").value =
-          L.LastUpdated_Date || "";
+          (window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+            ? window.api.formatDateDisplayDdMmYyyy(L.LastUpdated_Date || "")
+            : "") || (L.LastUpdated_Date || "");
         document.getElementById("tableEditErr").classList.add("hidden");
         document.getElementById("tableEditOk").classList.add("hidden");
         var panel = document.getElementById("tableEditPanel");
@@ -1222,9 +1227,13 @@
             .map(function (L, idx) {
               var tds = LESSON_TABLE_COLS.map(function (col) {
                 var v = L[col.key] != null ? String(L[col.key]) : "";
+                var disp =
+                  window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                    ? window.api.formatDateDisplayDdMmYyyy(v)
+                    : v;
                 return (
                   '<td class="py-2 pr-3 text-xs align-top whitespace-pre-wrap break-words max-w-[16rem]">' +
-                  escapeHtml(v) +
+                  escapeHtml(disp) +
                   "</td>"
                 );
               }).join("");
@@ -1254,9 +1263,13 @@
           .map(function (L, idx) {
             var tds = LESSON_TABLE_COLS.map(function (col) {
               var v = L[col.key] != null ? String(L[col.key]) : "";
+              var disp =
+                window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                  ? window.api.formatDateDisplayDdMmYyyy(v)
+                  : v;
               return (
                 '<td class="py-2 pr-3 text-xs align-top whitespace-pre-wrap break-words max-w-[16rem]">' +
-                escapeHtml(v) +
+                escapeHtml(disp) +
                 "</td>"
               );
             }).join("");
@@ -1331,9 +1344,15 @@
                 if (!keepCol[ci]) {
                   continue;
                 }
+                var cStr = cells[ci] != null ? String(cells[ci]) : "";
+                var disp =
+                  window.api &&
+                  typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                    ? window.api.formatDateDisplayDdMmYyyy(cStr)
+                    : cStr;
                 parts.push(
                   '<td class="py-2 pr-3 text-xs align-top whitespace-pre-wrap break-words max-w-[16rem]">' +
-                    escapeHtml(cells[ci]) +
+                    escapeHtml(disp) +
                     "</td>"
                 );
               }
