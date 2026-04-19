@@ -3,6 +3,4 @@
 **/.env
 **/.env.*
 !**/.env.example
-**/src/backend/data_club/*
-/src/backend/data_club/*
-
+src/backend/data_club/
