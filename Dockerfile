@@ -32,7 +32,6 @@ RUN mkdir -p /app/static && \
     cp src/*.html /app/static/ 2>/dev/null || true
 
 # Set environment variables
-ENV PORT=3000
 ENV SPORT_COACH_STATIC_ROOT=/app/static
 
 # Ensure proper permissions
@@ -40,6 +39,6 @@ RUN chown -R node:node /app
 
 USER node
 
-EXPOSE 3000
+EXPOSE 8080
 
 CMD ["node", "src/backend/dist/server.js"]
