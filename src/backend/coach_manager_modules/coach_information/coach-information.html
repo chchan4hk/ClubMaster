@@ -71,7 +71,7 @@
         <h3 class="text-base font-semibold text-teal-200 mb-2">New coach</h3>
         <p class="text-xs text-slate-500 mb-4">
           <strong>Club</strong> and <strong>Coach ID</strong> are assigned automatically. <strong>Created At</strong> and <strong>Last Update Date</strong> are set to today when you confirm.
-          This only adds the coach to your club roster — it does <strong>not</strong> create a row in the main <code class="text-slate-400">userLogin.json</code>. To add sign-in credentials, use <strong>New Login Account</strong> (writes to <code class="text-slate-400">userLogin_Coach.json</code>) or ask an administrator.
+          This only adds the coach to your club roster.
         </p>
         <form id="createCoachForm" class="space-y-3 max-w-2xl">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -104,7 +104,7 @@
               </select>
             </div>
             <div>
-              <label for="newCoachHourly" class="block text-xs text-slate-400 mb-1">Hourly Rate (HKD)</label>
+              <label for="newCoachHourly" class="block text-xs text-slate-400 mb-1">Hourly Rate</label>
               <input id="newCoachHourly" type="text"
                 class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
             </div>
@@ -161,7 +161,7 @@
       <div id="tableEditPanel" class="hidden mt-6 pt-6 border-t border-white/10 rounded-lg bg-slate-900/40 p-4">
         <h3 class="text-base font-semibold text-teal-200 mb-3">Edit coach</h3>
         <p class="text-xs text-slate-500 mb-4">
-          Change <strong>Full Name</strong>, <strong>Sex</strong>, <strong>Country</strong>, <strong>Hourly Rate (HKD)</strong>, <strong>Date of Birth</strong>, <strong>Joined Date</strong>,
+          Change <strong>Full Name</strong>, <strong>Sex</strong>, <strong>Country</strong>, <strong>Hourly Rate</strong>, <strong>Date of Birth</strong>, <strong>Joined Date</strong>,
           <strong>Home Address</strong>, <strong>Email Address</strong>,
           <strong>Contact Number</strong>, <strong>Status</strong>, and <strong>Remark</strong> below.
           Click <strong>Confirm</strong> to save; <strong>Last Update Date</strong> is set to today for this coach.
@@ -216,7 +216,7 @@
               </select>
             </div>
             <div>
-              <label for="tableEditHourlyRate" class="block text-xs text-slate-400 mb-1">Hourly Rate (HKD)</label>
+              <label for="tableEditHourlyRate" class="block text-xs text-slate-400 mb-1">Hourly Rate</label>
               <input id="tableEditHourlyRate" type="text"
                 class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
             </div>
@@ -581,7 +581,7 @@
         { key: "created_at", label: "Created At" },
         { key: "remark", label: "Remark" },
         { key: "lastUpdate_date", label: "Last Update Date" },
-        { key: "hourly_rate (HKD)", label: "Hourly Rate (HKD)" },
+        { key: "hourly_rate (HKD)", label: "Hourly Rate" },
       ];
 
       /** Student Coach Information: omit sensitive / internal roster columns. */

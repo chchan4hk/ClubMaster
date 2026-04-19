@@ -205,7 +205,7 @@
         <thead>
           <tr class="border-b border-emerald-600/20 text-emerald-200/70">
             <th class="py-2 pr-3 font-medium whitespace-nowrap">Month</th>
-            <th class="py-2 pr-3 font-medium text-right whitespace-nowrap">Total salary <span id="hdrTrendSalaryCurrency">(HKD)</span></th>
+            <th class="py-2 pr-3 font-medium text-right whitespace-nowrap">Total salary</th>
             <th class="py-2 pr-2 font-medium text-right whitespace-nowrap">Records</th>
           </tr>
         </thead>
@@ -216,7 +216,7 @@
 
       <h3 class="text-sm font-semibold text-emerald-200/90 mt-8 mb-1">Trend chart</h3>
       <p class="text-xs text-emerald-100/65 mb-3">
-        Y-axis: total salary (<span id="lblTrendChartCurrency">HKD</span>). X-axis: month. Same six-month window and totals as the table.
+        Y-axis: total salary amount. X-axis: month. Same six-month window and totals as the table.
       </p>
       <div class="h-72 w-full max-w-3xl mx-auto sm:mx-0">
         <canvas id="salaryTrendLineChart" aria-label="Salary trend by month"></canvas>
@@ -393,20 +393,7 @@
       var cachedRows = [];
       var pendingConfirmSalaryId = "";
       var salaryTrendLineChartInst = null;
-      var clubCurrencyCode = "HKD";
       var clubCurrencySymbol = "$";
-
-      function applyClubCurrencyLabels() {
-        var paren = "(" + clubCurrencyCode + ")";
-        var h = document.getElementById("hdrTrendSalaryCurrency");
-        if (h) {
-          h.textContent = paren;
-        }
-        var c = document.getElementById("lblTrendChartCurrency");
-        if (c) {
-          c.textContent = clubCurrencyCode;
-        }
-      }
 
       function findCachedRowBySalaryId(sid) {
         var id = String(sid || "").trim();
@@ -451,7 +438,7 @@
           ["Coach", row.coachFullName || "—"],
           ["Lesson", row.lessonNameDate || "—"],
           ["Club", row.club_name || "—"],
-          ["Salary (" + clubCurrencyCode + ")", String(row.salary_amount ?? "—")],
+          ["Salary", String(row.salary_amount ?? "—")],
           ["Payment method", String(row.Payment_Method || "—")],
           ["Payment status", String(row.Payment_Status || "—")],
           ["Confirmed", isDone ? "Yes" : "No"],
@@ -638,7 +625,7 @@
             labels: labels,
             datasets: [
               {
-                label: "Total salary (" + clubCurrencyCode + ")",
+                label: "Total salary",
                 data: values,
                 borderColor: "rgba(52, 211, 153, 0.95)",
                 backgroundColor: "rgba(52, 211, 153, 0.14)",
@@ -665,7 +652,7 @@
                 beginAtZero: true,
                 title: {
                   display: true,
-                  text: "Salary (" + clubCurrencyCode + ")",
+                  text: "Salary",
                   color: "#a7f3d0",
                   font: { size: 12, weight: "600" },
                 },
@@ -812,13 +799,10 @@
           if (!data || !data.ok) {
             throw new Error((data && data.error) || "Load failed.");
           }
-          clubCurrencyCode =
-            (data.currencyCode && String(data.currencyCode).trim()) || "HKD";
           clubCurrencySymbol =
             data.currencySymbol != null && String(data.currencySymbol).trim() !== ""
               ? String(data.currencySymbol).trim()
               : "$";
-          applyClubCurrencyLabels();
           cachedRows = Array.isArray(data.rows) ? data.rows.slice() : [];
           var monEl = document.getElementById("filterCoachSalaryMonth");
           if (monEl && !monEl.value) {
