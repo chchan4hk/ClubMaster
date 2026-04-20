@@ -7,6 +7,9 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/profile-password-panels.css" />
+  <link rel="stylesheet" href="/css/coach-manager-module-shell.css" />
+  <link rel="stylesheet" href="/css/btn-cancel-metallic-brown.css" />
   <style>
     .btn-metal-gold {
       background: linear-gradient(145deg, #e8c547 0%, #a67c1a 42%, #2a1f08 100%);
@@ -54,88 +57,19 @@
       white-space: nowrap;
     }
 
-    /* Silver + pale champagne / yellow metallic backdrop (this page only) */
-    body.lesson-payment-status-page.dashboard-dynamic-bg {
-      background-color: #e6f4ec;
-      isolation: isolate;
-    }
-    body.lesson-payment-status-page .dynamic-bg-photo {
-      opacity: 0.12;
-      filter: sepia(0.4) saturate(0.55) brightness(1.2) contrast(0.95);
-      mix-blend-mode: multiply;
-    }
-    body.lesson-payment-status-page .dynamic-bg-overlay {
-      background:
-        linear-gradient(
-          165deg,
-          rgba(255, 252, 244, 0.98) 0%,
-          rgba(240, 236, 224, 0.97) 24%,
-          rgba(228, 224, 212, 0.96) 48%,
-          rgba(250, 246, 232, 0.97) 72%,
-          rgba(210, 232, 218, 0.96) 100%
-        ),
-        linear-gradient(
-          95deg,
-          transparent 0%,
-          rgba(209, 250, 229, 0.5) 40%,
-          transparent 58%
-        ),
-        radial-gradient(
-          ellipse 130% 100% at var(--spot-x, 50%) var(--spot-y, 50%),
-          rgba(255, 251, 235, 0.65) 0%,
-          rgba(232, 228, 215, 0.35) 42%,
-          transparent 68%
-        ),
-        radial-gradient(ellipse 75% 55% at 8% 92%, rgba(185, 180, 168, 0.4) 0%, transparent 52%),
-        radial-gradient(ellipse 65% 50% at 94% 8%, rgba(245, 238, 210, 0.55) 0%, transparent 50%);
-    }
-    body.lesson-payment-status-page .dynamic-bg-spot-glow {
-      background: radial-gradient(
-        circle min(88vw, 760px) at var(--spot-x, 50%) var(--spot-y, 50%),
-        rgba(255, 252, 235, 0.42) 0%,
-        rgba(230, 225, 205, 0.18) 48%,
-        transparent 70%
-      );
-      mix-blend-mode: soft-light;
-    }
-    body.lesson-payment-status-page .dynamic-bg-star-net {
-      opacity: 0.06;
-      filter: sepia(1) hue-rotate(25deg) saturate(0.25) brightness(1.2);
-    }
-    body.lesson-payment-status-page .glass {
-      background: linear-gradient(
-        155deg,
-        rgba(6, 52, 44, 0.82) 0%,
-        rgba(15, 48, 42, 0.86) 50%,
-        rgba(10, 42, 36, 0.84) 100%
-      );
-      border-color: rgba(52, 211, 153, 0.28);
-      box-shadow:
-        inset 0 1px 0 rgba(167, 243, 208, 0.1),
-        0 10px 40px rgba(0, 45, 35, 0.18);
-      backdrop-filter: blur(12px);
-    }
   </style>
 </head>
-<body
-  class="lesson-payment-status-page dashboard-dynamic-bg min-h-screen text-amber-950 p-6 pb-24"
-  style="--dashboard-bg-img: url('/Source/Image/coach-manager.jpg');">
-  <div class="dynamic-bg-stack" aria-hidden="true">
-    <div class="dynamic-bg-photo"></div>
-    <div class="dynamic-bg-overlay"></div>
-    <canvas class="dynamic-bg-star-net"></canvas>
-    <div class="dynamic-bg-spot-glow"></div>
-  </div>
-
-  <div class="max-w-7xl mx-auto relative z-[1] text-amber-100">
-    <header class="mb-6 text-amber-950">
+<body class="lesson-payment-status-page profile-password-page cm-module-shell min-h-full p-4 sm:p-6 pb-16">
+  <div class="max-w-7xl mx-auto relative z-[1]">
+    <div class="glass profile-password-card rounded-xl border border-stone-200/60 p-5 sm:p-6">
+    <header class="cm-module-page-header">
       <p>
         <a href="/coach-manager.html" target="_top"
-          class="text-sm text-amber-800 hover:text-amber-950 underline-offset-2 hover:underline font-medium">
+          class="cm-module-backlink text-sm underline-offset-2 hover:underline">
           ← Back to Coach Manager
         </a>
       </p>
-      <h1 class="text-2xl font-bold text-amber-950 mt-2 tracking-tight">Lesson Payment Status</h1>
+      <h1 class="profile-password-heading text-2xl font-semibold mt-3 tracking-tight">Lesson Payment Status</h1>
       <p id="loadError" class="hidden text-sm text-red-700 mt-2"></p>
     </header>
 
@@ -193,13 +127,13 @@
         </div>
         <div>
           <label for="filterDateFrom" class="block text-xs text-amber-200/70 mb-1">From</label>
-          <input id="filterDateFrom" type="date"
-            class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
+          <input id="filterDateFrom" type="text"
+            class="cm-date-ddmmyyyy w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
         </div>
         <div>
           <label for="filterDateTo" class="block text-xs text-amber-200/70 mb-1">To</label>
-          <input id="filterDateTo" type="date"
-            class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
+          <input id="filterDateTo" type="text"
+            class="cm-date-ddmmyyyy w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
         </div>
       </div>
       <div class="flex flex-wrap gap-2 mt-4">
@@ -255,6 +189,7 @@
         </tbody>
       </table>
     </section>
+    </div>
   </div>
 
   <!-- Record payment modal -->
@@ -295,8 +230,8 @@
           </div>
           <div>
             <label class="block text-xs text-amber-200/70 mb-1">Date of payment</label>
-            <input id="payDate" type="date"
-              class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-amber-50 text-sm [color-scheme:dark]" />
+            <input id="payDate" type="text"
+              class="cm-date-ddmmyyyy w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-amber-50 text-sm" />
           </div>
           <div id="splitWrap" class="rounded-lg border border-amber-600/20 bg-amber-950/35 p-3 space-y-2">
             <p class="text-xs font-semibold text-amber-200">Split across lessons (same student)</p>
@@ -307,14 +242,14 @@
 
         <div id="payActionsEdit" class="flex flex-wrap gap-2 pt-2">
           <button type="submit" id="btnPaySave" class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium px-4 py-2">Save payment</button>
-          <button type="button" id="btnPayCancel" class="rounded-lg bg-amber-800 hover:bg-amber-700 text-sm px-4 py-2">Cancel</button>
+          <button type="button" id="btnPayCancel" class="btn-cancel-metallic-brown rounded-lg text-sm px-4 py-2">Cancel</button>
         </div>
         <div id="payActionsPaid" class="hidden gap-3 pt-2">
           <div class="flex flex-wrap gap-2">
             <button type="button" id="btnConfirmPaidPayment" class="btn-metal-gold rounded-lg text-sm px-4 py-2.5">Confirm Payment</button>
             <button type="button" id="btnVoidPaidPayment" class="btn-metal-red rounded-lg text-sm px-4 py-2.5">Cancel Payment</button>
           </div>
-          <button type="button" id="btnPayDismiss" class="text-left text-xs text-amber-100/75 hover:text-amber-50/90 underline-offset-2 hover:underline w-fit">Close without changes</button>
+          <button type="button" id="btnPayDismiss" class="text-left text-xs text-slate-300/90 hover:text-teal-200/95 underline-offset-2 hover:underline w-fit">Close without changes</button>
         </div>
         <p id="payFormError" class="hidden text-sm text-red-300"></p>
       </form>
@@ -323,6 +258,7 @@
 
   <script src="/js/api.js"></script>
   <script src="/js/auth.js"></script>
+  <script src="/js/cm-date-ddmmyyyy.js"></script>
   <script>
     (function () {
       var isFramed = false;
@@ -459,8 +395,8 @@
         var search = (document.getElementById("filterSearch").value || "").trim().toLowerCase();
         var st = document.getElementById("filterStatus").value;
         var df = "due";
-        var dFrom = document.getElementById("filterDateFrom").value;
-        var dTo = document.getElementById("filterDateTo").value;
+        var dFrom = window.cmDateDdMmYyyy.readIso("filterDateFrom");
+        var dTo = window.cmDateDdMmYyyy.readIso("filterDateTo");
 
         return rows.filter(function (r) {
           if (search) {
@@ -511,6 +447,9 @@
         if (chartBarInst) {
           chartBarInst.destroy();
         }
+        var chartTickColor = "#44403c";
+        var chartGridColor = "rgba(68, 64, 60, 0.14)";
+        var chartLegendColor = "#44403c";
         chartBarInst = new Chart(barEl, {
           type: "bar",
           data: {
@@ -526,10 +465,19 @@
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { labels: { color: "#d1fae5" } } },
+            plugins: { legend: { labels: { color: chartLegendColor } } },
             scales: {
-              x: { ticks: { color: "#86efac" }, grid: { color: "rgba(52,211,153,0.12)" } },
-              y: { ticks: { color: "#86efac" }, grid: { color: "rgba(52,211,153,0.12)" }, beginAtZero: true },
+              x: {
+                ticks: { color: chartTickColor },
+                grid: { color: chartGridColor },
+                border: { color: "rgba(68, 64, 60, 0.35)" },
+              },
+              y: {
+                ticks: { color: chartTickColor },
+                grid: { color: chartGridColor },
+                border: { color: "rgba(68, 64, 60, 0.35)" },
+                beginAtZero: true,
+              },
             },
           },
         });
@@ -562,7 +510,10 @@
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-              legend: { position: "bottom", labels: { color: "#d1fae5", boxWidth: 12 } },
+              legend: {
+                position: "bottom",
+                labels: { color: chartLegendColor, boxWidth: 12 },
+              },
             },
           },
         });
@@ -806,7 +757,10 @@
         setPayModalMode("edit");
         document.getElementById("payAmount").value = r.outstanding > 0 ? String(r.outstanding) : "";
         document.getElementById("payReference").value = "";
-        document.getElementById("payDate").value = (lastPayload && lastPayload.today) || new Date().toISOString().slice(0, 10);
+        window.cmDateDdMmYyyy.writeIso(
+          "payDate",
+          (lastPayload && lastPayload.today) || new Date().toISOString().slice(0, 10)
+        );
         if (sub) {
           sub.textContent = r.Student_Name + " · " + r.lessonId + " · Outstanding $" + fmtMoney(r.outstanding);
         }
@@ -980,7 +934,7 @@
         var amount = Number(document.getElementById("payAmount").value);
         var method = document.getElementById("payMethod").value;
         var reference = document.getElementById("payReference").value;
-        var paidAt = document.getElementById("payDate").value;
+        var paidAt = window.cmDateDdMmYyyy.readIso("payDate");
         var splits = [{ lessonReserveId: primary, amount: amount }];
         document.querySelectorAll("#splitList .split-chk:checked").forEach(function (chk) {
           var rid = chk.getAttribute("data-rid");

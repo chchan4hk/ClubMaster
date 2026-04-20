@@ -6,26 +6,21 @@
   <title>Prize List — Coach Manager</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/profile-password-panels.css" />
+  <link rel="stylesheet" href="/css/coach-manager-module-shell.css" />
+  <link rel="stylesheet" href="/css/btn-cancel-metallic-brown.css" />
 </head>
-<body
-  class="dashboard-dynamic-bg min-h-screen text-slate-100 p-6"
-  style="--dashboard-bg-img: url('/Source/Image/coach-manager.jpg');">
-  <div class="dynamic-bg-stack" aria-hidden="true">
-    <div class="dynamic-bg-photo"></div>
-    <div class="dynamic-bg-overlay"></div>
-    <canvas class="dynamic-bg-star-net"></canvas>
-    <div class="dynamic-bg-spot-glow"></div>
-  </div>
-
+<body class="profile-password-page cm-module-shell min-h-full p-4 sm:p-6">
   <div class="max-w-6xl mx-auto">
-    <header class="mb-6">
+    <div class="glass profile-password-card rounded-xl border border-stone-200/60 p-5 sm:p-6">
+    <header class="cm-module-page-header">
       <p id="backLinkWrap">
         <a href="/coach-manager.html" target="_top"
-          class="text-sm text-amber-400/90 hover:text-amber-300 underline-offset-2 hover:underline">
+          class="cm-module-backlink text-sm underline-offset-2 hover:underline">
           ← Back to Coach Manager
         </a>
       </p>
-      <h1 class="text-2xl font-bold text-amber-300 mt-2">Prize List</h1>
+      <h1 class="profile-password-heading text-2xl font-semibold mt-3">Prize List</h1>
     </header>
 
     <section class="glass rounded-xl border border-white/15 p-4 mb-6 overflow-x-auto">
@@ -137,7 +132,7 @@
               Confirm
             </button>
             <button type="button" id="createPrizeCancelBtn"
-              class="rounded-lg bg-slate-700 hover:bg-slate-600 border border-white/15 text-slate-100 font-medium px-4 py-2 text-sm">
+              class="btn-cancel-metallic-brown rounded-lg font-medium px-4 py-2 text-sm">
               Cancel
             </button>
           </div>
@@ -257,16 +252,16 @@
               Confirm
             </button>
             <button type="button" id="tableEditCancelBtn"
-              class="rounded-lg bg-slate-700 hover:bg-slate-600 border border-white/15 text-slate-100 font-medium px-4 py-2 text-sm">
+              class="btn-cancel-metallic-brown rounded-lg font-medium px-4 py-2 text-sm">
               Cancel
             </button>
           </div>
         </form>
       </div>
     </section>
+    </div>
   </div>
 
-  <script src="/js/dashboard-dynamic-bg.js"></script>
   <script src="/js/api.js"></script>
   <script src="/js/auth.js"></script>
   <script>

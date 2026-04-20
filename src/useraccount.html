@@ -3,45 +3,46 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>User Profile</title>
+  <title>User account</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/profile-password-panels.css" />
 </head>
-<body class="page-gold-ivory">
-  <div class="gold-ivory-panel rounded-xl p-6 max-w-lg">
-    <h2 class="text-lg font-semibold text-amber-900 mb-4">User Profile</h2>
-    <p id="loadState" class="text-sm text-stone-500">Loading…</p>
+<body class="profile-password-page profile-account-page min-h-full p-6">
+  <div class="glass profile-password-card rounded-xl border p-6 max-w-lg">
+    <h2 class="profile-page-title">My Profile</h2>
+    <p id="loadState" class="text-sm profile-password-muted">Loading…</p>
     <dl id="accountFields" class="hidden space-y-3 text-sm">
       <div class="flex flex-col sm:flex-row sm:gap-4">
-        <dt class="text-amber-900/55 shrink-0 w-40">User Type</dt>
-        <dd id="fieldUserType" class="font-medium text-stone-800"></dd>
+        <dt class="profile-dt-black-bold shrink-0 w-40">User Type</dt>
+        <dd id="fieldUserType" class="font-medium"></dd>
       </div>
       <div class="flex flex-col sm:flex-row sm:gap-4">
-        <dt class="text-amber-900/55 shrink-0 w-40">Username</dt>
-        <dd id="fieldUsername" class="font-medium text-stone-800"></dd>
+        <dt class="profile-dt-black-bold shrink-0 w-40">Username</dt>
+        <dd id="fieldUsername" class="font-medium"></dd>
       </div>
       <div class="flex flex-col sm:flex-row sm:gap-4">
-        <dt class="text-amber-900/55 shrink-0 w-40">Full Name</dt>
-        <dd id="fieldFullName" class="font-medium text-stone-800"></dd>
+        <dt class="profile-dt-black-bold shrink-0 w-40">Full Name</dt>
+        <dd id="fieldFullName" class="font-medium"></dd>
       </div>
       <div class="flex flex-col sm:flex-row sm:gap-4">
-        <dt id="labelClubName" class="text-amber-900/55 shrink-0 w-40">Club Name</dt>
-        <dd id="fieldClubName" class="font-medium text-stone-800"></dd>
+        <dt id="labelClubName" class="profile-dt-black-bold shrink-0 w-40">Club Name</dt>
+        <dd id="fieldClubName" class="font-medium"></dd>
       </div>
       <div class="flex flex-col sm:flex-row sm:gap-4">
-        <dt class="text-amber-900/55 shrink-0 w-40">Status</dt>
-        <dd id="fieldStatus" class="font-medium text-stone-800"></dd>
+        <dt class="profile-dt-black-bold shrink-0 w-40">Status</dt>
+        <dd id="fieldStatus" class="font-medium"></dd>
       </div>
       <div class="flex flex-col sm:flex-row sm:gap-4">
-        <dt id="labelCreated" class="text-amber-900/55 shrink-0 w-40">Creation Date</dt>
-        <dd id="fieldCreated" class="font-medium text-stone-800"></dd>
+        <dt id="labelCreated" class="profile-dt-black-bold shrink-0 w-40">Creation Date</dt>
+        <dd id="fieldCreated" class="font-medium"></dd>
       </div>
       <div class="flex flex-col sm:flex-row sm:gap-4">
-        <dt class="text-amber-900/55 shrink-0 w-40">Expiry Date</dt>
-        <dd id="fieldExpiryDate" class="font-medium text-stone-800"></dd>
+        <dt class="profile-dt-black-bold shrink-0 w-40">Expiry Date</dt>
+        <dd id="fieldExpiryDate" class="font-medium"></dd>
       </div>
     </dl>
-    <p id="errorBox" class="hidden text-sm text-red-300 mt-4"></p>
+    <p id="errorBox" class="hidden text-sm text-red-600 mt-4"></p>
   </div>
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>

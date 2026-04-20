@@ -6,26 +6,21 @@
   <title>Student Information — Coach Manager</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/profile-password-panels.css" />
+  <link rel="stylesheet" href="/css/coach-manager-module-shell.css" />
+  <link rel="stylesheet" href="/css/btn-cancel-metallic-brown.css" />
 </head>
-<body
-  class="dashboard-dynamic-bg min-h-screen text-slate-100 p-6"
-  style="--dashboard-bg-img: url('/Source/Image/coach-manager.jpg');">
-  <div class="dynamic-bg-stack" aria-hidden="true">
-    <div class="dynamic-bg-photo"></div>
-    <div class="dynamic-bg-overlay"></div>
-    <canvas class="dynamic-bg-star-net"></canvas>
-    <div class="dynamic-bg-spot-glow"></div>
-  </div>
-
+<body class="profile-password-page cm-module-shell min-h-full p-4 sm:p-6">
   <div class="max-w-6xl mx-auto">
-    <header class="mb-6">
+    <div class="glass profile-password-card rounded-xl border border-stone-200/60 p-5 sm:p-6">
+    <header class="cm-module-page-header">
       <p id="backLinkWrap">
         <a href="/coach-manager.html" target="_top"
-          class="text-sm text-amber-400/90 hover:text-amber-300 underline-offset-2 hover:underline">
+          class="cm-module-backlink text-sm underline-offset-2 hover:underline">
           ← Back to Coach Manager
         </a>
       </p>
-      <h1 class="text-2xl font-bold text-amber-300 mt-2">Student Information</h1>
+      <h1 class="profile-password-heading text-2xl font-semibold mt-3">Student Information</h1>
     </header>
 
     <section class="glass rounded-xl border border-white/15 p-4 mb-6 overflow-x-auto">
@@ -72,13 +67,13 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label for="newStudentDob" class="block text-xs text-slate-400 mb-1">Date of Birth</label>
-              <input id="newStudentDob" type="date"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+              <input id="newStudentDob" type="text"
+                class="cm-date-ddmmyyyy w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="newStudentJoined" class="block text-xs text-slate-400 mb-1">Joined Date</label>
-              <input id="newStudentJoined" type="date" required
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+              <input id="newStudentJoined" type="text" required
+                class="cm-date-ddmmyyyy w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
           </div>
           <div>
@@ -160,7 +155,7 @@
               Confirm
             </button>
             <button type="button" id="createStudentCancelBtn"
-              class="rounded-lg bg-slate-700 hover:bg-slate-600 border border-white/15 text-slate-100 font-medium px-4 py-2 text-sm">
+              class="btn-cancel-metallic-brown rounded-lg font-medium px-4 py-2 text-sm">
               Cancel
             </button>
           </div>
@@ -211,13 +206,13 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label for="tableEditDateOfBirth" class="block text-xs text-slate-400 mb-1">Date of Birth</label>
-              <input id="tableEditDateOfBirth" type="date"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+              <input id="tableEditDateOfBirth" type="text"
+                class="cm-date-ddmmyyyy w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="tableEditJoinedDate" class="block text-xs text-slate-400 mb-1">Joined Date</label>
-              <input id="tableEditJoinedDate" type="date"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+              <input id="tableEditJoinedDate" type="text"
+                class="cm-date-ddmmyyyy w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
           </div>
           <div>
@@ -308,13 +303,14 @@
               Confirm
             </button>
             <button type="button" id="tableEditCancelBtn"
-              class="rounded-lg bg-slate-700 hover:bg-slate-600 border border-white/15 text-slate-100 font-medium px-4 py-2 text-sm">
+              class="btn-cancel-metallic-brown rounded-lg font-medium px-4 py-2 text-sm">
               Cancel
             </button>
           </div>
         </form>
       </div>
     </section>
+    </div>
   </div>
 
   <div id="removeUserConfirmModal" class="fixed inset-0 z-[80] hidden" aria-hidden="true" role="dialog" aria-labelledby="removeUserConfirmTitle">
@@ -371,7 +367,7 @@
         <p id="newStudentRoleAccountErr" class="mt-3 text-sm text-red-300 hidden"></p>
         <div class="flex flex-wrap gap-2 justify-end mt-5">
           <button type="button" id="newStudentRoleAccountCancel"
-            class="rounded-lg border border-amber-800/40 bg-black/35 hover:bg-amber-950/25 text-amber-100 px-4 py-2 text-sm font-medium">
+            class="btn-cancel-metallic-brown rounded-lg px-4 py-2 text-sm font-medium">
             Cancel
           </button>
           <button type="button" id="newStudentRoleAccountOk"
@@ -404,9 +400,9 @@
     </div>
   </div>
 
-  <script src="/js/dashboard-dynamic-bg.js"></script>
   <script src="/js/api.js"></script>
   <script src="/js/auth.js"></script>
+  <script src="/js/cm-date-ddmmyyyy.js"></script>
   <script>
     (function () {
       var isFramed = false;
@@ -680,11 +676,6 @@
         hideCreateStudentPanel();
       }
 
-      function isoDateForPicker(s) {
-        var t = (s == null ? "" : String(s)).trim();
-        return /^\d{4}-\d{2}-\d{2}$/.test(t) ? t : "";
-      }
-
       function bindSelectWithOrphan(sel, value) {
         if (!sel) {
           return;
@@ -800,10 +791,14 @@
           s.club_id || s.club_name || "";
         document.getElementById("tableEditFullName").value = s.full_name || "";
         bindSelectWithOrphan(document.getElementById("tableEditSex"), s.sex);
-        document.getElementById("tableEditDateOfBirth").value =
-          isoDateForPicker(s.date_of_birth);
-        document.getElementById("tableEditJoinedDate").value =
-          isoDateForPicker(s.joined_date);
+        window.cmDateDdMmYyyy.populateFromBackend(
+          "tableEditDateOfBirth",
+          s.date_of_birth
+        );
+        window.cmDateDdMmYyyy.populateFromBackend(
+          "tableEditJoinedDate",
+          s.joined_date
+        );
         document.getElementById("tableEditHomeAddress").value =
           s.home_address || "";
         bindSelectWithOrphan(document.getElementById("tableEditCountry"), s.country);
@@ -1221,12 +1216,8 @@
             .getElementById("tableEditContactNumber")
             .value.trim(),
           sex: document.getElementById("tableEditSex").value.trim(),
-          date_of_birth: document
-            .getElementById("tableEditDateOfBirth")
-            .value.trim(),
-          joined_date: document
-            .getElementById("tableEditJoinedDate")
-            .value.trim(),
+          date_of_birth: window.cmDateDdMmYyyy.readIso("tableEditDateOfBirth"),
+          joined_date: window.cmDateDdMmYyyy.readIso("tableEditJoinedDate"),
           home_address: document
             .getElementById("tableEditHomeAddress")
             .value.trim(),
@@ -1356,7 +1347,7 @@
         setNewStudentCountryToFirst();
         var joined = document.getElementById("newStudentJoined");
         if (joined) {
-          joined.value = ymdTodayLocal();
+          window.cmDateDdMmYyyy.writeIso(joined, ymdTodayLocal());
         }
         setNewStudentClubNameField();
         var coachSel = document.getElementById("newStudentStudentCoach");
@@ -1396,12 +1387,12 @@
         var body = {
           full_name: nm,
           sex: document.getElementById("newStudentSex").value.trim(),
-          date_of_birth: document.getElementById("newStudentDob").value.trim(),
+          date_of_birth: window.cmDateDdMmYyyy.readIso("newStudentDob"),
           home_address: document.getElementById("newStudentAddress").value.trim(),
           country: document.getElementById("newStudentCountry").value.trim(),
           email: em,
           contact_number: document.getElementById("newStudentPhone").value.trim(),
-          joined_date: document.getElementById("newStudentJoined").value.trim(),
+          joined_date: window.cmDateDdMmYyyy.readIso("newStudentJoined"),
           remark: document.getElementById("newStudentRemark").value.trim(),
           guardian: document.getElementById("newStudentGuardian").value.trim(),
           guardian_contact: document
@@ -1425,7 +1416,7 @@
               (data.studentId || "—");
             okBox.classList.remove("hidden");
             document.getElementById("createStudentForm").reset();
-            document.getElementById("newStudentJoined").value = ymdTodayLocal();
+            window.cmDateDdMmYyyy.writeIso("newStudentJoined", ymdTodayLocal());
             setNewStudentCountryToFirst();
             setNewStudentClubNameField();
             var cSel = document.getElementById("newStudentStudentCoach");

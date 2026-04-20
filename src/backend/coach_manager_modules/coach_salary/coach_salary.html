@@ -7,90 +7,22 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="/css/style.css" />
-  <style>
-    body.coach-salary-page.dashboard-dynamic-bg {
-      background-color: #e6f4ec;
-      isolation: isolate;
-    }
-    body.coach-salary-page .dynamic-bg-photo {
-      opacity: 0.12;
-      filter: sepia(0.4) saturate(0.55) brightness(1.2) contrast(0.95);
-      mix-blend-mode: multiply;
-    }
-    body.coach-salary-page .dynamic-bg-overlay {
-      background:
-        linear-gradient(
-          165deg,
-          rgba(255, 252, 244, 0.98) 0%,
-          rgba(240, 236, 224, 0.97) 24%,
-          rgba(228, 224, 212, 0.96) 48%,
-          rgba(250, 246, 232, 0.97) 72%,
-          rgba(210, 232, 218, 0.96) 100%
-        ),
-        linear-gradient(
-          95deg,
-          transparent 0%,
-          rgba(209, 250, 229, 0.5) 40%,
-          transparent 58%
-        ),
-        radial-gradient(
-          ellipse 130% 100% at var(--spot-x, 50%) var(--spot-y, 50%),
-          rgba(255, 251, 235, 0.65) 0%,
-          rgba(232, 228, 215, 0.35) 42%,
-          transparent 68%
-        ),
-        radial-gradient(ellipse 75% 55% at 8% 92%, rgba(185, 180, 168, 0.4) 0%, transparent 52%),
-        radial-gradient(ellipse 65% 50% at 94% 8%, rgba(245, 238, 210, 0.55) 0%, transparent 50%);
-    }
-    body.coach-salary-page .dynamic-bg-spot-glow {
-      background: radial-gradient(
-        circle min(88vw, 760px) at var(--spot-x, 50%) var(--spot-y, 50%),
-        rgba(255, 252, 235, 0.42) 0%,
-        rgba(230, 225, 205, 0.18) 48%,
-        transparent 70%
-      );
-      mix-blend-mode: soft-light;
-    }
-    body.coach-salary-page .dynamic-bg-star-net {
-      opacity: 0.06;
-      filter: sepia(1) hue-rotate(25deg) saturate(0.25) brightness(1.2);
-    }
-    body.coach-salary-page .glass {
-      background: linear-gradient(
-        155deg,
-        rgba(6, 52, 44, 0.82) 0%,
-        rgba(15, 48, 42, 0.86) 50%,
-        rgba(10, 42, 36, 0.84) 100%
-      );
-      border-color: rgba(52, 211, 153, 0.28);
-      box-shadow:
-        inset 0 1px 0 rgba(167, 243, 208, 0.1),
-        0 10px 40px rgba(0, 45, 35, 0.18);
-      backdrop-filter: blur(12px);
-    }
-  </style>
+  <link rel="stylesheet" href="/css/profile-password-panels.css" />
+  <link rel="stylesheet" href="/css/coach-manager-module-shell.css" />
 </head>
-<body
-  class="coach-salary-page dashboard-dynamic-bg min-h-screen text-amber-950 p-6 pb-24"
-  style="--dashboard-bg-img: url('/Source/Image/coach-manager.jpg');">
-  <div class="dynamic-bg-stack" aria-hidden="true">
-    <div class="dynamic-bg-photo"></div>
-    <div class="dynamic-bg-overlay"></div>
-    <canvas class="dynamic-bg-star-net"></canvas>
-    <div class="dynamic-bg-spot-glow"></div>
-  </div>
-
+<body class="coach-salary-page profile-password-page cm-module-shell min-h-full p-4 sm:p-6 pb-16">
   <div id="toastHost" class="fixed top-4 right-4 z-[200] flex flex-col gap-2 pointer-events-none max-w-sm"></div>
 
-  <div class="max-w-7xl mx-auto relative z-[1] text-amber-100">
-    <header class="mb-6 text-amber-950">
+  <div class="max-w-7xl mx-auto relative z-[1]">
+    <div class="glass profile-password-card rounded-xl border border-stone-200/60 p-5 sm:p-6">
+    <header class="cm-module-page-header">
       <p id="backLinkWrap">
         <a href="/coach-manager.html" target="_top"
-          class="text-sm text-amber-800 hover:text-amber-950 underline-offset-2 hover:underline font-medium">
+          class="cm-module-backlink text-sm underline-offset-2 hover:underline">
           ← Back to Coach Manager
         </a>
       </p>
-      <h1 class="text-2xl font-bold text-amber-950 mt-2 tracking-tight">Coach Salary</h1>
+      <h1 class="profile-password-heading text-2xl font-semibold mt-3 tracking-tight">Coach Salary</h1>
       <p id="loadError" class="hidden text-sm text-red-700 mt-2"></p>
     </header>
 
@@ -215,6 +147,7 @@
         </div>
       </div>
     </section>
+    </div>
   </div>
 
   <script src="/js/api.js"></script>

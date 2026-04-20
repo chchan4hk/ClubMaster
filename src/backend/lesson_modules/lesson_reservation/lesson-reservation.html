@@ -6,26 +6,21 @@
   <title>Lesson Reservation — Coach Manager</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/profile-password-panels.css" />
+  <link rel="stylesheet" href="/css/coach-manager-module-shell.css" />
+  <link rel="stylesheet" href="/css/btn-cancel-metallic-brown.css" />
 </head>
-<body
-  class="dashboard-dynamic-bg min-h-screen text-slate-100 p-6"
-  style="--dashboard-bg-img: url('/Source/Image/coach-manager.jpg');">
-  <div class="dynamic-bg-stack" aria-hidden="true">
-    <div class="dynamic-bg-photo"></div>
-    <div class="dynamic-bg-overlay"></div>
-    <canvas class="dynamic-bg-star-net"></canvas>
-    <div class="dynamic-bg-spot-glow"></div>
-  </div>
-
+<body class="profile-password-page cm-module-shell min-h-full p-4 sm:p-6">
   <div class="max-w-6xl mx-auto">
-    <header class="mb-6">
+    <div class="glass profile-password-card rounded-xl border border-stone-200/60 p-5 sm:p-6">
+    <header class="cm-module-page-header">
       <p id="backLinkWrap">
         <a href="/coach-manager.html" target="_top"
-          class="text-sm text-amber-400/90 hover:text-amber-300 underline-offset-2 hover:underline">
+          class="cm-module-backlink text-sm underline-offset-2 hover:underline">
           ← Back to Coach Manager
         </a>
       </p>
-      <h1 class="text-2xl font-bold text-amber-300 mt-2">Lesson Reservation</h1>
+      <h1 class="profile-password-heading text-2xl font-semibold mt-3">Lesson Reservation</h1>
     </header>
 
     <section class="glass rounded-xl border border-white/15 p-4 mb-6 overflow-x-auto">
@@ -166,13 +161,13 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label for="newLessonStart" class="block text-xs text-slate-400 mb-1">Lesson start date</label>
-              <input id="newLessonStart" type="date"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+              <input id="newLessonStart" type="text"
+                class="cm-date-ddmmyyyy w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="newLessonEnd" class="block text-xs text-slate-400 mb-1">Lesson end date</label>
-              <input id="newLessonEnd" type="date"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+              <input id="newLessonEnd" type="text"
+                class="cm-date-ddmmyyyy w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -221,7 +216,7 @@
               Confirm
             </button>
             <button type="button" id="createLessonCancelBtn"
-              class="rounded-lg bg-slate-700 hover:bg-slate-600 border border-white/15 text-slate-100 font-medium px-4 py-2 text-sm">
+              class="btn-cancel-metallic-brown rounded-lg font-medium px-4 py-2 text-sm">
               Cancel
             </button>
           </div>
@@ -345,13 +340,13 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label for="tableEditLessonStart" class="block text-xs text-slate-400 mb-1">Lesson start date</label>
-              <input id="tableEditLessonStart" type="date"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+              <input id="tableEditLessonStart" type="text"
+                class="cm-date-ddmmyyyy w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="tableEditLessonEnd" class="block text-xs text-slate-400 mb-1">Lesson end date</label>
-              <input id="tableEditLessonEnd" type="date"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+              <input id="tableEditLessonEnd" type="text"
+                class="cm-date-ddmmyyyy w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -412,13 +407,14 @@
               Confirm
             </button>
             <button type="button" id="tableEditCancelBtn"
-              class="rounded-lg bg-slate-700 hover:bg-slate-600 border border-white/15 text-slate-100 font-medium px-4 py-2 text-sm">
+              class="btn-cancel-metallic-brown rounded-lg font-medium px-4 py-2 text-sm">
               Cancel
             </button>
           </div>
         </form>
       </div>
     </section>
+    </div>
   </div>
 
   <div id="reservedStatusBackdrop" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-stone-950/65 backdrop-blur-sm p-4"
@@ -435,7 +431,7 @@
         </p>
         <div id="reservedStatusGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm"></div>
         <button type="button" id="reservedStatusClose"
-          class="mt-5 rounded-lg border border-amber-300/55 bg-gradient-to-b from-amber-100 via-amber-200/95 to-stone-400 px-4 py-2 text-sm font-semibold text-stone-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.75),inset_0_-1px_0_rgba(120,100,70,0.12)] hover:from-amber-50 hover:via-amber-100 hover:to-stone-300">
+          class="btn-cancel-metallic-brown mt-5 rounded-lg px-4 py-2 text-sm font-medium">
           Close
         </button>
       </div>
@@ -464,7 +460,7 @@
       </div>
       <div class="flex flex-wrap justify-end gap-2 px-5 py-3 border-t border-white/10 shrink-0">
         <button type="button" id="assignStudentModalCancel"
-          class="rounded-lg bg-slate-700 hover:bg-slate-600 border border-white/15 text-slate-100 font-medium px-4 py-2 text-sm">
+          class="btn-cancel-metallic-brown rounded-lg font-medium px-4 py-2 text-sm">
           Cancel
         </button>
         <button type="button" id="assignStudentModalConfirm"
@@ -475,9 +471,9 @@
     </div>
   </div>
 
-  <script src="/js/dashboard-dynamic-bg.js"></script>
   <script src="/js/api.js"></script>
   <script src="/js/auth.js"></script>
+  <script src="/js/cm-date-ddmmyyyy.js"></script>
   <script>
     (function () {
       var isFramed = false;
@@ -656,8 +652,8 @@
         return {
           LessonID: document.getElementById("tableEditLessonId").value.trim(),
           class_info: document.getElementById("tableEditClassInfo").value.trim(),
-          lesson_start_date: document.getElementById("tableEditLessonStart").value.trim(),
-          lesson_end_date: document.getElementById("tableEditLessonEnd").value.trim(),
+          lesson_start_date: window.cmDateDdMmYyyy.readIso("tableEditLessonStart"),
+          lesson_end_date: window.cmDateDdMmYyyy.readIso("tableEditLessonEnd"),
           class_time: document.getElementById("tableEditClassTime").value.trim(),
           Age_group: document.getElementById("tableEditAgeGroup").value.trim(),
           Sport_center: sc ? sc.value.trim() : "",
@@ -1024,11 +1020,6 @@
         hideCreateLessonPanel();
       }
 
-      function isoDateForPicker(s) {
-        var t = (s == null ? "" : String(s)).trim();
-        return /^\d{4}-\d{2}-\d{2}$/.test(t) ? t : "";
-      }
-
       /** Lesson list / API day flags are Y/N (or common truthy strings). */
       function lessonDayYnChecked(v) {
         var t = String(v == null ? "" : v).trim().toUpperCase();
@@ -1163,10 +1154,14 @@
               ? String(L.reservedNumber).trim()
               : "0";
         document.getElementById("tableEditFrequency").value = L.Frequency || "";
-        document.getElementById("tableEditLessonStart").value =
-          isoDateForPicker(L.lesson_start_date);
-        document.getElementById("tableEditLessonEnd").value =
-          isoDateForPicker(L.lesson_end_date);
+        window.cmDateDdMmYyyy.populateFromBackend(
+          "tableEditLessonStart",
+          L.lesson_start_date
+        );
+        window.cmDateDdMmYyyy.populateFromBackend(
+          "tableEditLessonEnd",
+          L.lesson_end_date
+        );
         setSportCenterSelectValue(
           document.getElementById("tableEditSportCenter"),
           L.Sport_center || ""
@@ -1835,12 +1830,8 @@
           max_number: document.getElementById("tableEditMaxNumber").value.trim(),
           ReservedNumber: document.getElementById("tableEditReservedNumber").value.trim(),
           Frequency: document.getElementById("tableEditFrequency").value.trim(),
-          lesson_start_date: document
-            .getElementById("tableEditLessonStart")
-            .value.trim(),
-          lesson_end_date: document
-            .getElementById("tableEditLessonEnd")
-            .value.trim(),
+          lesson_start_date: window.cmDateDdMmYyyy.readIso("tableEditLessonStart"),
+          lesson_end_date: window.cmDateDdMmYyyy.readIso("tableEditLessonEnd"),
           Sport_center: document
             .getElementById("tableEditSportCenter")
             .value.trim(),
@@ -2019,8 +2010,8 @@
           Age_group: document.getElementById("newLessonAgeGroup").value.trim(),
           max_number: document.getElementById("newLessonMaxNumber").value.trim(),
           Frequency: document.getElementById("newLessonFrequency").value.trim(),
-          lesson_start_date: document.getElementById("newLessonStart").value.trim(),
-          lesson_end_date: document.getElementById("newLessonEnd").value.trim(),
+          lesson_start_date: window.cmDateDdMmYyyy.readIso("newLessonStart"),
+          lesson_end_date: window.cmDateDdMmYyyy.readIso("newLessonEnd"),
           Sport_center: document.getElementById("newLessonSportCenter").value.trim(),
           court_no: document.getElementById("newLessonCourtNo").value.trim(),
           "Coach Name": document.getElementById("newLessonCoachName").value.trim(),

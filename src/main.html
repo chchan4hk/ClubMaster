@@ -570,10 +570,11 @@
   <script>
     (function () {
       /**
-       * Sign-in uses POST /api/auth/login-with-context. When the backend has MongoDB configured
-       * (MONGODB_URI, etc.), credentials are checked against `ClubMaster_DB.userLogin`. On success,
-       * the app opens the role dashboard from that record (Coach Manager → coach-manager.html,
-       * Coach → coach.html, Student → student.html, Administrator → admin.html).
+       * Sign-in uses POST /api/auth/login-with-context. The backend must use MongoDB
+       * (`MONGODB_URI`, etc.); credentials are verified only against `ClubMaster_DB.userLogin`
+       * (not userLogin.csv / JSON). On success, the app opens the role dashboard from that record
+       * (Coach Manager → coach-manager.html, Coach → coach.html, Student → student.html,
+       * Administrator → admin.html). If Mongo is not configured, the API returns 503.
        */
       if (new URLSearchParams(window.location.search).get("logout")) {
         window.auth.clearSession();
