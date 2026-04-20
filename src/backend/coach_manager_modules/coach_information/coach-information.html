@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coach Information — Coach Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/profile-password-panels.css" />
+  <link rel="stylesheet" href="/css/coach-manager-module-shell.css" />
+  <link rel="stylesheet" href="/css/btn-cancel-metallic-brown.css" />
+  <style>
+    /* Student view: highlight assigned coach (student_coach vs Full name). */
+    tr.cm-student-my-coach > td {
+      background-color: #facc15;
+      color: #1c1917;
+      border-top: 1px solid #ca8a04;
+      border-bottom: 1px solid #ca8a04;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body class="profile-password-page cm-module-shell min-h-full p-4 sm:p-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="glass profile-password-card rounded-xl border border-stone-200/60 p-5 sm:p-6">
+    <header class="cm-module-page-header">
+      <p id="backLinkWrap">
+        <a id="coachInfoBackLink" href="/coach-manager.html" target="_top"
+          class="cm-module-backlink text-sm underline-offset-2 hover:underline">
+          ← Back to Coach Manager
+        </a>
+      </p>
+      <h1 class="profile-password-heading text-2xl font-semibold mt-3">Coach Information</h1>
+    </header>
+
+    <section class="glass rounded-xl border border-white/15 p-4 mb-6 overflow-x-auto">
+      <h2 class="text-lg font-semibold text-amber-200 mb-1">Coach roster</h2>
+      <p class="text-xs text-slate-500 mb-3">
+        Use <strong>Update</strong> on a row to edit details, or <strong>Create New Coach</strong> below to add a coach.
+      </p>
+      <p id="fullCsvError" class="hidden text-sm text-red-300 mb-2"></p>
+      <p id="fullCsvWarn" class="hidden text-sm text-amber-200/90 mb-2"></p>
+      <table class="w-full text-sm text-left border-collapse min-w-max">
+        <thead>
+          <tr id="fullCsvHeadRow" class="border-b border-white/10 text-slate-400">
+            <th class="py-2 pr-3 font-medium">…</th>
+          </tr>
+        </thead>
+        <tbody id="fullCsvBody">
+          <tr><td class="py-4 text-slate-500">Loading…</td></tr>
+        </tbody>
+      </table>
+
+      <div class="mt-4 flex flex-wrap gap-2">
+        <button type="button" id="btnCreateNewCoach"
+          class="rounded-lg border border-orange-600/45 bg-gradient-to-b from-orange-800 via-orange-900 to-orange-950 px-4 py-2 text-sm font-semibold text-orange-50 shadow-[0_4px_16px_-4px_rgba(0,0,0,0.5),0_0_24px_-8px_rgba(234,88,12,0.22),inset_0_1px_0_rgba(255,237,213,0.2)] hover:from-orange-700 hover:via-orange-800 hover:to-orange-900">
+          Create New Coach
+        </button>
+        <button type="button" id="btnNewCoachRoleAccount"
+          class="rounded-lg border border-amber-400/35 bg-gradient-to-b from-amber-500 to-amber-700 px-4 py-2 text-sm font-semibold text-black shadow-[0_4px_14px_-4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.25)] hover:from-amber-400 hover:to-amber-600">
+          New Login Account
+        </button>
+      </div>
+
+      <div id="createCoachPanel" class="hidden mt-6 pt-6 border-t border-white/10 rounded-lg bg-slate-900/50 p-4">
+        <h3 class="text-base font-semibold text-amber-200 mb-2">New coach</h3>
+        <p class="text-xs text-slate-500 mb-4">
+          <strong>Club</strong> and <strong>Coach ID</strong> are assigned automatically. <strong>Created At</strong> and <strong>Last Update Date</strong> are set to today when you confirm.
+          This only adds the coach to your club roster.
+        </p>
+        <form id="createCoachForm" class="space-y-3 max-w-2xl">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="newCoachFullName" class="block text-xs text-slate-400 mb-1">Full Name</label>
+              <input id="newCoachFullName" type="text" required autocomplete="name"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+            </div>
+            <div>
+              <label for="newCoachClubName" class="block text-xs text-slate-400 mb-1">Club Name</label>
+              <input id="newCoachClubName" type="text" readonly
+                class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed"
+                value="" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label for="newCoachSex" class="block text-xs text-slate-400 mb-1">Sex</label>
+              <select id="newCoachSex" required
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
+                <option value="M">M</option>
+                <option value="F">F</option>
+                <option value="N/A" selected>N/A</option>
+              </select>
+            </div>
+            <div>
+              <label for="newCoachCountry" class="block text-xs text-slate-400 mb-1">Country</label>
+              <select id="newCoachCountry" required
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
+              </select>
+            </div>
+            <div>
+              <label for="newCoachHourly" class="block text-xs text-slate-400 mb-1">Hourly Rate</label>
+              <input id="newCoachHourly" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="newCoachDob" class="block text-xs text-slate-400 mb-1">Date of Birth</label>
+              <input id="newCoachDob" type="text"
+                class="cm-date-ddmmyyyy w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+            </div>
+            <div>
+              <label for="newCoachJoined" class="block text-xs text-slate-400 mb-1">Joined Date</label>
+              <input id="newCoachJoined" type="text" required
+                class="cm-date-ddmmyyyy w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+            </div>
+          </div>
+          <div>
+            <label for="newCoachAddress" class="block text-xs text-slate-400 mb-1">Home Address</label>
+            <input id="newCoachAddress" type="text" autocomplete="street-address"
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="newCoachEmail" class="block text-xs text-slate-400 mb-1">Email Address</label>
+              <input id="newCoachEmail" type="email" required autocomplete="email"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+            </div>
+            <div>
+              <label for="newCoachPhone" class="block text-xs text-slate-400 mb-1">Contact Number</label>
+              <input id="newCoachPhone" type="text" autocomplete="tel"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+            </div>
+          </div>
+          <div>
+            <label for="newCoachRemark" class="block text-xs text-slate-400 mb-1">Remark</label>
+            <input id="newCoachRemark" type="text"
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+          </div>
+          <p id="createCoachErr" class="hidden text-sm text-red-300"></p>
+          <p id="createCoachOk" class="hidden text-sm text-amber-300 whitespace-pre-wrap break-words"></p>
+          <div class="flex flex-wrap gap-2 pt-2">
+            <button type="submit" id="createCoachSubmitBtn"
+              class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
+              Confirm
+            </button>
+            <button type="button" id="createCoachCancelBtn"
+              class="btn-cancel-metallic-brown rounded-lg font-medium px-4 py-2 text-sm">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div id="tableEditPanel" class="hidden mt-6 pt-6 border-t border-white/10 rounded-lg bg-slate-900/40 p-4">
+        <h3 class="text-base font-semibold text-amber-200 mb-3">Edit coach</h3>
+        <p class="text-xs text-slate-500 mb-4">
+          Change <strong>Full Name</strong>, <strong>Sex</strong>, <strong>Country</strong>, <strong>Hourly Rate</strong>, <strong>Date of Birth</strong>, <strong>Joined Date</strong>,
+          <strong>Home Address</strong>, <strong>Email Address</strong>,
+          <strong>Contact Number</strong>, <strong>Status</strong>, and <strong>Remark</strong> below.
+          Click <strong>Confirm</strong> to save; <strong>Last Update Date</strong> is set to today for this coach.
+        </p>
+        <form id="tableEditForm" class="space-y-3 max-w-2xl">
+          <p class="text-[11px] uppercase tracking-wide text-slate-500 font-medium">Read-only</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="tableEditCoachId" class="block text-xs text-slate-400 mb-1">Coach ID</label>
+              <input id="tableEditCoachId" type="text" readonly
+                class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed" />
+            </div>
+            <div>
+              <label for="tableEditClubName" class="block text-xs text-slate-400 mb-1">Club</label>
+              <input id="tableEditClubName" type="text" readonly
+                class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="tableEditCreated" class="block text-xs text-slate-400 mb-1">Created At</label>
+              <input id="tableEditCreated" type="text" readonly
+                class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed" />
+            </div>
+            <div>
+              <label for="tableEditLastUpdate" class="block text-xs text-slate-400 mb-1">Last Update Date (current file value)</label>
+              <input id="tableEditLastUpdate" type="text" readonly
+                class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed" />
+            </div>
+          </div>
+          <p class="text-[11px] uppercase tracking-wide text-slate-500 font-medium pt-2">You can edit</p>
+          <div>
+            <label for="tableEditFullName" class="block text-xs text-slate-400 mb-1">Full Name</label>
+            <input id="tableEditFullName" type="text" required autocomplete="name"
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label for="tableEditSex" class="block text-xs text-slate-400 mb-1">Sex</label>
+              <select id="tableEditSex"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
+                <option value="">—</option>
+                <option value="M">M</option>
+                <option value="F">F</option>
+                <option value="N/A">N/A</option>
+              </select>
+            </div>
+            <div>
+              <label for="tableEditCountry" class="block text-xs text-slate-400 mb-1">Country</label>
+              <select id="tableEditCountry"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
+              </select>
+            </div>
+            <div>
+              <label for="tableEditHourlyRate" class="block text-xs text-slate-400 mb-1">Hourly Rate</label>
+              <input id="tableEditHourlyRate" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="tableEditDateOfBirth" class="block text-xs text-slate-400 mb-1">Date of Birth</label>
+              <input id="tableEditDateOfBirth" type="text"
+                class="cm-date-ddmmyyyy w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+            </div>
+            <div>
+              <label for="tableEditJoinedDate" class="block text-xs text-slate-400 mb-1">Joined Date</label>
+              <input id="tableEditJoinedDate" type="text"
+                class="cm-date-ddmmyyyy w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+            </div>
+          </div>
+          <div>
+            <label for="tableEditHomeAddress" class="block text-xs text-slate-400 mb-1">Home Address</label>
+            <input id="tableEditHomeAddress" type="text" autocomplete="street-address"
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="tableEditEmail" class="block text-xs text-slate-400 mb-1">Email Address</label>
+              <input id="tableEditEmail" type="email" required autocomplete="email"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+            </div>
+            <div>
+              <label for="tableEditContactNumber" class="block text-xs text-slate-400 mb-1">Contact Number</label>
+              <input id="tableEditContactNumber" type="text" autocomplete="tel"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="tableEditStatus" class="block text-xs text-slate-400 mb-1">Status</label>
+              <select id="tableEditStatus"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="INACTIVE">INACTIVE</option>
+              </select>
+            </div>
+            <div>
+              <label for="tableEditRemark" class="block text-xs text-slate-400 mb-1">Remark</label>
+              <input id="tableEditRemark" type="text"
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+            </div>
+          </div>
+          <p id="tableEditErr" class="hidden text-sm text-red-300"></p>
+          <p id="tableEditOk" class="hidden text-sm text-amber-300"></p>
+          <div class="flex flex-wrap gap-2 pt-2">
+            <button type="button" id="tableEditConfirmBtn"
+              class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
+              Confirm
+            </button>
+            <button type="button" id="tableEditCancelBtn"
+              class="btn-cancel-metallic-brown rounded-lg font-medium px-4 py-2 text-sm">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+    </div>
+  </div>
+
+  <div id="removeUserConfirmModal" class="fixed inset-0 z-[80] hidden" aria-hidden="true" role="dialog" aria-labelledby="removeUserConfirmTitle">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" id="removeUserConfirmBackdrop"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+      <div
+        class="pointer-events-auto w-full max-w-md rounded-xl border border-white/15 bg-slate-900/95 shadow-xl p-5 text-slate-100">
+        <p id="removeUserConfirmTitle" class="text-base text-slate-100 mb-5">Confirm to remove the user</p>
+        <div class="flex flex-wrap gap-2 justify-end">
+          <button type="button" id="removeUserConfirmNo"
+            class="rounded-lg bg-slate-700 hover:bg-slate-600 border border-white/15 text-slate-100 px-4 py-2 text-sm font-medium">
+            No, thanks
+          </button>
+          <button type="button" id="removeUserConfirmYes"
+            class="rounded-lg bg-red-600 hover:bg-red-500 text-white px-4 py-2 text-sm font-medium disabled:opacity-50">
+            YES
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="newCoachRoleAccountModal" class="fixed inset-0 z-[85] hidden" aria-hidden="true" role="dialog"
+    aria-labelledby="newCoachRoleAccountTitle">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" id="newCoachRoleAccountBackdrop"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+      <div
+        class="pointer-events-auto w-full max-w-md rounded-xl border border-amber-600/40 bg-gradient-to-br from-zinc-950 via-stone-950 to-black p-5 text-amber-50 shadow-[0_25px_60px_-12px_rgba(0,0,0,0.9),0_0_0_1px_rgba(212,175,55,0.08),0_0_80px_-20px_rgba(180,134,11,0.12)] ring-1 ring-amber-500/20">
+        <h2 id="newCoachRoleAccountTitle" class="text-base font-semibold text-amber-200 mb-4 tracking-tight">New Login Account for Coach</h2>
+        <div class="space-y-3">
+          <div>
+            <label for="newCoachRoleFullName" class="block text-xs text-amber-200/55 mb-1">Full Name</label>
+            <select id="newCoachRoleFullName"
+              class="w-full rounded-lg bg-black/50 border border-amber-900/45 px-3 py-2 text-amber-50 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-600/35 focus:border-amber-600/40">
+              <option value="">— Select —</option>
+            </select>
+          </div>
+          <div>
+            <label for="newCoachRoleUsername" class="block text-xs text-amber-200/55 mb-1">Username</label>
+            <input id="newCoachRoleUsername" type="text" autocomplete="username"
+              class="w-full rounded-lg bg-black/50 border border-amber-900/45 px-3 py-2 text-amber-50 text-sm placeholder:text-amber-200/25 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-600/35 focus:border-amber-600/40" />
+          </div>
+          <div>
+            <label for="newCoachRolePassword" class="block text-xs text-amber-200/55 mb-1">Password</label>
+            <input id="newCoachRolePassword" type="password" autocomplete="new-password"
+              class="w-full rounded-lg bg-black/50 border border-amber-900/45 px-3 py-2 text-amber-50 text-sm placeholder:text-amber-200/25 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-600/35 focus:border-amber-600/40" />
+          </div>
+          <div>
+            <label for="newCoachRolePassword2" class="block text-xs text-amber-200/55 mb-1">Re-enter Password</label>
+            <input id="newCoachRolePassword2" type="password" autocomplete="new-password"
+              class="w-full rounded-lg bg-black/50 border border-amber-900/45 px-3 py-2 text-amber-50 text-sm placeholder:text-amber-200/25 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-600/35 focus:border-amber-600/40" />
+          </div>
+        </div>
+        <p id="newCoachRoleAccountErr" class="mt-3 text-sm text-red-300 hidden"></p>
+        <div class="flex flex-wrap gap-2 justify-end mt-5">
+          <button type="button" id="newCoachRoleAccountCancel"
+            class="btn-cancel-metallic-brown rounded-lg px-4 py-2 text-sm font-medium">
+            Cancel
+          </button>
+          <button type="button" id="newCoachRoleAccountOk"
+            class="rounded-lg border border-amber-400/35 bg-gradient-to-b from-amber-500 to-amber-700 hover:from-amber-400 hover:to-amber-600 text-black px-4 py-2 text-sm font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] disabled:opacity-50">
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="loginAccountSuccessModal" class="fixed inset-0 z-[95] hidden" aria-hidden="true" role="dialog"
+    aria-labelledby="loginAccountSuccessTitle">
+    <div class="absolute inset-0 bg-black/55 backdrop-blur-sm" id="loginAccountSuccessBackdrop"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+      <div
+        class="pointer-events-auto w-full max-w-md rounded-xl border border-amber-500/40 bg-gradient-to-br from-amber-950 via-green-950 to-black p-5 text-amber-50 shadow-[0_25px_60px_-12px_rgba(0,0,0,0.9),0_0_0_1px_rgba(52,211,153,0.1),0_0_70px_-18px_rgba(16,185,129,0.18)] ring-1 ring-amber-400/25">
+        <h2 id="loginAccountSuccessTitle" class="text-base font-semibold text-amber-200 mb-3 tracking-tight">
+          Login account created
+        </h2>
+        <p id="loginAccountSuccessMessage"
+          class="text-sm text-amber-100/90 leading-relaxed whitespace-pre-wrap"></p>
+        <div class="flex justify-end mt-5">
+          <button type="button" id="loginAccountSuccessClose"
+            class="rounded-lg border border-amber-400/40 bg-gradient-to-b from-amber-500 to-amber-800 hover:from-amber-400 hover:to-amber-700 text-white px-5 py-2 text-sm font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.2),0_4px_14px_-4px_rgba(0,0,0,0.45)]">
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/cm-date-ddmmyyyy.js"></script>
+  <script>
+    (function () {
+      var isFramed = false;
+      try {
+        isFramed = window.self !== window.top;
+      } catch (e) {
+        isFramed = true;
+      }
+
+      var token =
+        window.auth &&
+        typeof window.auth.getToken === "function" &&
+        window.auth.getToken();
+      var role = localStorage.getItem("userRole");
+      var isStudentReadOnly = role === "Student";
+      var sessionOk =
+        Boolean(token) &&
+        (role === "CoachManager" || role === "Coach" || role === "Student");
+
+      if (isFramed) {
+        var bw = document.getElementById("backLinkWrap");
+        if (bw) {
+          bw.classList.add("hidden");
+        }
+      } else {
+        var backL = document.getElementById("coachInfoBackLink");
+        if (backL && isStudentReadOnly) {
+          backL.setAttribute("href", "/student.html");
+          backL.textContent = "← Back to Student";
+        }
+      }
+
+      function setUidLabels(uid) {
+        var u = uid && String(uid).trim() ? String(uid).trim() : "…";
+        var el = document.getElementById("hdrUid");
+        if (el) {
+          el.textContent = u;
+        }
+        document.querySelectorAll(".hdrUidInline").forEach(function (n) {
+          n.textContent = u;
+        });
+      }
+
+      (function primeClubIdFromUrlOrCache() {
+        var q = new URLSearchParams(window.location.search || "");
+        var id = (q.get("clubId") || q.get("uid") || "").trim();
+        var ctx =
+          window.api &&
+          window.api.getClubFolderContext &&
+          window.api.getClubFolderContext();
+        if (ctx && ctx.clubId) {
+          id = id || String(ctx.clubId).trim();
+        }
+        if (id) {
+          setUidLabels(id);
+        }
+      })();
+
+      if (!isFramed) {
+        if (isStudentReadOnly) {
+          if (!window.auth.guardPage("Student")) {
+            return;
+          }
+        } else if (role === "Coach") {
+          if (!window.auth.guardPage("Coach")) {
+            return;
+          }
+        } else if (role === "CoachManager") {
+          if (!window.auth.guardPage("CoachManager")) {
+            return;
+          }
+        } else {
+          return;
+        }
+      }
+
+      if (isStudentReadOnly) {
+        var intro = document.querySelector("section.glass > p.text-xs.text-slate-500.mb-3");
+        if (intro) {
+          intro.innerHTML =
+            "Coach roster is <strong>read-only</strong> and your Coach is highlighted in <strong>Yellow Color</strong>. Please contact your Club - Coach manager to update details if necessary.";
+        }
+        ["btnCreateNewCoach", "btnNewCoachRoleAccount"].forEach(function (id) {
+          var el = document.getElementById(id);
+          if (el) {
+            el.classList.add("hidden");
+          }
+        });
+        var cp = document.getElementById("createCoachPanel");
+        if (cp) {
+          cp.classList.add("hidden");
+        }
+        var ep = document.getElementById("tableEditPanel");
+        if (ep) {
+          ep.classList.add("hidden");
+        }
+      }
+
+      function escapeHtml(s) {
+        if (s == null) {
+          return "";
+        }
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      var cachedCoaches = [];
+
+      /** Options for New Login modal: full_name from club UserList_Coach.json (via GET /coach-manager/coaches). */
+      function fillNewCoachRoleFullNameSelect() {
+        var sel = document.getElementById("newCoachRoleFullName");
+        if (!sel || sel.tagName !== "SELECT") {
+          return;
+        }
+        sel.innerHTML = "";
+        var lead = document.createElement("option");
+        lead.value = "";
+        lead.textContent = "— Select —";
+        sel.appendChild(lead);
+        var list = Array.isArray(cachedCoaches) ? cachedCoaches.slice() : [];
+        var rows = [];
+        list.forEach(function (c) {
+          var fn = c.full_name != null ? String(c.full_name).trim() : "";
+          if (!fn) {
+            return;
+          }
+          rows.push({
+            fullName: fn,
+            coachId:
+              c.coach_id != null && String(c.coach_id).trim()
+                ? String(c.coach_id).trim()
+                : c.CoachID != null
+                  ? String(c.CoachID).trim()
+                  : "",
+          });
+        });
+        rows.sort(function (a, b) {
+          var cmp = a.fullName.localeCompare(b.fullName, undefined, {
+            sensitivity: "base",
+          });
+          return cmp !== 0 ? cmp : a.coachId.localeCompare(b.coachId);
+        });
+        var nameCount = Object.create(null);
+        rows.forEach(function (r) {
+          var k = r.fullName.toLowerCase();
+          nameCount[k] = (nameCount[k] || 0) + 1;
+        });
+        rows.forEach(function (row) {
+          var k = row.fullName.toLowerCase();
+          var opt = document.createElement("option");
+          opt.value = row.fullName;
+          var label = row.fullName;
+          if (nameCount[k] > 1 && row.coachId) {
+            label = row.fullName + " (" + row.coachId + ")";
+          }
+          opt.textContent = label;
+          sel.appendChild(opt);
+        });
+      }
+
+      /** Assigned coach label from UserList_Student.json (student_coach); set via GET /me for students. */
+      var cachedMyStudentCoach = "";
+      /** Manager club name from GET /coach-manager/coaches or GET /me (user.club_name). */
+      var cachedManagerClubName = "";
+
+      function normCoachLabel(s) {
+        return String(s == null ? "" : s)
+          .trim()
+          .toLowerCase()
+          .replace(/\s+/g, " ");
+      }
+
+      function coachRowIsMyAssignedCoach(c) {
+        if (!isStudentReadOnly || !cachedMyStudentCoach) {
+          return false;
+        }
+        var target = normCoachLabel(cachedMyStudentCoach);
+        if (!target) {
+          return false;
+        }
+        return normCoachLabel(c.full_name || "") === target;
+      }
+
+      function syncNewCoachClubNameField() {
+        var el = document.getElementById("newCoachClubName");
+        if (!el) {
+          return;
+        }
+        var v = (cachedManagerClubName || "").trim();
+        if (v === "—") {
+          v = "";
+        }
+        el.value = v;
+      }
+
+      var COACH_TABLE_COLS = [
+        { key: "coach_id", label: "Coach ID" },
+        { key: "club_name", label: "Club" },
+        { key: "full_name", label: "Full Name" },
+        { key: "sex", label: "Sex" },
+        { key: "date_of_birth", label: "Date of Birth" },
+        { key: "joined_date", label: "Joined Date" },
+        { key: "home_address", label: "Home Address" },
+        { key: "country", label: "Country" },
+        { key: "username", label: "User Login" },
+        { key: "email", label: "Email Address" },
+        { key: "contact_number", label: "Contact Number" },
+        { key: "status", label: "Status" },
+        { key: "creation_date", label: "Created At" },
+        { key: "remark", label: "Remark" },
+        { key: "lastUpdate_date", label: "Last Update Date" },
+        { key: "hourly_rate (HKD)", label: "Hourly Rate" },
+      ];
+
+      /** Student Coach Information: omit sensitive / internal roster columns. */
+      var COACH_TABLE_COLS_STUDENT_OMIT_KEYS = {
+        coach_id: true,
+        date_of_birth: true,
+        home_address: true,
+        username: true,
+        creation_date: true,
+      };
+
+      function coachTableColsForRole() {
+        if (!isStudentReadOnly) {
+          return COACH_TABLE_COLS;
+        }
+        return COACH_TABLE_COLS.filter(function (col) {
+          return !COACH_TABLE_COLS_STUDENT_OMIT_KEYS[col.key];
+        });
+      }
+
+      function hideCreateCoachPanel() {
+        var p = document.getElementById("createCoachPanel");
+        if (p) {
+          p.classList.add("hidden");
+        }
+        var ce = document.getElementById("createCoachErr");
+        var co = document.getElementById("createCoachOk");
+        if (ce) {
+          ce.classList.add("hidden");
+          ce.textContent = "";
+        }
+        if (co) {
+          co.classList.add("hidden");
+          co.textContent = "";
+        }
+      }
+
+      function hideTableEditPanel() {
+        var p = document.getElementById("tableEditPanel");
+        if (p) {
+          p.classList.add("hidden");
+        }
+        var err = document.getElementById("tableEditErr");
+        var ok = document.getElementById("tableEditOk");
+        if (err) {
+          err.classList.add("hidden");
+          err.textContent = "";
+        }
+        if (ok) {
+          ok.classList.add("hidden");
+          ok.textContent = "";
+        }
+      }
+
+      function hideAllCoachPanels() {
+        hideTableEditPanel();
+        hideCreateCoachPanel();
+      }
+
+      function bindSelectWithOrphan(sel, value) {
+        if (!sel) {
+          return;
+        }
+        sel.querySelectorAll("option[data-orphan]").forEach(function (o) {
+          o.remove();
+        });
+        var v = value == null ? "" : String(value).trim();
+        sel.value = v;
+        if (v && sel.value !== v) {
+          var opt = document.createElement("option");
+          opt.value = v;
+          opt.textContent = v;
+          opt.setAttribute("data-orphan", "1");
+          sel.appendChild(opt);
+          sel.value = v;
+        }
+      }
+
+      function initCountrySelectsFromBasicInfo() {
+        if (
+          !window.api ||
+          typeof window.api.fetchBasicInfo !== "function" ||
+          typeof window.api.fillSelectFromBasicList !== "function"
+        ) {
+          return Promise.resolve();
+        }
+        return window.api.fetchBasicInfo().then(function (info) {
+          window.api.fillSelectFromBasicList(
+            document.getElementById("newCoachCountry"),
+            info.countries,
+            {}
+          );
+          window.api.fillSelectFromBasicList(
+            document.getElementById("tableEditCountry"),
+            info.countries,
+            { leadEmpty: true, leadEmptyLabel: "—" }
+          );
+        });
+      }
+
+      function setNewCoachCountryToFirst() {
+        var nc = document.getElementById("newCoachCountry");
+        if (nc && nc.options.length) {
+          nc.selectedIndex = 0;
+        }
+      }
+
+      function ymdTodayLocal() {
+        var d = new Date();
+        var y = d.getFullYear();
+        var m = String(d.getMonth() + 1).padStart(2, "0");
+        var day = String(d.getDate()).padStart(2, "0");
+        return y + "-" + m + "-" + day;
+      }
+
+      function openTableEditPanelFromCoach(c) {
+        hideCreateCoachPanel();
+        document.getElementById("tableEditCoachId").value =
+          (c.coach_id != null && String(c.coach_id).trim()
+            ? String(c.coach_id).trim()
+            : c.CoachID) || "";
+        document.getElementById("tableEditClubName").value = c.club_name || "";
+        document.getElementById("tableEditFullName").value = c.full_name || "";
+        bindSelectWithOrphan(document.getElementById("tableEditSex"), c.sex);
+        window.cmDateDdMmYyyy.populateFromBackend(
+          "tableEditDateOfBirth",
+          c.date_of_birth
+        );
+        window.cmDateDdMmYyyy.populateFromBackend(
+          "tableEditJoinedDate",
+          c.joined_date
+        );
+        document.getElementById("tableEditHomeAddress").value =
+          c.home_address || "";
+        bindSelectWithOrphan(document.getElementById("tableEditCountry"), c.country);
+        document.getElementById("tableEditEmail").value = c.email || "";
+        document.getElementById("tableEditContactNumber").value =
+          c.contact_number || "";
+        var st = (c.status || "ACTIVE").toString().trim().toUpperCase();
+        document.getElementById("tableEditStatus").value =
+          st === "INACTIVE" ? "INACTIVE" : "ACTIVE";
+        document.getElementById("tableEditRemark").value = c.remark || "";
+        document.getElementById("tableEditHourlyRate").value =
+          c["hourly_rate (HKD)"] || "";
+        document.getElementById("tableEditCreated").value =
+          (window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+            ? window.api.formatDateDisplayDdMmYyyy(
+                c.creation_date || c.created_at || "",
+              )
+            : "") ||
+          (c.creation_date || c.created_at || "");
+        document.getElementById("tableEditLastUpdate").value =
+          (window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+            ? window.api.formatDateDisplayDdMmYyyy(c.lastUpdate_date || "")
+            : "") || (c.lastUpdate_date || "");
+        document.getElementById("tableEditErr").classList.add("hidden");
+        document.getElementById("tableEditOk").classList.add("hidden");
+        var panel = document.getElementById("tableEditPanel");
+        if (panel) {
+          panel.classList.remove("hidden");
+          try {
+            panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          } catch (se) {
+            /* ignore */
+          }
+        }
+      }
+
+      function renderCoachTableFromApi(coaches) {
+        var headRow = document.getElementById("fullCsvHeadRow");
+        var tb = document.getElementById("fullCsvBody");
+        if (!headRow || !tb) {
+          return;
+        }
+        if (!coaches || !coaches.length) {
+          headRow.innerHTML =
+            '<th class="py-2 pr-3 font-medium text-slate-400">—</th>';
+          tb.innerHTML =
+            '<tr><td class="py-4 text-slate-500">No coaches in list yet.</td></tr>';
+          return;
+        }
+        var cols = coachTableColsForRole();
+        headRow.innerHTML =
+          (isStudentReadOnly
+            ? ""
+            : '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap min-w-[9.5rem]">Actions</th>') +
+          cols.map(function (col) {
+            return (
+              '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap max-w-[14rem]">' +
+              escapeHtml(col.label) +
+              "</th>"
+            );
+          }).join("");
+        tb.innerHTML = coaches
+          .map(function (c, idx) {
+            var tds = cols.map(function (col) {
+              var v = c[col.key] != null ? String(c[col.key]) : "";
+              var disp =
+                window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                  ? window.api.formatDateDisplayDdMmYyyy(v)
+                  : v;
+              return (
+                '<td class="py-2 pr-3 text-xs align-top whitespace-pre-wrap break-words max-w-[16rem]">' +
+                escapeHtml(disp) +
+                "</td>"
+              );
+            }).join("");
+            var actionTd = isStudentReadOnly
+              ? ""
+              : '<td class="py-2 pr-3 align-top whitespace-nowrap">' +
+                '<div class="flex flex-wrap gap-1.5">' +
+                '<button type="button" class="cm-row-update rounded-md bg-amber-100/95 hover:bg-amber-200 border border-amber-300/80 text-slate-900 text-xs font-medium px-2.5 py-1.5 shadow-sm" data-idx="' +
+                idx +
+                '">Update</button>' +
+                '<button type="button" class="cm-row-remove rounded-md bg-red-200/90 hover:bg-red-300 border border-red-300/70 text-slate-900 text-xs font-medium px-2.5 py-1.5 shadow-sm" data-idx="' +
+                idx +
+                '">Remove</button>' +
+                "</div></td>";
+            var trClass =
+              "border-b border-white/5" +
+              (coachRowIsMyAssignedCoach(c) ? " cm-student-my-coach" : "");
+            return '<tr class="' + trClass + '">' + actionTd + tds + "</tr>";
+          })
+          .join("");
+      }
+
+      function renderRawCsvFallback(csv) {
+        var headRow = document.getElementById("fullCsvHeadRow");
+        var tb = document.getElementById("fullCsvBody");
+        if (!headRow || !tb) {
+          return;
+        }
+        if (!csv || !csv.headers || !csv.headers.length) {
+          headRow.innerHTML =
+            '<th class="py-2 pr-3 font-medium text-slate-400">—</th>';
+          tb.innerHTML =
+            '<tr><td class="py-4 text-slate-500">No CSV rows (empty or missing file).</td></tr>';
+          return;
+        }
+        var colCount = csv.headers.length;
+        headRow.innerHTML = csv.headers
+          .map(function (h) {
+            return (
+              '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap max-w-[14rem]">' +
+              escapeHtml(h) +
+              "</th>"
+            );
+          })
+          .join("");
+        if (!csv.rows || !csv.rows.length) {
+          tb.innerHTML =
+            '<tr><td colspan="' +
+            colCount +
+            '" class="py-4 text-slate-500">Header only — no data rows yet.</td></tr>';
+          return;
+        }
+        try {
+          tb.innerHTML = csv.rows
+            .map(function (row) {
+              var cells = Array.isArray(row) ? row : [];
+              return (
+                '<tr class="border-b border-white/5">' +
+                cells
+                  .map(function (cell) {
+                    var cStr = cell != null ? String(cell) : "";
+                    var disp =
+                      window.api &&
+                      typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                        ? window.api.formatDateDisplayDdMmYyyy(cStr)
+                        : cStr;
+                    return (
+                      '<td class="py-2 pr-3 text-xs align-top whitespace-pre-wrap break-words max-w-[16rem]">' +
+                      escapeHtml(disp) +
+                      "</td>"
+                    );
+                  })
+                  .join("") +
+                "</tr>"
+              );
+            })
+            .join("");
+        } catch (renderErr) {
+          tb.innerHTML =
+            '<tr><td colspan="' +
+            colCount +
+            '" class="py-4 text-red-300">Could not render table: ' +
+            escapeHtml(
+              renderErr && renderErr.message ? renderErr.message : String(renderErr)
+            ) +
+            "</td></tr>";
+        }
+      }
+
+      var loadFullCsvSeq = 0;
+      var loadFullCsvAbort = null;
+
+      function loadFullCsv() {
+        var errEl = document.getElementById("fullCsvError");
+        var warnEl = document.getElementById("fullCsvWarn");
+        hideAllCoachPanels();
+        if (errEl) {
+          errEl.classList.add("hidden");
+        }
+        if (warnEl) {
+          warnEl.classList.add("hidden");
+          warnEl.textContent = "";
+        }
+
+        if (!window.api || typeof window.api.api !== "function") {
+          if (errEl) {
+            errEl.textContent =
+              "Scripts failed to load. Open Coach Manager from the running Node server (same origin as the API), not file:// or a static server that omits /js/api.js.";
+            errEl.classList.remove("hidden");
+          }
+          cachedCoaches = [];
+          renderRawCsvFallback(null);
+          return;
+        }
+
+        loadFullCsvSeq += 1;
+        var mySeq = loadFullCsvSeq;
+        if (loadFullCsvAbort) {
+          try {
+            loadFullCsvAbort.abort();
+          } catch (abortErr) {
+            /* ignore */
+          }
+        }
+        loadFullCsvAbort =
+          typeof AbortController !== "undefined" ? new AbortController() : null;
+        var fetchOpts = loadFullCsvAbort ? { signal: loadFullCsvAbort.signal } : {};
+
+        window.api
+          .api("/coach-manager/coaches", fetchOpts)
+          .then(function (data) {
+            if (mySeq !== loadFullCsvSeq) {
+              return;
+            }
+            if (!data || data.ok === false) {
+              var failMsg =
+                (data && data.error) || "Could not load coach list (server returned an error).";
+              if (errEl) {
+                errEl.textContent = failMsg;
+                errEl.classList.remove("hidden");
+              }
+              cachedCoaches = [];
+              renderRawCsvFallback(null);
+              return;
+            }
+            if (data.clubId) {
+              setUidLabels(data.clubId);
+            }
+            if (data.clubName != null && String(data.clubName).trim()) {
+              cachedManagerClubName = String(data.clubName).trim();
+            }
+            syncNewCoachClubNameField();
+            if (warnEl && data.coachesParseWarning) {
+              warnEl.textContent =
+                "Roster table shows raw CSV; structured rows need a valid header (coach_id + full_name). " +
+                data.coachesParseWarning;
+              warnEl.classList.remove("hidden");
+            }
+            cachedCoaches = Array.isArray(data.coaches) ? data.coaches.slice() : [];
+            try {
+              if (cachedCoaches.length > 0) {
+                renderCoachTableFromApi(cachedCoaches);
+              } else {
+                renderRawCsvFallback(data.coachCsv || null);
+              }
+            } catch (renderErr) {
+              if (errEl) {
+                errEl.textContent =
+                  renderErr && renderErr.message
+                    ? renderErr.message
+                    : "Failed to render table.";
+                errEl.classList.remove("hidden");
+              }
+              cachedCoaches = [];
+              renderRawCsvFallback(data.coachCsv || null);
+            }
+          })
+          .catch(function (e) {
+            if (mySeq !== loadFullCsvSeq) {
+              return;
+            }
+            if (e && (e.name === "AbortError" || (e.cause && e.cause.name === "AbortError"))) {
+              return;
+            }
+            var msg = e.message || "Could not load coach CSV.";
+            if (e.status === 401 || /Unauthorized|Invalid token/i.test(msg)) {
+              msg +=
+                " Sign in as Coach Manager on the same host you used to open this site (do not mix localhost and 127.0.0.1).";
+            }
+            if (errEl) {
+              errEl.textContent = msg;
+              errEl.classList.remove("hidden");
+            }
+            cachedCoaches = [];
+            renderRawCsvFallback(null);
+          });
+      }
+
+      var pendingRemoveCoach = null;
+
+      function closeRemoveUserConfirmModal() {
+        pendingRemoveCoach = null;
+        var m = document.getElementById("removeUserConfirmModal");
+        if (m) {
+          m.classList.add("hidden");
+          m.setAttribute("aria-hidden", "true");
+        }
+        document.body.classList.remove("overflow-hidden");
+        var yesBtn = document.getElementById("removeUserConfirmYes");
+        if (yesBtn) {
+          yesBtn.disabled = false;
+        }
+      }
+
+      function openRemoveUserConfirmModal(triggerBtn, coachId) {
+        pendingRemoveCoach = { button: triggerBtn, coachId: coachId };
+        var m = document.getElementById("removeUserConfirmModal");
+        if (m) {
+          m.classList.remove("hidden");
+          m.setAttribute("aria-hidden", "false");
+        }
+        document.body.classList.add("overflow-hidden");
+      }
+
+      document.getElementById("removeUserConfirmBackdrop").addEventListener("click", closeRemoveUserConfirmModal);
+      document.getElementById("removeUserConfirmNo").addEventListener("click", closeRemoveUserConfirmModal);
+      document.getElementById("removeUserConfirmYes").addEventListener("click", function () {
+        if (!pendingRemoveCoach) {
+          return;
+        }
+        var p = pendingRemoveCoach;
+        var cid = p.coachId;
+        var triggerBtn = p.button;
+        pendingRemoveCoach = null;
+        closeRemoveUserConfirmModal();
+        var yesBtn = document.getElementById("removeUserConfirmYes");
+        if (triggerBtn) {
+          triggerBtn.disabled = true;
+        }
+        if (yesBtn) {
+          yesBtn.disabled = true;
+        }
+        window.api
+          .api("/coach-manager/coaches/remove", {
+            method: "POST",
+            body: JSON.stringify({ coach_id: cid }),
+          })
+          .then(function () {
+            hideTableEditPanel();
+            loadFullCsv();
+          })
+          .catch(function (e) {
+            window.alert(e.message || "Remove failed.");
+          })
+          .finally(function () {
+            if (triggerBtn) {
+              triggerBtn.disabled = false;
+            }
+            if (yesBtn) {
+              yesBtn.disabled = false;
+            }
+          });
+      });
+
+      (function bindCoachTableActions() {
+        var tb = document.getElementById("fullCsvBody");
+        if (!tb || tb.dataset.cmRowBound === "1") {
+          return;
+        }
+        tb.dataset.cmRowBound = "1";
+        tb.addEventListener("click", function (ev) {
+          var rm =
+            ev.target && ev.target.closest && ev.target.closest("button.cm-row-remove");
+          if (rm) {
+            var ridx = parseInt(rm.getAttribute("data-idx"), 10);
+            if (isNaN(ridx) || ridx < 0 || ridx >= cachedCoaches.length) {
+              return;
+            }
+            var crow = cachedCoaches[ridx];
+            var cid =
+              crow && (crow.coach_id != null || crow.CoachID != null)
+                ? String(crow.coach_id != null ? crow.coach_id : crow.CoachID).trim()
+                : "";
+            if (!cid) {
+              window.alert("Missing Coach ID.");
+              return;
+            }
+            openRemoveUserConfirmModal(rm, cid);
+            return;
+          }
+          var btn = ev.target && ev.target.closest && ev.target.closest("button.cm-row-update");
+          if (!btn) {
+            return;
+          }
+          var idx = parseInt(btn.getAttribute("data-idx"), 10);
+          if (isNaN(idx) || idx < 0 || idx >= cachedCoaches.length) {
+            return;
+          }
+          openTableEditPanelFromCoach(cachedCoaches[idx]);
+        });
+      })();
+
+      document.getElementById("tableEditCancelBtn").addEventListener("click", function () {
+        hideTableEditPanel();
+      });
+
+      document.getElementById("tableEditConfirmBtn").addEventListener("click", function () {
+        var btn = document.getElementById("tableEditConfirmBtn");
+        var errBox = document.getElementById("tableEditErr");
+        var okBox = document.getElementById("tableEditOk");
+        errBox.classList.add("hidden");
+        okBox.classList.add("hidden");
+        var id = document.getElementById("tableEditCoachId").value.trim();
+        if (!id) {
+          errBox.textContent = "Missing coach_id.";
+          errBox.classList.remove("hidden");
+          return;
+        }
+        var nm = document.getElementById("tableEditFullName").value.trim();
+        var em = document.getElementById("tableEditEmail").value.trim();
+        if (!nm || !em) {
+          errBox.textContent = "full_name and email are required.";
+          errBox.classList.remove("hidden");
+          return;
+        }
+        btn.disabled = true;
+        var putBody = {
+          coach_id: id,
+          full_name: nm,
+          email: em,
+          contact_number: document
+            .getElementById("tableEditContactNumber")
+            .value.trim(),
+          sex: document.getElementById("tableEditSex").value.trim(),
+          date_of_birth: window.cmDateDdMmYyyy.readIso("tableEditDateOfBirth"),
+          joined_date: window.cmDateDdMmYyyy.readIso("tableEditJoinedDate"),
+          home_address: document
+            .getElementById("tableEditHomeAddress")
+            .value.trim(),
+          country: document.getElementById("tableEditCountry").value.trim(),
+          status: document.getElementById("tableEditStatus").value,
+          remark: document.getElementById("tableEditRemark").value.trim(),
+        };
+        putBody["hourly_rate (HKD)"] = document
+          .getElementById("tableEditHourlyRate")
+          .value.trim();
+        window.api
+          .api("/coach-manager/coaches", {
+            method: "PUT",
+            body: JSON.stringify(putBody),
+          })
+          .then(function () {
+            loadFullCsv();
+          })
+          .catch(function (e) {
+            errBox.textContent = e.message || "Save failed.";
+            errBox.classList.remove("hidden");
+          })
+          .finally(function () {
+            btn.disabled = false;
+          });
+      });
+
+      window.addEventListener("message", function (ev) {
+        if (ev.origin !== window.location.origin) {
+          return;
+        }
+        var d = ev.data;
+        if (!d || d.type !== "sportCoach.clubContext") {
+          return;
+        }
+        var cid = String(d.clubId || d.uid || "").trim();
+        if (cid) {
+          setUidLabels(cid);
+        }
+        if (
+          window.api &&
+          typeof window.api.setClubFolderContext === "function"
+        ) {
+          window.api.setClubFolderContext(
+            cid || null,
+            d.clubName != null && String(d.clubName).trim() !== ""
+              ? String(d.clubName).trim()
+              : null
+          );
+        }
+        loadFullCsv();
+      });
+
+      if (window.api && typeof window.api.api === "function") {
+        window.api
+          .api("/me")
+          .then(function (d) {
+            var u = d.user || {};
+            setUidLabels(u.uid);
+            var cn =
+              u.club_name != null && String(u.club_name).trim() !== ""
+                ? String(u.club_name).trim()
+                : "";
+            if (cn && cn !== "—") {
+              cachedManagerClubName = cn;
+            }
+            if (isStudentReadOnly && u.student_coach != null) {
+              cachedMyStudentCoach = String(u.student_coach).trim();
+            }
+            syncNewCoachClubNameField();
+            if (isStudentReadOnly && cachedCoaches.length) {
+              renderCoachTableFromApi(cachedCoaches);
+            }
+          })
+          .catch(function () {
+            /* keep UID from CSV response or postMessage */
+          });
+      }
+
+      initCountrySelectsFromBasicInfo()
+        .catch(function () {
+          /* dropdowns stay empty if API fails */
+        })
+        .finally(function () {
+          loadFullCsv();
+        });
+
+      document.getElementById("btnCreateNewCoach").addEventListener("click", function () {
+        hideTableEditPanel();
+        var panel = document.getElementById("createCoachPanel");
+        var form = document.getElementById("createCoachForm");
+        var errEl = document.getElementById("createCoachErr");
+        var okEl = document.getElementById("createCoachOk");
+        if (errEl) {
+          errEl.classList.add("hidden");
+          errEl.textContent = "";
+        }
+        if (okEl) {
+          okEl.classList.add("hidden");
+          okEl.textContent = "";
+        }
+        if (form) {
+          form.reset();
+        }
+        setNewCoachCountryToFirst();
+        syncNewCoachClubNameField();
+        var joined = document.getElementById("newCoachJoined");
+        if (joined) {
+          window.cmDateDdMmYyyy.writeIso(joined, ymdTodayLocal());
+        }
+        if (panel) {
+          panel.classList.remove("hidden");
+          try {
+            panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          } catch (se) {
+            /* ignore */
+          }
+        }
+      });
+
+      document.getElementById("createCoachCancelBtn").addEventListener("click", function () {
+        hideCreateCoachPanel();
+      });
+
+      document.getElementById("createCoachForm").addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        var errBox = document.getElementById("createCoachErr");
+        var okBox = document.getElementById("createCoachOk");
+        var btn = document.getElementById("createCoachSubmitBtn");
+        errBox.classList.add("hidden");
+        okBox.classList.add("hidden");
+        errBox.textContent = "";
+        var nm = document.getElementById("newCoachFullName").value.trim();
+        var em = document.getElementById("newCoachEmail").value.trim();
+        if (!nm || !em) {
+          errBox.textContent = "Full Name and Email are required.";
+          errBox.classList.remove("hidden");
+          return;
+        }
+        btn.disabled = true;
+        var body = {
+          full_name: nm,
+          sex: document.getElementById("newCoachSex").value.trim(),
+          date_of_birth: window.cmDateDdMmYyyy.readIso("newCoachDob"),
+          home_address: document.getElementById("newCoachAddress").value.trim(),
+          country: document.getElementById("newCoachCountry").value.trim(),
+          email: em,
+          contact_number: document.getElementById("newCoachPhone").value.trim(),
+          joined_date: window.cmDateDdMmYyyy.readIso("newCoachJoined"),
+          remark: document.getElementById("newCoachRemark").value.trim(),
+          status: "ACTIVE",
+        };
+        body["hourly_rate (HKD)"] = document
+          .getElementById("newCoachHourly")
+          .value.trim();
+        window.api
+          .api("/coach-manager/coaches", {
+            method: "POST",
+            body: JSON.stringify(body),
+          })
+          .then(function (data) {
+            okBox.textContent =
+              (data.message || "Created.") +
+              " Coach ID: " +
+              (data.coachId || "—");
+            okBox.classList.remove("hidden");
+            document.getElementById("createCoachForm").reset();
+            window.cmDateDdMmYyyy.writeIso("newCoachJoined", ymdTodayLocal());
+            setNewCoachCountryToFirst();
+            syncNewCoachClubNameField();
+            loadFullCsv();
+          })
+          .catch(function (e) {
+            errBox.textContent = e.message || "Could not create coach.";
+            errBox.classList.remove("hidden");
+          })
+          .finally(function () {
+            btn.disabled = false;
+          });
+      });
+
+      function openNewCoachRoleAccountModal() {
+        var m = document.getElementById("newCoachRoleAccountModal");
+        var err = document.getElementById("newCoachRoleAccountErr");
+        if (err) {
+          err.classList.add("hidden");
+          err.textContent = "";
+        }
+        function showModal() {
+          fillNewCoachRoleFullNameSelect();
+          var fn = document.getElementById("newCoachRoleFullName");
+          var un = document.getElementById("newCoachRoleUsername");
+          var p1 = document.getElementById("newCoachRolePassword");
+          var p2 = document.getElementById("newCoachRolePassword2");
+          if (fn && fn.tagName === "SELECT") {
+            fn.selectedIndex = 0;
+          }
+          if (un) {
+            un.value = "";
+          }
+          if (p1) {
+            p1.value = "";
+          }
+          if (p2) {
+            p2.value = "";
+          }
+          if (m) {
+            m.classList.remove("hidden");
+            m.setAttribute("aria-hidden", "false");
+          }
+        }
+        if (
+          window.api &&
+          typeof window.api.api === "function" &&
+          (!cachedCoaches || cachedCoaches.length === 0)
+        ) {
+          window.api
+            .api("/coach-manager/coaches")
+            .then(function (data) {
+              if (data && data.ok && Array.isArray(data.coaches)) {
+                cachedCoaches = data.coaches.slice();
+              }
+            })
+            .catch(function () {
+              /* keep empty list */
+            })
+            .finally(showModal);
+          return;
+        }
+        showModal();
+      }
+
+      function closeNewCoachRoleAccountModal() {
+        var m = document.getElementById("newCoachRoleAccountModal");
+        if (m) {
+          m.classList.add("hidden");
+          m.setAttribute("aria-hidden", "true");
+        }
+      }
+
+      function openLoginAccountSuccessModal(message) {
+        var msgEl = document.getElementById("loginAccountSuccessMessage");
+        var modal = document.getElementById("loginAccountSuccessModal");
+        if (msgEl) {
+          msgEl.textContent = message || "";
+        }
+        if (modal) {
+          modal.classList.remove("hidden");
+          modal.setAttribute("aria-hidden", "false");
+        }
+        document.body.classList.add("overflow-hidden");
+      }
+
+      function closeLoginAccountSuccessModal() {
+        var modal = document.getElementById("loginAccountSuccessModal");
+        if (modal) {
+          modal.classList.add("hidden");
+          modal.setAttribute("aria-hidden", "true");
+        }
+        document.body.classList.remove("overflow-hidden");
+      }
+
+      document
+        .getElementById("loginAccountSuccessBackdrop")
+        .addEventListener("click", closeLoginAccountSuccessModal);
+      document
+        .getElementById("loginAccountSuccessClose")
+        .addEventListener("click", closeLoginAccountSuccessModal);
+
+      document.getElementById("btnNewCoachRoleAccount").addEventListener("click", function () {
+        hideCreateCoachPanel();
+        hideTableEditPanel();
+        openNewCoachRoleAccountModal();
+      });
+      document
+        .getElementById("newCoachRoleAccountCancel")
+        .addEventListener("click", closeNewCoachRoleAccountModal);
+      document
+        .getElementById("newCoachRoleAccountBackdrop")
+        .addEventListener("click", closeNewCoachRoleAccountModal);
+      document.getElementById("newCoachRoleAccountOk").addEventListener("click", function () {
+        var errEl = document.getElementById("newCoachRoleAccountErr");
+        var okBtn = document.getElementById("newCoachRoleAccountOk");
+        if (!window.api || typeof window.api.api !== "function") {
+          if (errEl) {
+            errEl.textContent = "API not loaded.";
+            errEl.classList.remove("hidden");
+          }
+          return;
+        }
+        var fullNameEl = document.getElementById("newCoachRoleFullName");
+        var usernameEl = document.getElementById("newCoachRoleUsername");
+        var pwEl = document.getElementById("newCoachRolePassword");
+        var pw2El = document.getElementById("newCoachRolePassword2");
+        var fullName =
+          fullNameEl && fullNameEl.value != null
+            ? String(fullNameEl.value).trim()
+            : "";
+        var username = usernameEl ? usernameEl.value.trim() : "";
+        var pw = pwEl ? pwEl.value : "";
+        var pw2 = pw2El ? pw2El.value : "";
+        if (errEl) {
+          errEl.classList.add("hidden");
+          errEl.textContent = "";
+        }
+        if (!fullName || !username || !pw) {
+          if (errEl) {
+            errEl.textContent =
+              "Select a coach (full name), username, and password are required.";
+            errEl.classList.remove("hidden");
+          }
+          return;
+        }
+        if (pw !== pw2) {
+          if (errEl) {
+            errEl.textContent = "Passwords do not match.";
+            errEl.classList.remove("hidden");
+          }
+          return;
+        }
+        if (pw.length < 6) {
+          if (errEl) {
+            errEl.textContent = "Password must be at least 6 characters.";
+            errEl.classList.remove("hidden");
+          }
+          return;
+        }
+        okBtn.disabled = true;
+        window.api
+          .api("/coach-manager/coaches/role-login-account", {
+            method: "POST",
+            body: JSON.stringify({
+              fullName: fullName,
+              username: username,
+              password: pw,
+              passwordConfirm: pw2,
+            }),
+          })
+          .then(function (data) {
+            var uid = data.uid != null ? String(data.uid) : "";
+            var cid = data.clubId != null ? String(data.clubId) : "";
+            var cname = data.clubName != null ? String(data.clubName) : "";
+            var parts = [data.message || "Created."];
+            if (uid) {
+              parts.push("Login UID: " + uid + ".");
+            }
+            if (cid || cname) {
+              parts.push("Club: " + (cid || "—") + (cname ? " (" + cname + ")" : "") + ".");
+            }
+            closeNewCoachRoleAccountModal();
+            openLoginAccountSuccessModal(parts.join("\n"));
+          })
+          .catch(function (e) {
+            if (errEl) {
+              errEl.textContent = e.message || "Could not create account.";
+              errEl.classList.remove("hidden");
+            }
+          })
+          .finally(function () {
+            okBtn.disabled = false;
+          });
+      });
+    })();
+  </script>
+</body>
+</html>

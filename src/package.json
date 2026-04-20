@@ -1,0 +1,14 @@
+{
+  "name": "clubmaster-src",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ClubMaster src workspace (HTML UI + backend runner scripts)",
+  "scripts": {
+    "backend": "npm run dev --prefix backend",
+    "backend:dev": "npm run dev --prefix backend",
+    "backend:install": "npm install --prefix backend",
+    "backend:build": "npm run build --prefix backend",
+    "backend:start": "npm start --prefix backend",
+    "backend:start:tsx": "npm run start:tsx --prefix backend"
+  }
+}

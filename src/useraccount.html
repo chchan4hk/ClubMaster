@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User account</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/profile-password-panels.css" />
+</head>
+<body class="profile-password-page profile-account-page min-h-full p-6">
+  <div class="glass profile-password-card rounded-xl border p-6 max-w-lg">
+    <h2 class="profile-page-title">My Profile</h2>
+    <p id="loadState" class="text-sm profile-password-muted">Loading…</p>
+    <dl id="accountFields" class="hidden space-y-3 text-sm">
+      <div class="flex flex-col sm:flex-row sm:gap-4">
+        <dt class="profile-dt-black-bold shrink-0 w-40">User Type</dt>
+        <dd id="fieldUserType" class="font-medium"></dd>
+      </div>
+      <div class="flex flex-col sm:flex-row sm:gap-4">
+        <dt class="profile-dt-black-bold shrink-0 w-40">Username</dt>
+        <dd id="fieldUsername" class="font-medium"></dd>
+      </div>
+      <div class="flex flex-col sm:flex-row sm:gap-4">
+        <dt class="profile-dt-black-bold shrink-0 w-40">Full Name</dt>
+        <dd id="fieldFullName" class="font-medium"></dd>
+      </div>
+      <div class="flex flex-col sm:flex-row sm:gap-4">
+        <dt id="labelClubName" class="profile-dt-black-bold shrink-0 w-40">Club Name</dt>
+        <dd id="fieldClubName" class="font-medium"></dd>
+      </div>
+      <div class="flex flex-col sm:flex-row sm:gap-4">
+        <dt class="profile-dt-black-bold shrink-0 w-40">Status</dt>
+        <dd id="fieldStatus" class="font-medium"></dd>
+      </div>
+      <div class="flex flex-col sm:flex-row sm:gap-4">
+        <dt id="labelCreated" class="profile-dt-black-bold shrink-0 w-40">Creation Date</dt>
+        <dd id="fieldCreated" class="font-medium"></dd>
+      </div>
+      <div class="flex flex-col sm:flex-row sm:gap-4">
+        <dt class="profile-dt-black-bold shrink-0 w-40">Expiry Date</dt>
+        <dd id="fieldExpiryDate" class="font-medium"></dd>
+      </div>
+    </dl>
+    <p id="errorBox" class="hidden text-sm text-red-600 mt-4"></p>
+  </div>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    (function () {
+      if (!window.auth.getToken()) {
+        window.location.href = "main.html";
+        return;
+      }
+      var loadState = document.getElementById("loadState");
+      var fields = document.getElementById("accountFields");
+      var errBox = document.getElementById("errorBox");
+      window.api
+        .api("/me")
+        .then(function (data) {
+          var u = data.user;
+          if (!u) {
+            throw new Error("No user in response");
+          }
+          document.getElementById("fieldUserType").textContent =
+            u.usertype != null && String(u.usertype).trim() !== ""
+              ? String(u.usertype)
+              : String(u.role || "—");
+          document.getElementById("fieldUsername").textContent =
+            u.username != null ? String(u.username) : "—";
+          document.getElementById("fieldFullName").textContent = (function () {
+            var fn =
+              u.full_name != null && String(u.full_name).trim() !== ""
+                ? String(u.full_name).trim()
+                : "";
+            return fn !== "" && fn !== "—" ? fn : "—";
+          })();
+          document.getElementById("fieldClubName").textContent =
+            u.club_name != null && String(u.club_name).trim() !== ""
+              ? String(u.club_name)
+              : "—";
+          document.getElementById("fieldStatus").textContent =
+            u.status != null && String(u.status).trim() !== ""
+              ? String(u.status)
+              : "—";
+          document.getElementById("fieldCreated").textContent = (function () {
+            if (u.creation_date == null) {
+              return "—";
+            }
+            var s = String(u.creation_date);
+            return window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+              ? window.api.formatDateDisplayDdMmYyyy(s) || s
+              : s;
+          })();
+          document.getElementById("fieldExpiryDate").textContent = (function () {
+            if (u.expiry_date == null) {
+              return "—";
+            }
+            var s = String(u.expiry_date);
+            return window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+              ? window.api.formatDateDisplayDdMmYyyy(s) || s
+              : s;
+          })();
+          if (u.role === "Student" || u.role === "Coach") {
+            var lc = document.getElementById("labelClubName");
+            var ld = document.getElementById("labelCreated");
+            if (lc) {
+              lc.textContent = "Club Name";
+            }
+            if (ld) {
+              ld.textContent = "Creation Date";
+            }
+          }
+          loadState.classList.add("hidden");
+          fields.classList.remove("hidden");
+        })
+        .catch(function (e) {
+          loadState.classList.add("hidden");
+          errBox.textContent = e.message || "Could not load account.";
+          errBox.classList.remove("hidden");
+        });
+    })();
+  </script>
+</body>
+</html>

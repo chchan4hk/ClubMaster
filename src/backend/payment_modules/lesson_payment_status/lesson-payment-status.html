@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson Payment Status — Coach Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/profile-password-panels.css" />
+  <link rel="stylesheet" href="/css/coach-manager-module-shell.css" />
+  <link rel="stylesheet" href="/css/btn-cancel-metallic-brown.css" />
+  <style>
+    .btn-metal-gold {
+      background: linear-gradient(145deg, #e8c547 0%, #a67c1a 42%, #2a1f08 100%);
+      color: #0c0a06;
+      border: 1px solid rgba(255, 224, 130, 0.45);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 2px 10px rgba(0, 0, 0, 0.45);
+      font-weight: 600;
+    }
+    .btn-metal-gold:hover {
+      filter: brightness(1.09);
+    }
+    .btn-metal-red {
+      background: linear-gradient(145deg, #dc2626 0%, #7f1d1d 48%, #1a0a0a 100%);
+      color: #fecaca;
+      border: 1px solid rgba(248, 113, 113, 0.4);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 2px 10px rgba(0, 0, 0, 0.5);
+      font-weight: 600;
+    }
+    .btn-metal-red:hover {
+      filter: brightness(1.08);
+    }
+    .btn-metal-dark {
+      background: linear-gradient(145deg, #52525b 0%, #3f3f46 45%, #18181b 100%);
+      color: #fafafa;
+      border: 1px solid rgba(161, 161, 170, 0.45);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 2px 8px rgba(0, 0, 0, 0.35);
+      font-weight: 600;
+    }
+    .btn-metal-dark:hover {
+      filter: brightness(1.08);
+    }
+    /* Compact action row: keep three controls on one line */
+    .lesson-pay-actions {
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .lesson-pay-actions .btn-action-compact {
+      flex-shrink: 0;
+      padding: 0.25rem 0.35rem;
+      font-size: 10px;
+      line-height: 1.2;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+  </style>
+</head>
+<body class="lesson-payment-status-page profile-password-page cm-module-shell min-h-full p-4 sm:p-6 pb-16">
+  <div class="max-w-7xl mx-auto relative z-[1]">
+    <div class="glass profile-password-card rounded-xl border border-stone-200/60 p-5 sm:p-6">
+    <header class="cm-module-page-header">
+      <p>
+        <a href="/coach-manager.html" target="_top"
+          class="cm-module-backlink text-sm underline-offset-2 hover:underline">
+          ← Back to Coach Manager
+        </a>
+      </p>
+      <h1 class="profile-password-heading text-2xl font-semibold mt-3 tracking-tight">Lesson Payment Status</h1>
+      <p id="loadError" class="hidden text-sm text-red-700 mt-2"></p>
+    </header>
+
+    <!-- Integration hooks -->
+    <section class="glass rounded-xl border border-amber-600/20 p-3 mb-4 flex flex-wrap gap-2 items-center text-xs">
+      <span class="text-amber-100/75 font-medium uppercase tracking-wide">Integrations</span>
+      <a id="linkStudents" href="#" target="_blank" rel="noopener"
+        class="rounded-lg bg-amber-500/10 border border-amber-600/25 px-3 py-1.5 text-amber-200 hover:bg-amber-500/20">Student Information</a>
+      <a id="linkLessons" href="#" target="_blank" rel="noopener"
+        class="rounded-lg bg-amber-500/10 border border-amber-600/25 px-3 py-1.5 text-amber-200 hover:bg-amber-500/20">Lesson Reservation</a>
+      <a id="linkRevenue" href="/coming_soon.html?m=revenue" target="_blank" rel="noopener"
+        class="rounded-lg bg-amber-500/10 border border-amber-600/25 px-3 py-1.5 text-amber-200/90 hover:bg-amber-500/15">Revenue module</a>
+    </section>
+
+    <!-- KPI cards -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+      <div class="glass rounded-xl border border-amber-500/25 p-4">
+        <p class="text-xs text-amber-100/75 uppercase tracking-wide">Total collected</p>
+        <p id="kpiCollected" class="text-2xl font-semibold text-amber-300 mt-1">—</p>
+        <p id="kpiPeriodLabel" class="text-xs text-amber-100/75 mt-1">Period</p>
+      </div>
+      <div class="glass rounded-xl border border-amber-500/25 p-4">
+        <p class="text-xs text-amber-100/75 uppercase tracking-wide">Outstanding balance</p>
+        <p id="kpiOutstanding" class="text-2xl font-semibold text-amber-200 mt-1">—</p>
+      </div>
+      <div class="glass rounded-xl border border-red-500/30 p-4">
+        <p class="text-xs text-amber-100/75 uppercase tracking-wide">Overdue amount</p>
+        <p id="kpiOverdue" class="text-2xl font-semibold text-red-300 mt-1">—</p>
+      </div>
+      <div class="glass rounded-xl border border-amber-500/30 p-4">
+        <p class="text-xs text-amber-100/75 uppercase tracking-wide">Collection rate</p>
+        <p id="kpiRate" class="text-2xl font-semibold text-amber-300 mt-1">—</p>
+        <p class="text-xs text-amber-100/75 mt-1">Paid ÷ total fee (active rows)</p>
+      </div>
+    </section>
+
+    <!-- Filters -->
+    <section class="glass rounded-xl border border-amber-600/20 p-4 mb-4">
+      <h2 class="text-sm font-semibold text-amber-200 mb-3">Filter &amp; search</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+        <div class="xl:col-span-2">
+          <label for="filterSearch" class="block text-xs text-amber-200/70 mb-1">Student name or ID</label>
+          <input id="filterSearch" type="search" placeholder="Search…"
+            class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
+        </div>
+        <div>
+          <label for="filterStatus" class="block text-xs text-amber-200/70 mb-1">Payment status</label>
+          <select id="filterStatus"
+            class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/45">
+            <option value="">All</option>
+            <option value="PAID">Paid</option>
+            <option value="UNPAID">Unpaid</option>
+            <option value="OVERDUE">Overdue</option>
+          </select>
+        </div>
+        <div>
+          <label for="filterDateFrom" class="block text-xs text-amber-200/70 mb-1">From</label>
+          <input id="filterDateFrom" type="text"
+            class="cm-date-ddmmyyyy w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
+        </div>
+        <div>
+          <label for="filterDateTo" class="block text-xs text-amber-200/70 mb-1">To</label>
+          <input id="filterDateTo" type="text"
+            class="cm-date-ddmmyyyy w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-2 mt-4">
+        <div class="flex items-center gap-2">
+          <label for="periodMonth" class="text-xs text-amber-200/70">KPI period (month)</label>
+          <input id="periodMonth" type="month"
+            class="rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-1.5 text-sm text-amber-50 [color-scheme:dark]" />
+        </div>
+        <button type="button" id="btnReload"
+          class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium px-4 py-2">Reload data</button>
+        <button type="button" id="btnExportCsv"
+          class="hidden rounded-lg bg-amber-800 hover:bg-amber-700 border border-amber-600/30 text-amber-50 text-sm px-4 py-2">Export CSV</button>
+        <button type="button" id="btnBulkRemind"
+          class="hidden rounded-lg bg-amber-700/80 hover:bg-amber-600 border border-amber-500/30 text-amber-50 text-sm px-4 py-2">Send bulk reminders</button>
+      </div>
+    </section>
+
+    <!-- Charts (hidden for Student — club-level aggregates) -->
+    <section id="chartSection" class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <div class="glass rounded-xl border border-amber-600/25 p-4">
+        <h3 class="text-sm font-semibold text-amber-200 mb-2">Collections by month</h3>
+        <p class="text-xs text-amber-100/75 mb-2">Sum of recorded payments per calendar month (ledger).</p>
+        <div class="h-56"><canvas id="chartBar"></canvas></div>
+      </div>
+      <div class="glass rounded-xl border border-amber-600/25 p-4">
+        <h3 class="text-sm font-semibold text-amber-200 mb-2">Status mix</h3>
+        <p class="text-xs text-amber-100/75 mb-2">Share of active reservations by computed status (after filters: table only; pie uses loaded rows).</p>
+        <div class="h-56 max-w-md mx-auto"><canvas id="chartPie"></canvas></div>
+      </div>
+    </section>
+
+    <!-- Table -->
+    <section class="glass rounded-xl border border-amber-600/25 p-4 overflow-x-auto">
+      <h2 class="text-lg font-semibold text-amber-200 mb-2">Payment status</h2>
+      <p id="tableMeta" class="text-xs text-amber-100/75 mb-3"></p>
+      <table class="w-full text-sm text-left border-collapse min-w-[1180px]">
+        <thead>
+          <tr class="border-b border-amber-600/20 text-amber-200/70">
+            <th class="py-2 pr-2 w-8"></th>
+            <th class="py-2 pr-3 font-medium max-w-[11rem]">Student</th>
+            <th class="py-2 pr-3 font-medium max-w-[10rem]">Lesson / period</th>
+            <th class="py-2 pr-3 font-medium text-right">Total fee</th>
+            <th class="py-2 pr-3 font-medium text-right">Paid</th>
+            <th class="py-2 pr-3 font-medium text-right">Outstanding</th>
+            <th class="py-2 pr-3 font-medium whitespace-nowrap">Due</th>
+            <th class="py-2 pr-3 font-medium">Status</th>
+            <th class="py-2 pr-3 font-medium">Confirm Payment</th>
+            <th class="py-2 pr-3 font-medium">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr><td class="py-6 text-amber-100/75" colspan="10">Loading…</td></tr>
+        </tbody>
+      </table>
+    </section>
+    </div>
+  </div>
+
+  <!-- Record payment modal -->
+  <div id="modalPay" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" aria-modal="true">
+    <div class="glass rounded-xl border border-amber-500/35 max-w-lg w-full max-h-[90vh] overflow-y-auto p-5 shadow-xl">
+      <h3 id="modalPayTitle" class="text-lg font-semibold text-amber-200 mb-1">Record payment</h3>
+      <p id="modalPaySubtitle" class="text-xs text-amber-100/75 mb-4"></p>
+      <form id="formPay" class="space-y-3">
+        <input type="hidden" id="payPrimaryReserveId" />
+        <input type="hidden" id="payModalMode" value="edit" />
+
+        <div id="payFlowPaidVerify" class="hidden space-y-3">
+          <p class="text-xs text-amber-200/70">Recorded payment details (ledger). Confirm to mark <span class="text-amber-300/90">Payment_Confirm</span> in the reservation, or cancel payment to remove ledger and PaymentList rows and set status to UNPAID.</p>
+          <div id="paidVerifySummary" class="rounded-lg border border-amber-600/20 bg-amber-950/45 p-3 text-sm text-amber-50 space-y-2"></div>
+          <p id="paidVerifyEmpty" class="hidden text-xs text-amber-200/90">No ledger lines found; you can still confirm or void this PAID row.</p>
+        </div>
+
+        <div id="payFlowEdit" class="space-y-3">
+          <div>
+            <label class="block text-xs text-amber-200/70 mb-1">Amount</label>
+            <input id="payAmount" type="number" step="0.01" min="0" required
+              class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-amber-50 text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs text-amber-200/70 mb-1">Payment method</label>
+            <select id="payMethod"
+              class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-amber-50 text-sm">
+              <option value="PayMe">PayMe</option>
+              <option value="FPS">FPS</option>
+              <option value="Credit Card">Credit Card</option>
+              <option value="Cash">Cash</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-amber-200/70 mb-1">Reference / transaction ID</label>
+            <input id="payReference" type="text"
+              class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-amber-50 text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs text-amber-200/70 mb-1">Date of payment</label>
+            <input id="payDate" type="text"
+              class="cm-date-ddmmyyyy w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-amber-50 text-sm" />
+          </div>
+          <div id="splitWrap" class="rounded-lg border border-amber-600/20 bg-amber-950/35 p-3 space-y-2">
+            <p class="text-xs font-semibold text-amber-200">Split across lessons (same student)</p>
+            <p class="text-xs text-amber-100/75">Allocate part of this payment to other outstanding reservations.</p>
+            <div id="splitList" class="space-y-2 max-h-40 overflow-y-auto text-xs"></div>
+          </div>
+        </div>
+
+        <div id="payActionsEdit" class="flex flex-wrap gap-2 pt-2">
+          <button type="submit" id="btnPaySave" class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium px-4 py-2">Save payment</button>
+          <button type="button" id="btnPayCancel" class="btn-cancel-metallic-brown rounded-lg text-sm px-4 py-2">Cancel</button>
+        </div>
+        <div id="payActionsPaid" class="hidden gap-3 pt-2">
+          <div class="flex flex-wrap gap-2">
+            <button type="button" id="btnConfirmPaidPayment" class="btn-metal-gold rounded-lg text-sm px-4 py-2.5">Confirm Payment</button>
+            <button type="button" id="btnVoidPaidPayment" class="btn-metal-red rounded-lg text-sm px-4 py-2.5">Cancel Payment</button>
+          </div>
+          <button type="button" id="btnPayDismiss" class="text-left text-xs text-slate-300/90 hover:text-teal-200/95 underline-offset-2 hover:underline w-fit">Close without changes</button>
+        </div>
+        <p id="payFormError" class="hidden text-sm text-red-300"></p>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/cm-date-ddmmyyyy.js"></script>
+  <script>
+    (function () {
+      var isFramed = false;
+      try {
+        isFramed = window.self !== window.top;
+      } catch (e) {
+        isFramed = true;
+      }
+
+      function getClubIdFromUrl() {
+        var q = new URLSearchParams(window.location.search || "");
+        return (q.get("clubId") || q.get("uid") || "").trim();
+      }
+
+      function primeClubContext() {
+        var id = getClubIdFromUrl();
+        var ctx = window.api && window.api.getClubFolderContext && window.api.getClubFolderContext();
+        if (ctx && ctx.clubId) {
+          id = id || String(ctx.clubId).trim();
+        }
+        var qn = new URLSearchParams(window.location.search || "");
+        var nameRaw = qn.get("clubName");
+        var name = "";
+        if (nameRaw) {
+          try {
+            name = decodeURIComponent(String(nameRaw).replace(/\+/g, " ")).trim();
+          } catch (e) {
+            name = String(nameRaw).trim();
+          }
+        }
+        if (!name && ctx && ctx.clubName) {
+          name = String(ctx.clubName).trim();
+        }
+        if (id && window.api && window.api.setClubFolderContext) {
+          window.api.setClubFolderContext(id, name || null);
+        }
+        return { clubId: id, clubName: name };
+      }
+
+      primeClubContext();
+
+      /** Prefer no-hyphen path; server mounts the same router on /lesson-payment-status and /lessonpaymentstatus. */
+      var LESSON_PAY_API = "/coach-manager/lessonpaymentstatus";
+
+      if (!isFramed) {
+        if (!window.auth.guardPage("CoachManager") && !window.auth.guardPage("Coach") && !window.auth.guardPage("Student")) {
+          return;
+        }
+      }
+
+      var userRole = "";
+      var chartBarInst = null;
+      var chartPieInst = null;
+      var lastPayload = null;
+      var filteredRows = [];
+
+      function fmtMoney(n) {
+        var x = Number(n);
+        if (!isFinite(x)) {
+          return "—";
+        }
+        return x.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+      }
+
+      function escapeHtml(s) {
+        if (s == null) {
+          return "";
+        }
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function badgeClass(status) {
+        switch (status) {
+          case "PAID":
+            return "bg-amber-500/20 text-amber-200 border-amber-500/40";
+          case "PARTIALLY_PAID":
+            return "bg-amber-500/20 text-amber-200 border-amber-500/40";
+          case "OVERDUE":
+            return "bg-red-500/20 text-red-200 border-red-500/40";
+          default:
+            return "bg-amber-400/20 text-amber-100 border-amber-400/45";
+        }
+      }
+
+      function statusLabel(status) {
+        return String(status || "").replace(/_/g, " ");
+      }
+
+      /** Mirrors LessonReserveList.json Payment_Confirm (API: paymentConfirmedByCoach). */
+      function confirmPaymentDisplay(r) {
+        return r && r.paymentConfirmedByCoach === true ? "Yes" : "No";
+      }
+
+      function confirmPaymentBadgeClass(r) {
+        return r && r.paymentConfirmedByCoach === true
+          ? "bg-amber-500/25 text-amber-100 border-amber-400/45"
+          : "bg-amber-500/15 text-amber-100 border-amber-400/35";
+      }
+
+      function setIntegrationLinks(integration, clubId, clubName) {
+        var q = "clubId=" + encodeURIComponent(clubId);
+        if (clubName) {
+          q += "&clubName=" + encodeURIComponent(clubName);
+        }
+        var st = document.getElementById("linkStudents");
+        var ls = document.getElementById("linkLessons");
+        if (st && integration && integration.studentInformationUrl) {
+          st.href = integration.studentInformationUrl + "?" + q;
+        }
+        if (ls && integration && integration.lessonReservationUrl) {
+          ls.href = integration.lessonReservationUrl + "?" + q;
+        }
+        if (integration && integration.revenueModuleUrl) {
+          var rv = document.getElementById("linkRevenue");
+          if (rv) {
+            rv.href = integration.revenueModuleUrl;
+          }
+        }
+      }
+
+      function studentProfileUrl(clubId, clubName) {
+        var q = "clubId=" + encodeURIComponent(clubId);
+        if (clubName) {
+          q += "&clubName=" + encodeURIComponent(clubName);
+        }
+        return "/backend/student_modules/student_information/student-information.html?" + q;
+      }
+
+      function applyFilters(rows) {
+        var search = (document.getElementById("filterSearch").value || "").trim().toLowerCase();
+        var st = document.getElementById("filterStatus").value;
+        var df = "due";
+        var dFrom = window.cmDateDdMmYyyy.readIso("filterDateFrom");
+        var dTo = window.cmDateDdMmYyyy.readIso("filterDateTo");
+
+        return rows.filter(function (r) {
+          if (search) {
+            var nm = (r.Student_Name || "").toLowerCase();
+            var id = (r.student_id || r.StudentID || "").toLowerCase();
+            if (nm.indexOf(search) < 0 && id.indexOf(search) < 0) {
+              return false;
+            }
+          }
+          if (st && r.displayStatus !== st) {
+            return false;
+          }
+          var d = df === "lesson" ? (r.lesson_start_date || "").slice(0, 10) : (r.dueDate || "").slice(0, 10);
+          if (dFrom && (!d || d < dFrom)) {
+            return false;
+          }
+          if (dTo && (!d || d > dTo)) {
+            return false;
+          }
+          return true;
+        });
+      }
+
+      function renderKpis(kpis, period) {
+        document.getElementById("kpiCollected").textContent = "$" + fmtMoney(kpis.totalCollectedPeriod);
+        document.getElementById("kpiOutstanding").textContent = "$" + fmtMoney(kpis.outstandingBalance);
+        document.getElementById("kpiOverdue").textContent = "$" + fmtMoney(kpis.overdueAmount);
+        document.getElementById("kpiRate").textContent = (kpis.collectionRate != null ? kpis.collectionRate : 0) + "%";
+        var pl = document.getElementById("kpiPeriodLabel");
+        if (pl && period) {
+          pl.textContent = (period.start || "") + " → " + (period.end || "");
+        }
+      }
+
+      function renderCharts(payload, filtered) {
+        var barEl = document.getElementById("chartBar");
+        var pieEl = document.getElementById("chartPie");
+        if (!barEl || !pieEl || typeof Chart === "undefined") {
+          return;
+        }
+        var barData = payload.chartBarCollections || [];
+        var labels = barData.map(function (x) {
+          return x.month;
+        });
+        var values = barData.map(function (x) {
+          return x.collected;
+        });
+        if (chartBarInst) {
+          chartBarInst.destroy();
+        }
+        var chartTickColor = "#44403c";
+        var chartGridColor = "rgba(68, 64, 60, 0.14)";
+        var chartLegendColor = "#44403c";
+        chartBarInst = new Chart(barEl, {
+          type: "bar",
+          data: {
+            labels: labels,
+            datasets: [{
+              label: "Collected",
+              data: values,
+              backgroundColor: "rgba(45, 212, 191, 0.45)",
+              borderColor: "rgba(45, 212, 191, 0.9)",
+              borderWidth: 1,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: chartLegendColor } } },
+            scales: {
+              x: {
+                ticks: { color: chartTickColor },
+                grid: { color: chartGridColor },
+                border: { color: "rgba(68, 64, 60, 0.35)" },
+              },
+              y: {
+                ticks: { color: chartTickColor },
+                grid: { color: chartGridColor },
+                border: { color: "rgba(68, 64, 60, 0.35)" },
+                beginAtZero: true,
+              },
+            },
+          },
+        });
+
+        var pie = { PAID: 0, PARTIALLY_PAID: 0, UNPAID: 0, OVERDUE: 0 };
+        filtered.forEach(function (r) {
+          if (pie[r.displayStatus] != null) {
+            pie[r.displayStatus]++;
+          }
+        });
+        if (chartPieInst) {
+          chartPieInst.destroy();
+        }
+        chartPieInst = new Chart(pieEl, {
+          type: "doughnut",
+          data: {
+            labels: ["Paid", "Partial", "Unpaid", "Overdue"],
+            datasets: [{
+              data: [pie.PAID, pie.PARTIALLY_PAID, pie.UNPAID, pie.OVERDUE],
+              backgroundColor: [
+                "rgba(52, 211, 153, 0.75)",
+                "rgba(251, 191, 36, 0.75)",
+                "rgba(167, 243, 208, 0.72)",
+                "rgba(248, 113, 113, 0.8)",
+              ],
+              borderWidth: 0,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: { color: chartLegendColor, boxWidth: 12 },
+              },
+            },
+          },
+        });
+      }
+
+      function renderTable(rows, ctx) {
+        var tb = document.getElementById("tableBody");
+        var meta = document.getElementById("tableMeta");
+        if (meta) {
+          meta.textContent = rows.length + " row(s) after filters · Club " + (ctx.clubId || "—");
+        }
+        if (!tb) {
+          return;
+        }
+        if (!rows.length) {
+          tb.innerHTML = '<tr><td class="py-6 text-amber-100/75" colspan="10">No matching reservations.</td></tr>';
+          return;
+        }
+        var html = "";
+        rows.forEach(function (r) {
+          var expandId = "ex-" + escapeHtml(r.lessonReserveId).replace(/[^a-zA-Z0-9_-]/g, "");
+          var studentUrl = studentProfileUrl(ctx.clubId, ctx.clubName);
+          html += "<tr class=\"border-b border-amber-800/15 hover:bg-amber-500/[0.06]\" data-rid=\"" + escapeHtml(r.lessonReserveId) + "\">";
+          html += "<td class=\"py-1.5 pr-2 align-middle\"><button type=\"button\" class=\"text-amber-400 hover:text-amber-200 text-xs toggle-ex\" data-target=\"" + expandId + "\">▾</button></td>";
+          var studentLine =
+            escapeHtml(r.Student_Name) +
+            " · " +
+            escapeHtml(r.student_id || r.StudentID) +
+            " · " +
+            escapeHtml(r.studentLevel);
+          html +=
+            "<td class=\"py-1.5 pr-3 align-middle max-w-[11rem]\"><div class=\"min-w-0 text-[10px] leading-tight text-amber-100/85 truncate\" title=\"" +
+            escapeHtml(studentLine) +
+            "\"><a href=\"" +
+            escapeHtml(studentUrl) +
+            "\" target=\"_blank\" rel=\"noopener\" class=\"text-amber-300/95 hover:underline font-medium\">" +
+            escapeHtml(r.Student_Name) +
+            "</a><span class=\"text-amber-100/70\"> · " +
+            escapeHtml(r.student_id || r.StudentID) +
+            " · " +
+            escapeHtml(r.studentLevel) +
+            "</span></div></td>";
+          var lessonLine = escapeHtml(r.lessonId) + " · " + escapeHtml(r.lessonPeriodLabel);
+          html +=
+            "<td class=\"py-1.5 pr-3 align-middle max-w-[10rem]\"><div class=\"min-w-0 text-[10px] leading-tight text-amber-100/90 truncate tabular-nums\" title=\"" +
+            lessonLine +
+            "\">" +
+            lessonLine +
+            "</div></td>";
+          html += "<td class=\"py-1.5 pr-3 text-right tabular-nums align-middle\">$" + fmtMoney(r.totalFee) + "</td>";
+          html += "<td class=\"py-1.5 pr-3 text-right tabular-nums text-amber-200/90 align-middle\">$" + fmtMoney(r.amountPaid) + "</td>";
+          html += "<td class=\"py-1.5 pr-3 text-right tabular-nums text-amber-200/90 align-middle\">$" + fmtMoney(r.outstanding) + "</td>";
+          html +=
+            "<td class=\"py-1.5 pr-3 align-middle whitespace-nowrap\"><span class=\"text-[10px] leading-tight tabular-nums text-amber-50/90\">" +
+            escapeHtml(
+              window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                ? window.api.formatDateDisplayDdMmYyyy(String(r.dueDate || "")) ||
+                    String(r.dueDate || "")
+                : String(r.dueDate || "")
+            ) +
+            "</span></td>";
+          html += "<td class=\"py-1.5 pr-3 align-middle\"><span class=\"inline-flex rounded-full border px-2 py-0.5 text-[10px] " + badgeClass(r.displayStatus) + "\">" + escapeHtml(statusLabel(r.displayStatus)) + "</span></td>";
+          html +=
+            "<td class=\"py-1.5 pr-3 align-middle\"><span class=\"inline-flex rounded-full border px-2 py-0.5 text-[10px] " +
+            confirmPaymentBadgeClass(r) +
+            "\">" +
+            escapeHtml(confirmPaymentDisplay(r)) +
+            "</span></td>";
+          html += "<td class=\"py-1.5 pr-2 align-middle\">";
+          if (userRole === "CoachManager" || userRole === "Coach") {
+            html += "<div class=\"lesson-pay-actions\">";
+            html +=
+              "<button type=\"button\" class=\"rounded-md bg-amber-600/90 hover:bg-amber-500 btn-action-compact text-white shadow-sm btn-record\" data-id=\"" +
+              escapeHtml(r.lessonReserveId) +
+              "\">Payment Record</button>";
+            html +=
+              "<button type=\"button\" class=\"rounded-md btn-metal-dark btn-action-compact btn-cancel-lesson\" data-id=\"" +
+              escapeHtml(r.lessonReserveId) +
+              "\">Cancel Lesson</button>";
+            html +=
+              "<button type=\"button\" class=\"rounded-md bg-amber-800/90 hover:bg-amber-700 btn-action-compact text-amber-50 btn-remind\" data-id=\"" +
+              escapeHtml(r.lessonReserveId) +
+              "\" data-sid=\"" +
+              escapeHtml(r.student_id || r.StudentID) +
+              "\">Remind</button>";
+            html += "</div>";
+          }
+          html += "</td></tr>";
+          html += "<tr id=\"" + expandId + "\" class=\"hidden bg-amber-950/35\"><td colspan=\"10\" class=\"px-4 py-3 text-xs text-amber-200/70\">";
+          html += "<p class=\"font-semibold text-amber-200 mb-1\">Lesson breakdown</p>";
+          html += "<p>Class time: " + escapeHtml(r.class_time || "—") + " · Fee basis: LessonList class fee</p>";
+          html += "<p>Remaining for this reservation: <strong class=\"text-amber-200\">$" + fmtMoney(r.outstanding) + "</strong></p>";
+          if (r.paymentHistory && r.paymentHistory.length) {
+            html += "<ul class=\"mt-2 space-y-1 list-disc list-inside\">";
+            r.paymentHistory.forEach(function (p) {
+              var paidDisp =
+                window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                  ? window.api.formatDateDisplayDdMmYyyy(String(p.paidAt || "")) ||
+                      String(p.paidAt || "")
+                  : String(p.paidAt || "");
+              html += "<li>" + escapeHtml(paidDisp) + " · " + escapeHtml(p.method) + " · $" + fmtMoney(p.amount) + " · ref " + escapeHtml(p.reference || "—") + "</li>";
+            });
+            html += "</ul>";
+          } else {
+            html += "<p class=\"mt-1 text-amber-100/75\">No ledger payments yet.</p>";
+          }
+          html += "</td></tr>";
+        });
+        tb.innerHTML = html;
+
+        tb.querySelectorAll(".toggle-ex").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            var id = btn.getAttribute("data-target");
+            var row = id ? document.getElementById(id) : null;
+            if (!row) {
+              return;
+            }
+            row.classList.toggle("hidden");
+            btn.textContent = row.classList.contains("hidden") ? "▾" : "▴";
+          });
+        });
+        tb.querySelectorAll(".btn-record").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            openPayModal(btn.getAttribute("data-id"));
+          });
+        });
+        tb.querySelectorAll(".btn-remind").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            var sid = btn.getAttribute("data-sid");
+            alert("Reminder hook: connect email/SMS for student " + (sid || "") + " (stub).");
+          });
+        });
+        tb.querySelectorAll(".btn-cancel-lesson").forEach(function (btn) {
+          btn.addEventListener("click", async function () {
+            var id = btn.getAttribute("data-id");
+            if (!id) {
+              return;
+            }
+            var rid = String(id).trim();
+            var cancelRow = null;
+            if (lastPayload && lastPayload.rows) {
+              var u = rid.toUpperCase();
+              for (var i = 0; i < lastPayload.rows.length; i++) {
+                var x = lastPayload.rows[i];
+                if (String(x.lessonReserveId || "").trim().toUpperCase() === u) {
+                  cancelRow = x;
+                  break;
+                }
+              }
+            }
+            if (cancelRow && cancelRow.paymentConfirmedByCoach === true) {
+              window.alert("Payment is completed, the Lesson can't be cancelled.");
+              return;
+            }
+            if (
+              !window.confirm(
+                "Cancel this lesson reservation? This removes the booking, decreases ReservedNumber by 1, and deletes ledger and payment records for this reservation. This cannot be undone."
+              )
+            ) {
+              return;
+            }
+            try {
+              await window.api.api(LESSON_PAY_API + "/cancel-lesson-reservation", {
+                method: "POST",
+                body: JSON.stringify({ lessonReserveId: id }),
+              });
+              await loadData();
+            } catch (e) {
+              alert(e.message || String(e));
+            }
+          });
+        });
+      }
+
+      function openPayModal(primaryId) {
+        var modal = document.getElementById("modalPay");
+        var sub = document.getElementById("modalPaySubtitle");
+        var r = (lastPayload && lastPayload.rows || []).find(function (x) {
+          return x.lessonReserveId === primaryId;
+        });
+        if (!modal || !r) {
+          return;
+        }
+        document.getElementById("payPrimaryReserveId").value = primaryId;
+        document.getElementById("payFormError").classList.add("hidden");
+
+        if (r.displayStatus === "PAID") {
+          document.getElementById("modalPayTitle").textContent = "Verify payment";
+          setPayModalMode("paidVerify");
+          if (sub) {
+            sub.textContent =
+              r.Student_Name +
+              " · " +
+              r.lessonId +
+              " · Status PAID · Total paid $" +
+              fmtMoney(r.amountPaid) +
+              " · Fee $" +
+              fmtMoney(r.totalFee);
+          }
+          var hist = r.paymentHistory || [];
+          var sumEl = document.getElementById("paidVerifySummary");
+          var emptyEl = document.getElementById("paidVerifyEmpty");
+          if (!hist.length) {
+            sumEl.innerHTML = "";
+            emptyEl.classList.remove("hidden");
+          } else {
+            emptyEl.classList.add("hidden");
+            var rows = hist
+              .map(function (p) {
+                var paidDisp =
+                  window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                    ? window.api.formatDateDisplayDdMmYyyy(String(p.paidAt || "")) ||
+                        String(p.paidAt || "")
+                    : String(p.paidAt || "");
+                return (
+                  "<div class=\"rounded border border-amber-600/20 bg-amber-950/55 px-3 py-2\">" +
+                  "<div class=\"text-amber-200 font-medium\">$" +
+                  fmtMoney(p.amount) +
+                  " · " +
+                  escapeHtml(p.method) +
+                  "</div>" +
+                  "<div class=\"text-xs text-amber-200/70 mt-1\">Date: " +
+                  escapeHtml(paidDisp) +
+                  "</div>" +
+                  "<div class=\"text-xs text-amber-200/70\">Reference / transaction ID: " +
+                  escapeHtml(p.reference || "—") +
+                  "</div>" +
+                  "<div class=\"text-xs text-amber-100/75\">Ledger ID: " +
+                  escapeHtml(p.paymentId) +
+                  "</div></div>"
+                );
+              })
+              .join("");
+            sumEl.innerHTML = rows;
+          }
+          modal.classList.remove("hidden");
+          return;
+        }
+
+        document.getElementById("modalPayTitle").textContent = "Record payment";
+        setPayModalMode("edit");
+        document.getElementById("payAmount").value = r.outstanding > 0 ? String(r.outstanding) : "";
+        document.getElementById("payReference").value = "";
+        window.cmDateDdMmYyyy.writeIso(
+          "payDate",
+          (lastPayload && lastPayload.today) || new Date().toISOString().slice(0, 10)
+        );
+        if (sub) {
+          sub.textContent = r.Student_Name + " · " + r.lessonId + " · Outstanding $" + fmtMoney(r.outstanding);
+        }
+        var splitList = document.getElementById("splitList");
+        splitList.innerHTML = "";
+        var sameStudent = (lastPayload.rows || []).filter(function (x) {
+          return (
+            (x.student_id || x.StudentID) === (r.student_id || r.StudentID) &&
+            x.lessonReserveId !== r.lessonReserveId &&
+            x.outstanding > 0.009
+          );
+        });
+        sameStudent.forEach(function (o) {
+          var row = document.createElement("div");
+          row.className = "flex items-center gap-2";
+          row.innerHTML =
+            "<label class=\"flex items-center gap-2 cursor-pointer select-none\">" +
+            "<input type=\"checkbox\" class=\"split-chk rounded border-amber-500/30 bg-amber-950\" data-rid=\"" + escapeHtml(o.lessonReserveId) + "\" />" +
+            "<span>" + escapeHtml(o.lessonId) + " (owe $" + fmtMoney(o.outstanding) + ")</span></label>" +
+            "<input type=\"number\" step=\"0.01\" min=\"0\" class=\"split-amt hidden w-24 rounded bg-amber-950 border border-amber-600/25 px-2 py-1 text-xs\" placeholder=\"Amt\" data-rid=\"" + escapeHtml(o.lessonReserveId) + "\" />";
+          splitList.appendChild(row);
+          var chk = row.querySelector(".split-chk");
+          var amt = row.querySelector(".split-amt");
+          chk.addEventListener("change", function () {
+            amt.classList.toggle("hidden", !chk.checked);
+          });
+        });
+        if (!sameStudent.length) {
+          splitList.innerHTML = "<p class=\"text-amber-100/75\">No other outstanding lessons for this student.</p>";
+        }
+        modal.classList.remove("hidden");
+      }
+
+      function setPayModalMode(mode) {
+        var isPaid = mode === "paidVerify";
+        document.getElementById("payModalMode").value = mode;
+        document.getElementById("payFlowEdit").classList.toggle("hidden", isPaid);
+        document.getElementById("payFlowPaidVerify").classList.toggle("hidden", !isPaid);
+        document.getElementById("payActionsEdit").classList.toggle("hidden", isPaid);
+        var paidAct = document.getElementById("payActionsPaid");
+        paidAct.classList.toggle("hidden", !isPaid);
+        paidAct.classList.toggle("flex", isPaid);
+        paidAct.classList.toggle("flex-col", isPaid);
+        var amt = document.getElementById("payAmount");
+        if (isPaid) {
+          amt.removeAttribute("required");
+        } else {
+          amt.setAttribute("required", "required");
+        }
+      }
+
+      function closePayModal() {
+        document.getElementById("modalPay").classList.add("hidden");
+        setPayModalMode("edit");
+        document.getElementById("modalPayTitle").textContent = "Record payment";
+      }
+
+      async function loadData() {
+        var errEl = document.getElementById("loadError");
+        if (errEl) {
+          errEl.classList.add("hidden");
+        }
+        var pm = document.getElementById("periodMonth").value;
+        var payPath = LESSON_PAY_API;
+        if (pm) {
+          payPath += "?periodMonth=" + encodeURIComponent(pm);
+        }
+        try {
+          var data = await window.api.api(payPath);
+          if (!data.ok) {
+            throw new Error(data.error || "Load failed");
+          }
+          lastPayload = data;
+          var ctx = { clubId: data.clubId, clubName: data.clubName };
+          setIntegrationLinks(data.integration, data.clubId, data.clubName);
+
+          renderKpis(data.kpis, data.period);
+          filteredRows = applyFilters(data.rows || []);
+          renderTable(filteredRows, ctx);
+          renderCharts(data, filteredRows);
+        } catch (e) {
+          if (errEl) {
+            errEl.textContent = e.message || String(e);
+            errEl.classList.remove("hidden");
+          }
+          document.getElementById("tableBody").innerHTML =
+            '<tr><td class="py-6 text-red-300" colspan="10">Could not load data.</td></tr>';
+        }
+      }
+
+      function wireFilters() {
+        ["filterSearch", "filterStatus", "filterDateFrom", "filterDateTo"].forEach(function (id) {
+          var el = document.getElementById(id);
+          if (el) {
+            el.addEventListener("input", onFilterChange);
+            el.addEventListener("change", onFilterChange);
+          }
+        });
+      }
+
+      function onFilterChange() {
+        if (!lastPayload) {
+          return;
+        }
+        filteredRows = applyFilters(lastPayload.rows || []);
+        renderTable(filteredRows, { clubId: lastPayload.clubId, clubName: lastPayload.clubName });
+        renderCharts(lastPayload, filteredRows);
+      }
+
+      document.getElementById("btnReload").addEventListener("click", loadData);
+      document.getElementById("periodMonth").addEventListener("change", loadData);
+
+      document.getElementById("btnPayCancel").addEventListener("click", closePayModal);
+      document.getElementById("btnPayDismiss").addEventListener("click", closePayModal);
+
+      document.getElementById("btnConfirmPaidPayment").addEventListener("click", async function () {
+        var err = document.getElementById("payFormError");
+        err.classList.add("hidden");
+        var primary = document.getElementById("payPrimaryReserveId").value;
+        if (!primary) {
+          return;
+        }
+        try {
+          await window.api.api(LESSON_PAY_API + "/confirm-paid-payment", {
+            method: "POST",
+            body: JSON.stringify({ lessonReserveId: primary }),
+          });
+          closePayModal();
+          await loadData();
+        } catch (e) {
+          err.textContent = e.message || String(e);
+          err.classList.remove("hidden");
+        }
+      });
+
+      document.getElementById("btnVoidPaidPayment").addEventListener("click", async function () {
+        var err = document.getElementById("payFormError");
+        err.classList.add("hidden");
+        var primary = document.getElementById("payPrimaryReserveId").value;
+        if (!primary) {
+          return;
+        }
+        if (
+          !window.confirm(
+            "Cancel this payment? This removes PaymentList and ledger entries for this reservation and sets status to UNPAID."
+          )
+        ) {
+          return;
+        }
+        try {
+          await window.api.api(LESSON_PAY_API + "/void-paid-payment", {
+            method: "POST",
+            body: JSON.stringify({ lessonReserveId: primary }),
+          });
+          closePayModal();
+          await loadData();
+        } catch (e) {
+          err.textContent = e.message || String(e);
+          err.classList.remove("hidden");
+        }
+      });
+
+      document.getElementById("formPay").addEventListener("submit", async function (ev) {
+        ev.preventDefault();
+        if (document.getElementById("payModalMode").value === "paidVerify") {
+          return;
+        }
+        var err = document.getElementById("payFormError");
+        err.classList.add("hidden");
+        var primary = document.getElementById("payPrimaryReserveId").value;
+        var amount = Number(document.getElementById("payAmount").value);
+        var method = document.getElementById("payMethod").value;
+        var reference = document.getElementById("payReference").value;
+        var paidAt = window.cmDateDdMmYyyy.readIso("payDate");
+        var splits = [{ lessonReserveId: primary, amount: amount }];
+        document.querySelectorAll("#splitList .split-chk:checked").forEach(function (chk) {
+          var rid = chk.getAttribute("data-rid");
+          var row = chk.closest("div");
+          var amtEl = row && row.querySelector(".split-amt");
+          var a = amtEl ? Number(amtEl.value) : 0;
+          if (rid && isFinite(a) && a > 0) {
+            splits.push({ lessonReserveId: rid, amount: a });
+          }
+        });
+        try {
+          await window.api.api(LESSON_PAY_API + "/record-payment", {
+            method: "POST",
+            body: JSON.stringify({ splits: splits, method: method, reference: reference, paidAt: paidAt }),
+          });
+          closePayModal();
+          await loadData();
+        } catch (e) {
+          err.textContent = e.message || String(e);
+          err.classList.remove("hidden");
+        }
+      });
+
+      document.getElementById("btnExportCsv").addEventListener("click", async function () {
+        var base = window.api.getApiBase().replace(/\/$/, "");
+        var pm = document.getElementById("periodMonth").value;
+        var q = pm ? "?periodMonth=" + encodeURIComponent(pm) : "";
+        var url = base + LESSON_PAY_API + "/export.csv" + q;
+        var token = localStorage.getItem("token");
+        var res = await fetch(url, {
+          headers: token ? { Authorization: "Bearer " + token } : {},
+          credentials: "include",
+        });
+        if (!res.ok) {
+          alert("Export failed");
+          return;
+        }
+        var blob = await res.blob();
+        var a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "lesson-payment-status.csv";
+        a.click();
+        URL.revokeObjectURL(a.href);
+      });
+
+      document.getElementById("btnBulkRemind").addEventListener("click", async function () {
+        try {
+          var data = await window.api.api(LESSON_PAY_API + "/bulk-remind", {
+            method: "POST",
+            body: JSON.stringify({ onlyOverdue: false }),
+          });
+          alert(data.message + "\nQueued: " + data.queued);
+        } catch (e) {
+          alert(e.message || String(e));
+        }
+      });
+
+      (async function init() {
+        try {
+          var me = await window.api.api("/me");
+          userRole = (me && me.user && me.user.role) || "";
+        } catch (e) {
+          userRole = "";
+        }
+        if (userRole === "CoachManager" || userRole === "Coach") {
+          document.getElementById("btnExportCsv").classList.remove("hidden");
+          document.getElementById("btnBulkRemind").classList.remove("hidden");
+        }
+        if (userRole === "Student") {
+          var ch = document.getElementById("chartSection");
+          if (ch) {
+            ch.classList.add("hidden");
+          }
+        }
+        var d = new Date();
+        document.getElementById("periodMonth").value =
+          d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+        wireFilters();
+        await loadData();
+      })();
+    })();
+  </script>
+</body>
+</html>

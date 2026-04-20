@@ -1,0 +1,51 @@
+{
+  "name": "ClubMaster-backend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node ./node_modules/tsx/dist/cli.mjs watch ./src/server.ts",
+    "start": "node ./dist/server.js",
+    "start:tsx": "node ./node_modules/tsx/dist/cli.mjs ./src/server.ts",
+    "build": "tsc",
+    "rds:download-ca": "node ./scripts/download-rds-global-bundle.mjs",
+    "mongo:seed-user-login": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-userLogin-first-user.ts",
+    "mongo:migrate-user-list": "node ./node_modules/tsx/dist/cli.mjs ./scripts/migrate-userList-to-userLogin.ts",
+    "mongo:clone-userlogin": "node ./node_modules/tsx/dist/cli.mjs ./scripts/clone-userLogin-to-clubmaster-db.ts",
+    "mongo:clone-clubinfo": "node ./node_modules/tsx/dist/cli.mjs ./scripts/clone-clubInfo-to-clubmaster-db.ts",
+    "mongo:seed-basicinfo-json": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-basicInfo-json-to-mongo.ts",
+    "mongo:seed-lessonlist-json": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-lessonList-json-to-mongo.ts",
+    "mongo:seed-club-info-cm3": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-clubInfo-CM00000003.ts",
+    "mongo:seed-userlist-student-cm3": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-userList-student-CM00000003.ts",
+    "mongo:seed-userlist-student": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-userList-student-CM00000003.ts",
+    "mongo:migrate-userlist-student-field": "node ./node_modules/tsx/dist/cli.mjs ./scripts/migrate-userlist-student-mongo-studentid-to-student_id.ts",
+    "mongo:seed-lesson-reserve-list-cm3": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-lessonReserveList-CM00000003.ts",
+    "mongo:seed-coach-salary-cm3": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-coachSalary-CM00000003.ts",
+    "mongo:seed-prize-list-cm3": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-prizeList-CM00000003.ts",
+    "mongo:seed-userlist-coach": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-userlist-coach-json-to-mongo.ts"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "jsonwebtoken": "^9.0.2",
+    "lru-cache": "^11.3.5",
+    "mongodb": "^6.21.0",
+    "mongoose": "^8.23.0",
+    "multer": "^2.1.1",
+    "pg": "^8.20.0"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cookie-parser": "^1.4.7",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/multer": "^2.1.0",
+    "@types/node": "^20.14.0",
+    "@types/pg": "^8.20.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0"
+  }
+}

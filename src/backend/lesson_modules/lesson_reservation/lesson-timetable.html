@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson Time Table — Coach Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    .tt-scroll {
+      max-height: min(70vh, 42rem);
+      overflow: auto;
+    }
+    .tt-table {
+      border-collapse: separate;
+      border-spacing: 0;
+      min-width: 56rem;
+    }
+    .tt-table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgb(30 41 59);
+      box-shadow: 0 1px 0 rgb(51 65 85);
+    }
+    .tt-table tbody th {
+      position: sticky;
+      left: 0;
+      z-index: 15;
+      background: rgb(15 23 42);
+      box-shadow: 1px 0 0 rgb(51 65 85);
+    }
+    .tt-table thead th.tt-corner {
+      left: 0;
+      z-index: 35;
+      background: rgb(30 41 59);
+    }
+  </style>
+</head>
+<body
+  id="ttBodyRoot"
+  class="dashboard-dynamic-bg min-h-screen text-slate-100 p-4 sm:p-6"
+  style="--dashboard-bg-img: url('/Source/Image/coach-manager.jpg');">
+  <div class="dynamic-bg-stack" aria-hidden="true">
+    <div class="dynamic-bg-photo"></div>
+    <div class="dynamic-bg-overlay"></div>
+    <canvas class="dynamic-bg-star-net"></canvas>
+    <div class="dynamic-bg-spot-glow"></div>
+  </div>
+
+  <div class="max-w-[100rem] mx-auto relative z-[1]">
+    <header class="mb-4">
+      <p>
+        <a href="/coach-manager.html" target="_top"
+          class="text-sm text-amber-400/90 hover:text-amber-300 underline-offset-2 hover:underline">
+          ← Back to Coach Manager
+        </a>
+      </p>
+      <h1 class="text-2xl font-bold text-amber-300 mt-2">Lesson Time Table</h1>
+      <p class="text-xs text-slate-500 mt-1">
+        Club: <span id="hdrUid" class="text-slate-400">…</span>
+        <span class="text-slate-600"> · </span>
+        <span class="text-slate-500">Schedule data: <code class="text-slate-400">LessonList.json</code> (Coach Manager) or API (Coach).</span>
+      </p>
+    </header>
+
+    <section class="glass rounded-xl border border-white/15 p-4 mb-4">
+      <div class="flex flex-wrap items-end gap-3 gap-y-2">
+        <div>
+          <label for="ttYear" class="block text-xs text-slate-400 mb-1">Year</label>
+          <select id="ttYear"
+            class="rounded-lg bg-slate-900/70 border border-white/15 px-3 py-2 text-sm text-slate-100 min-w-[6rem]"></select>
+        </div>
+        <div>
+          <label for="ttMonth" class="block text-xs text-slate-400 mb-1">Month</label>
+          <select id="ttMonth"
+            class="rounded-lg bg-slate-900/70 border border-white/15 px-3 py-2 text-sm text-slate-100 min-w-[9rem]"></select>
+        </div>
+        <button type="button" id="ttGo"
+          class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm">
+          Go
+        </button>
+        <button type="button" id="ttPrev"
+          class="rounded-lg bg-slate-700 hover:bg-slate-600 border border-white/15 text-slate-100 font-medium px-4 py-2 text-sm">
+          Previous Week
+        </button>
+        <button type="button" id="ttNext"
+          class="rounded-lg bg-slate-700 hover:bg-slate-600 border border-white/15 text-slate-100 font-medium px-4 py-2 text-sm">
+          Next Week
+        </button>
+      </div>
+      <p id="ttWeekLabel" class="text-sm text-amber-200/90 mt-3 font-medium"></p>
+    </section>
+
+    <p id="ttError" class="hidden rounded-lg border border-red-500/40 bg-red-950/40 text-red-200 text-sm px-4 py-3 mb-4"></p>
+
+    <section class="glass rounded-xl border border-white/15 p-2 sm:p-4 overflow-x-auto">
+      <div class="tt-scroll rounded-lg border border-white/10">
+        <table class="tt-table w-full text-xs sm:text-sm text-left">
+          <thead id="ttHead"></thead>
+          <tbody id="ttBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script src="/js/dashboard-dynamic-bg.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    (function () {
+      var MONTH_NAMES = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December",
+      ];
+      var DAY_HEADERS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      var HOUR_START = 7;
+      var HOUR_END = 23;
+
+      function pad2(n) {
+        return n < 10 ? "0" + n : String(n);
+      }
+
+      function parseJsonLessons(text) {
+        var data;
+        try {
+          data = JSON.parse(String(text || ""));
+        } catch (err) {
+          return { error: "File is not valid JSON.", lessons: [] };
+        }
+        var raw = Array.isArray(data) ? data : (data && data.lessons) || [];
+        if (!Array.isArray(raw)) {
+          return { error: "Lesson list must contain a \"lessons\" array.", lessons: [] };
+        }
+        var lessons = [];
+        for (var i = 0; i < raw.length; i++) {
+          var row = normalizeLessonRow(raw[i]);
+          if (!row.LessonID && !row.class_id) {
+            continue;
+          }
+          if (String(row.status || "ACTIVE").toUpperCase() === "INACTIVE") {
+            continue;
+          }
+          lessons.push(row);
+        }
+        return { error: null, lessons: lessons };
+      }
+
+      function yn(v) {
+        var t = String(v == null ? "" : v).trim().toUpperCase();
+        return t === "Y" || t === "1" || t === "TRUE" || t === "YES";
+      }
+
+      function parseClassTimeHours(classTimeStr) {
+        var s = String(classTimeStr == null ? "" : classTimeStr).trim();
+        if (!s) {
+          return [];
+        }
+        if (/^\d{1,2}$/.test(s)) {
+          var h = parseInt(s, 10);
+          return isNaN(h) ? [] : [h];
+        }
+        var multi = s.split(/\s*[-–—]\s*/);
+        function hourFromChunk(chunk) {
+          var m = String(chunk).match(/(\d{1,2})/);
+          return m ? parseInt(m[1], 10) : NaN;
+        }
+        if (multi.length >= 2) {
+          var h0 = hourFromChunk(multi[0]);
+          var h1 = hourFromChunk(multi[1]);
+          if (!isNaN(h0) && !isNaN(h1)) {
+            if (h1 < h0) {
+              var t = h0;
+              h0 = h1;
+              h1 = t;
+            }
+            var hrs = [];
+            for (var x = h0; x <= h1; x++) {
+              hrs.push(x);
+            }
+            return hrs;
+          }
+        }
+        var one = hourFromChunk(s);
+        return isNaN(one) ? [] : [one];
+      }
+
+      function hoursInDisplayRange(hours) {
+        var seen = {};
+        var out = [];
+        for (var i = 0; i < hours.length; i++) {
+          var h = hours[i];
+          if (h >= HOUR_START && h <= HOUR_END && !seen[h]) {
+            seen[h] = true;
+            out.push(h);
+          }
+        }
+        return out;
+      }
+
+      function parseIsoDate(s) {
+        var t = String(s == null ? "" : s).trim();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(t)) {
+          return null;
+        }
+        var p = t.split("-");
+        var y = parseInt(p[0], 10);
+        var m = parseInt(p[1], 10) - 1;
+        var d = parseInt(p[2], 10);
+        var dt = new Date(y, m, d);
+        if (dt.getFullYear() !== y || dt.getMonth() !== m || dt.getDate() !== d) {
+          return null;
+        }
+        return dt;
+      }
+
+      function dateKey(d) {
+        return (
+          d.getFullYear() +
+          "-" +
+          pad2(d.getMonth() + 1) +
+          "-" +
+          pad2(d.getDate())
+        );
+      }
+
+      function firstSundayOfMonth(year, monthIndex) {
+        var d = new Date(year, monthIndex, 1);
+        var dow = d.getDay();
+        var add = (7 - dow) % 7;
+        d.setDate(1 + add);
+        d.setHours(0, 0, 0, 0);
+        return d;
+      }
+
+      function addDays(d, n) {
+        var x = new Date(d.getTime());
+        x.setDate(x.getDate() + n);
+        x.setHours(0, 0, 0, 0);
+        return x;
+      }
+
+      function lessonRunsOnDay(lesson, dayIndex, calendarDate) {
+        var flags = [
+          lesson.class_sun,
+          lesson.class_mon,
+          lesson.class_tue,
+          lesson.class_wed,
+          lesson.class_thur,
+          lesson.class_fri,
+          lesson.class_sat,
+        ];
+        if (!yn(flags[dayIndex])) {
+          return false;
+        }
+        var start = parseIsoDate(lesson.lesson_start_date);
+        var end = parseIsoDate(lesson.lesson_end_date);
+        if (!start || !end) {
+          return false;
+        }
+        if (calendarDate < start || calendarDate > end) {
+          return false;
+        }
+        return true;
+      }
+
+      function collectYearsFromLessons(lessons) {
+        var set = {};
+        var y;
+        for (var i = 0; i < lessons.length; i++) {
+          var L = lessons[i];
+          if (L.Year && /^\d{4}$/.test(L.Year.trim())) {
+            set[L.Year.trim()] = true;
+          }
+          var a = parseIsoDate(L.lesson_start_date);
+          var b = parseIsoDate(L.lesson_end_date);
+          if (a) {
+            set[String(a.getFullYear())] = true;
+          }
+          if (b) {
+            set[String(b.getFullYear())] = true;
+          }
+        }
+        var arr = Object.keys(set).map(function (x) {
+          return parseInt(x, 10);
+        });
+        arr.sort(function (a, b) {
+          return a - b;
+        });
+        var cy = new Date().getFullYear();
+        if (arr.indexOf(cy) < 0) {
+          arr.push(cy);
+        }
+        arr.sort(function (a, b) {
+          return a - b;
+        });
+        return arr;
+      }
+
+      function escapeHtml(s) {
+        if (s == null) {
+          return "";
+        }
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function formatLessonAlert(L) {
+        var lines = [
+          "LessonID: " + (L.LessonID || "—"),
+          "Class ID: " + (L.class_id || "—"),
+          "Class info: " + (L.class_info || "—"),
+          "Sport center: " + (L.Sport_center || "—"),
+          "Coach: " + (L["Coach Name"] || "—"),
+          "Sport type: " + (L.SportType || "—"),
+          "Year: " + (L.Year || "—"),
+          "Class time: " + (L.class_time || "—"),
+          "Start: " + (L.lesson_start_date || "—"),
+          "End: " + (L.lesson_end_date || "—"),
+          "Days: Sun=" +
+            L.class_sun +
+            " Mon=" +
+            L.class_mon +
+            " Tue=" +
+            L.class_tue +
+            " Wed=" +
+            L.class_wed +
+            " Thu=" +
+            L.class_thur +
+            " Fri=" +
+            L.class_fri +
+            " Sat=" +
+            L.class_sat,
+          "Remarks: " + (L.Remarks || "—"),
+        ];
+        return lines.join("\n");
+      }
+
+      var state = {
+        clubId: "",
+        lessons: [],
+        displayWeekStart: null,
+        selectedYear: new Date().getFullYear(),
+        selectedMonth: new Date().getMonth(),
+      };
+
+      function showError(msg) {
+        var el = document.getElementById("ttError");
+        if (!el) {
+          return;
+        }
+        if (msg) {
+          el.textContent = msg;
+          el.classList.remove("hidden");
+        } else {
+          el.textContent = "";
+          el.classList.add("hidden");
+        }
+      }
+
+      function setWeekLabel() {
+        var el = document.getElementById("ttWeekLabel");
+        if (!el || !state.displayWeekStart) {
+          return;
+        }
+        var a = state.displayWeekStart;
+        var b = addDays(a, 6);
+        el.textContent =
+          "Week: " +
+          MONTH_NAMES[a.getMonth()] +
+          " " +
+          a.getDate() +
+          " – " +
+          MONTH_NAMES[b.getMonth()] +
+          " " +
+          b.getDate() +
+          ", " +
+          a.getFullYear() +
+          (a.getFullYear() !== b.getFullYear() ? " – " + b.getFullYear() : "") +
+          ". Go / month change uses the week that starts on the first Sunday of the chosen month.";
+      }
+
+      function buildGrid() {
+        var thead = document.getElementById("ttHead");
+        var tbody = document.getElementById("ttBody");
+        if (!thead || !tbody || !state.displayWeekStart) {
+          return;
+        }
+        var weekDates = [];
+        for (var i = 0; i < 7; i++) {
+          weekDates.push(addDays(state.displayWeekStart, i));
+        }
+        var headHtml =
+          "<tr>" +
+          '<th class="tt-corner px-2 py-2 text-left text-slate-400 font-medium border-b border-r border-white/10 w-16 sm:w-20">Time</th>';
+        for (var d = 0; d < 7; d++) {
+          var dt = weekDates[d];
+          headHtml +=
+            '<th class="px-2 py-2 text-center text-slate-300 font-medium border-b border-white/10 min-w-[7.5rem]">' +
+            escapeHtml(DAY_HEADERS[d]) +
+            "<br/><span class=\"text-[10px] text-slate-500 font-normal\">" +
+            escapeHtml(MONTH_NAMES[dt.getMonth()].slice(0, 3) + " " + dt.getDate()) +
+            "</span></th>";
+        }
+        headHtml += "</tr>";
+        thead.innerHTML = headHtml;
+
+        var cells = {};
+        for (var h = HOUR_START; h <= HOUR_END; h++) {
+          for (var di = 0; di < 7; di++) {
+            cells[h + "_" + di] = [];
+          }
+        }
+        for (var li = 0; li < state.lessons.length; li++) {
+          var L = state.lessons[li];
+          var hrs = hoursInDisplayRange(parseClassTimeHours(L.class_time));
+          if (!hrs.length) {
+            continue;
+          }
+          for (var dj = 0; dj < 7; dj++) {
+            var cal = weekDates[dj];
+            if (!lessonRunsOnDay(L, dj, cal)) {
+              continue;
+            }
+            for (var hi = 0; hi < hrs.length; hi++) {
+              var hh = hrs[hi];
+              if (hh < HOUR_START || hh > HOUR_END) {
+                continue;
+              }
+              var key = hh + "_" + dj;
+              if (!cells[key]) {
+                cells[key] = [];
+              }
+              cells[key].push(L);
+            }
+          }
+        }
+
+        var bodyHtml = "";
+        for (var hour = HOUR_START; hour <= HOUR_END; hour++) {
+          bodyHtml +=
+            "<tr class=\"border-b border-white/5\">" +
+            '<th class="px-2 py-2 text-slate-400 font-mono text-right pr-3 whitespace-nowrap">' +
+            pad2(hour) +
+            ":00</th>";
+          for (var col = 0; col < 7; col++) {
+            var list = cells[hour + "_" + col] || [];
+            var cellInner;
+            if (!list.length) {
+              cellInner = '<span class="text-slate-600">—</span>';
+            } else {
+              cellInner = "<ul class=\"list-disc list-inside space-y-1 text-slate-200\">";
+              for (var k = 0; k < list.length; k++) {
+                var item = list[k];
+                var payload = encodeURIComponent(JSON.stringify(item));
+                cellInner +=
+                  "<li><button type=\"button\" class=\"tt-course text-left hover:text-amber-300 underline decoration-white/20 underline-offset-2\" data-payload=\"" +
+                  payload +
+                  "\">" +
+                  "<span class=\"font-semibold text-amber-200/90\">" +
+                  escapeHtml(item.class_id || item.LessonID || "—") +
+                  "</span><br/>" +
+                  "<span class=\"text-slate-300\">" +
+                  escapeHtml(item.class_info || "—") +
+                  "</span><br/>" +
+                  "<span class=\"text-slate-400 text-[11px]\">" +
+                  escapeHtml(item.Sport_center || "—") +
+                  " · " +
+                  escapeHtml(item["Coach Name"] || "—") +
+                  "</span></button></li>";
+              }
+              cellInner += "</ul>";
+            }
+            bodyHtml +=
+              '<td class="align-top px-2 py-2 border-l border-white/5 bg-slate-900/30">' +
+              cellInner +
+              "</td>";
+          }
+          bodyHtml += "</tr>";
+        }
+        tbody.innerHTML = bodyHtml;
+
+        tbody.querySelectorAll("button.tt-course").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            try {
+              var raw = btn.getAttribute("data-payload");
+              var L = JSON.parse(decodeURIComponent(raw || ""));
+              var msg = formatLessonAlert(L);
+              console.log("[Lesson Time Table]", L);
+              alert(msg);
+            } catch (e) {
+              console.warn(e);
+              alert("Could not read lesson details.");
+            }
+          });
+        });
+      }
+
+      function resetWeekToSelectedMonth() {
+        state.displayWeekStart = firstSundayOfMonth(
+          state.selectedYear,
+          state.selectedMonth,
+        );
+      }
+
+      function populateYearMonthControls() {
+        var years = collectYearsFromLessons(state.lessons);
+        var ySel = document.getElementById("ttYear");
+        var mSel = document.getElementById("ttMonth");
+        if (!ySel || !mSel) {
+          return;
+        }
+        ySel.innerHTML = "";
+        for (var i = 0; i < years.length; i++) {
+          var opt = document.createElement("option");
+          opt.value = String(years[i]);
+          opt.textContent = String(years[i]);
+          ySel.appendChild(opt);
+        }
+        if (years.indexOf(state.selectedYear) < 0) {
+          state.selectedYear = years[years.length - 1] || new Date().getFullYear();
+        }
+        ySel.value = String(state.selectedYear);
+        mSel.innerHTML = "";
+        for (var m = 0; m < 12; m++) {
+          var o2 = document.createElement("option");
+          o2.value = String(m);
+          o2.textContent = MONTH_NAMES[m];
+          mSel.appendChild(o2);
+        }
+        mSel.value = String(state.selectedMonth);
+      }
+
+      function render() {
+        setWeekLabel();
+        buildGrid();
+      }
+
+      /** Coach Manager: read `backend/data_club/{clubId}/LessonList.json` directly. */
+      function loadLessonListFromJsonFile() {
+        showError("");
+        if (!state.clubId) {
+          showError(
+            "Missing club ID. Open this page from Lesson Reservation (Lesson TimeTable button) or add ?clubId=YOUR_UID to the URL.",
+          );
+          state.lessons = [];
+          populateYearMonthControls();
+          resetWeekToSelectedMonth();
+          render();
+          return;
+        }
+        var url =
+          window.location.origin +
+          "/backend/data_club/" +
+          encodeURIComponent(state.clubId) +
+          "/LessonList.json";
+        fetch(url, { credentials: "include" })
+          .then(function (res) {
+            if (!res.ok) {
+              throw new Error(
+                res.status === 404
+                  ? "Lesson list file was not found for this club."
+                  : "Could not load lesson list (HTTP " + res.status + ").",
+              );
+            }
+            return res.text();
+          })
+          .then(function (text) {
+            var parsed = parseJsonLessons(text);
+            if (parsed.error) {
+              throw new Error(parsed.error);
+            }
+            state.lessons = parsed.lessons;
+            populateYearMonthControls();
+            resetWeekToSelectedMonth();
+            render();
+          })
+          .catch(function (e) {
+            state.lessons = [];
+            showError(e.message || "Failed to load or read the lesson list.");
+            populateYearMonthControls();
+            resetWeekToSelectedMonth();
+            render();
+          });
+      }
+
+      function normalizeLessonRow(L) {
+        function first() {
+          for (var i = 0; i < arguments.length - 1; i++) {
+            var v = arguments[i];
+            if (v != null && String(v).trim() !== "") {
+              return String(v).trim();
+            }
+          }
+          var d = arguments[arguments.length - 1];
+          return d == null ? "" : String(d);
+        }
+        L = L || {};
+        var id = first(L.LessonID, L.lessonId, "");
+        function ynCell(a, b, def) {
+          var t = first(a, b, def).toUpperCase();
+          if (t === "TRUE" || t === "1" || t === "YES") {
+            return "Y";
+          }
+          if (t === "FALSE" || t === "0" || t === "NO") {
+            return "N";
+          }
+          return first(a, b, def) || def;
+        }
+        return {
+          LessonID: id,
+          ClubID: first(L.ClubID, L.clubUid, ""),
+          ReservedNumber: first(L.ReservedNumber, L.reservedNumber, "0"),
+          class_id: first(L.class_id, L.classId, id),
+          class_info: first(L.class_info, L.classInfo, ""),
+          Sport_center: first(L.Sport_center, L.sportCenter, ""),
+          "Coach Name": first(L["Coach Name"], L.coachName, ""),
+          lesson_start_date: first(L.lesson_start_date, L.lessonStartDate, ""),
+          lesson_end_date: first(L.lesson_end_date, L.lessonEndDate, ""),
+          class_time: first(L.class_time, L.classTime, ""),
+          Year: first(L.Year, L.year, ""),
+          SportType: first(L.SportType, L.sportType, ""),
+          Remarks: first(L.Remarks, L.remarks, ""),
+          status: first(L.status, L.Status, "ACTIVE"),
+          class_sun: ynCell(L.class_sun, L.classSun, "N"),
+          class_mon: ynCell(L.class_mon, L.classMon, "N"),
+          class_tue: ynCell(L.class_tue, L.classTue, "N"),
+          class_wed: ynCell(L.class_wed, L.classWed, "N"),
+          class_thur: ynCell(L.class_thur, L.classThur, "N"),
+          class_fri: ynCell(L.class_fri, L.classFri, "N"),
+          class_sat: ynCell(L.class_sat, L.classSat, "N"),
+        };
+      }
+
+      function loadLessonsFromApi() {
+        showError("");
+        if (!window.api || typeof window.api.api !== "function") {
+          state.lessons = [];
+          showError("Could not call API (scripts not loaded).");
+          populateYearMonthControls();
+          resetWeekToSelectedMonth();
+          render();
+          return;
+        }
+        var userRole = localStorage.getItem("userRole");
+        var qPath = new URLSearchParams(window.location.search || "");
+        var browseAllLessons = qPath.get("browse") === "1";
+        var studentMyLessonsOnly =
+          userRole === "Student" && qPath.get("myLessons") === "1";
+        var cidForApi = (state.clubId || "").trim();
+        var lessonsPath = "/coach-manager/lessons";
+        if (studentMyLessonsOnly) {
+          if (!cidForApi) {
+            state.lessons = [];
+            showError(
+              "Missing club ID for your lessons timetable. Open from Student My Bookings (Overview) or add ?clubId= to the URL.",
+            );
+            populateYearMonthControls();
+            resetWeekToSelectedMonth();
+            render();
+            return;
+          }
+          lessonsPath =
+            "/coach-manager/lessons/student-bookings?clubId=" +
+            encodeURIComponent(cidForApi);
+        } else if (userRole === "Coach" && browseAllLessons) {
+          if (!cidForApi) {
+            state.lessons = [];
+            showError(
+              "Missing club ID for club-wide timetable. Open from Browse Lessons or add ?clubId= to the URL.",
+            );
+            populateYearMonthControls();
+            resetWeekToSelectedMonth();
+            render();
+            return;
+          }
+          lessonsPath += "?clubId=" + encodeURIComponent(cidForApi);
+        }
+        window.api
+          .api(lessonsPath)
+          .then(function (data) {
+            if (!data || data.ok === false) {
+              throw new Error(
+                (data && data.error) || "Could not load lessons from server.",
+              );
+            }
+            var list = Array.isArray(data.lessons) ? data.lessons : [];
+            state.lessons = list.map(normalizeLessonRow);
+            if (data.clubId) {
+              var cid = String(data.clubId).trim();
+              state.clubId = cid;
+              var h = document.getElementById("hdrUid");
+              if (h) {
+                h.textContent = cid;
+              }
+            }
+            populateYearMonthControls();
+            resetWeekToSelectedMonth();
+            render();
+          })
+          .catch(function (e) {
+            state.lessons = [];
+            showError(e.message || "Failed to load lessons.");
+            populateYearMonthControls();
+            resetWeekToSelectedMonth();
+            render();
+          });
+      }
+
+      function loadLessonsData() {
+        var userRole = localStorage.getItem("userRole");
+        if (userRole === "Coach" || userRole === "Student") {
+          loadLessonsFromApi();
+        } else {
+          loadLessonListFromJsonFile();
+        }
+      }
+
+      function readClubId() {
+        var q = new URLSearchParams(window.location.search || "");
+        var id = (q.get("clubId") || q.get("uid") || "").trim();
+        var ctx =
+          window.api &&
+          window.api.getClubFolderContext &&
+          window.api.getClubFolderContext();
+        if (ctx && ctx.clubId) {
+          id = id || String(ctx.clubId).trim();
+        }
+        return id;
+      }
+
+      var isFramed = false;
+      try {
+        isFramed = window.self !== window.top;
+      } catch (e) {
+        isFramed = true;
+      }
+      var token =
+        window.auth &&
+        typeof window.auth.getToken === "function" &&
+        window.auth.getToken();
+      var role = localStorage.getItem("userRole");
+      var sessionOk =
+        Boolean(token) &&
+        (role === "CoachManager" || role === "Coach" || role === "Student");
+      if (!sessionOk) {
+        if (
+          !isFramed &&
+          !window.auth.guardPage("CoachManager") &&
+          !window.auth.guardPage("Coach") &&
+          !window.auth.guardPage("Student")
+        ) {
+          return;
+        }
+      } else if (!isFramed) {
+        if (role === "CoachManager" && !window.auth.guardPage("CoachManager")) {
+          return;
+        }
+        if (role === "Coach" && !window.auth.guardPage("Coach")) {
+          return;
+        }
+        if (role === "Student" && !window.auth.guardPage("Student")) {
+          return;
+        }
+      }
+
+      if (role === "Student") {
+        var ttRoot = document.getElementById("ttBodyRoot");
+        if (ttRoot) {
+          ttRoot.style.setProperty(
+            "--dashboard-bg-img",
+            "url('/Source/Image/student.jpg')",
+          );
+        }
+      }
+
+      state.clubId = readClubId();
+      var hdr = document.getElementById("hdrUid");
+      if (hdr) {
+        hdr.textContent = state.clubId || "…";
+      }
+
+      var backTop = document.querySelector('header p a[target="_top"]');
+      if (backTop && role === "Coach") {
+        backTop.setAttribute("href", "/coach.html");
+        backTop.textContent = "← Back to Coach";
+      }
+      if (backTop && role === "Student") {
+        backTop.setAttribute("href", "/student.html");
+        backTop.textContent = "← Back to Student";
+      }
+
+      if (role === "Coach") {
+        var sub = document.querySelector("header p.text-xs.text-slate-500");
+        if (sub) {
+          var qBr = new URLSearchParams(window.location.search || "");
+          if (qBr.get("browse") === "1") {
+            sub.innerHTML =
+              "Timetable shows <strong>all club lessons</strong> (Browse Lessons), via the server API.";
+          } else {
+            sub.innerHTML =
+              "Timetable uses the same lesson list as <strong>My Bookings</strong> (your coach), loaded from the server.";
+          }
+        }
+      }
+      if (role === "Student") {
+        var subSt = document.querySelector("header p.text-xs.text-slate-500");
+        if (subSt) {
+          var qStu = new URLSearchParams(window.location.search || "");
+          if (qStu.get("myLessons") === "1") {
+            subSt.innerHTML =
+              "Showing only <strong>your lessons</strong> — reserved slots from <code class=\"text-slate-400\">LessonReserveList.json</code> with details from <code class=\"text-slate-400\">LessonList.json</code> (same as Student My Bookings).";
+          } else {
+            subSt.innerHTML =
+              "Timetable uses the full club lesson list from the server.";
+          }
+        }
+      }
+
+      var ySel = document.getElementById("ttYear");
+      var mSel = document.getElementById("ttMonth");
+      if (ySel) {
+        ySel.addEventListener("change", function () {
+          state.selectedYear = parseInt(ySel.value, 10) || state.selectedYear;
+          resetWeekToSelectedMonth();
+          render();
+        });
+      }
+      if (mSel) {
+        mSel.addEventListener("change", function () {
+          state.selectedMonth = parseInt(mSel.value, 10) || 0;
+          resetWeekToSelectedMonth();
+          render();
+        });
+      }
+      document.getElementById("ttGo").addEventListener("click", function () {
+        if (ySel) {
+          state.selectedYear = parseInt(ySel.value, 10) || state.selectedYear;
+        }
+        if (mSel) {
+          state.selectedMonth = parseInt(mSel.value, 10) || 0;
+        }
+        resetWeekToSelectedMonth();
+        render();
+      });
+      document.getElementById("ttPrev").addEventListener("click", function () {
+        if (!state.displayWeekStart) {
+          resetWeekToSelectedMonth();
+        }
+        state.displayWeekStart = addDays(state.displayWeekStart, -7);
+        render();
+      });
+      document.getElementById("ttNext").addEventListener("click", function () {
+        if (!state.displayWeekStart) {
+          resetWeekToSelectedMonth();
+        }
+        state.displayWeekStart = addDays(state.displayWeekStart, 7);
+        render();
+      });
+
+      window.addEventListener("message", function (ev) {
+        if (ev.origin !== window.location.origin) {
+          return;
+        }
+        var d = ev.data;
+        if (!d || d.type !== "sportCoach.clubContext") {
+          return;
+        }
+        var cid = String(d.clubId || d.uid || "").trim();
+        if (cid) {
+          state.clubId = cid;
+          if (hdr) {
+            hdr.textContent = cid;
+          }
+          if (window.api && typeof window.api.setClubFolderContext === "function") {
+            window.api.setClubFolderContext(
+              cid,
+              d.clubName != null && String(d.clubName).trim() !== ""
+                ? String(d.clubName).trim()
+                : null,
+            );
+          }
+          loadLessonsData();
+        }
+      });
+
+      if (window.api && typeof window.api.api === "function") {
+        window.api
+          .api("/me")
+          .then(function (d) {
+            var u = d.user || {};
+            var cfu =
+              u.club_folder_uid != null && String(u.club_folder_uid).trim() !== ""
+                ? String(u.club_folder_uid).trim()
+                : "";
+            if (role === "Coach") {
+              if (cfu && !state.clubId) {
+                state.clubId = cfu;
+                if (hdr) {
+                  hdr.textContent = cfu;
+                }
+              }
+            } else if (role === "Student") {
+              if (cfu && !state.clubId) {
+                state.clubId = cfu;
+                if (hdr) {
+                  hdr.textContent = cfu;
+                }
+              }
+            } else if (role === "CoachManager") {
+              var uid = u.uid != null ? String(u.uid).trim() : "";
+              if (uid && !state.clubId) {
+                state.clubId = uid;
+                if (hdr) {
+                  hdr.textContent = uid;
+                }
+              }
+            }
+            loadLessonsData();
+          })
+          .catch(function () {
+            loadLessonsData();
+          });
+      } else {
+        loadLessonsData();
+      }
+    })();
+  </script>
+</body>
+</html>
