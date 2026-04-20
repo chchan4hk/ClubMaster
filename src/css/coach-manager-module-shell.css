@@ -1,0 +1,164 @@
+/**
+ * Coach Manager iframe modules: match useraccount.html (My Profile) warm metallic tone.
+ * Use with: body.profile-password-page.cm-module-shell (+ link profile-password-panels.css).
+ */
+
+.profile-password-page.cm-module-shell .glass {
+  background: rgba(255, 255, 255, 0.42) !important;
+  border-color: rgba(196, 165, 110, 0.45) !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.5) inset,
+    0 12px 40px rgba(90, 70, 40, 0.08) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #292524;
+}
+
+.profile-password-page.cm-module-shell .profile-password-card.glass {
+  background: rgba(255, 255, 255, 0.5) !important;
+}
+
+.profile-password-page.cm-module-shell .cm-module-page-header {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(180, 140, 80, 0.22);
+}
+
+.profile-password-page.cm-module-shell .cm-module-backlink {
+  color: #92400e !important;
+  font-weight: 500;
+}
+.profile-password-page.cm-module-shell .cm-module-backlink:hover {
+  color: #451a03 !important;
+}
+
+.profile-password-page.cm-module-shell table {
+  color: #44403c;
+}
+.profile-password-page.cm-module-shell table thead tr {
+  background: linear-gradient(
+    180deg,
+    rgba(254, 243, 199, 0.75) 0%,
+    rgba(250, 230, 180, 0.5) 100%
+  );
+  border-bottom: 1px solid rgba(180, 130, 70, 0.4);
+}
+.profile-password-page.cm-module-shell table th {
+  color: #78350f !important;
+  font-weight: 600;
+}
+.profile-password-page.cm-module-shell table tbody tr {
+  border-color: rgba(168, 140, 100, 0.28) !important;
+}
+.profile-password-page.cm-module-shell table tbody td {
+  color: #44403c !important;
+}
+
+.profile-password-page.cm-module-shell .border-white\/10,
+.profile-password-page.cm-module-shell .border-white\/15 {
+  border-color: rgba(168, 140, 100, 0.35) !important;
+}
+
+.profile-password-page.cm-module-shell .text-slate-100,
+.profile-password-page.cm-module-shell .text-slate-200 {
+  color: #1c1917 !important;
+}
+.profile-password-page.cm-module-shell .text-slate-300 {
+  color: #44403c !important;
+}
+.profile-password-page.cm-module-shell .text-slate-400 {
+  color: #78716c !important;
+}
+.profile-password-page.cm-module-shell .text-slate-500 {
+  color: #a8a29e !important;
+}
+
+.profile-password-page.cm-module-shell .text-amber-200,
+.profile-password-page.cm-module-shell .text-amber-200\/95,
+.profile-password-page.cm-module-shell .text-amber-200\/90,
+.profile-password-page.cm-module-shell .text-amber-200\/70 {
+  color: #92400e !important;
+}
+.profile-password-page.cm-module-shell .text-amber-300 {
+  color: #b45309 !important;
+}
+.profile-password-page.cm-module-shell .text-amber-300\/95,
+.profile-password-page.cm-module-shell .text-amber-300\/90 {
+  color: #92400e !important;
+}
+.profile-password-page.cm-module-shell .text-amber-400 {
+  color: #b45309 !important;
+}
+.profile-password-page.cm-module-shell .hover\:text-amber-200:hover {
+  color: #78350f !important;
+}
+.profile-password-page.cm-module-shell .text-amber-100,
+.profile-password-page.cm-module-shell .text-amber-100\/75,
+.profile-password-page.cm-module-shell .text-amber-100\/90,
+.profile-password-page.cm-module-shell .text-amber-100\/85,
+.profile-password-page.cm-module-shell .text-amber-100\/70 {
+  color: #44403c !important;
+}
+.profile-password-page.cm-module-shell .text-amber-50 {
+  color: #292524 !important;
+}
+.profile-password-page.cm-module-shell .text-amber-50\/90 {
+  color: #292524 !important;
+}
+.profile-password-page.cm-module-shell .text-amber-950 {
+  color: #1c1917 !important;
+}
+.profile-password-page.cm-module-shell .text-amber-800 {
+  color: #92400e !important;
+}
+
+.profile-password-page.cm-module-shell .bg-slate-900\/50,
+.profile-password-page.cm-module-shell .bg-slate-900\/60,
+.profile-password-page.cm-module-shell .bg-slate-950\/40,
+.profile-password-page.cm-module-shell .bg-slate-950\/50,
+.profile-password-page.cm-module-shell .bg-slate-950\/60,
+.profile-password-page.cm-module-shell .bg-slate-950\/80 {
+  background-color: rgba(255, 255, 255, 0.82) !important;
+}
+
+.profile-password-page.cm-module-shell .bg-slate-900\/95 {
+  background-color: rgba(255, 252, 245, 0.97) !important;
+  color: #1c1917 !important;
+}
+
+.profile-password-page.cm-module-shell .bg-amber-950\/50 {
+  background-color: rgba(255, 251, 235, 0.9) !important;
+  color: #1c1917 !important;
+}
+
+.profile-password-page.cm-module-shell .club-field:disabled,
+.profile-password-page.cm-module-shell select.club-field,
+.profile-password-page.cm-module-shell input.club-field {
+  color: #292524 !important;
+  background-color: rgba(255, 255, 255, 0.88) !important;
+  border-color: rgba(168, 140, 100, 0.4) !important;
+}
+
+.profile-password-page.cm-module-shell .text-red-300 {
+  color: #b91c1c !important;
+}
+
+.profile-password-page.cm-module-shell .text-red-200 {
+  color: #991b1b !important;
+}
+
+.profile-password-page.cm-module-shell strong {
+  color: #451a03;
+}
+
+/* Lesson Payment Status / User Account Subscription: expanded row — light panel, readable type */
+.lesson-payment-status-page.cm-module-shell table tbody tr[id^="ex-"],
+.userlogin-subscription-status-page.cm-module-shell table tbody tr[id^="ex-"] {
+  background: transparent !important;
+}
+.lesson-payment-status-page.cm-module-shell table tbody tr[id^="ex-"] > td,
+.userlogin-subscription-status-page.cm-module-shell table tbody tr[id^="ex-"] > td {
+  background: rgba(255, 253, 245, 0.96) !important;
+  color: #292524 !important;
+  border-top: 1px solid rgba(180, 140, 90, 0.28);
+}

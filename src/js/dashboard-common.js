@@ -17,6 +17,10 @@ window.dashboardInit = function dashboardInit(expectedRole, shortRoleLabel) {
         shortRoleLabel +
         " · signed in — profile refresh skipped (sign out and back in if something misbehaves)";
     }
+    var roleHeading = document.getElementById("cmRoleLabel");
+    if (roleHeading && shortRoleLabel) {
+      roleHeading.textContent = shortRoleLabel;
+    }
   }
 
   window.api
@@ -27,14 +31,15 @@ window.dashboardInit = function dashboardInit(expectedRole, shortRoleLabel) {
           data.user.usertype != null && String(data.user.usertype).trim() !== ""
             ? String(data.user.usertype).trim()
             : data.user.role;
-        welcome.textContent =
-          "UID " +
-          data.user.uid +
-          " · " +
-          data.user.username +
-          " (" +
-          typeLabel +
-          ")";
+        var un =
+          data.user.username != null && String(data.user.username).trim() !== ""
+            ? String(data.user.username).trim()
+            : "";
+        welcome.textContent = un ? "User Account · " + un : "User Account";
+        var roleHeading = document.getElementById("cmRoleLabel");
+        if (roleHeading) {
+          roleHeading.textContent = typeLabel || String(data.user.role || "").trim();
+        }
       }
       if (
         data.user &&
