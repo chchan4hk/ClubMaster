@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Sign in — ClubMaster</title>
+  <title>Sign in ??ClubMaster</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/btn-cancel-metallic-brown.css" />
@@ -11,7 +11,7 @@
     html {
       background-color: #000000;
     }
-    /* Page shell — pure black base with warm gold highlights (no blue-gray) */
+    /* Page shell ??pure black base with warm gold highlights (no blue-gray) */
     .login-page-metal-bg {
       background-color: #000000;
       background-image:
@@ -59,60 +59,7 @@
         }
       }
     }
-    /* Yellow → gold → orange → white with gentle blink (slow cycle for comfort) */
-    @keyframes login-video-hint {
-      0% {
-        color: #facc15;
-        opacity: 1;
-      }
-      11% {
-        opacity: 0.55;
-      }
-      22% {
-        color: #d4af37;
-        opacity: 1;
-      }
-      33% {
-        opacity: 0.55;
-      }
-      44% {
-        color: #f97316;
-        opacity: 1;
-      }
-      55% {
-        opacity: 0.55;
-      }
-      66% {
-        color: #ffffff;
-        opacity: 1;
-      }
-      77% {
-        opacity: 0.55;
-      }
-      88% {
-        color: #facc15;
-        opacity: 1;
-      }
-      94% {
-        opacity: 0.55;
-      }
-      100% {
-        color: #facc15;
-        opacity: 1;
-      }
-    }
-    .login-video-hint {
-      animation: login-video-hint 3.6s ease-in-out infinite;
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .login-video-hint {
-        animation: none;
-        color: #facc15;
-        opacity: 1;
-      }
-    }
-
-    /* Login card — animated frame + headline */
+    /* Login card ??animated frame + headline */
     @keyframes login-border-flow {
       0%,
       100% {
@@ -288,7 +235,7 @@
         0 12px 40px rgba(0, 0, 0, 0.45);
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
-    /* Gold / white metallic — slow shifting gradient */
+    /* Gold / white metallic ??slow shifting gradient */
     @keyframes renewal-gold-metallic {
       0% {
         background-position: 0% 40%;
@@ -413,7 +360,7 @@
       border-color: rgba(251, 191, 36, 0.5);
       color: #fde68a;
     }
-    /* Match Coach Manager → Payment → Verify Payment Table “Confirm Payment” */
+    /* Match Coach Manager ??Payment ??Verify Payment Table ?onfirm Payment??*/
     .renewal-btn-metal-gold {
       background: linear-gradient(145deg, #e8c547 0%, #a67c1a 42%, #2a1f08 100%);
       color: #0c0a06;
@@ -524,10 +471,8 @@
   </header>
   <div
     id="loginBgStage"
-    class="login-bottom-frame relative flex min-h-0 w-full cursor-pointer overflow-hidden bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-500/45"
-    role="button"
-    tabindex="0"
-    aria-label="Click on the background to play the welcome video">
+    class="login-bottom-frame relative flex min-h-0 w-full overflow-hidden bg-black"
+    aria-hidden="true">
     <div class="login-bg-metal-layer" aria-hidden="true"></div>
     <img
       id="loginBgImage"
@@ -539,22 +484,6 @@
       sizes="100vw"
       decoding="async"
     />
-    <p
-      id="loginBgVideoHint"
-      tabindex="0"
-      role="button"
-      class="login-video-hint pointer-events-auto cursor-pointer absolute left-1/2 top-2 z-[5] max-w-[min(100%,22rem)] -translate-x-1/2 px-2 text-center text-xs font-medium leading-snug sm:top-3 sm:max-w-xl sm:text-sm [text-shadow:0_1px_2px_rgba(0,0,0,0.9),0_0_12px_rgba(0,0,0,0.65)] focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black/50 rounded-md"
-      aria-label="Play welcome video">
-      Click on this ⬇ to show the video
-    </p>
-    <video
-      id="openingVideo"
-      class="absolute inset-0 z-10 hidden h-full w-full bg-black object-cover object-center"
-      playsinline
-      webkit-playsinline="true"
-      preload="none"
-      data-stream-src="source/image/opening.MP4"
-      aria-hidden="true"></video>
   </div>
 
   <!-- Expired account notice -->
@@ -581,7 +510,7 @@
         <button type="button" class="renewal-method-btn rounded-lg border border-neutral-700 px-4 py-2 text-sm text-neutral-200 hover:bg-neutral-900" data-method="PayMe">PayMe</button>
         <button type="button" class="renewal-method-btn rounded-lg border border-neutral-700 px-4 py-2 text-sm text-neutral-200 hover:bg-neutral-900" data-method="FPS">FPS</button>
         <button type="button" class="renewal-method-btn rounded-lg border border-neutral-700 px-4 py-2 text-sm text-neutral-200 hover:bg-neutral-900" data-method="AliPay">AliPay</button>
-        <button type="button" class="renewal-method-btn rounded-lg border border-neutral-700 px-4 py-2 text-sm text-neutral-200 hover:bg-neutral-900" data-method="支付寶">支付寶</button>
+        <button type="button" class="renewal-method-btn rounded-lg border border-neutral-700 px-4 py-2 text-sm text-neutral-200 hover:bg-neutral-900" data-method="?臭?撖?>?臭?撖?/button>
       </div>
 
       <p class="renewal-section-label mb-3">Subscription Options</p>
@@ -643,8 +572,8 @@
       /**
        * Sign-in uses POST /api/auth/login-with-context. When the backend has MongoDB configured
        * (MONGODB_URI, etc.), credentials are checked against `ClubMaster_DB.userLogin`. On success,
-       * the app opens the role dashboard from that record (Coach Manager → coach-manager.html,
-       * Coach → coach.html, Student → student.html, Administrator → admin.html).
+       * the app opens the role dashboard from that record (Coach Manager ??coach-manager.html,
+       * Coach ??coach.html, Student ??student.html, Administrator ??admin.html).
        */
       if (new URLSearchParams(window.location.search).get("logout")) {
         window.auth.clearSession();
@@ -695,7 +624,7 @@
           PayMe: "Payme_QR.jpg",
           FPS: "FPS_QR.jpg",
           AliPay: "Alipay_QR.jpg",
-          支付寶: "支付寶_QR.jpg",
+          ?臭?撖? "?臭?撖跛QR.jpg",
         };
         var pendingUser = null;
         var selectedMethod = "";
@@ -768,7 +697,7 @@
             errEl.classList.add("hidden");
           }
           grid.innerHTML =
-            '<p class="text-neutral-500 text-sm col-span-full py-4 text-center">Loading subscription options…</p>';
+            '<p class="text-neutral-500 text-sm col-span-full py-4 text-center">Loading subscription options??/p>';
           try {
             if (!cachedSubscriptionRows) {
               var url = qrBaseUrl() + SUBSCRIPTION_LIST_PATH;
@@ -995,112 +924,6 @@
         };
       })();
 
-      (function setupOpeningVideo() {
-        var stage = document.getElementById("loginBgStage");
-        var imgEl = document.getElementById("loginBgImage");
-        var video = document.getElementById("openingVideo");
-        var hint = document.getElementById("loginBgVideoHint");
-        if (!stage || !imgEl || !video) {
-          return;
-        }
-
-          var OPENING_STREAM_URL =
-          (video.getAttribute("data-stream-src") || "source/image/opening.MP4").trim();
-
-        var playing = false;
-
-        /**
-         * Attach MP4 URL on first play only (`preload="none"` + no src until click).
-         * The browser then fetches via HTTP progressive byte-range streaming (native data stream),
-         * so playback can start before the full file is downloaded (requires moov early enough + server ranges).
-         */
-        function attachStreamingSrcIfNeeded() {
-          if (video.getAttribute("data-stream-bound") === "1") {
-            return;
-          }
-          video.preload = "none";
-          video.src = OPENING_STREAM_URL;
-          video.setAttribute("data-stream-bound", "1");
-          try {
-            video.load();
-          } catch (e) {
-            /* ignore */
-          }
-        }
-
-        function showPhoto() {
-          playing = false;
-          video.classList.add("hidden");
-          try {
-            video.pause();
-            video.currentTime = 0;
-          } catch (e) {
-            /* ignore */
-          }
-          imgEl.classList.remove("hidden");
-          stage.classList.add("cursor-pointer");
-          stage.setAttribute("aria-label", "Click on the background to play the welcome video");
-          stage.setAttribute("aria-busy", "false");
-          if (hint) {
-            hint.classList.remove("hidden");
-          }
-        }
-
-        function showVideo() {
-          if (playing) {
-            return;
-          }
-          attachStreamingSrcIfNeeded();
-          playing = true;
-          imgEl.classList.add("hidden");
-          video.classList.remove("hidden");
-          stage.classList.remove("cursor-pointer");
-          stage.setAttribute("aria-label", "Playing video");
-          stage.setAttribute("aria-busy", "true");
-          if (hint) {
-            hint.classList.add("hidden");
-          }
-          var p = video.play();
-          if (p && typeof p.catch === "function") {
-            p.catch(function () {
-              showPhoto();
-            });
-          }
-        }
-
-        video.addEventListener("ended", showPhoto);
-        video.addEventListener("error", showPhoto);
-
-        function onActivate(ev) {
-          if (playing) {
-            return;
-          }
-          if (ev.type === "keydown" && ev.key !== "Enter" && ev.key !== " ") {
-            return;
-          }
-          if (ev.type === "keydown") {
-            ev.preventDefault();
-          }
-          showVideo();
-        }
-
-        stage.addEventListener("click", onActivate);
-        stage.addEventListener("keydown", onActivate);
-
-        if (hint) {
-          hint.addEventListener("click", function (ev) {
-            ev.stopPropagation();
-            onActivate(ev);
-          });
-          hint.addEventListener("keydown", function (ev) {
-            if (ev.key === "Enter" || ev.key === " ") {
-              ev.preventDefault();
-              ev.stopPropagation();
-              onActivate(ev);
-            }
-          });
-        }
-      })();
     })();
   </script>
 </body>
