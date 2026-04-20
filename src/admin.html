@@ -2,78 +2,308 @@
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Admin — Sport Court Booking</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/dashboard-metal-nav.css" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+    html {
+      height: 100%;
+      height: -webkit-fill-available;
+    }
+    body.admin-dashboard-page {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+      min-height: 100vh;
+      min-height: 100dvh;
+      min-height: -webkit-fill-available;
+      background: #0a0a0a;
+      color: #e2e8f0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      overflow-x: hidden;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    .hidden {
+      display: none !important;
+    }
+
+    .cm-role-heading {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+    @media (min-width: 640px) {
+      .cm-role-heading {
+        font-size: 1.35rem;
+      }
+    }
+    .cm-role-shimmer {
+      display: inline-block;
+      font-weight: 700;
+      background: linear-gradient(
+        100deg,
+        #ffffff 0%,
+        #fefdfb 6%,
+        #faf3e0 14%,
+        #f3e4c4 22%,
+        #e8b86a 30%,
+        #e5983a 38%,
+        #daa520 46%,
+        #f0c419 52%,
+        #facc15 58%,
+        #fde047 64%,
+        #fef08a 70%,
+        #fde047 76%,
+        #f5e6c8 84%,
+        #faf3e0 92%,
+        #ffffff 100%
+      );
+      background-size: 300% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      -webkit-text-fill-color: transparent;
+      animation: cm-role-gold-shift 56s ease-in-out infinite alternate;
+    }
+    @keyframes cm-role-gold-shift {
+      0% {
+        background-position: 0% 50%;
+      }
+      100% {
+        background-position: 100% 50%;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .cm-role-shimmer {
+        animation: none;
+        background: none;
+        color: #e8c547;
+        -webkit-text-fill-color: #e8c547;
+      }
+    }
+
+    .cm-top-frame {
+      flex: 0 0 auto;
+      background: linear-gradient(180deg, #141210 0%, #0c0b0a 100%);
+      border-bottom: 1px solid rgba(212, 175, 55, 0.28);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+    }
+    .cm-top-frame__row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.5rem 1rem;
+      padding: 0.65rem 0.85rem 0.45rem;
+      max-width: 72rem;
+      margin: 0 auto;
+    }
+    #welcome {
+      margin: 0.2rem 0 0;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      max-width: 70vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    @media (min-width: 640px) {
+      #welcome {
+        font-size: 0.8125rem;
+      }
+    }
+    #logoutBtn {
+      cursor: pointer;
+      font-size: 0.75rem;
+      padding: 0.45rem 0.75rem;
+      border-radius: 0.4rem;
+      color: #fef3c7;
+      border: 1px solid rgba(180, 83, 9, 0.45);
+      background: linear-gradient(165deg, #292524 0%, #0c0a09 100%);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+    #logoutBtn:hover {
+      border-color: rgba(251, 191, 36, 0.55);
+      background: linear-gradient(165deg, #3f3a36 0%, #12100e 100%);
+    }
+
+    .cm-main-stage {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 0.5rem 0.65rem 0.65rem;
+      max-width: 72rem;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .cm-middle-frame {
+      flex: 1 1 auto;
+      min-height: 0;
+      position: relative;
+      overflow: hidden;
+      border-radius: 0.65rem;
+      border: 1px solid rgba(212, 175, 55, 0.38);
+      background: #000;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 248, 220, 0.08),
+        inset 0 0 0 1px rgba(0, 0, 0, 0.5),
+        0 16px 48px rgba(0, 0, 0, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.2rem;
+    }
+    .cm-image-stage {
+      flex: 1 1 auto;
+      min-height: 0;
+      min-width: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .cm-image-pin {
+      position: relative;
+      align-self: center;
+      max-width: 100%;
+      max-height: 100%;
+      line-height: 0;
+    }
+    .cm-middle-frame__photo {
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      object-position: center center;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .cm-hotspot-layer {
+      position: absolute;
+      z-index: 1;
+      box-sizing: border-box;
+      pointer-events: none;
+    }
+    .cm-hotspot-layer--2x3 {
+      top: var(--cm-hot-top, 3.45%);
+      right: var(--cm-hot-x, 2.45%);
+      bottom: var(--cm-hot-bottom, 4.85%);
+      left: var(--cm-hot-x, 2.45%);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(2, 1fr);
+      column-gap: var(--cm-hot-gap-col, 1.2%);
+      row-gap: var(--cm-hot-gap-row, 1.75%);
+    }
+    .cm-hotspot-layer .cm-hotspot {
+      position: relative;
+      left: auto;
+      top: auto;
+      width: 100%;
+      height: 100%;
+      pointer-events: auto;
+      box-sizing: border-box;
+    }
+
+    a.cm-hotspot {
+      position: absolute;
+      border-radius: 0.5rem;
+      transition: background-color 0.2s ease;
+      text-decoration: none;
+    }
+    a.cm-hotspot:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+    a.cm-hotspot:focus-visible {
+      outline: 2px solid rgba(212, 175, 55, 0.65);
+      outline-offset: 2px;
+    }
+
+    .cm-iframe-panel {
+      flex: 1 1 auto;
+      min-height: 0;
+      width: 100%;
+      border: 0;
+      border-radius: 0.65rem;
+      background: rgba(15, 23, 42, 0.92);
+    }
+  </style>
 </head>
 <body
-  class="dashboard-dynamic-bg min-h-screen text-slate-100 p-6"
-  style="--dashboard-bg-img: url('Source/Image/admin.jpg');">
-  <div class="dynamic-bg-stack" aria-hidden="true">
-    <div class="dynamic-bg-photo"></div>
-    <div class="dynamic-bg-overlay"></div>
-    <canvas class="dynamic-bg-star-net"></canvas>
-    <div class="dynamic-bg-spot-glow"></div>
-  </div>
-  <header class="max-w-6xl mx-auto mb-2">
-    <div class="flex flex-wrap justify-between items-center gap-4 mb-4">
+  class="admin-dashboard-page"
+  data-dashboard-nav-active="cm-metal-btn-active">
+  <span id="clubDock" class="sr-only" aria-hidden="true"></span>
+
+  <header class="cm-top-frame">
+    <div class="cm-top-frame__row">
       <div>
-        <h1 class="text-2xl font-bold text-amber-300">Administrator</h1>
-        <p id="welcome" class="text-slate-400 text-sm mt-1">Loading…</p>
+        <h1 class="cm-role-heading"><span id="cmRoleLabel" class="cm-role-shimmer">Administrator</span></h1>
+        <p id="welcome">Loading…</p>
       </div>
-      <button type="button" id="logoutBtn"
-        class="rounded-lg bg-slate-800 border border-slate-600 px-4 py-2 text-sm hover:bg-slate-700 shrink-0">
-        Sign out
-      </button>
+      <button type="button" id="logoutBtn">Sign out</button>
     </div>
-    <nav class="flex flex-nowrap items-center gap-2 overflow-x-auto glass rounded-xl border border-white/15 p-2" role="tablist" aria-label="Dashboard sections">
-      <button type="button" id="navOverview"
-        class="shrink-0 whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-medium text-slate-100 hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500/50">
-        Overview
-      </button>
-      <button type="button" id="navProfile"
-        class="shrink-0 whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-medium text-slate-100 hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500/50">
-        My Profile
-      </button>
-      <button type="button" id="navSettings"
-        class="shrink-0 whitespace-nowrap rounded-lg px-4 py-2.5 text-sm font-medium text-slate-100 hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500/50">
-        Password Setting
-      </button>
+    <nav class="cm-metal-panel rounded-lg overflow-hidden" role="tablist" aria-label="Dashboard sections">
+      <div class="cm-metal-panel__inner">
+        <button type="button" id="navOverview" class="cm-metal-btn">Overview</button>
+        <button type="button" id="navProfile" class="cm-metal-btn">My Profile</button>
+        <button type="button" id="navSettings" class="cm-metal-btn">Password Change</button>
+      </div>
     </nav>
   </header>
 
-  <main class="max-w-6xl mx-auto mt-6">
-    <div>
-        <div id="panelOverview" class="glass rounded-xl border border-amber-500/20 p-6">
-          <h2 class="text-lg font-semibold text-amber-300 mb-4">Overview</h2>
-          <div
-            class="relative w-full rounded-lg overflow-hidden border border-white/10 shadow-lg bg-slate-900/40"
-            aria-label="Administrator shortcuts">
-            <img src="Source/Image/admin.jpg" alt=""
-              class="w-full h-auto max-w-full block pointer-events-none select-none"
-              loading="lazy" />
-            <!-- 2×3 tile links; HKIT_Dashboard-style hotspots -->
+  <main class="cm-main-stage">
+    <div id="panelOverview" class="cm-middle-frame" aria-label="Administrator shortcuts">
+      <div class="cm-image-stage">
+        <div class="cm-image-pin">
+          <img
+            class="cm-middle-frame__photo"
+            src="Source/Image/admin.webp"
+            alt=""
+            width="2400"
+            height="1416"
+            decoding="async"
+            fetchpriority="high" />
+          <div class="cm-hotspot-layer cm-hotspot-layer--2x3">
             <a class="cm-hotspot" href="coming_soon.html?m=admin-sport-activation" title="Sport Activation"
-              style="left: 2.5%; top: 3.5%; width: 29.5%; height: 44%;" aria-label="Sport Activation"></a>
+              aria-label="Sport Activation"></a>
             <a class="cm-hotspot" href="admin-user-account-management.html" title="User Account Management"
-              style="left: 34%; top: 3.5%; width: 29.5%; height: 44%;" aria-label="User Account Management"></a>
+              aria-label="User Account Management"></a>
             <a class="cm-hotspot" href="backend/payment_modules/userlogin_payment/userlogin-payment-status.html" title="Payment Status"
-              style="left: 65.5%; top: 3.5%; width: 29.5%; height: 44%;" aria-label="Payment Status"></a>
-            <a class="cm-hotspot" href="coming_soon.html?m=admin-revenue" title="Revenue"
-              style="left: 2.5%; top: 49.5%; width: 29.5%; height: 44%;" aria-label="Revenue"></a>
+              aria-label="Payment Status"></a>
+            <a class="cm-hotspot" href="coming_soon.html?m=admin-revenue" title="Revenue" aria-label="Revenue"></a>
             <a class="cm-hotspot" href="coming_soon.html?m=admin-statistic-new-module" title="Statistic (New Module)"
-              style="left: 34%; top: 49.5%; width: 29.5%; height: 44%;" aria-label="Statistic (New Module)"></a>
-            <a class="cm-hotspot" href="coming_soon.html?m=admin-announcement" title="Announcement"
-              style="left: 65.5%; top: 49.5%; width: 29.5%; height: 44%;" aria-label="Announcement"></a>
+              aria-label="Statistic (New Module)"></a>
+            <a class="cm-hotspot" href="coming_soon.html?m=admin-announcement" title="Announcement" aria-label="Announcement"></a>
           </div>
         </div>
-        <iframe id="panelFrame" title="Dashboard panel"
-          class="hidden w-full h-[min(560px,72vh)] rounded-xl border border-white/15 bg-slate-900/50"></iframe>
+      </div>
     </div>
+    <iframe id="panelFrame" title="Dashboard panel" class="cm-iframe-panel hidden"></iframe>
   </main>
 
-  <script src="js/dashboard-dynamic-bg.js"></script>
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/dashboard-common.js"></script>
