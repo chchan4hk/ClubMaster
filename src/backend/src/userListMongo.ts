@@ -201,6 +201,30 @@ export async function findCoachManagerUidByClubNameMongo(
   return uid || null;
 }
 
+/** Distinct non-empty `club_name` values from `userLogin` (sign-in club dropdown). */
+export async function distinctClubNamesFromUserLoginMongo(): Promise<string[]> {
+  const coll = await collWithIndexes();
+  const raw = (await coll.distinct("club_name", {
+    club_name: { $exists: true, $nin: ["", "—"] },
+  })) as unknown[];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const v of raw) {
+    const cn = String(v ?? "").trim();
+    if (!cn || cn === "—") {
+      continue;
+    }
+    const key = cn.toLowerCase();
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    out.push(cn);
+  }
+  out.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+  return out;
+}
+
 /**
  * Administrator / Coach Manager row by UID (main admin table).
  */
