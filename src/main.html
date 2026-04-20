@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en-GB">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Sign in ??ClubMaster</title>
+  <title>Sign in — ClubMaster</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/btn-cancel-metallic-brown.css" />
@@ -11,7 +11,7 @@
     html {
       background-color: #000000;
     }
-    /* Page shell ??pure black base with warm gold highlights (no blue-gray) */
+    /* Page shell — pure black base with warm gold highlights (no blue-gray) */
     .login-page-metal-bg {
       background-color: #000000;
       background-image:
@@ -59,7 +59,7 @@
         }
       }
     }
-    /* Login card ??animated frame + headline */
+    /* Login card — animated frame + headline */
     @keyframes login-border-flow {
       0%,
       100% {
@@ -235,7 +235,7 @@
         0 12px 40px rgba(0, 0, 0, 0.45);
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
-    /* Gold / white metallic ??slow shifting gradient */
+    /* Gold / white metallic — slow shifting gradient */
     @keyframes renewal-gold-metallic {
       0% {
         background-position: 0% 40%;
@@ -360,7 +360,7 @@
       border-color: rgba(251, 191, 36, 0.5);
       color: #fde68a;
     }
-    /* Match Coach Manager ??Payment ??Verify Payment Table ?onfirm Payment??*/
+    /* Match Coach Manager → Payment → Verify Payment Table “Confirm Payment” */
     .renewal-btn-metal-gold {
       background: linear-gradient(145deg, #e8c547 0%, #a67c1a 42%, #2a1f08 100%);
       color: #0c0a06;
@@ -476,7 +476,7 @@
     <div class="login-bg-metal-layer" aria-hidden="true"></div>
     <img
       id="loginBgImage"
-      src="source/image/main.jpg"
+      src="source/image/main.webp"
       alt=""
       class="pointer-events-none absolute inset-0 z-[2] h-full min-h-0 w-full object-cover object-center opacity-100 select-none"
       width="1920"
@@ -510,7 +510,7 @@
         <button type="button" class="renewal-method-btn rounded-lg border border-neutral-700 px-4 py-2 text-sm text-neutral-200 hover:bg-neutral-900" data-method="PayMe">PayMe</button>
         <button type="button" class="renewal-method-btn rounded-lg border border-neutral-700 px-4 py-2 text-sm text-neutral-200 hover:bg-neutral-900" data-method="FPS">FPS</button>
         <button type="button" class="renewal-method-btn rounded-lg border border-neutral-700 px-4 py-2 text-sm text-neutral-200 hover:bg-neutral-900" data-method="AliPay">AliPay</button>
-        <button type="button" class="renewal-method-btn rounded-lg border border-neutral-700 px-4 py-2 text-sm text-neutral-200 hover:bg-neutral-900" data-method="?臭?撖?>?臭?撖?/button>
+        <button type="button" class="renewal-method-btn rounded-lg border border-neutral-700 px-4 py-2 text-sm text-neutral-200 hover:bg-neutral-900" data-method="支付寶">支付寶</button>
       </div>
 
       <p class="renewal-section-label mb-3">Subscription Options</p>
@@ -572,8 +572,8 @@
       /**
        * Sign-in uses POST /api/auth/login-with-context. When the backend has MongoDB configured
        * (MONGODB_URI, etc.), credentials are checked against `ClubMaster_DB.userLogin`. On success,
-       * the app opens the role dashboard from that record (Coach Manager ??coach-manager.html,
-       * Coach ??coach.html, Student ??student.html, Administrator ??admin.html).
+       * the app opens the role dashboard from that record (Coach Manager → coach-manager.html,
+       * Coach → coach.html, Student → student.html, Administrator → admin.html).
        */
       if (new URLSearchParams(window.location.search).get("logout")) {
         window.auth.clearSession();
@@ -624,7 +624,7 @@
           PayMe: "Payme_QR.jpg",
           FPS: "FPS_QR.jpg",
           AliPay: "Alipay_QR.jpg",
-          ?臭?撖? "?臭?撖跛QR.jpg",
+          支付寶: "支付寶_QR.jpg",
         };
         var pendingUser = null;
         var selectedMethod = "";
@@ -697,7 +697,7 @@
             errEl.classList.add("hidden");
           }
           grid.innerHTML =
-            '<p class="text-neutral-500 text-sm col-span-full py-4 text-center">Loading subscription options??/p>';
+            '<p class="text-neutral-500 text-sm col-span-full py-4 text-center">Loading subscription options…</p>';
           try {
             if (!cachedSubscriptionRows) {
               var url = qrBaseUrl() + SUBSCRIPTION_LIST_PATH;
