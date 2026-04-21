@@ -7,8 +7,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="/css/style.css" />
-  <link rel="stylesheet" href="/css/profile-password-panels.css" />
-  <link rel="stylesheet" href="/css/coach-manager-module-shell.css" />
   <style>
     .btn-metal-gold {
       background: linear-gradient(145deg, #e8c547 0%, #a67c1a 42%, #2a1f08 100%);
@@ -34,18 +32,64 @@
       font-weight: 600;
       white-space: nowrap;
     }
+    body.userlogin-subscription-status-page.dashboard-dynamic-bg {
+      background-color: #e8f4f0;
+      isolation: isolate;
+    }
+    body.userlogin-subscription-status-page .dynamic-bg-photo {
+      opacity: 0.11;
+      filter: sepia(0.25) saturate(0.5) brightness(1.15) contrast(0.95);
+      mix-blend-mode: multiply;
+    }
+    body.userlogin-subscription-status-page .dynamic-bg-overlay {
+      background:
+        linear-gradient(
+          165deg,
+          rgba(248, 252, 251, 0.98) 0%,
+          rgba(232, 244, 240, 0.97) 35%,
+          rgba(220, 236, 232, 0.96) 65%,
+          rgba(240, 250, 247, 0.97) 100%
+        ),
+        radial-gradient(
+          ellipse 120% 90% at var(--spot-x, 50%) var(--spot-y, 50%),
+          rgba(204, 251, 241, 0.5) 0%,
+          transparent 65%
+        );
+    }
+    body.userlogin-subscription-status-page .glass {
+      background: linear-gradient(
+        155deg,
+        rgba(8, 47, 53, 0.85) 0%,
+        rgba(12, 55, 58, 0.88) 50%,
+        rgba(10, 45, 52, 0.86) 100%
+      );
+      border-color: rgba(45, 212, 191, 0.28);
+      box-shadow:
+        inset 0 1px 0 rgba(167, 243, 208, 0.1),
+        0 10px 40px rgba(0, 40, 45, 0.2);
+      backdrop-filter: blur(12px);
+    }
   </style>
 </head>
-<body class="userlogin-subscription-status-page profile-password-page cm-module-shell min-h-full p-4 sm:p-6 pb-16">
-  <div class="max-w-7xl mx-auto relative z-[1]">
-    <div class="glass profile-password-card rounded-xl border border-stone-200/60 p-5 sm:p-6">
-    <header class="cm-module-page-header">
+<body
+  class="userlogin-subscription-status-page dashboard-dynamic-bg min-h-screen text-amber-950 p-6 pb-24"
+  style="--dashboard-bg-img: url('/source/image/admin.jpg');">
+  <div class="dynamic-bg-stack" aria-hidden="true">
+    <div class="dynamic-bg-photo"></div>
+    <div class="dynamic-bg-overlay"></div>
+    <canvas class="dynamic-bg-star-net"></canvas>
+    <div class="dynamic-bg-spot-glow"></div>
+  </div>
+
+  <div class="max-w-7xl mx-auto relative z-[1] text-amber-100">
+    <header class="mb-6 text-amber-950">
       <p>
-        <a href="/admin.html" target="_top" class="cm-module-backlink text-sm underline-offset-2 hover:underline">
+        <a href="/admin.html" target="_top"
+          class="text-sm text-amber-800 hover:text-amber-950 underline-offset-2 hover:underline font-medium">
           ← Back to Admin
         </a>
       </p>
-      <h1 class="profile-password-heading text-2xl font-semibold mt-3 tracking-tight">User Account Subscription</h1>
+      <h1 class="text-2xl font-bold text-amber-950 mt-2 tracking-tight">User Account Subscription</h1>
       <p class="text-sm text-amber-800/90 mt-1">Payment status · <code class="text-xs bg-amber-100/80 px-1 rounded">backend/data/admin/PaymentList_UserLogin.json</code></p>
       <p id="loadError" class="hidden text-sm text-red-700 mt-2"></p>
     </header>
@@ -99,13 +143,13 @@
         </div>
         <div>
           <label for="filterDateFrom" class="block text-xs text-amber-200/70 mb-1">From (payment / created)</label>
-          <input id="filterDateFrom" type="text"
-            class="cm-date-ddmmyyyy w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
+          <input id="filterDateFrom" type="text" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="DD/MM/YYYY"
+            class="date-field-ddmm w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
         </div>
         <div>
           <label for="filterDateTo" class="block text-xs text-amber-200/70 mb-1">To</label>
-          <input id="filterDateTo" type="text"
-            class="cm-date-ddmmyyyy w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
+          <input id="filterDateTo" type="text" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="DD/MM/YYYY"
+            class="date-field-ddmm w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
         </div>
       </div>
       <div class="flex flex-wrap gap-2 mt-4">
@@ -157,12 +201,11 @@
         </tbody>
       </table>
     </section>
-    </div>
   </div>
 
+  <script src="/js/dashboard-dynamic-bg.js"></script>
   <script src="/js/api.js"></script>
   <script src="/js/auth.js"></script>
-  <script src="/js/cm-date-ddmmyyyy.js"></script>
   <script>
     (function () {
       var isFramed = false;
@@ -237,8 +280,16 @@
       function applyFilters(rows) {
         var search = (document.getElementById("filterSearch").value || "").trim().toLowerCase();
         var st = document.getElementById("filterStatus").value;
-        var dFrom = window.cmDateDdMmYyyy.readIso("filterDateFrom");
-        var dTo = window.cmDateDdMmYyyy.readIso("filterDateTo");
+        var dFromRaw = document.getElementById("filterDateFrom").value;
+        var dToRaw = document.getElementById("filterDateTo").value;
+        var dFrom =
+          window.api && typeof window.api.parseAnyDisplayDateToYmd === "function"
+            ? window.api.parseAnyDisplayDateToYmd(dFromRaw)
+            : dFromRaw;
+        var dTo =
+          window.api && typeof window.api.parseAnyDisplayDateToYmd === "function"
+            ? window.api.parseAnyDisplayDateToYmd(dToRaw)
+            : dToRaw;
 
         return rows.filter(function (r) {
           if (search) {
@@ -296,9 +347,6 @@
         if (chartBarInst) {
           chartBarInst.destroy();
         }
-        var chartTickColor = "#44403c";
-        var chartGridColor = "rgba(68, 64, 60, 0.14)";
-        var chartLegendColor = "#44403c";
         chartBarInst = new Chart(barEl, {
           type: "bar",
           data: {
@@ -314,19 +362,10 @@
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { labels: { color: chartLegendColor } } },
+            plugins: { legend: { labels: { color: "#ccfbf1" } } },
             scales: {
-              x: {
-                ticks: { color: chartTickColor },
-                grid: { color: chartGridColor },
-                border: { color: "rgba(68, 64, 60, 0.35)" },
-              },
-              y: {
-                ticks: { color: chartTickColor },
-                grid: { color: chartGridColor },
-                border: { color: "rgba(68, 64, 60, 0.35)" },
-                beginAtZero: true,
-              },
+              x: { ticks: { color: "#5eead4" }, grid: { color: "rgba(45,212,191,0.12)" } },
+              y: { ticks: { color: "#5eead4" }, grid: { color: "rgba(45,212,191,0.12)" }, beginAtZero: true },
             },
           },
         });
@@ -363,10 +402,7 @@
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-              legend: {
-                position: "bottom",
-                labels: { color: chartLegendColor, boxWidth: 12 },
-              },
+              legend: { position: "bottom", labels: { color: "#ccfbf1", boxWidth: 12 } },
             },
           },
         });

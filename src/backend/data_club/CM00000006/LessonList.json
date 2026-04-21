@@ -1,4 +1,35 @@
 {
   "version": 1,
-  "lessons": []
+  "lessons": [
+    {
+      "lessonId": "LE000001",
+      "sportType": "Gymnasium",
+      "year": "2026",
+      "classId": "2026221TD",
+      "classInfo": "培立成人精英班",
+      "classTime": "Every Monday  Wednesday 16:00 - 20:00",
+      "classFee": "1380",
+      "classSun": "N",
+      "classMon": "Y",
+      "classTue": "N",
+      "classWed": "Y",
+      "classThur": "N",
+      "classFri": "N",
+      "classSat": "N",
+      "ageGroup": "Over 20",
+      "maxNumber": "8",
+      "frequency": "Weekly",
+      "lessonStartDate": "2025-12-15",
+      "lessonEndDate": "2026-09-12",
+      "sportCenter": "Gym 247",
+      "courtNo": "",
+      "coachName": "HO SHUN CHAN",
+      "status": "ACTIVE",
+      "createdAt": "2026-04-21",
+      "lastUpdatedDate": "2026-04-21",
+      "remarks": "",
+      "ClubID": "CM00000006",
+      "ReservedNumber": "0"
+    }
+  ]
 }

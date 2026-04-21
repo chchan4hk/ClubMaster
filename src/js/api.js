@@ -265,6 +265,80 @@ function formatDateDisplayDdMmYyyy(raw) {
   return `${m[3]}/${m[2]}/${m[1]}`;
 }
 
+function pad2DatePart(n) {
+  const s = String(Math.floor(Number(n)));
+  return s.length >= 2 ? s.slice(-2) : `0${s}`.slice(-2);
+}
+
+/**
+ * Parse `DD/MM/YYYY` (or `YYYY-MM-DD`) to `YYYY-MM-DD` for APIs / comparisons.
+ * @param {unknown} raw
+ * @returns {string}
+ */
+function parseDdMmYyyyToYmd(raw) {
+  const t = raw == null ? "" : String(raw).trim();
+  if (!t) {
+    return "";
+  }
+  const iso = /^(\d{4})-(\d{2})-(\d{2})(?:$|[T\s])/.exec(t);
+  if (iso) {
+    return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  }
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(t);
+  if (!m) {
+    return "";
+  }
+  const day = Number(m[1]);
+  const month = Number(m[2]);
+  const year = Number(m[3]);
+  if (
+    !Number.isFinite(day) ||
+    !Number.isFinite(month) ||
+    !Number.isFinite(year)
+  ) {
+    return "";
+  }
+  const dt = new Date(year, month - 1, day);
+  if (
+    dt.getFullYear() !== year ||
+    dt.getMonth() !== month - 1 ||
+    dt.getDate() !== day
+  ) {
+    return "";
+  }
+  return `${year}-${pad2DatePart(month)}-${pad2DatePart(day)}`;
+}
+
+/** Alias: normalise any supported display string to `YYYY-MM-DD`. */
+function parseAnyDisplayDateToYmd(raw) {
+  return parseDdMmYyyyToYmd(raw);
+}
+
+/**
+ * Show stored club/API dates as `DD/MM/YYYY` in text fields.
+ * Accepts `YYYY-MM-DD`, `YYYY/MM/DD`, or existing `DD/MM/YYYY`.
+ * @param {unknown} raw
+ * @returns {string}
+ */
+function formatStoredDateToDdMmYyyy(raw) {
+  const t = raw == null ? "" : String(raw).trim();
+  if (!t) {
+    return "";
+  }
+  if (/^\d{4}-\d{2}-\d{2}/.test(t)) {
+    return formatDateDisplayDdMmYyyy(t);
+  }
+  const ymdSlash = /^(\d{4})\/(\d{1,2})\/(\d{1,2})$/.exec(t);
+  if (ymdSlash) {
+    return `${pad2DatePart(ymdSlash[3])}/${pad2DatePart(ymdSlash[2])}/${ymdSlash[1]}`;
+  }
+  const dmy = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(t);
+  if (dmy) {
+    return `${pad2DatePart(dmy[1])}/${pad2DatePart(dmy[2])}/${dmy[3]}`;
+  }
+  return t;
+}
+
 function fillSelectFromBasicList(sel, values, opts) {
   if (!sel) {
     return;
@@ -309,4 +383,7 @@ window.api = {
   clearBasicInfoCache,
   fillSelectFromBasicList,
   formatDateDisplayDdMmYyyy,
+  parseDdMmYyyyToYmd,
+  parseAnyDisplayDateToYmd,
+  formatStoredDateToDdMmYyyy,
 };

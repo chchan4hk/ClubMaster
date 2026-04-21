@@ -6,72 +6,75 @@
   <title>User Account Management — Admin</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="css/style.css" />
-  <link rel="stylesheet" href="css/profile-password-panels.css" />
-  <link rel="stylesheet" href="css/coach-manager-module-shell.css" />
   <link rel="stylesheet" href="css/btn-cancel-metallic-brown.css" />
 </head>
-<body class="admin-user-account-management-page profile-password-page cm-module-shell min-h-full p-4 sm:p-6 pb-16">
-  <div class="max-w-7xl mx-auto relative z-[1]">
-    <div class="glass profile-password-card rounded-xl border border-stone-200/60 p-5 sm:p-6">
-    <header class="cm-module-page-header">
-      <div class="flex flex-wrap items-start justify-between gap-4 gap-y-3">
-        <div>
-          <p>
-            <a href="admin.html"
-              class="cm-module-backlink text-sm underline-offset-2 hover:underline">
-              ← Back to Admin
-            </a>
-          </p>
-          <h1 class="profile-password-heading text-2xl font-semibold mt-3 tracking-tight">User Account Management</h1>
-          <p class="text-sm text-amber-100/75 mt-1">Coach Manager, Coach and Student</p>
-          <p id="pageLoadError" class="hidden text-sm text-red-700 mt-2"></p>
-        </div>
-        <div class="flex flex-wrap items-center gap-2 shrink-0">
-          <button type="button" id="addUserBtn"
-            class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm">
-            Add User
-          </button>
-          <button type="button" id="refreshBtn"
-            class="rounded-lg bg-amber-700/80 hover:bg-amber-600 border border-amber-500/30 text-amber-50 text-sm font-medium px-4 py-2">
-            Refresh
-          </button>
-          <button type="button" id="logoutBtn"
-            class="rounded-lg bg-amber-800 hover:bg-amber-700 border border-amber-600/30 text-amber-50 text-sm font-medium px-4 py-2">
-            Sign out
-          </button>
-        </div>
+<body
+  class="dashboard-dynamic-bg min-h-screen text-slate-100 p-6"
+  style="--dashboard-bg-img: url('source/image/admin.jpg');">
+  <div class="dynamic-bg-stack" aria-hidden="true">
+    <div class="dynamic-bg-photo"></div>
+    <div class="dynamic-bg-overlay"></div>
+    <canvas class="dynamic-bg-star-net"></canvas>
+    <div class="dynamic-bg-spot-glow"></div>
+  </div>
+
+  <div class="max-w-6xl mx-auto">
+    <header class="flex flex-wrap items-center justify-between gap-4 mb-6">
+      <div>
+        <a href="admin.html"
+          class="text-sm text-teal-400/90 hover:text-teal-300 underline-offset-2 hover:underline">
+          ← Back to Admin
+        </a>
+        <h1 class="text-2xl font-bold text-teal-300 mt-2">User Account Management</h1>
+        <p class="text-slate-400 text-sm mt-1">Coach Manager, Coach and Student</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2 shrink-0">
+        <button type="button" id="addUserBtn"
+          class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm">
+          Add User
+        </button>
+        <button type="button" id="refreshBtn"
+          class="rounded-lg bg-slate-800 border border-slate-600 px-4 py-2 text-sm hover:bg-slate-700">
+          Refresh
+        </button>
+        <button type="button" id="logoutBtn"
+          class="rounded-lg bg-slate-800 border border-slate-600 px-4 py-2 text-sm hover:bg-slate-700">
+          Sign out
+        </button>
       </div>
     </header>
 
+    <p id="pageLoadError" class="hidden mb-4 text-sm text-red-300"></p>
+
     <!-- Add user (collapsible) -->
-    <section id="addUserPanel" class="hidden glass rounded-xl border border-amber-600/25 p-4 sm:p-6 mb-4">
-      <h2 class="text-lg font-semibold text-amber-200 mb-4">Create new account</h2>
+    <section id="addUserPanel" class="hidden glass rounded-xl border border-teal-500/20 p-6 mb-6">
+      <h2 class="text-lg font-semibold text-teal-200 mb-4">Create new account</h2>
       <form id="createForm" class="space-y-4 max-w-xl">
         <div>
-          <label for="createFullName" class="block text-sm text-amber-200/70 mb-1">Full name</label>
+          <label for="createFullName" class="block text-sm text-slate-400 mb-1">Full name</label>
           <input id="createFullName" name="full_name" type="text" required autocomplete="name"
-            class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
+            class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
         </div>
         <div>
-          <label for="createUsername" class="block text-sm text-amber-200/70 mb-1">Username</label>
+          <label for="createUsername" class="block text-sm text-slate-400 mb-1">Username</label>
           <input id="createUsername" name="username" type="text" required autocomplete="username"
-            class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
+            class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
         </div>
         <div>
-          <label for="createPassword" class="block text-sm text-amber-200/70 mb-1">Default password</label>
+          <label for="createPassword" class="block text-sm text-slate-400 mb-1">Default password</label>
           <input id="createPassword" name="password" type="password" required autocomplete="new-password"
-            class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
+            class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label for="createClubName" class="block text-sm text-amber-200/70 mb-1">Club name</label>
+            <label for="createClubName" class="block text-sm text-slate-400 mb-1">Club name</label>
             <input id="createClubName" name="clubName" type="text" required
-              class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
           </div>
           <div>
-            <label for="createUserRole" class="block text-sm text-amber-200/70 mb-1">User role</label>
+            <label for="createUserRole" class="block text-sm text-slate-400 mb-1">User role</label>
             <select id="createUserRole" name="userRole" required
-              class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/45">
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500/50">
               <option value="Student">Student</option>
               <option value="Coach Manager" selected>Coach Manager</option>
               <option value="Coach">Coach</option>
@@ -79,130 +82,134 @@
           </div>
         </div>
         <div>
-          <label for="createExpiryDate" class="block text-sm text-amber-200/70 mb-1">Expiry_Date <span class="text-amber-800/50 font-normal">(optional)</span></label>
-          <input type="hidden" name="Expiry_Date" id="createExpiryDateIso" value="" />
-          <input id="createExpiryDate" type="text" autocomplete="off"
-            class="cm-date-ddmmyyyy w-full max-w-xs rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
+          <label for="createExpiryDate" class="block text-sm text-slate-400 mb-1">Expiry_Date <span class="text-slate-600 font-normal">(optional)</span></label>
+          <input id="createExpiryDate" name="Expiry_Date" type="date"
+            class="w-full max-w-xs rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
         </div>
-        <p id="createFormError" class="hidden text-sm text-red-700"></p>
-        <p id="createFormSuccess" class="hidden text-sm text-amber-800 font-medium"></p>
+        <p id="createFormError" class="hidden text-sm text-red-300"></p>
+        <p id="createFormSuccess" class="hidden text-sm text-teal-300"></p>
         <button type="submit" id="createSubmitBtn"
-          class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2.5 disabled:opacity-50 disabled:pointer-events-none">
+          class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2.5 disabled:opacity-50 disabled:pointer-events-none">
           Create
         </button>
       </form>
     </section>
 
-    <section class="glass rounded-xl border border-amber-600/25 p-4 overflow-x-auto mb-4">
+    <section class="glass rounded-xl border border-teal-500/20 p-6 mb-6">
       <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <h2 class="text-lg font-semibold text-amber-200">UserLogin - Coach Manager</h2>
-        <span id="countUserLogin" class="text-xs text-amber-100/75"></span>
+        <h2 class="text-lg font-semibold text-teal-200">UserLogin - Coach Manager</h2>
+        <span id="countUserLogin" class="text-xs text-slate-500"></span>
       </div>
-      <table class="w-full text-sm text-left border-collapse min-w-full">
-        <thead>
-          <tr class="border-b border-amber-600/20 text-amber-200/70">
-            <th class="py-2 pr-3 font-medium">UID</th>
-            <th class="py-2 pr-3 font-medium">Type / role</th>
-            <th class="py-2 pr-3 font-medium">Username</th>
-            <th class="py-2 pr-3 font-medium">Full name</th>
-            <th class="py-2 pr-3 font-medium">Club</th>
-            <th class="py-2 pr-3 font-medium">Status</th>
-            <th class="py-2 pr-3 font-medium">Expiry_Date</th>
-            <th class="py-2 pr-3 font-medium">Last update</th>
-            <th class="py-2 pr-3 font-medium text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="tbodyUserLogin"></tbody>
-      </table>
-      <p id="emptyUserLogin" class="hidden text-sm text-amber-100/75 mt-2">No accounts.</p>
+      <div class="overflow-x-auto rounded-lg border border-white/10">
+        <table class="min-w-full text-sm text-left">
+          <thead class="bg-slate-900/60 text-slate-400 border-b border-white/10">
+            <tr>
+              <th class="px-3 py-2 font-medium">UID</th>
+              <th class="px-3 py-2 font-medium">Type / role</th>
+              <th class="px-3 py-2 font-medium">Username</th>
+              <th class="px-3 py-2 font-medium">Full name</th>
+              <th class="px-3 py-2 font-medium">Club</th>
+              <th class="px-3 py-2 font-medium">Status</th>
+              <th class="px-3 py-2 font-medium">Expiry_Date</th>
+              <th class="px-3 py-2 font-medium">Last update</th>
+              <th class="px-3 py-2 font-medium text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyUserLogin" class="divide-y divide-white/5"></tbody>
+        </table>
+      </div>
+      <p id="emptyUserLogin" class="hidden text-sm text-slate-500 mt-2">No accounts.</p>
     </section>
 
-    <section class="glass rounded-xl border border-amber-600/25 p-4 overflow-x-auto mb-4">
+    <section class="glass rounded-xl border border-teal-500/20 p-6 mb-6">
       <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <h2 class="text-lg font-semibold text-amber-200">UserLogin - Coach</h2>
-        <span id="countCoach" class="text-xs text-amber-100/75"></span>
+        <h2 class="text-lg font-semibold text-teal-200">UserLogin - Coach</h2>
+        <span id="countCoach" class="text-xs text-slate-500"></span>
       </div>
-      <table class="w-full text-sm text-left border-collapse min-w-full">
-        <thead>
-          <tr class="border-b border-amber-600/20 text-amber-200/70">
-            <th class="py-2 pr-3 font-medium">UID</th>
-            <th class="py-2 pr-3 font-medium">Username</th>
-            <th class="py-2 pr-3 font-medium">Full name</th>
-            <th class="py-2 pr-3 font-medium">Club</th>
-            <th class="py-2 pr-3 font-medium">Status</th>
-            <th class="py-2 pr-3 font-medium">Expiry_Date</th>
-            <th class="py-2 pr-3 font-medium">Last update</th>
-            <th class="py-2 pr-3 font-medium text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="tbodyCoach"></tbody>
-      </table>
-      <p id="emptyCoach" class="hidden text-sm text-amber-100/75 mt-2">No accounts.</p>
+      <div class="overflow-x-auto rounded-lg border border-white/10">
+        <table class="min-w-full text-sm text-left">
+          <thead class="bg-slate-900/60 text-slate-400 border-b border-white/10">
+            <tr>
+              <th class="px-3 py-2 font-medium">UID</th>
+              <th class="px-3 py-2 font-medium">Username</th>
+              <th class="px-3 py-2 font-medium">Full name</th>
+              <th class="px-3 py-2 font-medium">Club</th>
+              <th class="px-3 py-2 font-medium">Status</th>
+              <th class="px-3 py-2 font-medium">Expiry_Date</th>
+              <th class="px-3 py-2 font-medium">Last update</th>
+              <th class="px-3 py-2 font-medium text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyCoach" class="divide-y divide-white/5"></tbody>
+        </table>
+      </div>
+      <p id="emptyCoach" class="hidden text-sm text-slate-500 mt-2">No accounts.</p>
     </section>
 
-    <section class="glass rounded-xl border border-amber-600/25 p-4 overflow-x-auto mb-4">
+    <section class="glass rounded-xl border border-teal-500/20 p-6 mb-6">
       <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <h2 class="text-lg font-semibold text-amber-200">UserLogin - Student</h2>
-        <span id="countStudent" class="text-xs text-amber-100/75"></span>
+        <h2 class="text-lg font-semibold text-teal-200">UserLogin - Student</h2>
+        <span id="countStudent" class="text-xs text-slate-500"></span>
       </div>
-      <table class="w-full text-sm text-left border-collapse min-w-full">
-        <thead>
-          <tr class="border-b border-amber-600/20 text-amber-200/70">
-            <th class="py-2 pr-3 font-medium">UID</th>
-            <th class="py-2 pr-3 font-medium">Username</th>
-            <th class="py-2 pr-3 font-medium">Full name</th>
-            <th class="py-2 pr-3 font-medium">Club</th>
-            <th class="py-2 pr-3 font-medium">Status</th>
-            <th class="py-2 pr-3 font-medium">Expiry_Date</th>
-            <th class="py-2 pr-3 font-medium">Last update</th>
-            <th class="py-2 pr-3 font-medium text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="tbodyStudent"></tbody>
-      </table>
-      <p id="emptyStudent" class="hidden text-sm text-amber-100/75 mt-2">No accounts.</p>
+      <div class="overflow-x-auto rounded-lg border border-white/10">
+        <table class="min-w-full text-sm text-left">
+          <thead class="bg-slate-900/60 text-slate-400 border-b border-white/10">
+            <tr>
+              <th class="px-3 py-2 font-medium">UID</th>
+              <th class="px-3 py-2 font-medium">Username</th>
+              <th class="px-3 py-2 font-medium">Full name</th>
+              <th class="px-3 py-2 font-medium">Club</th>
+              <th class="px-3 py-2 font-medium">Status</th>
+              <th class="px-3 py-2 font-medium">Expiry_Date</th>
+              <th class="px-3 py-2 font-medium">Last update</th>
+              <th class="px-3 py-2 font-medium text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyStudent" class="divide-y divide-white/5"></tbody>
+        </table>
+      </div>
+      <p id="emptyStudent" class="hidden text-sm text-slate-500 mt-2">No accounts.</p>
     </section>
-    </div>
   </div>
 
   <!-- Update status modal -->
-  <div id="updateModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="updateModalTitle">
-    <div class="glass max-w-lg w-full rounded-xl border border-amber-500/35 p-6 shadow-xl max-h-[90vh] overflow-y-auto">
-      <h3 id="updateModalTitle" class="text-lg font-semibold text-amber-200 mb-4">Update account</h3>
-      <p class="text-sm text-amber-100/90 mb-2"><span class="text-amber-800/60 font-medium">Store:</span> <span id="modalStoreLabel"></span></p>
-      <p class="text-sm text-amber-900/90 mb-4 font-mono" id="modalUidLine"></p>
-      <label for="modalUsername" class="block text-sm text-amber-200/70 mb-1">Username</label>
+  <div id="updateModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" role="dialog" aria-modal="true" aria-labelledby="updateModalTitle">
+    <div class="glass max-w-lg w-full rounded-xl border border-teal-500/30 p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+      <h3 id="updateModalTitle" class="text-lg font-semibold text-teal-200 mb-4">Update account</h3>
+      <p class="text-sm text-slate-400 mb-2"><span class="text-slate-500">Store:</span> <span id="modalStoreLabel"></span></p>
+      <p class="text-sm text-slate-300 mb-4 font-mono" id="modalUidLine"></p>
+      <label for="modalUsername" class="block text-sm text-slate-400 mb-1">Username</label>
       <input id="modalUsername" type="text" autocomplete="off"
-        class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 mb-3 focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
-      <label for="modalFullName" class="block text-sm text-amber-200/70 mb-1">Full name</label>
+        class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-3 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+      <label for="modalFullName" class="block text-sm text-slate-400 mb-1">Full name</label>
       <input id="modalFullName" type="text" autocomplete="name"
-        class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 mb-3 focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
-      <label for="modalClubName" class="block text-sm text-amber-200/70 mb-1">Club</label>
+        class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-3 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+      <label for="modalClubName" class="block text-sm text-slate-400 mb-1">Club</label>
       <input id="modalClubName" type="text" autocomplete="organization"
-        class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 mb-3 focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
-      <label for="modalExpiryDate" class="block text-sm text-amber-200/70 mb-1">Expiry_date <span class="text-amber-800/50 font-normal">(optional)</span></label>
-      <input id="modalExpiryDate" type="text" autocomplete="off"
-        class="cm-date-ddmmyyyy w-full max-w-xs rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 mb-3 focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
-      <label for="modalPassword" class="block text-sm text-amber-200/70 mb-1">New password <span class="text-amber-800/50 font-normal">(optional)</span></label>
+        class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-3 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+      <label for="modalExpiryDate" class="block text-sm text-slate-400 mb-1">Expiry_date <span class="text-slate-600 font-normal">(optional)</span></label>
+      <input id="modalExpiryDate" type="date"
+        class="w-full max-w-xs rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-3 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+      <label for="modalPassword" class="block text-sm text-slate-400 mb-1">New password <span class="text-slate-600 font-normal">(optional)</span></label>
       <input id="modalPassword" type="password" autocomplete="new-password"
-        class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 mb-3 focus:outline-none focus:ring-2 focus:ring-amber-400/45" placeholder="Leave blank to keep current" />
-      <label for="modalPasswordConfirm" class="block text-sm text-amber-200/70 mb-1">Re-enter password</label>
+        class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-3 focus:outline-none focus:ring-2 focus:ring-teal-500/50" placeholder="Leave blank to keep current" />
+      <label for="modalPasswordConfirm" class="block text-sm text-slate-400 mb-1">Re-enter password</label>
       <input id="modalPasswordConfirm" type="password" autocomplete="new-password"
-        class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 mb-3 focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
-      <label for="modalStatus" class="block text-sm text-amber-200/70 mb-1">Status</label>
+        class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-3 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+      <label for="modalStatus" class="block text-sm text-slate-400 mb-1">Status</label>
       <select id="modalStatus"
-        class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 mb-4 focus:outline-none focus:ring-2 focus:ring-amber-400/45">
+        class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-4 focus:outline-none focus:ring-2 focus:ring-teal-500/50">
         <option value="ACTIVE">ACTIVE</option>
         <option value="INACTIVE">INACTIVE</option>
       </select>
-      <p id="modalError" class="hidden text-sm text-red-700 mb-3"></p>
+      <p id="modalError" class="hidden text-sm text-red-300 mb-3"></p>
       <div class="flex flex-wrap justify-end gap-2">
         <button type="button" id="modalCancel"
           class="btn-cancel-metallic-brown rounded-lg px-4 py-2 text-sm">
           Cancel
         </button>
         <button type="button" id="modalSave"
-          class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50">
+          class="rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50">
           Save
         </button>
       </div>
@@ -210,14 +217,14 @@
   </div>
 
   <!-- Remove Coach Manager: YES / NO -->
-  <div id="removeCoachManagerModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="removeCmModalTitle">
-    <div class="glass max-w-lg w-full rounded-xl border border-red-500/30 p-6 shadow-xl">
-      <h3 id="removeCmModalTitle" class="text-lg font-semibold text-red-800 mb-3">Confirm removal</h3>
-      <p id="removeCoachManagerModalText" class="text-sm text-amber-100/90 mb-4 leading-relaxed"></p>
-      <p id="removeCoachManagerModalError" class="hidden text-sm text-red-700 mb-3"></p>
+  <div id="removeCoachManagerModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" role="dialog" aria-modal="true" aria-labelledby="removeCmModalTitle">
+    <div class="glass max-w-lg w-full rounded-xl border border-red-500/25 p-6 shadow-xl">
+      <h3 id="removeCmModalTitle" class="text-lg font-semibold text-red-200 mb-3">Confirm removal</h3>
+      <p id="removeCoachManagerModalText" class="text-sm text-slate-300 mb-4 leading-relaxed"></p>
+      <p id="removeCoachManagerModalError" class="hidden text-sm text-red-300 mb-3"></p>
       <div class="flex flex-wrap justify-end gap-2">
         <button type="button" id="removeCmModalNo"
-          class="btn-cancel-metallic-brown rounded-lg px-4 py-2 text-sm">
+          class="rounded-lg border border-white/20 px-4 py-2 text-sm text-slate-200 hover:bg-white/10">
           NO
         </button>
         <button type="button" id="removeCmModalYes"
@@ -228,9 +235,9 @@
     </div>
   </div>
 
+  <script src="js/dashboard-dynamic-bg.js"></script>
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
-  <script src="js/cm-date-ddmmyyyy.js"></script>
   <script>
     (function () {
       if (!window.auth.guardPage("Admin")) {
@@ -262,16 +269,10 @@
       function statusBadge(st) {
         var u = (st || "").toString().trim().toUpperCase();
         if (u === "ACTIVE") {
-          return (
-            '<span class="inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ' +
-            'bg-emerald-100 text-emerald-900 border-emerald-400/50">ACTIVE</span>'
-          );
+          return '<span class="text-teal-300">ACTIVE</span>';
         }
         if (u === "INACTIVE") {
-          return (
-            '<span class="inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ' +
-            'bg-stone-200 text-stone-700 border-stone-400/50">INACTIVE</span>'
-          );
+          return '<span class="text-slate-500">INACTIVE</span>';
         }
         return esc(st || "—");
       }
@@ -376,7 +377,7 @@
           (row.expiryDate != null && String(row.expiryDate).trim()) ||
           (row.Expiry_date != null && String(row.Expiry_date).trim()) ||
           "";
-        window.cmDateDdMmYyyy.populateFromBackend("modalExpiryDate", ex);
+        modalExpiryDate.value = /^\d{4}-\d{2}-\d{2}$/.test(ex) ? ex : "";
         modalPassword.value = "";
         modalPasswordConfirm.value = "";
         var st = (row.status || "").toString().trim().toUpperCase();
@@ -409,7 +410,7 @@
             return;
           }
         }
-        var expVal = window.cmDateDdMmYyyy.readIso("modalExpiryDate");
+        var expVal = (modalExpiryDate.value || "").trim();
         var payload = {
           store: pendingModal.store,
           uid: pendingModal.uid,
@@ -452,13 +453,13 @@
             ? ' data-coach-manager-remove="1"'
             : "";
         return (
-          '<button type="button" class="row-update text-amber-300/95 hover:underline text-xs font-medium mr-2" ' +
+          '<button type="button" class="row-update text-teal-400 hover:text-teal-300 text-xs font-medium mr-2" ' +
           'data-store="' +
           esc(store) +
           '" data-uid="' +
           uid +
           '">Update</button>' +
-          '<button type="button" class="row-remove text-red-700 hover:underline text-xs font-medium" ' +
+          '<button type="button" class="row-remove text-red-300 hover:text-red-200 text-xs font-medium" ' +
           'data-store="' +
           esc(store) +
           '" data-uid="' +
@@ -548,26 +549,26 @@
           .map(function (r) {
             var typeLine = esc(r.usertype || "—") + " · " + esc(r.role || "—");
             return (
-              "<tr class=\"border-b border-amber-800/15 hover:bg-amber-500/[0.06]\">" +
-              "<td class=\"py-2 pr-3 font-mono text-xs align-middle\">" +
+              "<tr class='bg-slate-900/20'>" +
+              "<td class='px-3 py-2 font-mono text-xs'>" +
               esc(r.uid) +
               "</td>" +
-              "<td class=\"py-2 pr-3 text-xs align-middle\">" +
+              "<td class='px-3 py-2 text-xs'>" +
               typeLine +
               "</td>" +
-              "<td class=\"py-2 pr-3 align-middle\">" +
+              "<td class='px-3 py-2'>" +
               esc(r.username) +
               "</td>" +
-              "<td class=\"py-2 pr-3 align-middle\">" +
+              "<td class='px-3 py-2'>" +
               esc(r.fullName || "—") +
               "</td>" +
-              "<td class=\"py-2 pr-3 align-middle\">" +
+              "<td class='px-3 py-2'>" +
               esc(r.clubName || "—") +
               "</td>" +
-              "<td class=\"py-2 pr-3 align-middle\">" +
+              "<td class='px-3 py-2'>" +
               statusBadge(r.status) +
               "</td>" +
-              "<td class=\"py-2 pr-3 text-slate-400 align-middle\">" +
+              "<td class='px-3 py-2 text-slate-400'>" +
               esc(
                 window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
                   ? window.api.formatDateDisplayDdMmYyyy(String(r.expiryDate || "—")) ||
@@ -575,7 +576,7 @@
                   : String(r.expiryDate || "—")
               ) +
               "</td>" +
-              "<td class=\"py-2 pr-3 text-slate-400 align-middle\">" +
+              "<td class='px-3 py-2 text-slate-400'>" +
               esc(
                 window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
                   ? window.api.formatDateDisplayDdMmYyyy(String(r.lastUpdateDate || "—")) ||
@@ -583,7 +584,7 @@
                   : String(r.lastUpdateDate || "—")
               ) +
               "</td>" +
-              "<td class=\"py-2 pr-3 text-right whitespace-nowrap align-middle\">" +
+              "<td class='px-3 py-2 text-right whitespace-nowrap'>" +
               actionButtons("userLogin", r) +
               "</td>" +
               "</tr>"
@@ -606,23 +607,23 @@
         tb.innerHTML = rows
           .map(function (r) {
             return (
-              "<tr class=\"border-b border-amber-800/15 hover:bg-amber-500/[0.06]\">" +
-              "<td class=\"py-2 pr-3 font-mono text-xs align-middle\">" +
+              "<tr class='bg-slate-900/20'>" +
+              "<td class='px-3 py-2 font-mono text-xs'>" +
               esc(r.uid) +
               "</td>" +
-              "<td class=\"py-2 pr-3 align-middle\">" +
+              "<td class='px-3 py-2'>" +
               esc(r.username) +
               "</td>" +
-              "<td class=\"py-2 pr-3 align-middle\">" +
+              "<td class='px-3 py-2'>" +
               esc(r.fullName || "—") +
               "</td>" +
-              "<td class=\"py-2 pr-3 align-middle\">" +
+              "<td class='px-3 py-2'>" +
               esc(r.clubName || "—") +
               "</td>" +
-              "<td class=\"py-2 pr-3 align-middle\">" +
+              "<td class='px-3 py-2'>" +
               statusBadge(r.status) +
               "</td>" +
-              "<td class=\"py-2 pr-3 text-slate-400 align-middle\">" +
+              "<td class='px-3 py-2 text-slate-400'>" +
               esc(
                 window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
                   ? window.api.formatDateDisplayDdMmYyyy(String(r.expiryDate || "—")) ||
@@ -630,7 +631,7 @@
                   : String(r.expiryDate || "—")
               ) +
               "</td>" +
-              "<td class=\"py-2 pr-3 text-slate-400 align-middle\">" +
+              "<td class='px-3 py-2 text-slate-400'>" +
               esc(
                 window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
                   ? window.api.formatDateDisplayDdMmYyyy(String(r.lastUpdateDate || "—")) ||
@@ -638,7 +639,7 @@
                   : String(r.lastUpdateDate || "—")
               ) +
               "</td>" +
-              "<td class=\"py-2 pr-3 text-right whitespace-nowrap align-middle\">" +
+              "<td class='px-3 py-2 text-right whitespace-nowrap'>" +
               actionButtons(storeKey, r) +
               "</td>" +
               "</tr>"
@@ -690,8 +691,6 @@
         var base = window.api.getApiBase().replace(/\/$/, "");
         var token = window.auth.getToken();
         createBtn.disabled = true;
-        document.getElementById("createExpiryDateIso").value =
-          window.cmDateDdMmYyyy.readIso("createExpiryDate");
         var fd = new FormData(createForm);
         fetch(base + "/admin/coach-managers", {
           method: "POST",

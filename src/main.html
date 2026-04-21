@@ -59,6 +59,59 @@
         }
       }
     }
+    /* Yellow → gold → orange → white with gentle blink (slow cycle for comfort) */
+    @keyframes login-video-hint {
+      0% {
+        color: #facc15;
+        opacity: 1;
+      }
+      11% {
+        opacity: 0.55;
+      }
+      22% {
+        color: #d4af37;
+        opacity: 1;
+      }
+      33% {
+        opacity: 0.55;
+      }
+      44% {
+        color: #f97316;
+        opacity: 1;
+      }
+      55% {
+        opacity: 0.55;
+      }
+      66% {
+        color: #ffffff;
+        opacity: 1;
+      }
+      77% {
+        opacity: 0.55;
+      }
+      88% {
+        color: #facc15;
+        opacity: 1;
+      }
+      94% {
+        opacity: 0.55;
+      }
+      100% {
+        color: #facc15;
+        opacity: 1;
+      }
+    }
+    .login-video-hint {
+      animation: login-video-hint 3.6s ease-in-out infinite;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .login-video-hint {
+        animation: none;
+        color: #facc15;
+        opacity: 1;
+      }
+    }
+
     /* Login card — animated frame + headline */
     @keyframes login-border-flow {
       0%,
@@ -124,10 +177,10 @@
     @keyframes login-bg-metal-sheen {
       0%,
       100% {
-        background-position: 0% 40%, 0% 0%, 50% 0%;
+        background-position: 0% 0%, 0% 0%, 50% 0%;
       }
       50% {
-        background-position: 100% 60%, 100% 100%, 50% 100%;
+        background-position: 100% 0%, 100% 0%, 50% 0%;
       }
     }
     .login-bg-metal-layer {
@@ -238,13 +291,13 @@
     /* Gold / white metallic — slow shifting gradient */
     @keyframes renewal-gold-metallic {
       0% {
-        background-position: 0% 40%;
+        background-position: 0% 0%;
       }
       50% {
-        background-position: 100% 60%;
+        background-position: 100% 0%;
       }
       100% {
-        background-position: 0% 40%;
+        background-position: 0% 0%;
       }
     }
     .renewal-payment-shell {
@@ -393,7 +446,7 @@
       }
       .login-bg-metal-layer {
         animation: none;
-        background-position: center;
+        background-position: center top, center top, center top;
         background-size: 100% 100%, 100% 100%, 100% 100%;
       }
       .login-card-outer,
@@ -417,7 +470,7 @@
       .renewal-payment-shell {
         animation: none;
         background-size: 100% 100%;
-        background-position: center;
+        background-position: center top;
       }
     }
   </style>
@@ -471,19 +524,37 @@
   </header>
   <div
     id="loginBgStage"
-    class="login-bottom-frame relative flex min-h-0 w-full overflow-hidden bg-black"
-    aria-hidden="true">
+    class="login-bottom-frame relative flex min-h-0 w-full cursor-pointer overflow-hidden bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-amber-500/45"
+    role="button"
+    tabindex="0"
+    aria-label="Click on the background to play the welcome video">
     <div class="login-bg-metal-layer" aria-hidden="true"></div>
     <img
       id="loginBgImage"
-      src="source/image/main.webp"
+      src="source/image/main.jpg"
       alt=""
-      class="pointer-events-none absolute inset-0 z-[2] h-full min-h-0 w-full object-cover object-center opacity-100 select-none"
+      class="pointer-events-none absolute inset-0 z-[2] h-full min-h-0 w-full object-cover object-top opacity-100 select-none"
       width="1920"
       height="1080"
       sizes="100vw"
       decoding="async"
     />
+    <p
+      id="loginBgVideoHint"
+      tabindex="0"
+      role="button"
+      class="login-video-hint pointer-events-auto cursor-pointer absolute left-1/2 top-2 z-[5] max-w-[min(100%,22rem)] -translate-x-1/2 px-2 text-center text-xs font-medium leading-snug sm:top-3 sm:max-w-xl sm:text-sm [text-shadow:0_1px_2px_rgba(0,0,0,0.9),0_0_12px_rgba(0,0,0,0.65)] focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black/50 rounded-md"
+      aria-label="Play welcome video">
+      Click on this ⬇ to show the video
+    </p>
+    <video
+      id="openingVideo"
+      class="absolute inset-0 z-10 hidden h-full w-full bg-black object-cover object-top"
+      playsinline
+      webkit-playsinline="true"
+      preload="none"
+      data-stream-src="source/image/opening.MP4"
+      aria-hidden="true"></video>
   </div>
 
   <!-- Expired account notice -->
@@ -570,11 +641,10 @@
   <script>
     (function () {
       /**
-       * Sign-in uses POST /api/auth/login-with-context. The backend must use MongoDB
-       * (`MONGODB_URI`, etc.); credentials are verified only against `ClubMaster_DB.userLogin`
-       * (not userLogin.csv / JSON). On success, the app opens the role dashboard from that record
-       * (Coach Manager → coach-manager.html, Coach → coach.html, Student → student.html,
-       * Administrator → admin.html). If Mongo is not configured, the API returns 503.
+       * Sign-in uses POST /api/auth/login-with-context. When the backend has MongoDB configured
+       * (MONGODB_URI, etc.), credentials are checked against `ClubMaster_DB.userLogin`. On success,
+       * the app opens the role dashboard from that record (Coach Manager → coach-manager.html,
+       * Coach → coach.html, Student → student.html, Administrator → admin.html).
        */
       if (new URLSearchParams(window.location.search).get("logout")) {
         window.auth.clearSession();
@@ -925,6 +995,112 @@
         };
       })();
 
+      (function setupOpeningVideo() {
+        var stage = document.getElementById("loginBgStage");
+        var imgEl = document.getElementById("loginBgImage");
+        var video = document.getElementById("openingVideo");
+        var hint = document.getElementById("loginBgVideoHint");
+        if (!stage || !imgEl || !video) {
+          return;
+        }
+
+          var OPENING_STREAM_URL =
+          (video.getAttribute("data-stream-src") || "source/image/opening.MP4").trim();
+
+        var playing = false;
+
+        /**
+         * Attach MP4 URL on first play only (`preload="none"` + no src until click).
+         * The browser then fetches via HTTP progressive byte-range streaming (native data stream),
+         * so playback can start before the full file is downloaded (requires moov early enough + server ranges).
+         */
+        function attachStreamingSrcIfNeeded() {
+          if (video.getAttribute("data-stream-bound") === "1") {
+            return;
+          }
+          video.preload = "none";
+          video.src = OPENING_STREAM_URL;
+          video.setAttribute("data-stream-bound", "1");
+          try {
+            video.load();
+          } catch (e) {
+            /* ignore */
+          }
+        }
+
+        function showPhoto() {
+          playing = false;
+          video.classList.add("hidden");
+          try {
+            video.pause();
+            video.currentTime = 0;
+          } catch (e) {
+            /* ignore */
+          }
+          imgEl.classList.remove("hidden");
+          stage.classList.add("cursor-pointer");
+          stage.setAttribute("aria-label", "Click on the background to play the welcome video");
+          stage.setAttribute("aria-busy", "false");
+          if (hint) {
+            hint.classList.remove("hidden");
+          }
+        }
+
+        function showVideo() {
+          if (playing) {
+            return;
+          }
+          attachStreamingSrcIfNeeded();
+          playing = true;
+          imgEl.classList.add("hidden");
+          video.classList.remove("hidden");
+          stage.classList.remove("cursor-pointer");
+          stage.setAttribute("aria-label", "Playing video");
+          stage.setAttribute("aria-busy", "true");
+          if (hint) {
+            hint.classList.add("hidden");
+          }
+          var p = video.play();
+          if (p && typeof p.catch === "function") {
+            p.catch(function () {
+              showPhoto();
+            });
+          }
+        }
+
+        video.addEventListener("ended", showPhoto);
+        video.addEventListener("error", showPhoto);
+
+        function onActivate(ev) {
+          if (playing) {
+            return;
+          }
+          if (ev.type === "keydown" && ev.key !== "Enter" && ev.key !== " ") {
+            return;
+          }
+          if (ev.type === "keydown") {
+            ev.preventDefault();
+          }
+          showVideo();
+        }
+
+        stage.addEventListener("click", onActivate);
+        stage.addEventListener("keydown", onActivate);
+
+        if (hint) {
+          hint.addEventListener("click", function (ev) {
+            ev.stopPropagation();
+            onActivate(ev);
+          });
+          hint.addEventListener("keydown", function (ev) {
+            if (ev.key === "Enter" || ev.key === " ") {
+              ev.preventDefault();
+              ev.stopPropagation();
+              onActivate(ev);
+            }
+          });
+        }
+      })();
     })();
   </script>
 </body>

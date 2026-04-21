@@ -127,13 +127,13 @@
         </div>
         <div>
           <label for="filterDateFrom" class="block text-xs text-amber-200/70 mb-1">From</label>
-          <input id="filterDateFrom" type="text"
-            class="cm-date-ddmmyyyy w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
+          <input id="filterDateFrom" type="text" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="DD/MM/YYYY"
+            class="date-field-ddmm w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
         </div>
         <div>
           <label for="filterDateTo" class="block text-xs text-amber-200/70 mb-1">To</label>
-          <input id="filterDateTo" type="text"
-            class="cm-date-ddmmyyyy w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
+          <input id="filterDateTo" type="text" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="DD/MM/YYYY"
+            class="date-field-ddmm w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
         </div>
       </div>
       <div class="flex flex-wrap gap-2 mt-4">
@@ -154,12 +154,12 @@
     <!-- Charts (hidden for Student — club-level aggregates) -->
     <section id="chartSection" class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
       <div class="glass rounded-xl border border-amber-600/25 p-4">
-        <h3 class="text-sm font-semibold text-amber-200 mb-2">Collections by month</h3>
+        <h3 class="text-sm font-semibold text-amber-200 mb-2">Collections By Month</h3>
         <p class="text-xs text-amber-100/75 mb-2">Sum of recorded payments per calendar month (ledger).</p>
         <div class="h-56"><canvas id="chartBar"></canvas></div>
       </div>
       <div class="glass rounded-xl border border-amber-600/25 p-4">
-        <h3 class="text-sm font-semibold text-amber-200 mb-2">Status mix</h3>
+        <h3 class="text-sm font-semibold text-amber-200 mb-2">Status Mix</h3>
         <p class="text-xs text-amber-100/75 mb-2">Share of active reservations by computed status (after filters: table only; pie uses loaded rows).</p>
         <div class="h-56 max-w-md mx-auto"><canvas id="chartPie"></canvas></div>
       </div>
@@ -230,8 +230,8 @@
           </div>
           <div>
             <label class="block text-xs text-amber-200/70 mb-1">Date of payment</label>
-            <input id="payDate" type="text"
-              class="cm-date-ddmmyyyy w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-amber-50 text-sm" />
+            <input id="payDate" type="text" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="DD/MM/YYYY"
+              class="date-field-ddmm w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-amber-50 text-sm" />
           </div>
           <div id="splitWrap" class="rounded-lg border border-amber-600/20 bg-amber-950/35 p-3 space-y-2">
             <p class="text-xs font-semibold text-amber-200">Split across lessons (same student)</p>
@@ -258,7 +258,6 @@
 
   <script src="/js/api.js"></script>
   <script src="/js/auth.js"></script>
-  <script src="/js/cm-date-ddmmyyyy.js"></script>
   <script>
     (function () {
       var isFramed = false;
@@ -395,8 +394,16 @@
         var search = (document.getElementById("filterSearch").value || "").trim().toLowerCase();
         var st = document.getElementById("filterStatus").value;
         var df = "due";
-        var dFrom = window.cmDateDdMmYyyy.readIso("filterDateFrom");
-        var dTo = window.cmDateDdMmYyyy.readIso("filterDateTo");
+        var dFromRaw = document.getElementById("filterDateFrom").value;
+        var dToRaw = document.getElementById("filterDateTo").value;
+        var dFrom =
+          window.api && typeof window.api.parseAnyDisplayDateToYmd === "function"
+            ? window.api.parseAnyDisplayDateToYmd(dFromRaw)
+            : dFromRaw;
+        var dTo =
+          window.api && typeof window.api.parseAnyDisplayDateToYmd === "function"
+            ? window.api.parseAnyDisplayDateToYmd(dToRaw)
+            : dToRaw;
 
         return rows.filter(function (r) {
           if (search) {
@@ -447,9 +454,6 @@
         if (chartBarInst) {
           chartBarInst.destroy();
         }
-        var chartTickColor = "#44403c";
-        var chartGridColor = "rgba(68, 64, 60, 0.14)";
-        var chartLegendColor = "#44403c";
         chartBarInst = new Chart(barEl, {
           type: "bar",
           data: {
@@ -465,17 +469,19 @@
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { labels: { color: chartLegendColor } } },
+            plugins: {
+              legend: {
+                labels: { color: "#292524", font: { size: 12, weight: "600" } },
+              },
+            },
             scales: {
               x: {
-                ticks: { color: chartTickColor },
-                grid: { color: chartGridColor },
-                border: { color: "rgba(68, 64, 60, 0.35)" },
+                ticks: { color: "#292524", font: { size: 11, weight: "600" } },
+                grid: { color: "rgba(41, 37, 36, 0.12)" },
               },
               y: {
-                ticks: { color: chartTickColor },
-                grid: { color: chartGridColor },
-                border: { color: "rgba(68, 64, 60, 0.35)" },
+                ticks: { color: "#292524", font: { size: 11, weight: "600" } },
+                grid: { color: "rgba(41, 37, 36, 0.12)" },
                 beginAtZero: true,
               },
             },
@@ -512,7 +518,7 @@
             plugins: {
               legend: {
                 position: "bottom",
-                labels: { color: chartLegendColor, boxWidth: 12 },
+                labels: { color: "#292524", boxWidth: 12, font: { size: 11, weight: "600" } },
               },
             },
           },
@@ -757,10 +763,16 @@
         setPayModalMode("edit");
         document.getElementById("payAmount").value = r.outstanding > 0 ? String(r.outstanding) : "";
         document.getElementById("payReference").value = "";
-        window.cmDateDdMmYyyy.writeIso(
-          "payDate",
-          (lastPayload && lastPayload.today) || new Date().toISOString().slice(0, 10)
-        );
+        (function () {
+          var todayYmd =
+            (lastPayload && lastPayload.today) ||
+            new Date().toISOString().slice(0, 10);
+          document.getElementById("payDate").value =
+            window.api &&
+            typeof window.api.formatDateDisplayDdMmYyyy === "function"
+              ? window.api.formatDateDisplayDdMmYyyy(todayYmd)
+              : todayYmd;
+        })();
         if (sub) {
           sub.textContent = r.Student_Name + " · " + r.lessonId + " · Outstanding $" + fmtMoney(r.outstanding);
         }
@@ -934,7 +946,11 @@
         var amount = Number(document.getElementById("payAmount").value);
         var method = document.getElementById("payMethod").value;
         var reference = document.getElementById("payReference").value;
-        var paidAt = window.cmDateDdMmYyyy.readIso("payDate");
+        var paidAtRaw = document.getElementById("payDate").value;
+        var paidAt =
+          window.api && typeof window.api.parseAnyDisplayDateToYmd === "function"
+            ? window.api.parseAnyDisplayDateToYmd(paidAtRaw)
+            : paidAtRaw;
         var splits = [{ lessonReserveId: primary, amount: amount }];
         document.querySelectorAll("#splitList .split-chk:checked").forEach(function (chk) {
           var rid = chk.getAttribute("data-rid");

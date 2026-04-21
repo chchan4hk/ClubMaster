@@ -1,4 +1,22 @@
 {
   "version": 1,
-  "coaches": []
+  "coaches": [
+    {
+      "coach_id": "C000001",
+      "club_name": "Gym Fit",
+      "full_name": "HO SHUN CHAN",
+      "sex": "M",
+      "date_of_birth": "1980-12-15",
+      "joined_date": "2026-04-21",
+      "home_address": "KOWLOON WEST  HONG KONG",
+      "country": "Hong Kong",
+      "email": "chchan4@yahoo.com.hk",
+      "contact_number": "+85253880508",
+      "status": "ACTIVE",
+      "creation_date": "2026-04-21",
+      "remark": "",
+      "lastUpdate_date": "2026-04-21",
+      "hourly_rate (HKD)": "1000"
+    }
+  ]
 }

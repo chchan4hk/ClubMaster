@@ -95,7 +95,7 @@
             <div>
               <label for="newCoachCountry" class="block text-xs text-slate-400 mb-1">Country</label>
               <select id="newCoachCountry" required
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-500/50">
               </select>
             </div>
             <div>
@@ -107,13 +107,13 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label for="newCoachDob" class="block text-xs text-slate-400 mb-1">Date of Birth</label>
-              <input id="newCoachDob" type="text"
-                class="cm-date-ddmmyyyy w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+              <input id="newCoachDob" type="text" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="DD/MM/YYYY"
+                class="date-field-ddmm w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="newCoachJoined" class="block text-xs text-slate-400 mb-1">Joined Date</label>
-              <input id="newCoachJoined" type="text" required
-                class="cm-date-ddmmyyyy w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+              <input id="newCoachJoined" type="text" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="DD/MM/YYYY" required
+                class="date-field-ddmm w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
           </div>
           <div>
@@ -219,13 +219,13 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label for="tableEditDateOfBirth" class="block text-xs text-slate-400 mb-1">Date of Birth</label>
-              <input id="tableEditDateOfBirth" type="text"
-                class="cm-date-ddmmyyyy w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+              <input id="tableEditDateOfBirth" type="text" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="DD/MM/YYYY"
+                class="date-field-ddmm w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="tableEditJoinedDate" class="block text-xs text-slate-400 mb-1">Joined Date</label>
-              <input id="tableEditJoinedDate" type="text"
-                class="cm-date-ddmmyyyy w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+              <input id="tableEditJoinedDate" type="text" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="DD/MM/YYYY"
+                class="date-field-ddmm w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
           </div>
           <div>
@@ -309,24 +309,24 @@
           <div>
             <label for="newCoachRoleFullName" class="block text-xs text-amber-200/55 mb-1">Full Name</label>
             <select id="newCoachRoleFullName"
-              class="w-full rounded-lg bg-black/50 border border-amber-900/45 px-3 py-2 text-amber-50 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-600/35 focus:border-amber-600/40">
+              class="w-full rounded-lg bg-black/50 border border-amber-900/45 px-3 py-2 text-sm text-white caret-white [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-600/35 focus:border-amber-600/40">
               <option value="">— Select —</option>
             </select>
           </div>
           <div>
             <label for="newCoachRoleUsername" class="block text-xs text-amber-200/55 mb-1">Username</label>
             <input id="newCoachRoleUsername" type="text" autocomplete="username"
-              class="w-full rounded-lg bg-black/50 border border-amber-900/45 px-3 py-2 text-amber-50 text-sm placeholder:text-amber-200/25 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-600/35 focus:border-amber-600/40" />
+              class="w-full rounded-lg bg-black/50 border border-amber-900/45 px-3 py-2 text-sm text-white caret-white placeholder:text-white/35 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-600/35 focus:border-amber-600/40" />
           </div>
           <div>
             <label for="newCoachRolePassword" class="block text-xs text-amber-200/55 mb-1">Password</label>
             <input id="newCoachRolePassword" type="password" autocomplete="new-password"
-              class="w-full rounded-lg bg-black/50 border border-amber-900/45 px-3 py-2 text-amber-50 text-sm placeholder:text-amber-200/25 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-600/35 focus:border-amber-600/40" />
+              class="w-full rounded-lg bg-black/50 border border-amber-900/45 px-3 py-2 text-sm text-amber-300 caret-amber-300 placeholder:text-amber-400/45 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-600/35 focus:border-amber-600/40" />
           </div>
           <div>
             <label for="newCoachRolePassword2" class="block text-xs text-amber-200/55 mb-1">Re-enter Password</label>
             <input id="newCoachRolePassword2" type="password" autocomplete="new-password"
-              class="w-full rounded-lg bg-black/50 border border-amber-900/45 px-3 py-2 text-amber-50 text-sm placeholder:text-amber-200/25 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-600/35 focus:border-amber-600/40" />
+              class="w-full rounded-lg bg-black/50 border border-amber-900/45 px-3 py-2 text-sm text-amber-300 caret-amber-300 placeholder:text-amber-400/45 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-600/35 focus:border-amber-600/40" />
           </div>
         </div>
         <p id="newCoachRoleAccountErr" class="mt-3 text-sm text-red-300 hidden"></p>
@@ -367,7 +367,6 @@
 
   <script src="/js/api.js"></script>
   <script src="/js/auth.js"></script>
-  <script src="/js/cm-date-ddmmyyyy.js"></script>
   <script>
     (function () {
       var isFramed = false;
@@ -387,12 +386,7 @@
         Boolean(token) &&
         (role === "CoachManager" || role === "Coach" || role === "Student");
 
-      if (isFramed) {
-        var bw = document.getElementById("backLinkWrap");
-        if (bw) {
-          bw.classList.add("hidden");
-        }
-      } else {
+      if (!isFramed) {
         var backL = document.getElementById("coachInfoBackLink");
         if (backL && isStudentReadOnly) {
           backL.setAttribute("href", "/student.html");
@@ -478,6 +472,8 @@
       }
 
       var cachedCoaches = [];
+      /** Last countries from GET /basic-info — refill after form.reset() (reset clears dynamic &lt;option&gt;s). */
+      var cachedBasicInfoCountries = [];
 
       /** Options for New Login modal: full_name from club UserList_Coach.json (via GET /coach-manager/coaches). */
       function fillNewCoachRoleFullNameSelect() {
@@ -642,6 +638,17 @@
         hideCreateCoachPanel();
       }
 
+      function isoDateForPicker(s) {
+        if (
+          window.api &&
+          typeof window.api.formatStoredDateToDdMmYyyy === "function"
+        ) {
+          return window.api.formatStoredDateToDdMmYyyy(s);
+        }
+        var t = (s == null ? "" : String(s)).trim();
+        return /^\d{4}-\d{2}-\d{2}$/.test(t) ? t : "";
+      }
+
       function bindSelectWithOrphan(sel, value) {
         if (!sel) {
           return;
@@ -661,41 +668,102 @@
         }
       }
 
+      /** Same as Club Master `setSelectToValue` (club-master.html). */
+      function setSelectToValue(sel, value) {
+        if (!sel) {
+          return;
+        }
+        var v = value == null ? "" : String(value).trim();
+        sel.value = v;
+        if (v && sel.value !== v) {
+          var opt = document.createElement("option");
+          opt.value = v;
+          opt.textContent = v;
+          sel.appendChild(opt);
+          sel.value = v;
+        }
+      }
+
+      /**
+       * Same as Club Master `refillSelectOptions` — rebuild &lt;select&gt; from country list.
+       * @param {string} selectId
+       * @param {unknown[]} values
+       */
+      function refillCountrySelectFromBasicInfo(selectId, values) {
+        var sel = document.getElementById(selectId);
+        if (!sel) {
+          return;
+        }
+        var prev = String(sel.value || "").trim();
+        sel.innerHTML = "";
+        var emptyOpt = document.createElement("option");
+        emptyOpt.value = "";
+        emptyOpt.textContent = "—";
+        sel.appendChild(emptyOpt);
+        var list = Array.isArray(values) ? values : [];
+        for (var i = 0; i < list.length; i++) {
+          var raw = list[i];
+          var label = raw == null ? "" : String(raw).trim();
+          if (!label) {
+            continue;
+          }
+          var o = document.createElement("option");
+          o.value = label;
+          o.textContent = label;
+          sel.appendChild(o);
+        }
+        setSelectToValue(sel, prev);
+      }
+
+      function refillCoachCountryDropdownsFromCache() {
+        refillCountrySelectFromBasicInfo("newCoachCountry", cachedBasicInfoCountries);
+        refillCountrySelectFromBasicInfo("tableEditCountry", cachedBasicInfoCountries);
+      }
+
+      /** Club Master–style: GET /basic-info via `api` (not fetchBasicInfo cache). */
       function initCountrySelectsFromBasicInfo() {
-        if (
-          !window.api ||
-          typeof window.api.fetchBasicInfo !== "function" ||
-          typeof window.api.fillSelectFromBasicList !== "function"
-        ) {
+        if (!window.api || typeof window.api.api !== "function") {
           return Promise.resolve();
         }
-        return window.api.fetchBasicInfo().then(function (info) {
-          window.api.fillSelectFromBasicList(
-            document.getElementById("newCoachCountry"),
-            info.countries,
-            {}
-          );
-          window.api.fillSelectFromBasicList(
-            document.getElementById("tableEditCountry"),
-            info.countries,
-            { leadEmpty: true, leadEmptyLabel: "—" }
-          );
-        });
+        return window.api
+          .api("/basic-info")
+          .then(function (data) {
+            if (!data || data.ok === false) {
+              return;
+            }
+            cachedBasicInfoCountries = Array.isArray(data.countries)
+              ? data.countries
+              : [];
+            refillCoachCountryDropdownsFromCache();
+          })
+          .catch(function () {
+            /* dropdowns stay empty */
+          });
       }
 
       function setNewCoachCountryToFirst() {
         var nc = document.getElementById("newCoachCountry");
-        if (nc && nc.options.length) {
+        if (nc && nc.options.length > 1) {
+          nc.selectedIndex = 1;
+        } else if (nc && nc.options.length === 1) {
           nc.selectedIndex = 0;
         }
       }
 
       function ymdTodayLocal() {
+        if (
+          window.api &&
+          typeof window.api.formatDateDisplayDdMmYyyy === "function"
+        ) {
+          return window.api.formatDateDisplayDdMmYyyy(
+            new Date().toISOString().slice(0, 10),
+          );
+        }
         var d = new Date();
         var y = d.getFullYear();
         var m = String(d.getMonth() + 1).padStart(2, "0");
         var day = String(d.getDate()).padStart(2, "0");
-        return y + "-" + m + "-" + day;
+        return day + "/" + m + "/" + y;
       }
 
       function openTableEditPanelFromCoach(c) {
@@ -707,14 +775,10 @@
         document.getElementById("tableEditClubName").value = c.club_name || "";
         document.getElementById("tableEditFullName").value = c.full_name || "";
         bindSelectWithOrphan(document.getElementById("tableEditSex"), c.sex);
-        window.cmDateDdMmYyyy.populateFromBackend(
-          "tableEditDateOfBirth",
-          c.date_of_birth
-        );
-        window.cmDateDdMmYyyy.populateFromBackend(
-          "tableEditJoinedDate",
-          c.joined_date
-        );
+        document.getElementById("tableEditDateOfBirth").value =
+          isoDateForPicker(c.date_of_birth);
+        document.getElementById("tableEditJoinedDate").value =
+          isoDateForPicker(c.joined_date);
         document.getElementById("tableEditHomeAddress").value =
           c.home_address || "";
         bindSelectWithOrphan(document.getElementById("tableEditCountry"), c.country);
@@ -1121,8 +1185,18 @@
             .getElementById("tableEditContactNumber")
             .value.trim(),
           sex: document.getElementById("tableEditSex").value.trim(),
-          date_of_birth: window.cmDateDdMmYyyy.readIso("tableEditDateOfBirth"),
-          joined_date: window.cmDateDdMmYyyy.readIso("tableEditJoinedDate"),
+          date_of_birth:
+            window.api && typeof window.api.parseAnyDisplayDateToYmd === "function"
+              ? window.api.parseAnyDisplayDateToYmd(
+                  document.getElementById("tableEditDateOfBirth").value,
+                )
+              : document.getElementById("tableEditDateOfBirth").value.trim(),
+          joined_date:
+            window.api && typeof window.api.parseAnyDisplayDateToYmd === "function"
+              ? window.api.parseAnyDisplayDateToYmd(
+                  document.getElementById("tableEditJoinedDate").value,
+                )
+              : document.getElementById("tableEditJoinedDate").value.trim(),
           home_address: document
             .getElementById("tableEditHomeAddress")
             .value.trim(),
@@ -1227,11 +1301,19 @@
         if (form) {
           form.reset();
         }
-        setNewCoachCountryToFirst();
+        /* reset() clears dynamic &lt;option&gt;s on newCoachCountry — repopulate from cache */
+        if (cachedBasicInfoCountries.length) {
+          refillCoachCountryDropdownsFromCache();
+          setNewCoachCountryToFirst();
+        } else {
+          initCountrySelectsFromBasicInfo().finally(function () {
+            setNewCoachCountryToFirst();
+          });
+        }
         syncNewCoachClubNameField();
         var joined = document.getElementById("newCoachJoined");
         if (joined) {
-          window.cmDateDdMmYyyy.writeIso(joined, ymdTodayLocal());
+          joined.value = ymdTodayLocal();
         }
         if (panel) {
           panel.classList.remove("hidden");
@@ -1266,12 +1348,22 @@
         var body = {
           full_name: nm,
           sex: document.getElementById("newCoachSex").value.trim(),
-          date_of_birth: window.cmDateDdMmYyyy.readIso("newCoachDob"),
+          date_of_birth:
+            window.api && typeof window.api.parseAnyDisplayDateToYmd === "function"
+              ? window.api.parseAnyDisplayDateToYmd(
+                  document.getElementById("newCoachDob").value,
+                )
+              : document.getElementById("newCoachDob").value.trim(),
           home_address: document.getElementById("newCoachAddress").value.trim(),
           country: document.getElementById("newCoachCountry").value.trim(),
           email: em,
           contact_number: document.getElementById("newCoachPhone").value.trim(),
-          joined_date: window.cmDateDdMmYyyy.readIso("newCoachJoined"),
+          joined_date:
+            window.api && typeof window.api.parseAnyDisplayDateToYmd === "function"
+              ? window.api.parseAnyDisplayDateToYmd(
+                  document.getElementById("newCoachJoined").value,
+                )
+              : document.getElementById("newCoachJoined").value.trim(),
           remark: document.getElementById("newCoachRemark").value.trim(),
           status: "ACTIVE",
         };
@@ -1290,7 +1382,8 @@
               (data.coachId || "—");
             okBox.classList.remove("hidden");
             document.getElementById("createCoachForm").reset();
-            window.cmDateDdMmYyyy.writeIso("newCoachJoined", ymdTodayLocal());
+            refillCoachCountryDropdownsFromCache();
+            document.getElementById("newCoachJoined").value = ymdTodayLocal();
             setNewCoachCountryToFirst();
             syncNewCoachClubNameField();
             loadFullCsv();

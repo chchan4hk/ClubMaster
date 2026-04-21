@@ -67,13 +67,13 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label for="newStudentDob" class="block text-xs text-slate-400 mb-1">Date of Birth</label>
-              <input id="newStudentDob" type="text"
-                class="cm-date-ddmmyyyy w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+              <input id="newStudentDob" type="text" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="DD/MM/YYYY"
+                class="date-field-ddmm w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="newStudentJoined" class="block text-xs text-slate-400 mb-1">Joined Date</label>
-              <input id="newStudentJoined" type="text" required
-                class="cm-date-ddmmyyyy w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+              <input id="newStudentJoined" type="text" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="DD/MM/YYYY" required
+                class="date-field-ddmm w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
           </div>
           <div>
@@ -94,13 +94,7 @@
             <div>
               <label for="newStudentCountry" class="block text-xs text-slate-400 mb-1">Country</label>
               <select id="newStudentCountry" required
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
-                <option value="">— Select —</option>
-                <option value="Hong Kong">Hong Kong</option>
-                <option value="China">China</option>
-                <option value="Taiwan">Taiwan</option>
-                <option value="Malaysia">Malaysia</option>
-                <option value="Korea">Korea</option>
+                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-500/50">
               </select>
             </div>
             <div>
@@ -206,13 +200,13 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label for="tableEditDateOfBirth" class="block text-xs text-slate-400 mb-1">Date of Birth</label>
-              <input id="tableEditDateOfBirth" type="text"
-                class="cm-date-ddmmyyyy w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+              <input id="tableEditDateOfBirth" type="text" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="DD/MM/YYYY"
+                class="date-field-ddmm w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="tableEditJoinedDate" class="block text-xs text-slate-400 mb-1">Joined Date</label>
-              <input id="tableEditJoinedDate" type="text"
-                class="cm-date-ddmmyyyy w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+              <input id="tableEditJoinedDate" type="text" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="DD/MM/YYYY"
+                class="date-field-ddmm w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
           </div>
           <div>
@@ -344,24 +338,24 @@
           <div>
             <label for="newStudentRoleFullName" class="block text-xs text-amber-200/55 mb-1">Full Name</label>
             <select id="newStudentRoleFullName"
-              class="w-full rounded-lg bg-black/50 border border-amber-900/45 px-3 py-2 text-amber-50 text-sm [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-600/35 focus:border-amber-600/40">
+              class="w-full rounded-lg bg-black/50 border border-amber-900/45 px-3 py-2 text-sm text-white caret-white [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-600/35 focus:border-amber-600/40">
               <option value="">— Select —</option>
             </select>
           </div>
           <div>
             <label for="newStudentRoleUsername" class="block text-xs text-amber-200/55 mb-1">Username</label>
             <input id="newStudentRoleUsername" type="text" autocomplete="username"
-              class="w-full rounded-lg bg-black/50 border border-amber-900/45 px-3 py-2 text-amber-50 text-sm placeholder:text-amber-200/25 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-600/35 focus:border-amber-600/40" />
+              class="w-full rounded-lg bg-black/50 border border-amber-900/45 px-3 py-2 text-sm text-white caret-white placeholder:text-white/35 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-600/35 focus:border-amber-600/40" />
           </div>
           <div>
             <label for="newStudentRolePassword" class="block text-xs text-amber-200/55 mb-1">Password</label>
             <input id="newStudentRolePassword" type="password" autocomplete="new-password"
-              class="w-full rounded-lg bg-black/50 border border-amber-900/45 px-3 py-2 text-amber-50 text-sm placeholder:text-amber-200/25 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-600/35 focus:border-amber-600/40" />
+              class="w-full rounded-lg bg-black/50 border border-amber-900/45 px-3 py-2 text-sm text-amber-300 caret-amber-300 placeholder:text-amber-400/45 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-600/35 focus:border-amber-600/40" />
           </div>
           <div>
             <label for="newStudentRolePassword2" class="block text-xs text-amber-200/55 mb-1">Re-enter Password</label>
             <input id="newStudentRolePassword2" type="password" autocomplete="new-password"
-              class="w-full rounded-lg bg-black/50 border border-amber-900/45 px-3 py-2 text-amber-50 text-sm placeholder:text-amber-200/25 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-600/35 focus:border-amber-600/40" />
+              class="w-full rounded-lg bg-black/50 border border-amber-900/45 px-3 py-2 text-sm text-amber-300 caret-amber-300 placeholder:text-amber-400/45 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-600/35 focus:border-amber-600/40" />
           </div>
         </div>
         <p id="newStudentRoleAccountErr" class="mt-3 text-sm text-red-300 hidden"></p>
@@ -402,7 +396,6 @@
 
   <script src="/js/api.js"></script>
   <script src="/js/auth.js"></script>
-  <script src="/js/cm-date-ddmmyyyy.js"></script>
   <script>
     (function () {
       var isFramed = false;
@@ -424,13 +417,6 @@
       var btnNewStudentRole = document.getElementById("btnNewStudentRoleAccount");
       if (btnNewStudentRole && role !== "CoachManager") {
         btnNewStudentRole.classList.add("hidden");
-      }
-
-      if (isFramed) {
-        var bw = document.getElementById("backLinkWrap");
-        if (bw) {
-          bw.classList.add("hidden");
-        }
       }
 
       function setUidLabels(uid) {
@@ -563,6 +549,8 @@
       }
 
       var cachedStudents = [];
+      /** Last countries from GET /basic-info — refill after form.reset() (reset clears dynamic &lt;option&gt;s). */
+      var cachedBasicInfoCountries = [];
 
       /** Options for New Login modal: full_name from club UserList_Student.json (via GET /coach-manager/students). */
       function fillNewStudentRoleFullNameSelect() {
@@ -676,6 +664,17 @@
         hideCreateStudentPanel();
       }
 
+      function isoDateForPicker(s) {
+        if (
+          window.api &&
+          typeof window.api.formatStoredDateToDdMmYyyy === "function"
+        ) {
+          return window.api.formatStoredDateToDdMmYyyy(s);
+        }
+        var t = (s == null ? "" : String(s)).trim();
+        return /^\d{4}-\d{2}-\d{2}$/.test(t) ? t : "";
+      }
+
       function bindSelectWithOrphan(sel, value) {
         if (!sel) {
           return;
@@ -695,26 +694,70 @@
         }
       }
 
+      function setSelectToValue(sel, value) {
+        if (!sel) {
+          return;
+        }
+        var v = value == null ? "" : String(value).trim();
+        sel.value = v;
+        if (v && sel.value !== v) {
+          var opt = document.createElement("option");
+          opt.value = v;
+          opt.textContent = v;
+          sel.appendChild(opt);
+          sel.value = v;
+        }
+      }
+
+      function refillCountrySelectFromBasicInfo(selectId, values) {
+        var sel = document.getElementById(selectId);
+        if (!sel) {
+          return;
+        }
+        var prev = String(sel.value || "").trim();
+        sel.innerHTML = "";
+        var emptyOpt = document.createElement("option");
+        emptyOpt.value = "";
+        emptyOpt.textContent = "—";
+        sel.appendChild(emptyOpt);
+        var list = Array.isArray(values) ? values : [];
+        for (var i = 0; i < list.length; i++) {
+          var raw = list[i];
+          var label = raw == null ? "" : String(raw).trim();
+          if (!label) {
+            continue;
+          }
+          var o = document.createElement("option");
+          o.value = label;
+          o.textContent = label;
+          sel.appendChild(o);
+        }
+        setSelectToValue(sel, prev);
+      }
+
+      function refillStudentCountryDropdownsFromCache() {
+        refillCountrySelectFromBasicInfo("newStudentCountry", cachedBasicInfoCountries);
+        refillCountrySelectFromBasicInfo("tableEditCountry", cachedBasicInfoCountries);
+      }
+
       function initCountrySelectsFromBasicInfo() {
-        if (
-          !window.api ||
-          typeof window.api.fetchBasicInfo !== "function" ||
-          typeof window.api.fillSelectFromBasicList !== "function"
-        ) {
+        if (!window.api || typeof window.api.api !== "function") {
           return Promise.resolve();
         }
-        return window.api.fetchBasicInfo().then(function (info) {
-          window.api.fillSelectFromBasicList(
-            document.getElementById("newStudentCountry"),
-            info.countries,
-            {}
-          );
-          window.api.fillSelectFromBasicList(
-            document.getElementById("tableEditCountry"),
-            info.countries,
-            { leadEmpty: true, leadEmptyLabel: "—" }
-          );
-        });
+        return window.api
+          .api("/basic-info")
+          .then(function (data) {
+            if (!data || data.ok === false) {
+              return;
+            }
+            cachedBasicInfoCountries = Array.isArray(data.countries)
+              ? data.countries
+              : [];
+            refillStudentCountryDropdownsFromCache();
+          })
+          .catch(function () {
+            /* dropdowns stay empty */
+          });
       }
 
       function fillStudentCoachSelectFromNames(sel, names) {
@@ -768,17 +811,27 @@
 
       function setNewStudentCountryToFirst() {
         var el = document.getElementById("newStudentCountry");
-        if (el && el.options.length) {
+        if (el && el.options.length > 1) {
+          el.selectedIndex = 1;
+        } else if (el && el.options.length === 1) {
           el.selectedIndex = 0;
         }
       }
 
       function ymdTodayLocal() {
+        if (
+          window.api &&
+          typeof window.api.formatDateDisplayDdMmYyyy === "function"
+        ) {
+          return window.api.formatDateDisplayDdMmYyyy(
+            new Date().toISOString().slice(0, 10),
+          );
+        }
         var d = new Date();
         var y = d.getFullYear();
         var m = String(d.getMonth() + 1).padStart(2, "0");
         var day = String(d.getDate()).padStart(2, "0");
-        return y + "-" + m + "-" + day;
+        return day + "/" + m + "/" + y;
       }
 
       function openTableEditPanelFromStudent(s) {
@@ -791,14 +844,10 @@
           s.club_id || s.club_name || "";
         document.getElementById("tableEditFullName").value = s.full_name || "";
         bindSelectWithOrphan(document.getElementById("tableEditSex"), s.sex);
-        window.cmDateDdMmYyyy.populateFromBackend(
-          "tableEditDateOfBirth",
-          s.date_of_birth
-        );
-        window.cmDateDdMmYyyy.populateFromBackend(
-          "tableEditJoinedDate",
-          s.joined_date
-        );
+        document.getElementById("tableEditDateOfBirth").value =
+          isoDateForPicker(s.date_of_birth);
+        document.getElementById("tableEditJoinedDate").value =
+          isoDateForPicker(s.joined_date);
         document.getElementById("tableEditHomeAddress").value =
           s.home_address || "";
         bindSelectWithOrphan(document.getElementById("tableEditCountry"), s.country);
@@ -1216,8 +1265,18 @@
             .getElementById("tableEditContactNumber")
             .value.trim(),
           sex: document.getElementById("tableEditSex").value.trim(),
-          date_of_birth: window.cmDateDdMmYyyy.readIso("tableEditDateOfBirth"),
-          joined_date: window.cmDateDdMmYyyy.readIso("tableEditJoinedDate"),
+          date_of_birth:
+            window.api && typeof window.api.parseAnyDisplayDateToYmd === "function"
+              ? window.api.parseAnyDisplayDateToYmd(
+                  document.getElementById("tableEditDateOfBirth").value,
+                )
+              : document.getElementById("tableEditDateOfBirth").value.trim(),
+          joined_date:
+            window.api && typeof window.api.parseAnyDisplayDateToYmd === "function"
+              ? window.api.parseAnyDisplayDateToYmd(
+                  document.getElementById("tableEditJoinedDate").value,
+                )
+              : document.getElementById("tableEditJoinedDate").value.trim(),
           home_address: document
             .getElementById("tableEditHomeAddress")
             .value.trim(),
@@ -1344,10 +1403,17 @@
         if (form) {
           form.reset();
         }
-        setNewStudentCountryToFirst();
+        if (cachedBasicInfoCountries.length) {
+          refillStudentCountryDropdownsFromCache();
+          setNewStudentCountryToFirst();
+        } else {
+          initCountrySelectsFromBasicInfo().finally(function () {
+            setNewStudentCountryToFirst();
+          });
+        }
         var joined = document.getElementById("newStudentJoined");
         if (joined) {
-          window.cmDateDdMmYyyy.writeIso(joined, ymdTodayLocal());
+          joined.value = ymdTodayLocal();
         }
         setNewStudentClubNameField();
         var coachSel = document.getElementById("newStudentStudentCoach");
@@ -1387,12 +1453,22 @@
         var body = {
           full_name: nm,
           sex: document.getElementById("newStudentSex").value.trim(),
-          date_of_birth: window.cmDateDdMmYyyy.readIso("newStudentDob"),
+          date_of_birth:
+            window.api && typeof window.api.parseAnyDisplayDateToYmd === "function"
+              ? window.api.parseAnyDisplayDateToYmd(
+                  document.getElementById("newStudentDob").value,
+                )
+              : document.getElementById("newStudentDob").value.trim(),
           home_address: document.getElementById("newStudentAddress").value.trim(),
           country: document.getElementById("newStudentCountry").value.trim(),
           email: em,
           contact_number: document.getElementById("newStudentPhone").value.trim(),
-          joined_date: window.cmDateDdMmYyyy.readIso("newStudentJoined"),
+          joined_date:
+            window.api && typeof window.api.parseAnyDisplayDateToYmd === "function"
+              ? window.api.parseAnyDisplayDateToYmd(
+                  document.getElementById("newStudentJoined").value,
+                )
+              : document.getElementById("newStudentJoined").value.trim(),
           remark: document.getElementById("newStudentRemark").value.trim(),
           guardian: document.getElementById("newStudentGuardian").value.trim(),
           guardian_contact: document
@@ -1416,7 +1492,8 @@
               (data.studentId || "—");
             okBox.classList.remove("hidden");
             document.getElementById("createStudentForm").reset();
-            window.cmDateDdMmYyyy.writeIso("newStudentJoined", ymdTodayLocal());
+            refillStudentCountryDropdownsFromCache();
+            document.getElementById("newStudentJoined").value = ymdTodayLocal();
             setNewStudentCountryToFirst();
             setNewStudentClubNameField();
             var cSel = document.getElementById("newStudentStudentCoach");

@@ -162,3 +162,53 @@
   color: #292524 !important;
   border-top: 1px solid rgba(180, 140, 90, 0.28);
 }
+
+/* New lesson — Class Time: pale yellow-gold → pale gold → silver-grey (slow animated “dynamic” wash) */
+.profile-password-page.cm-module-shell .cm-new-lesson-class-time-panel {
+  border-color: rgba(180, 140, 90, 0.42) !important;
+  background: linear-gradient(
+    125deg,
+    #fffbeb 0%,
+    #faf3d9 28%,
+    #f0e4c8 52%,
+    #ddd5c8 72%,
+    #d4d4d8 100%
+  );
+  background-size: 220% 220%;
+  animation: cm-new-lesson-class-time-shift 22s ease-in-out infinite alternate;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+@keyframes cm-new-lesson-class-time-shift {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 100% 0%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-password-page.cm-module-shell .cm-new-lesson-class-time-panel {
+    animation: none;
+    background-size: 100% 100%;
+    background-position: 0 0;
+  }
+}
+
+/* Assign Student modal: shell maps text-slate-100 to dark ink — restore light body on dark panel */
+.profile-password-page.cm-module-shell #assignStudentPanel {
+  color: #e7e5e4 !important;
+}
+
+.profile-password-page.cm-module-shell #assignStudentBackdrop .assign-student-field-label {
+  color: #92400e !important;
+}
+
+.profile-password-page.cm-module-shell #assignStudentBackdrop .assign-student-student-name {
+  color: #92400e !important;
+}
+
+.profile-password-page.cm-module-shell #assignStudentBackdrop .assign-student-student-id {
+  color: #78350f !important;
+}

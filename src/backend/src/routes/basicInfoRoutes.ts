@@ -5,7 +5,8 @@ import { readBasicInfo } from "../basicInfoCsv";
 
 /**
  * Public reference lists (no auth — form dropdowns).
- * Prefers MongoDB `basicInfo` when configured and document `basicInfoLists` exists;
+ * Prefers MongoDB: merges `basicInfo` document `basicInfoLists` with legacy `BasicInfo`
+ * (PascalCase) row/list documents in {@link resolveBasicInfoDatabaseName} (default `ClubMaster_DB`);
  * otherwise `BasicInfo.csv`.
  */
 export function createBasicInfoRouter(): Router {

@@ -1,6 +1,10 @@
 import { Router, type Response } from "express";
 import jwt from "jsonwebtoken";
-import { verifyRoleLoginPassword } from "../coachStudentLoginCsv";
+import {
+  findCoachRoleLoginByUsername,
+  findStudentRoleLoginByUsername,
+  verifyRoleLoginPassword,
+} from "../coachStudentLoginCsv";
 import {
   findClubUidForCoachId,
   isValidClubFolderId,
@@ -8,12 +12,13 @@ import {
 } from "../coachListCsv";
 import { findClubUidForStudentId } from "../studentListCsv";
 import {
+  distinctClubNamesFromUserlist,
   findCoachManagerClubUidByClubName,
+  findUserByUsername,
   verifyMainLoginPassword,
 } from "../userlistCsv";
 import { isMongoConfigured } from "../db/DBConnection";
 import {
-  distinctClubNamesFromUserLoginMongo,
   findCoachManagerUidByClubNameMongo,
   findCoachRoleLoginByUsernameMongo,
   findStudentRoleLoginByUsernameMongo,
@@ -33,35 +38,24 @@ function normEqText(a: string, b: string): boolean {
   return a.trim().toLowerCase() === b.trim().toLowerCase();
 }
 
-/** Club folder UID: Mongo `userLogin` (Coach Manager) when configured, else CSV. */
+/** Club folder UID from file, else Mongo `userLogin` when configured. */
 async function resolveCoachManagerClubUid(clubName: string): Promise<string | null> {
   const trimmed = clubName.trim();
   if (!trimmed) {
     return null;
   }
-  if (isMongoConfigured()) {
-    try {
-      const fromMongo = await findCoachManagerUidByClubNameMongo(trimmed);
-      if (fromMongo) {
-        return fromMongo;
-      }
-    } catch {
-      /* fall through */
-    }
+  const fromFile = findCoachManagerClubUidByClubName(trimmed);
+  if (fromFile) {
+    return fromFile;
   }
-  return findCoachManagerClubUidByClubName(trimmed);
-}
-
-function requireMongoAuth(res: Response): boolean {
   if (!isMongoConfigured()) {
-    res.status(503).json({
-      ok: false,
-      error:
-        "Sign-in requires MongoDB: set MONGODB_URI (and credentials) so accounts load from ClubMaster_DB.userLogin. CSV/JSON login is disabled.",
-    });
-    return false;
+    return null;
   }
-  return true;
+  try {
+    return await findCoachManagerUidByClubNameMongo(trimmed);
+  } catch {
+    return null;
+  }
 }
 
 function sendExpiredLogin(
@@ -90,14 +84,10 @@ function sendExpiredLogin(
 export function createAuthRouter(): Router {
   const r = Router();
 
-  /** Public list of club names from MongoDB `ClubMaster_DB.userLogin` (distinct `club_name`). */
-  r.get("/club-names", async (_req, res) => {
-    if (!requireMongoAuth(res)) {
-      return;
-    }
+  /** Public list of club names from userLogin.csv (for sign-in page dropdown). */
+  r.get("/club-names", (_req, res) => {
     try {
-      const names = await distinctClubNamesFromUserLoginMongo();
-      res.json({ ok: true, names });
+      res.json({ ok: true, names: distinctClubNamesFromUserlist() });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       res.status(500).json({ ok: false, error: msg });
@@ -106,14 +96,11 @@ export function createAuthRouter(): Router {
 
   /**
    * Login with explicit role + optional club name (sign-in page).
-   * Credentials are verified only against MongoDB `userLogin` via `getAuthUserLoginCollection()`
-   * (`resolveAuthLoginDatabaseName()`; typically `ClubMaster_DB`). Requires `MONGODB_URI`; CSV/JSON
-   * login is disabled (503 from `requireMongoAuth` when Mongo is not configured).
+   * When `MONGODB_URI` / `MONGO_PASSWORD` is set, credentials are checked against MongoDB
+   * `userLogin` via `getAuthUserLoginCollection()` (DB: `MONGO_AUTH_USERLOGIN_DB`, else same as `MONGO_USERLOGIN_DB` / `MONGO_DATABASE` / `ClubMaster_DB`).
+   * Otherwise: `userLogin.json` / CSV + club roster files.
    */
   r.post("/login-with-context", async (req, res) => {
-    if (!requireMongoAuth(res)) {
-      return;
-    }
     const username = String(req.body?.username ?? "").trim();
     const password = String(req.body?.password ?? "");
     const roleInput = String(req.body?.role ?? "").trim();
@@ -164,10 +151,14 @@ export function createAuthRouter(): Router {
     };
 
     if (expectedRole === "Admin" || expectedRole === "CoachManager") {
-      let row: Awaited<ReturnType<typeof findUserByUsernameMongo>> | undefined;
+      let row: ReturnType<typeof findUserByUsername>;
       try {
-        const mongoRow = await findUserByUsernameMongo(username);
-        row = mongoRow ?? undefined;
+        if (isMongoConfigured()) {
+          const mongoRow = await findUserByUsernameMongo(username);
+          row = mongoRow ?? undefined;
+        } else {
+          row = findUserByUsername(username);
+        }
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         res.status(503).json({
@@ -223,9 +214,13 @@ export function createAuthRouter(): Router {
     }
 
     if (expectedRole === "Coach") {
-      let login: Awaited<ReturnType<typeof findCoachRoleLoginByUsernameMongo>> | undefined;
+      let login: ReturnType<typeof findCoachRoleLoginByUsername> | undefined;
       try {
-        login = (await findCoachRoleLoginByUsernameMongo(username)) ?? undefined;
+        if (isMongoConfigured()) {
+          login = (await findCoachRoleLoginByUsernameMongo(username)) ?? undefined;
+        } else {
+          login = findCoachRoleLoginByUsername(username);
+        }
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         res.status(503).json({
@@ -316,9 +311,13 @@ export function createAuthRouter(): Router {
     }
 
     if (expectedRole === "Student") {
-      let login: Awaited<ReturnType<typeof findStudentRoleLoginByUsernameMongo>> | undefined;
+      let login: ReturnType<typeof findStudentRoleLoginByUsername> | undefined;
       try {
-        login = (await findStudentRoleLoginByUsernameMongo(username)) ?? undefined;
+        if (isMongoConfigured()) {
+          login = (await findStudentRoleLoginByUsernameMongo(username)) ?? undefined;
+        } else {
+          login = findStudentRoleLoginByUsername(username);
+        }
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         res.status(503).json({
@@ -402,9 +401,6 @@ export function createAuthRouter(): Router {
   });
 
   r.post("/login", async (req, res) => {
-    if (!requireMongoAuth(res)) {
-      return;
-    }
     const username = String(
       req.body?.username ?? req.body?.userID ?? req.body?.email ?? ""
     ).trim();
@@ -413,10 +409,14 @@ export function createAuthRouter(): Router {
       res.status(400).json({ ok: false, error: "Username and password required" });
       return;
     }
-    let row: Awaited<ReturnType<typeof findUserByUsernameMongo>> | undefined;
+    let row: ReturnType<typeof findUserByUsername>;
     try {
-      const mongoRow = await findUserByUsernameMongo(username);
-      row = mongoRow ?? undefined;
+      if (isMongoConfigured()) {
+        const mongoRow = await findUserByUsernameMongo(username);
+        row = mongoRow ?? undefined;
+      } else {
+        row = findUserByUsername(username);
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       res.status(503).json({
