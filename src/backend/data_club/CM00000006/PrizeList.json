@@ -1,3 +1,22 @@
 {
-  "prizes": []
+  "prizes": [
+    {
+      "PrizeID": "PR000001",
+      "ClubID": "CM00000006",
+      "Club_name": "Gym Fit",
+      "SportType": "Badminton",
+      "Year": "2026",
+      "Association": "香港羽毛球總會",
+      "Competition": "全港青少年錦標賽",
+      "Age_group": "2012-2013",
+      "Prize_type": "Men's Single",
+      "StudentName": "ayden chan",
+      "Ranking": "Gold",
+      "Status": "ACTIVE",
+      "Created_at": "2026-04-21",
+      "LastUpdated_Date": "2026-04-21",
+      "VerifiedBy": "Wong Wai Keung",
+      "Remarks": ""
+    }
+  ]
 }

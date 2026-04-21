@@ -1,4 +1,18 @@
 {
   "version": 1,
-  "entries": {}
+  "entries": {
+    "LR000001": {
+      "lessonReserveId": "LR000001",
+      "dueDate": "2025-12-08",
+      "payments": [
+        {
+          "paymentId": "PAY-mo8tucib-b5h4ht",
+          "amount": 1380,
+          "method": "PayMe",
+          "reference": "1213",
+          "paidAt": "2026-04-21"
+        }
+      ]
+    }
+  }
 }

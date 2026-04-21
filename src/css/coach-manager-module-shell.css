@@ -201,14 +201,23 @@
   color: #e7e5e4 !important;
 }
 
-.profile-password-page.cm-module-shell #assignStudentBackdrop .assign-student-field-label {
-  color: #92400e !important;
+.profile-password-page.cm-module-shell
+  #assignStudentBackdrop
+  .assign-student-surface
+  .assign-student-field-label {
+  color: #1c1917 !important;
 }
 
-.profile-password-page.cm-module-shell #assignStudentBackdrop .assign-student-student-name {
-  color: #92400e !important;
+.profile-password-page.cm-module-shell
+  #assignStudentBackdrop
+  .assign-student-surface
+  .assign-student-student-name {
+  color: #1c1917 !important;
 }
 
-.profile-password-page.cm-module-shell #assignStudentBackdrop .assign-student-student-id {
-  color: #78350f !important;
+.profile-password-page.cm-module-shell
+  #assignStudentBackdrop
+  .assign-student-surface
+  .assign-student-student-id {
+  color: #44403c !important;
 }

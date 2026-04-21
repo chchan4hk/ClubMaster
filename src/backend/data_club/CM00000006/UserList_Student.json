@@ -1,4 +1,45 @@
 {
   "version": 1,
-  "students": []
+  "students": [
+    {
+      "student_id": "S000000001",
+      "club_id": "CM00000006",
+      "full_name": "李大文",
+      "sex": "M",
+      "email": "chchan4@yahoo.com.hk",
+      "contact_number": "+85253880508",
+      "guardian": "陳裘大",
+      "guardian_contact": "+85293800508",
+      "school": "French International School",
+      "student_coach": "N/A",
+      "status": "ACTIVE",
+      "creation_date": "2026-04-21",
+      "remark": "",
+      "lastUpdate_date": "2026-04-21",
+      "date_of_birth": "2012-08-10",
+      "joined_date": "2026-04-21",
+      "home_address": "KOWLOON WEST  HONG KONG",
+      "country": "Hong Kong"
+    },
+    {
+      "student_id": "S000000002",
+      "club_id": "CM00000006",
+      "full_name": "Ma siu ling",
+      "sex": "F",
+      "email": "HULING212@GMAIL.COM",
+      "contact_number": "+85265221157",
+      "guardian": "Mr Yip",
+      "guardian_contact": "",
+      "school": "Queen's College",
+      "student_coach": "N/A",
+      "status": "ACTIVE",
+      "creation_date": "2026-04-21",
+      "remark": "",
+      "lastUpdate_date": "2026-04-21",
+      "date_of_birth": "2016-06-20",
+      "joined_date": "2026-04-21",
+      "home_address": "KOWLOON  HONG KONG",
+      "country": "Canada"
+    }
+  ]
 }

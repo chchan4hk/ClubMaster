@@ -1,4 +1,18 @@
 {
   "version": 1,
-  "coachSalaries": []
+  "coachSalaries": [
+    {
+      "CoachSalaryID": "CS000001",
+      "lessonId": "LE000001",
+      "ClubID": "CM00000006",
+      "club_name": "Gym Fit",
+      "coach_id": "C000001",
+      "salary_amount": 800,
+      "Payment_Method": "Bank Transfer",
+      "Payment_Status": "Paid",
+      "Payment_Confirm": false,
+      "createdAt": "2026-04-21",
+      "lastUpdatedDate": "2026-04-21T16:18:44.900Z"
+    }
+  ]
 }

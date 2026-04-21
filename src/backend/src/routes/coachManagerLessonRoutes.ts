@@ -514,17 +514,25 @@ export function createCoachManagerLessonRouter(): Router {
       if (_req.user?.role === "CoachManager" || _req.user?.role === "Coach") {
         try {
           ensureLessonReserveListFile(fileClub);
-          lessonReservationsPayload = loadLessonReservations(fileClub).map(
-            (resv) => ({
-              lessonId: resv.lessonId,
-              lessonReserveId: resv.lessonReserveId,
-              student_id: resv.student_id,
-              Student_Name: resv.Student_Name,
-              status: resv.status,
-              Payment_Status: resv.Payment_Status,
-              Payment_Confirm: resv.Payment_Confirm,
-            }),
-          );
+          let resvList = loadLessonReservations(fileClub);
+          /** Coach (narrow list): only reservations for lessons this coach teaches — smaller payload & less client work. */
+          if (_req.user?.role === "Coach" && !coachBrowseAll) {
+            const allowedLessonIds = new Set(
+              lessons.map((l) => l.lessonId.trim().toUpperCase()),
+            );
+            resvList = resvList.filter((r) =>
+              allowedLessonIds.has(r.lessonId.trim().toUpperCase()),
+            );
+          }
+          lessonReservationsPayload = resvList.map((resv) => ({
+            lessonId: resv.lessonId,
+            lessonReserveId: resv.lessonReserveId,
+            student_id: resv.student_id,
+            Student_Name: resv.Student_Name,
+            status: resv.status,
+            Payment_Status: resv.Payment_Status,
+            Payment_Confirm: resv.Payment_Confirm,
+          }));
         } catch (resvErr) {
           console.warn(
             "[coach-manager/lessons] load reservations failed",
