@@ -10,16 +10,19 @@
   <link rel="stylesheet" href="/css/coach-manager-module-shell.css" />
   <link rel="stylesheet" href="/css/btn-cancel-metallic-brown.css" />
   <style>
-    /* Assign Student modal: field labels + roster lines (dark gold on dark panel) */
-    #assignStudentBackdrop .assign-student-field-label {
-      color: #b45309 !important;
+    /* Assign Student: light “table” surfaces — dark type */
+    #assignStudentBackdrop .assign-student-surface {
+      color: #1c1917;
+    }
+    #assignStudentBackdrop .assign-student-surface .assign-student-field-label {
+      color: #1c1917 !important;
       font-weight: 600;
     }
-    #assignStudentBackdrop .assign-student-student-name {
-      color: #b45309 !important;
+    #assignStudentBackdrop .assign-student-surface .assign-student-student-name {
+      color: #1c1917 !important;
     }
-    #assignStudentBackdrop .assign-student-student-id {
-      color: #92400e !important;
+    #assignStudentBackdrop .assign-student-surface .assign-student-student-id {
+      color: #44403c !important;
     }
   </style>
 </head>
@@ -459,12 +462,12 @@
         <p class="text-xs text-slate-500 mt-1">Create reservations for this lesson.</p>
       </div>
       <div class="px-5 py-3 space-y-3 overflow-y-auto flex-1 min-h-0">
-        <div id="assignStudentLessonInfo" class="rounded-lg border border-white/10 bg-slate-950/60 p-3 text-sm space-y-1">
+        <div id="assignStudentLessonInfo" class="assign-student-surface rounded-lg border border-stone-200 bg-stone-50 p-3 text-sm text-stone-900 space-y-1">
         </div>
         <div>
-          <p class="text-[11px] uppercase tracking-wide text-slate-500 font-medium mb-2">Students (UserList_Student)</p>
-          <div id="assignStudentList" class="rounded-lg border border-white/10 bg-slate-950/50 max-h-[min(40vh,280px)] overflow-y-auto p-2 space-y-1 text-sm">
-            <p class="text-slate-500 text-xs px-2 py-3">Loading…</p>
+          <p class="text-[11px] uppercase tracking-wide text-stone-700 font-medium mb-2">Students (UserList_Student)</p>
+          <div id="assignStudentList" class="assign-student-surface rounded-lg border border-stone-200 bg-stone-50 max-h-[min(40vh,280px)] overflow-y-auto p-2 space-y-1 text-sm text-stone-900">
+            <p class="text-stone-600 text-xs px-2 py-3">Loading…</p>
           </div>
         </div>
         <p id="assignStudentErr" class="hidden text-sm text-red-300"></p>
@@ -906,12 +909,12 @@
           ok.textContent = "";
         }
         listEl.innerHTML =
-          '<p class="text-slate-500 text-xs px-2 py-3">Loading students…</p>';
+          '<p class="text-stone-600 text-xs px-2 py-3">Loading students…</p>';
         bd.classList.remove("hidden");
         var already = studentIdsWithActiveReservationForLesson(lessonId);
         if (!window.api || typeof window.api.api !== "function") {
           listEl.innerHTML =
-            '<p class="text-red-300 text-xs px-2 py-3">API not available.</p>';
+            '<p class="text-red-700 text-xs px-2 py-3">API not available.</p>';
           return;
         }
         window.api
@@ -931,7 +934,7 @@
             listEl.innerHTML = "";
             if (!students.length) {
               listEl.innerHTML =
-                '<p class="text-slate-500 text-xs px-2 py-3">No students in roster.</p>';
+                '<p class="text-stone-600 text-xs px-2 py-3">No students in roster.</p>';
               return;
             }
             students.forEach(function (st) {
@@ -942,18 +945,18 @@
               var status = String(st.status || "").trim().toUpperCase();
               var row = document.createElement("label");
               row.className =
-                "flex items-start gap-2 px-2 py-1.5 rounded-md hover:bg-white/5 cursor-pointer select-none";
+                "flex items-start gap-2 px-2 py-1.5 rounded-md hover:bg-stone-200/80 cursor-pointer select-none";
               var cb = document.createElement("input");
               cb.type = "checkbox";
               cb.className =
-                "mt-0.5 rounded border-white/25 bg-slate-900 text-amber-500 focus:ring-amber-500/50 shrink-0";
+                "mt-0.5 rounded border-stone-400 bg-white text-amber-600 focus:ring-amber-500/50 shrink-0";
               cb.setAttribute("data-student-id", sid);
               var inactive = status !== "ACTIVE";
               var booked = sid && already.has(sid.toUpperCase());
               if (inactive || booked || !sid) {
                 cb.disabled = true;
                 cb.checked = false;
-                row.classList.remove("hover:bg-white/5", "cursor-pointer");
+                row.classList.remove("hover:bg-stone-200/80", "cursor-pointer");
                 row.classList.add("cursor-default", "opacity-80");
               }
               var txt = document.createElement("span");
@@ -968,10 +971,10 @@
                 ")</span>";
               if (inactive) {
                 line +=
-                  " <span class=\"text-amber-200/90 text-xs\">(not ACTIVE)</span>";
+                  " <span class=\"text-amber-800 text-xs\">(not ACTIVE)</span>";
               } else if (booked) {
                 line +=
-                  " <span class=\"text-slate-500 text-xs\">(already reserved)</span>";
+                  " <span class=\"text-stone-600 text-xs\">(already reserved)</span>";
               }
               txt.innerHTML = line;
               row.appendChild(cb);
@@ -981,7 +984,7 @@
           })
           .catch(function (e) {
             listEl.innerHTML =
-              "<p class=\"text-red-300 text-xs px-2 py-3\">" +
+              "<p class=\"text-red-700 text-xs px-2 py-3\">" +
               escapeHtml(e.message || "Load failed.") +
               "</p>";
           });

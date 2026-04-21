@@ -102,48 +102,48 @@
       </table>
     </section>
 
-    <section class="glass rounded-xl border border-amber-600/25 p-4 mb-4">
-      <h2 class="text-lg font-semibold text-amber-200 mb-1">Overview charts (selected month)</h2>
-      <p class="text-xs text-amber-100/75 mb-4">
+    <section class="glass rounded-xl border border-amber-600/25 p-4 mb-4 coach-salary-overview-charts text-stone-900">
+      <h2 class="text-lg font-semibold text-stone-900 mb-1">Overview charts (selected month)</h2>
+      <p class="text-xs text-stone-700 mb-4">
         Figures match the filtered lessons and salary rows for the month chosen in the toolbar. The right chart partitions <strong>collected lesson fees</strong> (received) into coach salary marked <strong>Paid</strong> versus the remainder (treated as pending against that collected amount).
       </p>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         <div>
-          <h3 class="text-sm font-semibold text-amber-200/90 mb-2">Lesson fee (total) — received vs unpaid</h3>
-          <p class="text-xs text-amber-100/65 mb-2">Capacity (max enrolment × fee) split into fees collected from students vs still outstanding.</p>
+          <h3 class="text-sm font-semibold text-stone-900 mb-2">Lesson Fee (Total) - Received vs Outstanding</h3>
+          <p class="text-xs text-stone-700 mb-2">Capacity (max enrolment × fee) split into fees collected from students vs still outstanding.</p>
           <div class="h-56 max-w-sm mx-auto w-full mb-3">
-            <canvas id="lessonFeeReceivedPieChart" aria-label="Lesson fee received versus unpaid"></canvas>
+            <canvas id="lessonFeeReceivedPieChart" aria-label="Lesson fee total: received versus outstanding"></canvas>
           </div>
           <table class="w-full text-sm border-collapse">
             <thead>
-              <tr class="border-b border-amber-600/20 text-amber-200/70">
+              <tr class="border-b border-stone-300 text-stone-800">
                 <th class="py-2 pr-2 text-left font-medium">Category</th>
                 <th class="py-2 pr-2 text-right font-medium">Amount</th>
               </tr>
             </thead>
             <tbody id="lessonFeePieSummaryBody">
-              <tr><td class="py-3 text-amber-100/75" colspan="2">Load data and pick a month.</td></tr>
+              <tr><td class="py-3 text-stone-600" colspan="2">Load data and pick a month.</td></tr>
             </tbody>
           </table>
         </div>
         <div>
-          <h3 class="text-sm font-semibold text-amber-200/90 mb-2">Salary payment overview — paid vs pending</h3>
-          <p class="text-xs text-amber-100/65 mb-2">Uses the same <strong>received lesson fee</strong> total as the left chart. <strong>Paid</strong> sums salary amounts with payment status Paid (capped at collected fees). The rest is shown as pending.</p>
+          <h3 class="text-sm font-semibold text-stone-900 mb-2">Salary Payment Overview - Paid vs Pending</h3>
+          <p class="text-xs text-stone-700 mb-2">Uses the same <strong>received lesson fee</strong> total as the left chart. <strong>Paid</strong> sums salary amounts with payment status Paid (capped at collected fees). The rest is shown as pending.</p>
           <div class="h-56 max-w-sm mx-auto w-full mb-3">
-            <canvas id="salaryPaymentPieChart" aria-label="Salary payment paid versus pending from received fees"></canvas>
+            <canvas id="salaryPaymentPieChart" aria-label="Salary payment overview: paid versus pending from received fees"></canvas>
           </div>
           <table class="w-full text-sm border-collapse">
             <thead>
-              <tr class="border-b border-amber-600/20 text-amber-200/70">
+              <tr class="border-b border-stone-300 text-stone-800">
                 <th class="py-2 pr-2 text-left font-medium">Category</th>
                 <th class="py-2 pr-2 text-right font-medium">Amount</th>
               </tr>
             </thead>
             <tbody id="salaryPaymentPieSummaryBody">
-              <tr><td class="py-3 text-amber-100/75" colspan="2">Load data and pick a month.</td></tr>
+              <tr><td class="py-3 text-stone-600" colspan="2">Load data and pick a month.</td></tr>
             </tbody>
           </table>
-          <p id="salaryPieFootnote" class="text-xs text-amber-200/80 mt-2 hidden"></p>
+          <p id="salaryPieFootnote" class="text-xs text-stone-700 mt-2 hidden"></p>
         </div>
       </div>
     </section>
@@ -495,14 +495,14 @@
         var rows = [
           { label: "Lesson fee (total capacity)", v: t.lesson },
           { label: "Received (collected)", v: t.recv },
-          { label: "Unpaid (outstanding)", v: t.unpaid },
+          { label: "Outstanding", v: t.unpaid },
         ];
         var html = "";
         rows.forEach(function (r) {
           html +=
-            "<tr class=\"border-b border-amber-800/10\"><td class=\"py-2 pr-2 text-amber-100/90\">" +
+            "<tr class=\"border-b border-stone-200\"><td class=\"py-2 pr-2 text-stone-800\">" +
             escapeHtml(r.label) +
-            "</td><td class=\"py-2 pr-2 text-right tabular-nums text-amber-200\">" +
+            "</td><td class=\"py-2 pr-2 text-right tabular-nums text-stone-900 font-medium\">" +
             formatMoneyWithCurrency(r.v) +
             "</td></tr>";
         });
@@ -523,9 +523,9 @@
         var html = "";
         rows.forEach(function (r) {
           html +=
-            "<tr class=\"border-b border-amber-800/10\"><td class=\"py-2 pr-2 text-amber-100/90\">" +
+            "<tr class=\"border-b border-stone-200\"><td class=\"py-2 pr-2 text-stone-800\">" +
             escapeHtml(r.label) +
-            "</td><td class=\"py-2 pr-2 text-right tabular-nums text-amber-200\">" +
+            "</td><td class=\"py-2 pr-2 text-right tabular-nums text-stone-900 font-medium\">" +
             formatMoneyWithCurrency(r.v) +
             "</td></tr>";
         });
@@ -565,7 +565,7 @@
         lessonFeePieChartInst = new Chart(canvas, {
           type: "doughnut",
           data: {
-            labels: ["Received", "Unpaid"],
+            labels: ["Received", "Outstanding"],
             datasets: [
               {
                 data: recvSlice + unpaidSlice > 0 ? [recvSlice, unpaidSlice] : [0, 1],
@@ -580,9 +580,18 @@
             plugins: {
               legend: {
                 position: "bottom",
-                labels: { color: "#d1fae5", boxWidth: 12, font: { size: 11 } },
+                labels: {
+                  color: "#1c1917",
+                  boxWidth: 12,
+                  font: { size: 11, weight: "500" },
+                },
               },
               tooltip: {
+                backgroundColor: "rgba(255, 255, 255, 0.96)",
+                titleColor: "#1c1917",
+                bodyColor: "#292524",
+                borderColor: "#d6d3d1",
+                borderWidth: 1,
                 callbacks: {
                   label: function (ctx) {
                     var v = ctx.parsed;
@@ -635,9 +644,18 @@
             plugins: {
               legend: {
                 position: "bottom",
-                labels: { color: "#d1fae5", boxWidth: 12, font: { size: 11 } },
+                labels: {
+                  color: "#1c1917",
+                  boxWidth: 12,
+                  font: { size: 11, weight: "500" },
+                },
               },
               tooltip: {
+                backgroundColor: "rgba(255, 255, 255, 0.96)",
+                titleColor: "#1c1917",
+                bodyColor: "#292524",
+                borderColor: "#d6d3d1",
+                borderWidth: 1,
                 callbacks: {
                   label: function (ctx) {
                     var v = ctx.parsed;
