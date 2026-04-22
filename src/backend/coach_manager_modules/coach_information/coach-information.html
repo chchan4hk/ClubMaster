@@ -499,7 +499,8 @@
       var coachListPage = 1;
       var coachListTotal = 0;
       var cachedAllCoachesForModal = null;
-      var useCoachPager = role === "CoachManager";
+      /** Paginate roster API calls for Coach Manager and Coach (avoids loading entire CSV/JSON per request). */
+      var useCoachPager = role === "CoachManager" || role === "Coach";
       /** Last countries from GET /basic-info — refill after form.reset() (reset clears dynamic &lt;option&gt;s). */
       var cachedBasicInfoCountries = [];
 

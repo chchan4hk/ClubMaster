@@ -576,7 +576,8 @@
       var studentListPage = 1;
       var studentListTotal = 0;
       var cachedAllStudentsForModal = null;
-      var useStudentPager = role === "CoachManager";
+      /** Paginate roster API calls for Coach Manager and Coach (avoids loading entire roster per request). */
+      var useStudentPager = role === "CoachManager" || role === "Coach";
       /** Last countries from GET /basic-info — refill after form.reset() (reset clears dynamic &lt;option&gt;s). */
       var cachedBasicInfoCountries = [];
 
