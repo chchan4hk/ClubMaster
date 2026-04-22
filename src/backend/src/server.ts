@@ -18,6 +18,7 @@ import {
   isMongoConfigured,
 } from "./db/DBConnection";
 import { loadMeProfileFromUserLoginMongo } from "./userLoginCollectionMongo";
+import { userLoginCsvReadFallbackEnabled } from "./userListMongo";
 import { requireAuth } from "./middleware/requireAuth";
 import { ensureCoachStudentLoginFilesExist } from "./coachStudentLoginCsv";
 import {
@@ -162,15 +163,12 @@ app.use("/api/payments/mock", createMockPaymentRouter());
 
 app.get("/api/me", requireAuth, async (req, res) => {
   const uid = req.user?.sub;
-  let fromCsv = uid != null ? accountPayloadForUid(uid) : null;
-  let studentLogin =
-    req.user?.role === "Student" && uid != null
-      ? studentProfileFromUserLoginStudentCsv(uid)
-      : null;
-  let coachLogin =
-    req.user?.role === "Coach" && uid != null
-      ? coachProfileFromUserLoginCoachCsv(uid)
-      : null;
+  let fromCsv: ReturnType<typeof accountPayloadForUid> | null = null;
+  let studentLogin: ReturnType<
+    typeof studentProfileFromUserLoginStudentCsv
+  > | null = null;
+  let coachLogin: ReturnType<typeof coachProfileFromUserLoginCoachCsv> | null =
+    null;
 
   if (isMongoConfigured() && uid != null) {
     try {
@@ -190,8 +188,33 @@ app.get("/api/me", requireAuth, async (req, res) => {
         }
       }
     } catch {
-      /* keep file-backed profile */
+      /* fall through to file-backed profile */
     }
+  }
+  if (
+    !fromCsv &&
+    uid != null &&
+    (!isMongoConfigured() || userLoginCsvReadFallbackEnabled())
+  ) {
+    fromCsv = accountPayloadForUid(uid);
+  }
+  const allowFileRoleProfiles =
+    !isMongoConfigured() || userLoginCsvReadFallbackEnabled();
+  if (
+    !studentLogin &&
+    req.user?.role === "Student" &&
+    uid != null &&
+    allowFileRoleProfiles
+  ) {
+    studentLogin = studentProfileFromUserLoginStudentCsv(uid);
+  }
+  if (
+    !coachLogin &&
+    req.user?.role === "Coach" &&
+    uid != null &&
+    allowFileRoleProfiles
+  ) {
+    coachLogin = coachProfileFromUserLoginCoachCsv(uid);
   }
   const clubNameForFolder =
     coachLogin?.club_name ??

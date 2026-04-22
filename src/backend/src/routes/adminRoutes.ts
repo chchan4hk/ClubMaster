@@ -744,14 +744,14 @@ export function createAdminRouter(): Router {
 
         const csvResult =
           userRole === "Coach"
-            ? appendCoachRoleLoginRow({
+            ? await appendCoachRoleLoginRow({
                 username,
                 password,
                 fullName,
                 clubName,
                 expiryDate: roleLoginExpiry,
               })
-            : appendStudentRoleLoginRow({
+            : await appendStudentRoleLoginRow({
                 username,
                 password,
                 fullName,

@@ -2,7 +2,6 @@ import fs from "fs";
 import { Router, type Request } from "express";
 import { findStudentRoleLoginByUid } from "../coachStudentLoginCsv";
 import { requireAuth, requireRole } from "../middleware/requireAuth";
-import { findUserByUid } from "../userlistCsv";
 import {
   coachManagerClubContextAsync,
   findCoachManagerUserRowForClubUid,

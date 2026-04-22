@@ -6,6 +6,8 @@ import {
   getDataClubRootPath,
 } from "./coachListCsv";
 import { findUserByUid } from "./userlistCsv";
+import { isMongoConfigured } from "./db/DBConnection";
+import { userLoginCsvReadFallbackEnabled } from "./userListMongo";
 
 const PRIZE_ID_RE = /^PR(\d+)$/i;
 const PRIZE_ID_NUM_WIDTH = 6;
@@ -466,7 +468,10 @@ export function loadPrizes(clubId: string): PrizeCsvRow[] {
   ensurePrizeListFile(clubId);
   const sessionUid = clubId.trim();
   const rows = readPrizeListDocument(clubId);
-  const mgr = findUserByUid(sessionUid);
+  const mgr =
+    isMongoConfigured() && !userLoginCsvReadFallbackEnabled()
+      ? undefined
+      : findUserByUid(sessionUid);
   const defaultClubName =
     mgr?.clubName && mgr.clubName.trim() && mgr.clubName.trim() !== "—"
       ? mgr.clubName.trim()

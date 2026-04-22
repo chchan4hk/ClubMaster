@@ -19,10 +19,12 @@ import {
 } from "../userlistCsv";
 import { isMongoConfigured } from "../db/DBConnection";
 import {
+  distinctClubNamesFromUserLoginMongo,
   findCoachManagerUidByClubNameMongo,
   findCoachRoleLoginByUsernameMongo,
   findStudentRoleLoginByUsernameMongo,
   findUserByUsernameMongo,
+  userLoginCsvReadFallbackEnabled,
 } from "../userListMongo";
 import { jwtSecret } from "../middleware/requireAuth";
 import { isLoginExpiryDatePast } from "../accountExpiry";
@@ -44,18 +46,21 @@ async function resolveCoachManagerClubUid(clubName: string): Promise<string | nu
   if (!trimmed) {
     return null;
   }
-  const fromFile = findCoachManagerClubUidByClubName(trimmed);
-  if (fromFile) {
-    return fromFile;
-  }
-  if (!isMongoConfigured()) {
+  if (isMongoConfigured()) {
+    try {
+      const fromMongo = await findCoachManagerUidByClubNameMongo(trimmed);
+      if (fromMongo) {
+        return fromMongo;
+      }
+    } catch {
+      /* fall through */
+    }
+    if (userLoginCsvReadFallbackEnabled()) {
+      return findCoachManagerClubUidByClubName(trimmed);
+    }
     return null;
   }
-  try {
-    return await findCoachManagerUidByClubNameMongo(trimmed);
-  } catch {
-    return null;
-  }
+  return findCoachManagerClubUidByClubName(trimmed);
 }
 
 function sendExpiredLogin(
@@ -84,9 +89,28 @@ function sendExpiredLogin(
 export function createAuthRouter(): Router {
   const r = Router();
 
-  /** Public list of club names from userLogin.csv (for sign-in page dropdown). */
-  r.get("/club-names", (_req, res) => {
+  /** Public list of club names from Mongo `userLogin` when configured, else userLogin.csv. */
+  r.get("/club-names", async (_req, res) => {
     try {
+      if (isMongoConfigured()) {
+        try {
+          const names = await distinctClubNamesFromUserLoginMongo();
+          if (names.length > 0) {
+            res.json({ ok: true, names });
+            return;
+          }
+          if (!userLoginCsvReadFallbackEnabled()) {
+            res.json({ ok: true, names: [] });
+            return;
+          }
+        } catch (e) {
+          if (!userLoginCsvReadFallbackEnabled()) {
+            const msg = e instanceof Error ? e.message : String(e);
+            res.status(503).json({ ok: false, error: msg });
+            return;
+          }
+        }
+      }
       res.json({ ok: true, names: distinctClubNamesFromUserlist() });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);

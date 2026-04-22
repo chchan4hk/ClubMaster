@@ -2,12 +2,17 @@ import fs from "fs";
 import { Router, type Request } from "express";
 import { requireAuth, requireRole } from "../middleware/requireAuth";
 import {
-  findUserByUid,
   getCoachManagerExpiryDateForClubFolderUid,
   removeMainUserlistCoachOrStudentByUid,
   setCoachPasswordByUid,
   setLoginUsernameByUid,
 } from "../userlistCsv";
+import { isMongoConfigured } from "../db/DBConnection";
+import {
+  findUserByUidPreferred,
+  findUsersByUidsPreferred,
+  getCoachManagerExpiryDateForClubFolderUidMongo,
+} from "../userListMongo";
 import {
   coachManagerClubContextAsync,
   findCoachManagerUserRowForClubUid,
@@ -17,7 +22,7 @@ import {
   coachRoleLoginExistsForCoachIdAndClub,
   deleteRoleLoginByUidOrMissing,
   findCoachRoleLoginByUid,
-  usernameTakenForNewLogin,
+  usernameTakenForNewLoginPreferred,
 } from "../coachStudentLoginCsv";
 import { sportCoachDebugOn } from "../sportCoachDebug";
 import {
@@ -90,9 +95,11 @@ function readCoachWriteBody(body: unknown): {
 }
 
 
-function coachManagerDebugSnapshot(req: Request): Record<string, unknown> {
+async function coachManagerDebugSnapshot(
+  req: Request,
+): Promise<Record<string, unknown>> {
   const jwtSub = String(req.user?.sub ?? "").trim();
-  const row = jwtSub ? findUserByUid(jwtSub) : null;
+  const row = jwtSub ? await findUserByUidPreferred(jwtSub) : null;
   const root = getDataClubRootPath();
   const idOk = jwtSub ? isValidClubFolderId(jwtSub) : false;
   const resolved = idOk ? coachListResolvedPath(jwtSub) : "";
@@ -220,7 +227,7 @@ export function createCoachManagerCoachRouter(): Router {
     if (!ctx.ok) {
       const body: Record<string, unknown> = { ok: false, error: ctx.error };
       if (sportCoachDebugOn()) {
-        body.debug = coachManagerDebugSnapshot(_req);
+        body.debug = await coachManagerDebugSnapshot(_req);
         console.warn("[SPORT_COACH_DEBUG] coach-manager coaches context failed", body);
       }
       res.status(ctx.status).json(body);
@@ -240,6 +247,9 @@ export function createCoachManagerCoachRouter(): Router {
       }
       const idEnc = encodeURIComponent(ctx.clubId);
       const fileEnc = encodeURIComponent(COACH_LIST_FILENAME);
+      const loginByCoachId = await findUsersByUidsPreferred(
+        coaches.map((c) => c.coachId),
+      );
       const payload: Record<string, unknown> = {
         ok: true,
         clubId: ctx.clubId,
@@ -248,7 +258,7 @@ export function createCoachManagerCoachRouter(): Router {
         coachCsvResolvedPath: coachListResolvedPath(ctx.clubId),
         coaches: coaches.map((c) => {
           const fields = coachCsvRowToApiFields(c);
-          const ul = findUserByUid(c.coachId);
+          const ul = loginByCoachId.get(c.coachId.trim().toUpperCase());
           return { ...fields, username: ul?.username ?? "" };
         }),
         coachCsv,
@@ -256,7 +266,7 @@ export function createCoachManagerCoachRouter(): Router {
       };
       if (sportCoachDebugOn()) {
         const dbg = {
-          ...coachManagerDebugSnapshot(_req),
+          ...(await coachManagerDebugSnapshot(_req)),
           ...coachLoadDebugExtra(ctx.clubId, coachCsv, coaches.length),
         };
         payload.debug = dbg;
@@ -274,7 +284,7 @@ export function createCoachManagerCoachRouter(): Router {
       const body: Record<string, unknown> = { ok: false, error: msg };
       if (sportCoachDebugOn()) {
         body.debug = {
-          ...coachManagerDebugSnapshot(_req),
+          ...(await coachManagerDebugSnapshot(_req)),
           loadException: msg,
         };
       }
@@ -290,7 +300,7 @@ export function createCoachManagerCoachRouter(): Router {
     }
     const w = readCoachWriteBody(req.body);
     const coachId = allocateNextCoachId(ctx.clubId);
-    if (findUserByUid(coachId)) {
+    if (await findUserByUidPreferred(coachId)) {
       res.status(409).json({
         ok: false,
         error: "Coach UID already exists in user list; cannot allocate a new ID.",
@@ -360,7 +370,7 @@ export function createCoachManagerCoachRouter(): Router {
       });
       return;
     }
-    if (usernameTakenForNewLogin(username)) {
+    if (await usernameTakenForNewLoginPreferred(username)) {
       res.status(400).json({
         ok: false,
         error: "The user already existed !",
@@ -403,13 +413,26 @@ export function createCoachManagerCoachRouter(): Router {
       }
     }
 
-    const out = appendCoachRoleLoginRow({
+    let expiryDate = getCoachManagerExpiryDateForClubFolderUid(ctx.clubId);
+    if (isMongoConfigured()) {
+      try {
+        const e = await getCoachManagerExpiryDateForClubFolderUidMongo(
+          ctx.clubId,
+        );
+        if (e) {
+          expiryDate = e;
+        }
+      } catch {
+        /* keep CSV-derived expiry */
+      }
+    }
+    const out = await appendCoachRoleLoginRow({
       username,
       password,
       fullName,
       clubName: ctx.clubName,
       clubFolderUid: ctx.clubId,
-      expiryDate: getCoachManagerExpiryDateForClubFolderUid(ctx.clubId),
+      expiryDate,
     });
     if (!out.ok) {
       res.status(400).json({ ok: false, error: out.error });
@@ -498,7 +521,7 @@ export function createCoachManagerCoachRouter(): Router {
       return;
     }
     const loginBefore = !!findCoachRoleLoginByUid(coachId);
-    const mainBefore = !!findUserByUid(coachId);
+    const mainBefore = Boolean(await findUserByUidPreferred(coachId));
     const purge = purgeCoachRowFromAllClubFolders(coachId);
     if (!purge.ok) {
       res.status(400).json({ ok: false, error: purge.error });

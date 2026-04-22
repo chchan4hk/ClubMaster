@@ -10,6 +10,11 @@ import {
   parseLine,
 } from "./userlistCsv";
 import { readFileCached } from "./dataFileCache";
+import { isMongoConfigured } from "./db/DBConnection";
+import {
+  findUserByUsernameAnyStoreMongo,
+  userLoginUidExistsMongo,
+} from "./userListMongo";
 
 /** Coach login / roster-style ids: CH… or C… (numeric tail for sequencing). */
 const COACH_LOGIN_UID_NUM_RE = /^(?:CH|C)(\d+)$/i;
@@ -1279,6 +1284,34 @@ export function allocateNextStudentLoginUid(): string {
   return `S${String(n).padStart(STUDENT_LOGIN_UID_PAD, "0")}`;
 }
 
+/** Username collision: Mongo `userLogin` when configured (all roles), else CSV/role files. */
+export async function usernameTakenForNewLoginPreferred(
+  username: string,
+): Promise<boolean> {
+  if (isMongoConfigured()) {
+    try {
+      return await findUserByUsernameAnyStoreMongo(username);
+    } catch {
+      return usernameTakenForNewLogin(username);
+    }
+  }
+  return usernameTakenForNewLogin(username);
+}
+
+/** True if `uid` is already used in unified `userLogin` (Mongo) or main CSV (file mode). */
+export async function userLoginUidCollisionPreferred(
+  uid: string,
+): Promise<boolean> {
+  if (isMongoConfigured()) {
+    try {
+      return await userLoginUidExistsMongo(uid);
+    } catch {
+      return Boolean(findUserByUid(uid));
+    }
+  }
+  return Boolean(findUserByUid(uid));
+}
+
 export function usernameTakenForNewLogin(username: string): boolean {
   const u = username.trim();
   if (!u) {
@@ -1343,7 +1376,7 @@ export function coachRoleLoginExistsForCoachIdAndClub(
 }
 
 /** Appends a row to userLogin_Coach.csv (UID must later match CoachID in a club roster to sign in). */
-export function appendCoachRoleLoginRow(input: {
+export async function appendCoachRoleLoginRow(input: {
   username: string;
   password: string;
   fullName: string;
@@ -1352,12 +1385,12 @@ export function appendCoachRoleLoginRow(input: {
   clubFolderUid?: string;
   /** YYYY-MM-DD or empty */
   expiryDate?: string;
-}): { ok: true; uid: string } | { ok: false; error: string } {
+}): Promise<{ ok: true; uid: string } | { ok: false; error: string }> {
   const username = input.username.trim();
   if (!username) {
     return { ok: false, error: "Username is required." };
   }
-  if (usernameTakenForNewLogin(username)) {
+  if (await usernameTakenForNewLoginPreferred(username)) {
     return { ok: false, error: "The user already existed !" };
   }
   const safePass = String(input.password ?? "").replace(/,/g, " ").trim();
@@ -1374,7 +1407,7 @@ export function appendCoachRoleLoginRow(input: {
   }
   ensureCoachStudentLoginFilesExist();
   const uid = allocateNextCoachLoginUid();
-  if (findUserByUid(uid)) {
+  if (await userLoginUidCollisionPreferred(uid)) {
     return { ok: false, error: "Could not allocate a new Coach ID; try again." };
   }
   const today = new Date().toISOString().slice(0, 10);
@@ -1397,7 +1430,7 @@ export function appendCoachRoleLoginRow(input: {
 }
 
 /** Appends a row to userLogin_Student.csv (UID must later match StudentID in a club roster to sign in). */
-export function appendStudentRoleLoginRow(input: {
+export async function appendStudentRoleLoginRow(input: {
   username: string;
   password: string;
   fullName: string;
@@ -1405,12 +1438,12 @@ export function appendStudentRoleLoginRow(input: {
   clubFolderUid?: string;
   /** YYYY-MM-DD or empty */
   expiryDate?: string;
-}): { ok: true; uid: string } | { ok: false; error: string } {
+}): Promise<{ ok: true; uid: string } | { ok: false; error: string }> {
   const username = input.username.trim();
   if (!username) {
     return { ok: false, error: "Username is required." };
   }
-  if (usernameTakenForNewLogin(username)) {
+  if (await usernameTakenForNewLoginPreferred(username)) {
     return { ok: false, error: "The user already existed !" };
   }
   const safePass = String(input.password ?? "").replace(/,/g, " ").trim();
@@ -1427,7 +1460,7 @@ export function appendStudentRoleLoginRow(input: {
   }
   ensureCoachStudentLoginFilesExist();
   const uid = allocateNextStudentLoginUid();
-  if (findUserByUid(uid)) {
+  if (await userLoginUidCollisionPreferred(uid)) {
     return { ok: false, error: "Could not allocate a new Student ID; try again." };
   }
   const today = new Date().toISOString().slice(0, 10);

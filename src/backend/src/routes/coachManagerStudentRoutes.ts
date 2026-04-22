@@ -2,10 +2,15 @@ import fs from "fs";
 import { Router, type Request } from "express";
 import { requireAuth, requireRole } from "../middleware/requireAuth";
 import {
-  findUserByUid,
   getCoachManagerExpiryDateForClubFolderUid,
   removeMainUserlistCoachOrStudentByUid,
 } from "../userlistCsv";
+import { isMongoConfigured } from "../db/DBConnection";
+import {
+  findUserByUidPreferred,
+  findUsersByUidsPreferred,
+  getCoachManagerExpiryDateForClubFolderUidMongo,
+} from "../userListMongo";
 import {
   coachManagerClubContextAsync,
   findCoachManagerUserRowForClubUid,
@@ -15,7 +20,7 @@ import {
   deleteRoleLoginByUidOrMissing,
   findStudentRoleLoginByUid,
   studentRoleLoginExistsForStudentIdAndClub,
-  usernameTakenForNewLogin,
+  usernameTakenForNewLoginPreferred,
 } from "../coachStudentLoginCsv";
 import { sportCoachDebugOn } from "../sportCoachDebug";
 import {
@@ -246,6 +251,9 @@ export function createCoachManagerStudentRouter(): Router {
       }
       const idEnc = encodeURIComponent(ctx.clubId);
       const fileEnc = encodeURIComponent(STUDENT_LIST_FILENAME);
+      const loginByStudentId = await findUsersByUidsPreferred(
+        students.map((s) => s.studentId),
+      );
       const payload: Record<string, unknown> = {
         ok: true,
         clubId: ctx.clubId,
@@ -254,7 +262,7 @@ export function createCoachManagerStudentRouter(): Router {
         studentCsvResolvedPath: studentListResolvedPath(ctx.clubId),
         students: students.map((s) => {
           const fields = studentCsvRowToApiFields(s);
-          const ul = findUserByUid(s.studentId);
+          const ul = loginByStudentId.get(s.studentId.trim().toUpperCase());
           return { ...fields, username: ul?.username ?? "" };
         }),
         studentCsv,
@@ -305,7 +313,7 @@ export function createCoachManagerStudentRouter(): Router {
       studentCoach = (crow.coachName && crow.coachName.trim()) || studentCoach;
     }
     const studentId = allocateNextStudentId(ctx.clubId);
-    if (findUserByUid(studentId)) {
+    if (await findUserByUidPreferred(studentId)) {
       res.status(409).json({
         ok: false,
         error: "Student UID already exists in user list; cannot allocate a new ID.",
@@ -385,7 +393,7 @@ export function createCoachManagerStudentRouter(): Router {
       });
       return;
     }
-    if (usernameTakenForNewLogin(username)) {
+    if (await usernameTakenForNewLoginPreferred(username)) {
       res.status(400).json({
         ok: false,
         error: "The user already existed !",
@@ -430,13 +438,26 @@ export function createCoachManagerStudentRouter(): Router {
       }
     }
 
-    const out = appendStudentRoleLoginRow({
+    let expiryDate = getCoachManagerExpiryDateForClubFolderUid(ctx.clubId);
+    if (isMongoConfigured()) {
+      try {
+        const e = await getCoachManagerExpiryDateForClubFolderUidMongo(
+          ctx.clubId,
+        );
+        if (e) {
+          expiryDate = e;
+        }
+      } catch {
+        /* keep CSV-derived expiry */
+      }
+    }
+    const out = await appendStudentRoleLoginRow({
       username,
       password,
       fullName,
       clubName: ctx.clubName,
       clubFolderUid: ctx.clubId,
-      expiryDate: getCoachManagerExpiryDateForClubFolderUid(ctx.clubId),
+      expiryDate,
     });
     if (!out.ok) {
       res.status(400).json({ ok: false, error: out.error });
@@ -536,7 +557,7 @@ export function createCoachManagerStudentRouter(): Router {
       return;
     }
     const loginBefore = !!findStudentRoleLoginByUid(studentId);
-    const mainBefore = !!findUserByUid(studentId);
+    const mainBefore = Boolean(await findUserByUidPreferred(studentId));
     const purge = purgeStudentRowFromAllClubFolders(studentId);
     if (!purge.ok) {
       res.status(400).json({ ok: false, error: purge.error });
