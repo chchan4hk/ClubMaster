@@ -69,14 +69,12 @@ export function createCoachSalaryPaymentRouter(): Router {
     const fileClub = resolveLessonFileClubId(ctx.clubId);
     let rows: ReturnType<typeof buildCoachSalaryTableRows> = [];
     try {
-      rows = buildCoachSalaryTableRows(fileClub);
+      rows = buildCoachSalaryTableRows(fileClub, {
+        onlyCoachId: ctx.coachId,
+      });
     } catch {
       rows = [];
     }
-    const mine = rows.filter(
-      (row) =>
-        row.coach_id.trim().toUpperCase() === ctx.coachId.toUpperCase(),
-    );
     let clubCountry = "";
     try {
       const fields = clubInfoFirstRowObject(fileClub);
@@ -95,7 +93,7 @@ export function createCoachSalaryPaymentRouter(): Router {
       clubCountry,
       currencyCode,
       currencySymbol,
-      rows: mine,
+      rows,
     });
   });
 

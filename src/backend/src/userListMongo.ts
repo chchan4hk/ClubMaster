@@ -7,9 +7,12 @@ import {
   type UserLoginInsert,
 } from "./db/DBConnection";
 import { hashPassword, verifyPassword } from "./userLoginPassword";
-import type { CsvUser } from "./userlistCsv";
+import { findUserByUid, type CsvUser } from "./userlistCsv";
 import type { CoachStudentLoginRow } from "./coachStudentLoginCsv";
-import { userLoginDocumentToCsvUser } from "./userLoginCollectionMongo";
+import {
+  findUserLoginDocumentByUid,
+  userLoginDocumentToCsvUser,
+} from "./userLoginCollectionMongo";
 
 export { isMongoConfigured };
 
@@ -1086,4 +1089,122 @@ export async function resolveFullNameAndExpiryMongo(
     };
   }
   return { full_name: "", Expiry_date: "" };
+}
+
+/**
+ * When true (default is false), CSV/JSON userLogin files are still read if Mongo misses a row.
+ * Set `USERLOGIN_CSV_FALLBACK=true` during hybrid migration.
+ */
+export function userLoginCsvReadFallbackEnabled(): boolean {
+  const v = String(process.env.USERLOGIN_CSV_FALLBACK ?? "")
+    .trim()
+    .toLowerCase();
+  return v === "1" || v === "true" || v === "yes";
+}
+
+/** Single UID: Mongo `userLogin` when configured; optional CSV fallback. */
+export async function findUserByUidPreferred(
+  uid: string | number,
+): Promise<CsvUser | undefined> {
+  const key = String(uid ?? "").trim();
+  if (!key) {
+    return undefined;
+  }
+  if (isMongoConfigured()) {
+    try {
+      const doc = await findUserLoginDocumentByUid(key);
+      if (doc) {
+        const u = userLoginDocumentToCsvUser(doc as UserLoginDocument);
+        if (u) {
+          return u;
+        }
+      }
+    } catch {
+      /* fall through */
+    }
+    if (userLoginCsvReadFallbackEnabled()) {
+      return findUserByUid(key);
+    }
+    return undefined;
+  }
+  return findUserByUid(key);
+}
+
+/**
+ * Batch load by `uid` for roster → username joins (one query instead of N file reads).
+ */
+export async function findUsersByUidsPreferred(
+  uids: string[],
+): Promise<Map<string, CsvUser>> {
+  const out = new Map<string, CsvUser>();
+  const seen = new Set<string>();
+  const exactList: string[] = [];
+  for (const raw of uids) {
+    const t = String(raw ?? "").trim();
+    if (!t) {
+      continue;
+    }
+    const up = t.toUpperCase();
+    if (seen.has(up)) {
+      continue;
+    }
+    seen.add(up);
+    exactList.push(t);
+  }
+  if (!exactList.length) {
+    return out;
+  }
+  if (isMongoConfigured()) {
+    try {
+      const coll = await collWithIndexes();
+      const docs = (await coll
+        .find({ uid: { $in: exactList } })
+        .toArray()) as UserLoginDocument[];
+      for (const doc of docs) {
+        const u = userLoginDocumentToCsvUser(doc);
+        if (u?.uid) {
+          out.set(String(u.uid).trim().toUpperCase(), u);
+        }
+      }
+      const missing = exactList.filter((id) => !out.has(id.trim().toUpperCase()));
+      if (missing.length) {
+        const orCase: Filter<Document>[] = missing.map((id) => ({
+          uid: new RegExp(
+            `^${String(id).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+            "i",
+          ),
+        }));
+        const extra = (await coll
+          .find({ $or: orCase })
+          .toArray()) as UserLoginDocument[];
+        for (const doc of extra) {
+          const u = userLoginDocumentToCsvUser(doc);
+          if (u?.uid) {
+            out.set(String(u.uid).trim().toUpperCase(), u);
+          }
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+    if (userLoginCsvReadFallbackEnabled()) {
+      for (const id of exactList) {
+        if (out.has(id.trim().toUpperCase())) {
+          continue;
+        }
+        const u = findUserByUid(id);
+        if (u?.uid) {
+          out.set(String(u.uid).trim().toUpperCase(), u);
+        }
+      }
+    }
+    return out;
+  }
+  for (const id of exactList) {
+    const u = findUserByUid(id);
+    if (u?.uid) {
+      out.set(String(u.uid).trim().toUpperCase(), u);
+    }
+  }
+  return out;
 }

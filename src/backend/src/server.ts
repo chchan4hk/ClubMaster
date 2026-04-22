@@ -18,6 +18,7 @@ import {
   isMongoConfigured,
 } from "./db/DBConnection";
 import { loadMeProfileFromUserLoginMongo } from "./userLoginCollectionMongo";
+import { userLoginCsvReadFallbackEnabled } from "./userListMongo";
 import { requireAuth } from "./middleware/requireAuth";
 import { ensureCoachStudentLoginFilesExist } from "./coachStudentLoginCsv";
 import {
@@ -37,19 +38,13 @@ import { Lesson_payment_status } from "./payment_modules/Lesson_payment_status";
 import { createUserLoginPaymentStatusRouter } from "./payment_modules/UserLogin_payment_status";
 import { Student_payment } from "./payment_modules/Student_payment";
 import { createBasicInfoRouter } from "./routes/basicInfoRoutes";
-import {
-  isValidClubFolderId,
-  rebuildCoachIdClubIndex,
-} from "./coachListCsv";
-import { rebuildLessonIdClubIndex } from "./lessonListCsv";
-import { rebuildPrizeIdClubIndex } from "./prizeListJson";
-import {
-  rebuildStudentIdClubIndex,
-  resolveStudentClubSession,
-} from "./studentListCsv";
+import { isValidClubFolderId } from "./coachListCsv";
+import { resolveStudentClubSession } from "./studentListCsv";
 import { getDataFileCacheStats } from "./dataFileCache";
 import { getRdsPoolStats } from "./db/rdsPostgres";
 import {
+  accessRequestLogger,
+  shouldEnableAccessLog,
   slowRequestLogger,
   startProductionMemoryLogging,
 } from "./middleware/performanceLogging";
@@ -89,10 +84,10 @@ const adminDataStatic = path.join(backendRoot, "data", "admin");
 ensureUserlistFileExists();
 ensureUserlistSchema();
 ensureCoachStudentLoginFilesExist();
-rebuildStudentIdClubIndex();
-rebuildCoachIdClubIndex();
-rebuildPrizeIdClubIndex();
-rebuildLessonIdClubIndex();
+
+console.log(
+  "[startup] StudentID / CoachID / LessonID / PrizeID indexes are built lazily on first use (avoids scanning every data_club folder at boot).",
+);
 
 startProductionMemoryLogging();
 
@@ -104,6 +99,9 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
+if (shouldEnableAccessLog()) {
+  app.use(accessRequestLogger);
+}
 app.use(slowRequestLogger);
 
 const isProd = process.env.NODE_ENV === "production";
@@ -165,15 +163,12 @@ app.use("/api/payments/mock", createMockPaymentRouter());
 
 app.get("/api/me", requireAuth, async (req, res) => {
   const uid = req.user?.sub;
-  let fromCsv = uid != null ? accountPayloadForUid(uid) : null;
-  let studentLogin =
-    req.user?.role === "Student" && uid != null
-      ? studentProfileFromUserLoginStudentCsv(uid)
-      : null;
-  let coachLogin =
-    req.user?.role === "Coach" && uid != null
-      ? coachProfileFromUserLoginCoachCsv(uid)
-      : null;
+  let fromCsv: ReturnType<typeof accountPayloadForUid> | null = null;
+  let studentLogin: ReturnType<
+    typeof studentProfileFromUserLoginStudentCsv
+  > | null = null;
+  let coachLogin: ReturnType<typeof coachProfileFromUserLoginCoachCsv> | null =
+    null;
 
   if (isMongoConfigured() && uid != null) {
     try {
@@ -193,8 +188,33 @@ app.get("/api/me", requireAuth, async (req, res) => {
         }
       }
     } catch {
-      /* keep file-backed profile */
+      /* fall through to file-backed profile */
     }
+  }
+  if (
+    !fromCsv &&
+    uid != null &&
+    (!isMongoConfigured() || userLoginCsvReadFallbackEnabled())
+  ) {
+    fromCsv = accountPayloadForUid(uid);
+  }
+  const allowFileRoleProfiles =
+    !isMongoConfigured() || userLoginCsvReadFallbackEnabled();
+  if (
+    !studentLogin &&
+    req.user?.role === "Student" &&
+    uid != null &&
+    allowFileRoleProfiles
+  ) {
+    studentLogin = studentProfileFromUserLoginStudentCsv(uid);
+  }
+  if (
+    !coachLogin &&
+    req.user?.role === "Coach" &&
+    uid != null &&
+    allowFileRoleProfiles
+  ) {
+    coachLogin = coachProfileFromUserLoginCoachCsv(uid);
   }
   const clubNameForFolder =
     coachLogin?.club_name ??
@@ -360,10 +380,18 @@ app.use("/api", (req, res) => {
 });
 
 const server = app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${PORT} in production mode.`);
+  const envLabel = process.env.NODE_ENV === "production" ? "production" : "development";
+  console.log(`Server listening on ${PORT} (${envLabel}).`);
   console.log(`  Login: /main.html (same origin as this server)`);
   console.log(`Static root: ${staticRoot}`);
   console.log(`Backend root: ${backendRoot}`);
+  if (!shouldEnableAccessLog()) {
+    console.log(
+      "  Logs: slow requests >= " +
+        (process.env.SLOW_REQUEST_LOG_MS || "200") +
+        "ms · Set ACCESS_LOG=1 for every request line · PERF_MEMORY_LOG=0 to disable 60s RSS logs.",
+    );
+  }
   if (isMongoConfigured()) {
     void Promise.all([
       ensureUserLoginCollection(),

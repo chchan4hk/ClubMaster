@@ -8,7 +8,9 @@ export type BasicInfoLists = {
 };
 
 /** Normalize CSV key column: SportType, Sport_type, Sport Type → "sporttype"; Country → "country". */
-function normalizeBasicInfoKey(rawKey: string): "sporttype" | "country" | null {
+export function normalizeBasicInfoKey(
+  rawKey: string,
+): "sporttype" | "country" | null {
   const compact = rawKey
     .trim()
     .toLowerCase()
@@ -60,6 +62,21 @@ export function parseBasicInfoContent(content: string): BasicInfoLists {
   }
 
   return { countries, sportTypes };
+}
+
+/**
+ * Classify one CSV-style or Mongo row (`Key` / `Type` + `Value`) into country vs sport type.
+ */
+export function parseBasicInfoRow(
+  rawKey: string,
+  val: string,
+): { kind: "country" | "sporttype"; value: string } | null {
+  const kind = normalizeBasicInfoKey(rawKey);
+  const v = val.trim();
+  if (!kind || !v) {
+    return null;
+  }
+  return { kind, value: v };
 }
 
 export function readBasicInfo(): BasicInfoLists {

@@ -1,7 +1,10 @@
 import type { Request } from "express";
 import { findUserByUid, type CsvUser } from "./userlistCsv";
 import { isMongoConfigured } from "./db/DBConnection";
-import { findMainUserByUidMongo } from "./userListMongo";
+import {
+  findMainUserByUidMongo,
+  userLoginCsvReadFallbackEnabled,
+} from "./userListMongo";
 import { isValidClubFolderId } from "./coachListCsv";
 
 export type CoachManagerClubContext =
@@ -19,20 +22,26 @@ export async function findCoachManagerUserRowForClubUid(
   if (!id) {
     return null;
   }
+  if (isMongoConfigured()) {
+    try {
+      const fromMongo = await findMainUserByUidMongo(id);
+      if (fromMongo && fromMongo.role === "CoachManager") {
+        return fromMongo;
+      }
+    } catch {
+      /* Mongo unavailable */
+    }
+    if (userLoginCsvReadFallbackEnabled()) {
+      const fromCsv = findUserByUid(id);
+      if (fromCsv && fromCsv.role === "CoachManager") {
+        return fromCsv;
+      }
+    }
+    return null;
+  }
   const fromCsv = findUserByUid(id);
   if (fromCsv && fromCsv.role === "CoachManager") {
     return fromCsv;
-  }
-  if (!isMongoConfigured()) {
-    return null;
-  }
-  try {
-    const fromMongo = await findMainUserByUidMongo(id);
-    if (fromMongo && fromMongo.role === "CoachManager") {
-      return fromMongo;
-    }
-  } catch {
-    /* Mongo unavailable */
   }
   return null;
 }

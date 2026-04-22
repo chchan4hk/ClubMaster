@@ -463,20 +463,56 @@ export function applyLessonFeeAllocations(
   return { created, updated };
 }
 
+export type BuildCoachSalaryTableRowsOpts = {
+  /** When set, only salary rows for this coach_id and only lesson/reservation rows needed for those salaries. */
+  onlyCoachId?: string;
+};
+
 /**
  * Merged rows for Coach Salary UI (coach + lesson lookups).
+ * Pass `{ onlyCoachId }` for the logged-in coach API to avoid building rows for every coach in the club.
  */
-export function buildCoachSalaryTableRows(fileClub: string): CoachSalaryTableRow[] {
+export function buildCoachSalaryTableRows(
+  fileClub: string,
+  opts?: BuildCoachSalaryTableRowsOpts,
+): CoachSalaryTableRow[] {
   const doc = loadCoachSalaryDocument(fileClub);
+  const only = opts?.onlyCoachId?.trim();
+  const rawRows = only
+    ? doc.coachSalaries.filter(
+        (r) =>
+          r.coach_id.trim().toUpperCase() === only.toUpperCase(),
+      )
+    : doc.coachSalaries;
+
+  const lessonIdsNeeded = new Set<string>();
+  for (const raw of rawRows) {
+    const lid = raw.lessonId.trim().toUpperCase();
+    if (lid) {
+      lessonIdsNeeded.add(lid);
+    }
+  }
+
   const coaches = loadCoaches(fileClub);
   const coachMap = coachNameMap(coaches);
-  const lessons = loadLessons(fileClub);
+  const allLessons = loadLessons(fileClub);
+  const lessons =
+    only && lessonIdsNeeded.size > 0
+      ? allLessons.filter((l) =>
+          lessonIdsNeeded.has(l.lessonId.trim().toUpperCase()),
+        )
+      : allLessons;
   const lessonMap = lessonDetailMap(lessons);
-  const reservations = loadLessonReservations(fileClub);
+  let reservations = loadLessonReservations(fileClub);
+  if (only && lessonIdsNeeded.size > 0) {
+    reservations = reservations.filter((r) =>
+      lessonIdsNeeded.has(r.lessonId.trim().toUpperCase()),
+    );
+  }
   const resDates = reservationDateByLessonId(reservations);
 
   const out: CoachSalaryTableRow[] = [];
-  for (const raw of doc.coachSalaries) {
+  for (const raw of rawRows) {
     const coachId = raw.coach_id.trim();
     const lessonId = raw.lessonId.trim();
     let coachFullName = "N/A";

@@ -24,7 +24,7 @@
     </header>
 
     <section class="glass rounded-xl border border-white/15 p-4 mb-6 overflow-x-auto">
-      <h2 class="text-lg font-semibold text-amber-200 mb-1">Prizes</h2>
+      <h2 class="text-lg font-semibold text-amber-200 mb-1">Prize</h2>
       <p class="text-xs text-slate-500 mb-3">
         Use <strong>Update</strong> on a row to edit details, or <strong>Create New Prize</strong> below to add a prize.
       </p>
@@ -76,7 +76,7 @@
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label for="newPrizeAgeGroup" class="block text-xs text-slate-400 mb-1">Age group</label>
+              <label for="newPrizeAgeGroup" class="block text-xs text-slate-400 mb-1">Age Group</label>
               <input id="newPrizeAgeGroup" type="text"
                 class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
@@ -284,8 +284,22 @@
 
       if (isFramed) {
         var bw = document.getElementById("backLinkWrap");
-        if (bw) {
-          bw.classList.add("hidden");
+        var backA = bw && bw.querySelector("a");
+        if (backA) {
+          try {
+            var pp = String(
+              (window.parent && window.parent.location && window.parent.location.pathname) || ""
+            );
+            if (/\/coach\.html$/i.test(pp) || /\/coach$/i.test(pp)) {
+              backA.setAttribute("href", "/coach.html");
+              backA.textContent = "← Back to Coach";
+            }
+          } catch (e) {
+            if (role === "Coach") {
+              backA.setAttribute("href", "/coach.html");
+              backA.textContent = "← Back to Coach";
+            }
+          }
         }
       }
 
@@ -344,6 +358,8 @@
       }
 
       var cachedPrizes = [];
+      /** Club Master `Sport_type` (when CoachManager); used to default New Prize sport type. */
+      var lastClubSportTypeForDefaults = "";
       var PRIZE_TABLE_COLS = [
         { key: "PrizeID", label: "Prize ID" },
         { key: "SportType", label: "Sport Type" },
@@ -419,33 +435,112 @@
         }
       }
 
+      function clubMasterSportTypeFromFields(f) {
+        if (!f) {
+          return "";
+        }
+        var names = ["SportType", "Sport_type", "sport_type"];
+        for (var ni = 0; ni < names.length; ni++) {
+          var n = names[ni];
+          if (Object.prototype.hasOwnProperty.call(f, n)) {
+            var v = f[n];
+            var t = v == null ? "" : String(v).trim();
+            if (t) {
+              return t;
+            }
+          }
+        }
+        return "";
+      }
+
+      function mergeSportTypeIfMissing(list, value) {
+        var arr = Array.isArray(list) ? list.slice() : [];
+        var cs = value == null ? "" : String(value).trim();
+        if (!cs) {
+          return arr;
+        }
+        var lower = cs.toLowerCase();
+        for (var i = 0; i < arr.length; i++) {
+          if (String(arr[i] || "").trim().toLowerCase() === lower) {
+            return arr;
+          }
+        }
+        arr.push(cs);
+        return arr;
+      }
+
+      /**
+       * Same sources as Club Master: GET /basic-info for reference list, then (CoachManager)
+       * GET /coach-manager/clubinfo and merge club `Sport_type` if not already listed.
+       */
       function initSportTypeSelectsFromBasicInfo() {
         if (
           !window.api ||
-          typeof window.api.fetchBasicInfo !== "function" ||
+          typeof window.api.api !== "function" ||
           typeof window.api.fillSelectFromBasicList !== "function"
         ) {
           return Promise.resolve();
         }
-        return window.api.fetchBasicInfo().then(function (info) {
-          window.api.fillSelectFromBasicList(
-            document.getElementById("newPrizeSportType"),
-            info.sportTypes,
-            {}
-          );
-          window.api.fillSelectFromBasicList(
-            document.getElementById("tableEditSportType"),
-            info.sportTypes,
-            { leadEmpty: true, leadEmptyLabel: "—" }
-          );
-        });
+        lastClubSportTypeForDefaults = "";
+        return window.api
+          .api("/basic-info")
+          .then(function (data) {
+            if (!data || data.ok === false) {
+              return Promise.resolve(null);
+            }
+            var sportTypes = Array.isArray(data.sportTypes)
+              ? data.sportTypes.slice()
+              : [];
+            if (role !== "CoachManager") {
+              return Promise.resolve({ sportTypes: sportTypes, clubSport: "" });
+            }
+            return window.api
+              .api("/coach-manager/clubinfo")
+              .then(function (cdata) {
+                var clubSport = "";
+                if (cdata && cdata.fields) {
+                  clubSport = clubMasterSportTypeFromFields(cdata.fields);
+                  sportTypes = mergeSportTypeIfMissing(sportTypes, clubSport);
+                }
+                return { sportTypes: sportTypes, clubSport: clubSport };
+              })
+              .catch(function () {
+                return { sportTypes: sportTypes, clubSport: "" };
+              });
+          })
+          .then(function (pack) {
+            if (!pack || !Array.isArray(pack.sportTypes)) {
+              return;
+            }
+            lastClubSportTypeForDefaults = pack.clubSport || "";
+            window.api.fillSelectFromBasicList(
+              document.getElementById("newPrizeSportType"),
+              pack.sportTypes,
+              {}
+            );
+            window.api.fillSelectFromBasicList(
+              document.getElementById("tableEditSportType"),
+              pack.sportTypes,
+              { leadEmpty: true, leadEmptyLabel: "—" }
+            );
+          });
       }
 
       function setNewPrizeSportTypeToFirst() {
         var el = document.getElementById("newPrizeSportType");
-        if (el && el.options.length) {
-          el.selectedIndex = 0;
+        if (!el || !el.options.length) {
+          return;
         }
+        var want = String(lastClubSportTypeForDefaults || "").trim();
+        if (want) {
+          el.value = want;
+          if (el.value === want) {
+            return;
+          }
+          bindSelectWithOrphan(el, want);
+          return;
+        }
+        el.selectedIndex = 0;
       }
 
       function applyNewPrizeFormDefaults() {

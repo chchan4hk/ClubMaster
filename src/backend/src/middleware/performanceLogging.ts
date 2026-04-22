@@ -61,3 +61,26 @@ export function slowRequestLogger(
   });
   next();
 }
+
+/**
+ * One line per request (method, path, status, ms). Enable on Zeabur/Railway with `ACCESS_LOG=1`.
+ */
+export function accessRequestLogger(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void {
+  const start = process.hrtime.bigint();
+  res.on("finish", () => {
+    const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6;
+    console.log(
+      `[access] ${req.method} ${req.originalUrl} ${res.statusCode} ${elapsedMs.toFixed(0)}ms`,
+    );
+  });
+  next();
+}
+
+export function shouldEnableAccessLog(): boolean {
+  const v = process.env.ACCESS_LOG?.trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes";
+}

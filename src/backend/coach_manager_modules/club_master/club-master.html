@@ -90,7 +90,7 @@
           <div>
             <label for="fSetupDate" class="block text-xs text-slate-400 mb-1">Setup Date</label>
             <input id="fSetupDate" type="text" readonly placeholder="DD/MM/YYYY"
-              class="club-field cm-date-ddmmyyyy w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-100 text-sm cursor-not-allowed" />
+              class="club-field w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-100 text-sm cursor-not-allowed" />
           </div>
         </div>
 
@@ -283,7 +283,6 @@
 
   <script src="/js/api.js"></script>
   <script src="/js/auth.js"></script>
-  <script src="/js/cm-date-ddmmyyyy.js"></script>
   <script>
     (function () {
       var LOGO_W = 310;
@@ -303,13 +302,6 @@
         window.auth.getToken();
       var role = localStorage.getItem("userRole");
       var sessionOk = Boolean(token) && role === "CoachManager";
-
-      if (isFramed) {
-        var bw = document.getElementById("backLinkWrap");
-        if (bw) {
-          bw.classList.add("hidden");
-        }
-      }
 
       if (!sessionOk) {
         if (!isFramed && !window.auth.guardPage("CoachManager")) {
@@ -491,10 +483,14 @@
           document.getElementById("fCountry"),
           fieldGet(f, ["country", "Country"])
         );
-        var rawSetup = fieldGet(f, ["setup_date", "setupDate"]);
-        document.getElementById("fSetupDate").value = window.cmDateDdMmYyyy
-          ? window.cmDateDdMmYyyy.formatAnyToDdMmYyyy(rawSetup)
-          : rawSetup;
+        (function () {
+          var sd = fieldGet(f, ["setup_date", "setupDate"]);
+          document.getElementById("fSetupDate").value =
+            window.api &&
+            typeof window.api.formatStoredDateToDdMmYyyy === "function"
+              ? window.api.formatStoredDateToDdMmYyyy(sd)
+              : sd;
+        })();
         document.getElementById("fClubDesc").value = fieldGet(f, ["club_desc", "clubDesc"]);
         document.getElementById("fClubLogo").value = fieldGet(f, ["club_logo", "clubLogo"]);
         applyPaymentQrHiddens(f);
@@ -506,7 +502,12 @@
           Sport_type: document.getElementById("fSportType").value.trim(),
           Club_name: document.getElementById("fClubName").value.trim(),
           country: document.getElementById("fCountry").value.trim(),
-          setup_date: window.cmDateDdMmYyyy.readIso("fSetupDate"),
+          setup_date:
+            window.api && typeof window.api.parseAnyDisplayDateToYmd === "function"
+              ? window.api.parseAnyDisplayDateToYmd(
+                  document.getElementById("fSetupDate").value,
+                )
+              : document.getElementById("fSetupDate").value.trim(),
           club_desc: document.getElementById("fClubDesc").value.trim(),
           club_logo: document.getElementById("fClubLogo").value.trim(),
           club_payment_payme: document.getElementById("fPayQrRel-payme").value.trim(),

@@ -9,6 +9,22 @@
   <link rel="stylesheet" href="/css/profile-password-panels.css" />
   <link rel="stylesheet" href="/css/coach-manager-module-shell.css" />
   <link rel="stylesheet" href="/css/btn-cancel-metallic-brown.css" />
+  <style>
+    /* Assign Student: light “table” surfaces — dark type */
+    #assignStudentBackdrop .assign-student-surface {
+      color: #1c1917;
+    }
+    #assignStudentBackdrop .assign-student-surface .assign-student-field-label {
+      color: #1c1917 !important;
+      font-weight: 600;
+    }
+    #assignStudentBackdrop .assign-student-surface .assign-student-student-name {
+      color: #1c1917 !important;
+    }
+    #assignStudentBackdrop .assign-student-surface .assign-student-student-id {
+      color: #44403c !important;
+    }
+  </style>
 </head>
 <body class="profile-password-page cm-module-shell min-h-full p-4 sm:p-6">
   <div class="max-w-6xl mx-auto">
@@ -26,7 +42,7 @@
     <section class="glass rounded-xl border border-white/15 p-4 mb-6 overflow-x-auto">
       <h2 class="text-lg font-semibold text-amber-200 mb-1">Lesson list</h2>
       <p class="text-xs text-slate-500 mb-3">
-        Lessons are stored in <code class="text-slate-400">LessonList.json</code>. Use <strong>Update</strong> on a row to edit, or <strong>Create New Lesson</strong> below to add.
+        Use <strong>Update</strong> on a row to edit, or <strong>Create New Lesson</strong> below to add.
       </p>
       <p id="fullLessonListError" class="hidden text-sm text-red-300 mb-2"></p>
       <p id="fullLessonListWarn" class="hidden text-sm text-amber-200/90 mb-2"></p>
@@ -91,7 +107,7 @@
             <div>
               <label for="newLessonReservedNumber" class="block text-xs text-slate-400 mb-1">Reserved number</label>
               <input id="newLessonReservedNumber" type="text" value="0" readonly
-                title="Starts at 0 for new lessons (saved in LessonList.json)."
+                title="Starts at 0 for new lessons."
                 class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed" />
             </div>
           </div>
@@ -107,7 +123,7 @@
                 class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
           </div>
-          <div class="rounded-lg border border-white/10 bg-slate-900/40 p-4 space-y-3">
+          <div class="cm-new-lesson-class-time-panel rounded-lg border border-white/10 p-4 space-y-3">
             <p class="text-sm font-semibold text-amber-200">Class Time</p>
             <p class="text-xs text-slate-500">Which days does this class run?</p>
             <div class="flex flex-wrap gap-x-4 gap-y-2">
@@ -161,13 +177,13 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label for="newLessonStart" class="block text-xs text-slate-400 mb-1">Lesson start date</label>
-              <input id="newLessonStart" type="text"
-                class="cm-date-ddmmyyyy w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+              <input id="newLessonStart" type="text" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="DD/MM/YYYY"
+                class="date-field-ddmm w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="newLessonEnd" class="block text-xs text-slate-400 mb-1">Lesson end date</label>
-              <input id="newLessonEnd" type="text"
-                class="cm-date-ddmmyyyy w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+              <input id="newLessonEnd" type="text" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="DD/MM/YYYY"
+                class="date-field-ddmm w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -177,7 +193,6 @@
                 class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
                 <option value="">— Select sport center —</option>
               </select>
-              <p class="text-[10px] text-slate-500 mt-1">Options are active sport centers configured for your club (e.g. 界限街一號體育館, 界限街二號體育館).</p>
             </div>
             <div>
               <label for="newLessonCourtNo" class="block text-xs text-slate-400 mb-1">Court no.</label>
@@ -190,7 +205,6 @@
                 class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
                 <option value="">— Select coach —</option>
               </select>
-              <p class="text-[10px] text-slate-500 mt-1">Options are ACTIVE coaches from <code class="text-slate-400">UserList_Coach.json</code> for your club.</p>
             </div>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -340,13 +354,13 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label for="tableEditLessonStart" class="block text-xs text-slate-400 mb-1">Lesson start date</label>
-              <input id="tableEditLessonStart" type="text"
-                class="cm-date-ddmmyyyy w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+              <input id="tableEditLessonStart" type="text" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="DD/MM/YYYY"
+                class="date-field-ddmm w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
             <div>
               <label for="tableEditLessonEnd" class="block text-xs text-slate-400 mb-1">Lesson end date</label>
-              <input id="tableEditLessonEnd" type="text"
-                class="cm-date-ddmmyyyy w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+              <input id="tableEditLessonEnd" type="text" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="DD/MM/YYYY"
+                class="date-field-ddmm w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -369,7 +383,7 @@
                 class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
                 <option value="">— Select coach —</option>
               </select>
-              <p class="text-[10px] text-slate-500 mt-1"><strong>Coach Name</strong> — ACTIVE coaches from <code class="text-slate-400">UserList_Coach.json</code>; values not in the list stay selectable as a one-off row.</p>
+              <p class="text-[10px] text-slate-500 mt-1"><strong>Coach Name</strong> — ACTIVE coaches for your club; values not in the list stay selectable as a one-off row.</p>
             </div>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -441,18 +455,19 @@
   <div id="assignStudentBackdrop" class="hidden fixed inset-0 z-[102] flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4"
     aria-modal="true" role="dialog" aria-labelledby="assignStudentTitle">
     <div
-      class="relative w-full max-w-lg max-h-[min(88vh,640px)] flex flex-col rounded-xl border border-amber-500/30 bg-slate-900 shadow-xl text-slate-100">
+      id="assignStudentPanel"
+      class="assign-student-modal-panel relative w-full max-w-lg max-h-[min(88vh,640px)] flex flex-col rounded-xl border border-amber-500/30 bg-slate-900 shadow-xl text-slate-100">
       <div class="px-5 py-4 border-b border-white/10 shrink-0">
         <h3 id="assignStudentTitle" class="text-lg font-semibold text-amber-200">Assign students</h3>
-        <p class="text-xs text-slate-500 mt-1">Create reservations for this lesson (LessonReserveList.json).</p>
+        <p class="text-xs text-slate-500 mt-1">Create reservations for this lesson.</p>
       </div>
       <div class="px-5 py-3 space-y-3 overflow-y-auto flex-1 min-h-0">
-        <div id="assignStudentLessonInfo" class="rounded-lg border border-white/10 bg-slate-950/60 p-3 text-sm space-y-1">
+        <div id="assignStudentLessonInfo" class="assign-student-surface rounded-lg border border-stone-200 bg-stone-50 p-3 text-sm text-stone-900 space-y-1">
         </div>
         <div>
-          <p class="text-[11px] uppercase tracking-wide text-slate-500 font-medium mb-2">Students (UserList_Student)</p>
-          <div id="assignStudentList" class="rounded-lg border border-white/10 bg-slate-950/50 max-h-[min(40vh,280px)] overflow-y-auto p-2 space-y-1 text-sm">
-            <p class="text-slate-500 text-xs px-2 py-3">Loading…</p>
+          <p class="text-[11px] uppercase tracking-wide text-stone-700 font-medium mb-2">Students (UserList_Student)</p>
+          <div id="assignStudentList" class="assign-student-surface rounded-lg border border-stone-200 bg-stone-50 max-h-[min(40vh,280px)] overflow-y-auto p-2 space-y-1 text-sm text-stone-900">
+            <p class="text-stone-600 text-xs px-2 py-3">Loading…</p>
           </div>
         </div>
         <p id="assignStudentErr" class="hidden text-sm text-red-300"></p>
@@ -473,7 +488,6 @@
 
   <script src="/js/api.js"></script>
   <script src="/js/auth.js"></script>
-  <script src="/js/cm-date-ddmmyyyy.js"></script>
   <script>
     (function () {
       var isFramed = false;
@@ -501,13 +515,6 @@
         (role === "CoachManager" || role === "Coach");
       var coachLessonsReadOnly =
         role === "Coach" && (isFramed || myBookingsMode);
-
-      if (isFramed) {
-        var bw = document.getElementById("backLinkWrap");
-        if (bw) {
-          bw.classList.add("hidden");
-        }
-      }
 
       function setUidLabels(uid) {
         var u = uid && String(uid).trim() ? String(uid).trim() : "…";
@@ -628,6 +635,104 @@
       var cachedActiveSportCenters = [];
       /** Coach display names (`full_name`) from UserList_Coach.json (Status ACTIVE), from GET /lessons. */
       var cachedCoachNames = [];
+      /** Last sport types from GET /basic-info — refill after form.reset() (reset clears dynamic options). */
+      var cachedBasicInfoSportTypes = [];
+      /** Club Master SportType for the signed-in club folder (CoachManager only). */
+      var cachedClubSportType = "";
+
+      function fieldGetClubSportType(f) {
+        if (!f) {
+          return "";
+        }
+        var keys = ["SportType", "Sport_type", "sport_type"];
+        for (var i = 0; i < keys.length; i++) {
+          var n = keys[i];
+          if (Object.prototype.hasOwnProperty.call(f, n)) {
+            var v = f[n];
+            return v == null ? "" : String(v).trim();
+          }
+        }
+        return "";
+      }
+
+      function refillLessonSportTypeDropdownsFromCache() {
+        if (!window.api || typeof window.api.fillSelectFromBasicList !== "function") {
+          return;
+        }
+        window.api.fillSelectFromBasicList(
+          document.getElementById("newLessonSportType"),
+          cachedBasicInfoSportTypes,
+          {}
+        );
+        window.api.fillSelectFromBasicList(
+          document.getElementById("tableEditSportType"),
+          cachedBasicInfoSportTypes,
+          { leadEmpty: true, leadEmptyLabel: "—" }
+        );
+      }
+
+      /** Club Master–style: GET /basic-info via `api` (not fetchBasicInfo cache). */
+      function loadBasicInfoSportTypes() {
+        if (!window.api || typeof window.api.api !== "function") {
+          return Promise.resolve();
+        }
+        return window.api
+          .api("/basic-info")
+          .then(function (data) {
+            if (!data || data.ok === false) {
+              return;
+            }
+            cachedBasicInfoSportTypes = Array.isArray(data.sportTypes)
+              ? data.sportTypes
+              : [];
+            refillLessonSportTypeDropdownsFromCache();
+          })
+          .catch(function () {
+            /* dropdowns stay empty if API fails */
+          });
+      }
+
+      function loadClubSportTypeFromClubInfo() {
+        if (!window.api || typeof window.api.api !== "function") {
+          return Promise.resolve();
+        }
+        if (role !== "CoachManager") {
+          return Promise.resolve();
+        }
+        return window.api
+          .api("/coach-manager/clubinfo")
+          .then(function (data) {
+            if (!data || !data.fields) {
+              return;
+            }
+            cachedClubSportType = fieldGetClubSportType(data.fields);
+            applyDefaultSportTypeToNewLessonSelect();
+          })
+          .catch(function () {
+            /* keep cachedClubSportType empty */
+          });
+      }
+
+      function applyDefaultSportTypeToNewLessonSelect() {
+        var el = document.getElementById("newLessonSportType");
+        if (!el) {
+          return;
+        }
+        var want = (cachedClubSportType || "").trim();
+        if (want) {
+          bindSelectWithOrphan(el, want);
+          return;
+        }
+        if (el.options.length) {
+          el.selectedIndex = 0;
+        }
+      }
+
+      /** After create form reset(), repopulate options then match Club Master default SportType. */
+      function setNewLessonSportTypeToClubDefault() {
+        refillLessonSportTypeDropdownsFromCache();
+        applyDefaultSportTypeToNewLessonSelect();
+      }
 
       function activeStudentNamesForLesson(lessonId) {
         var id = String(lessonId || "").trim().toUpperCase();
@@ -652,8 +757,8 @@
         return {
           LessonID: document.getElementById("tableEditLessonId").value.trim(),
           class_info: document.getElementById("tableEditClassInfo").value.trim(),
-          lesson_start_date: window.cmDateDdMmYyyy.readIso("tableEditLessonStart"),
-          lesson_end_date: window.cmDateDdMmYyyy.readIso("tableEditLessonEnd"),
+          lesson_start_date: document.getElementById("tableEditLessonStart").value.trim(),
+          lesson_end_date: document.getElementById("tableEditLessonEnd").value.trim(),
           class_time: document.getElementById("tableEditClassTime").value.trim(),
           Age_group: document.getElementById("tableEditAgeGroup").value.trim(),
           Sport_center: sc ? sc.value.trim() : "",
@@ -771,13 +876,13 @@
         var coachSel = document.getElementById("tableEditCoachName");
         var coach = coachSel ? coachSel.value.trim() : "";
         box.innerHTML =
-          "<div><span class=\"text-slate-500\">Class ID</span> " +
+          "<div><span class=\"assign-student-field-label\">Class ID</span> " +
           escapeHtml(classId || "—") +
           "</div>" +
-          "<div><span class=\"text-slate-500\">Class info</span> " +
+          "<div><span class=\"assign-student-field-label\">Class Info</span> " +
           escapeHtml(classInfo || "—") +
           "</div>" +
-          "<div><span class=\"text-slate-500\">Coach Name</span> " +
+          "<div><span class=\"assign-student-field-label\">Coach Name</span> " +
           escapeHtml(coach || "—") +
           "</div>";
       }
@@ -804,12 +909,12 @@
           ok.textContent = "";
         }
         listEl.innerHTML =
-          '<p class="text-slate-500 text-xs px-2 py-3">Loading students…</p>';
+          '<p class="text-stone-600 text-xs px-2 py-3">Loading students…</p>';
         bd.classList.remove("hidden");
         var already = studentIdsWithActiveReservationForLesson(lessonId);
         if (!window.api || typeof window.api.api !== "function") {
           listEl.innerHTML =
-            '<p class="text-red-300 text-xs px-2 py-3">API not available.</p>';
+            '<p class="text-red-700 text-xs px-2 py-3">API not available.</p>';
           return;
         }
         window.api
@@ -829,7 +934,7 @@
             listEl.innerHTML = "";
             if (!students.length) {
               listEl.innerHTML =
-                '<p class="text-slate-500 text-xs px-2 py-3">No students in roster.</p>';
+                '<p class="text-stone-600 text-xs px-2 py-3">No students in roster.</p>';
               return;
             }
             students.forEach(function (st) {
@@ -840,33 +945,36 @@
               var status = String(st.status || "").trim().toUpperCase();
               var row = document.createElement("label");
               row.className =
-                "flex items-start gap-2 px-2 py-1.5 rounded-md hover:bg-white/5 cursor-pointer select-none";
+                "flex items-start gap-2 px-2 py-1.5 rounded-md hover:bg-stone-200/80 cursor-pointer select-none";
               var cb = document.createElement("input");
               cb.type = "checkbox";
               cb.className =
-                "mt-0.5 rounded border-white/25 bg-slate-900 text-amber-500 focus:ring-amber-500/50 shrink-0";
+                "mt-0.5 rounded border-stone-400 bg-white text-amber-600 focus:ring-amber-500/50 shrink-0";
               cb.setAttribute("data-student-id", sid);
               var inactive = status !== "ACTIVE";
               var booked = sid && already.has(sid.toUpperCase());
               if (inactive || booked || !sid) {
                 cb.disabled = true;
                 cb.checked = false;
-                row.classList.remove("hover:bg-white/5", "cursor-pointer");
+                row.classList.remove("hover:bg-stone-200/80", "cursor-pointer");
                 row.classList.add("cursor-default", "opacity-80");
               }
               var txt = document.createElement("span");
-              txt.className = "text-slate-200 text-sm leading-snug";
+              txt.className =
+                "assign-student-student-entry text-sm leading-snug flex-1 min-w-0";
               var line =
+                '<span class="assign-student-student-name">' +
                 escapeHtml(name || "—") +
-                " <span class=\"text-slate-500\">(" +
+                "</span> " +
+                '<span class="assign-student-student-id">(' +
                 escapeHtml(sid || "—") +
                 ")</span>";
               if (inactive) {
                 line +=
-                  " <span class=\"text-amber-200/90 text-xs\">(not ACTIVE)</span>";
+                  " <span class=\"text-amber-800 text-xs\">(not ACTIVE)</span>";
               } else if (booked) {
                 line +=
-                  " <span class=\"text-slate-500 text-xs\">(already reserved)</span>";
+                  " <span class=\"text-stone-600 text-xs\">(already reserved)</span>";
               }
               txt.innerHTML = line;
               row.appendChild(cb);
@@ -876,7 +984,7 @@
           })
           .catch(function (e) {
             listEl.innerHTML =
-              "<p class=\"text-red-300 text-xs px-2 py-3\">" +
+              "<p class=\"text-red-700 text-xs px-2 py-3\">" +
               escapeHtml(e.message || "Load failed.") +
               "</p>";
           });
@@ -1020,6 +1128,17 @@
         hideCreateLessonPanel();
       }
 
+      function isoDateForPicker(s) {
+        if (
+          window.api &&
+          typeof window.api.formatStoredDateToDdMmYyyy === "function"
+        ) {
+          return window.api.formatStoredDateToDdMmYyyy(s);
+        }
+        var t = (s == null ? "" : String(s)).trim();
+        return /^\d{4}-\d{2}-\d{2}$/.test(t) ? t : "";
+      }
+
       /** Lesson list / API day flags are Y/N (or common truthy strings). */
       function lessonDayYnChecked(v) {
         var t = String(v == null ? "" : v).trim().toUpperCase();
@@ -1074,35 +1193,6 @@
         }
       }
 
-      function initSportTypeSelectsFromBasicInfo() {
-        if (
-          !window.api ||
-          typeof window.api.fetchBasicInfo !== "function" ||
-          typeof window.api.fillSelectFromBasicList !== "function"
-        ) {
-          return Promise.resolve();
-        }
-        return window.api.fetchBasicInfo().then(function (info) {
-          window.api.fillSelectFromBasicList(
-            document.getElementById("newLessonSportType"),
-            info.sportTypes,
-            {}
-          );
-          window.api.fillSelectFromBasicList(
-            document.getElementById("tableEditSportType"),
-            info.sportTypes,
-            { leadEmpty: true, leadEmptyLabel: "—" }
-          );
-        });
-      }
-
-      function setNewLessonSportTypeToFirst() {
-        var el = document.getElementById("newLessonSportType");
-        if (el && el.options.length) {
-          el.selectedIndex = 0;
-        }
-      }
-
       function openTableEditPanelFromLesson(L) {
         hideCreateLessonPanel();
         populateSportCenterSelects(cachedActiveSportCenters);
@@ -1154,14 +1244,10 @@
               ? String(L.reservedNumber).trim()
               : "0";
         document.getElementById("tableEditFrequency").value = L.Frequency || "";
-        window.cmDateDdMmYyyy.populateFromBackend(
-          "tableEditLessonStart",
-          L.lesson_start_date
-        );
-        window.cmDateDdMmYyyy.populateFromBackend(
-          "tableEditLessonEnd",
-          L.lesson_end_date
-        );
+        document.getElementById("tableEditLessonStart").value =
+          isoDateForPicker(L.lesson_start_date);
+        document.getElementById("tableEditLessonEnd").value =
+          isoDateForPicker(L.lesson_end_date);
         setSportCenterSelectValue(
           document.getElementById("tableEditSportCenter"),
           L.Sport_center || ""
@@ -1528,12 +1614,12 @@
                 );
               } else if (warnEl && cachedCoachNames.length === 0) {
                 parts.push(
-                  "No ACTIVE coaches in UserList_Coach.json — add coaches or set status ACTIVE so they appear in the Coach Name dropdown."
+                  "No ACTIVE coaches for your club — add coaches or set status ACTIVE so they appear in the Coach Name dropdown."
                 );
               }
               if (warnEl && data.lessonsParseWarning) {
                 parts.push(
-                  "Lesson list could not be read in full; check LessonList.json (Lesson ID and Sport Type). " +
+                  "Lesson list could not be read in full; check Lesson ID and Sport Type. " +
                     data.lessonsParseWarning
                 );
               }
@@ -1830,8 +1916,18 @@
           max_number: document.getElementById("tableEditMaxNumber").value.trim(),
           ReservedNumber: document.getElementById("tableEditReservedNumber").value.trim(),
           Frequency: document.getElementById("tableEditFrequency").value.trim(),
-          lesson_start_date: window.cmDateDdMmYyyy.readIso("tableEditLessonStart"),
-          lesson_end_date: window.cmDateDdMmYyyy.readIso("tableEditLessonEnd"),
+          lesson_start_date:
+            window.api && typeof window.api.parseAnyDisplayDateToYmd === "function"
+              ? window.api.parseAnyDisplayDateToYmd(
+                  document.getElementById("tableEditLessonStart").value,
+                )
+              : document.getElementById("tableEditLessonStart").value.trim(),
+          lesson_end_date:
+            window.api && typeof window.api.parseAnyDisplayDateToYmd === "function"
+              ? window.api.parseAnyDisplayDateToYmd(
+                  document.getElementById("tableEditLessonEnd").value,
+                )
+              : document.getElementById("tableEditLessonEnd").value.trim(),
           Sport_center: document
             .getElementById("tableEditSportCenter")
             .value.trim(),
@@ -1917,9 +2013,12 @@
           });
       }
 
-      initSportTypeSelectsFromBasicInfo()
+      loadBasicInfoSportTypes()
+        .then(function () {
+          return loadClubSportTypeFromClubInfo();
+        })
         .catch(function () {
-          /* dropdowns stay empty if API fails */
+          /* reference lists may stay empty */
         })
         .finally(function () {
           loadLessonListFromApi();
@@ -1955,7 +2054,7 @@
         if (rnOpen) {
           rnOpen.value = "0";
         }
-        setNewLessonSportTypeToFirst();
+        setNewLessonSportTypeToClubDefault();
         syncNewLessonClubNameField();
         populateSportCenterSelects(cachedActiveSportCenters);
         populateCoachNameSelects(cachedCoachNames);
@@ -2010,8 +2109,18 @@
           Age_group: document.getElementById("newLessonAgeGroup").value.trim(),
           max_number: document.getElementById("newLessonMaxNumber").value.trim(),
           Frequency: document.getElementById("newLessonFrequency").value.trim(),
-          lesson_start_date: window.cmDateDdMmYyyy.readIso("newLessonStart"),
-          lesson_end_date: window.cmDateDdMmYyyy.readIso("newLessonEnd"),
+          lesson_start_date:
+            window.api && typeof window.api.parseAnyDisplayDateToYmd === "function"
+              ? window.api.parseAnyDisplayDateToYmd(
+                  document.getElementById("newLessonStart").value,
+                )
+              : document.getElementById("newLessonStart").value.trim(),
+          lesson_end_date:
+            window.api && typeof window.api.parseAnyDisplayDateToYmd === "function"
+              ? window.api.parseAnyDisplayDateToYmd(
+                  document.getElementById("newLessonEnd").value,
+                )
+              : document.getElementById("newLessonEnd").value.trim(),
           Sport_center: document.getElementById("newLessonSportCenter").value.trim(),
           court_no: document.getElementById("newLessonCourtNo").value.trim(),
           "Coach Name": document.getElementById("newLessonCoachName").value.trim(),
@@ -2034,7 +2143,7 @@
             if (rnDone) {
               rnDone.value = "0";
             }
-            setNewLessonSportTypeToFirst();
+            setNewLessonSportTypeToClubDefault();
             syncNewLessonClubNameField();
             var st2 = document.getElementById("newLessonStatus");
             if (st2) {

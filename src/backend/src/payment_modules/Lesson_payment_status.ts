@@ -31,6 +31,10 @@ import {
   type LedgerReservationEntry,
 } from "./lessonPaymentLedger";
 import { removePaymentListRecordsForLessonReserve } from "../paymentListJson";
+import {
+  csvCoachFieldMatchesLoggedCoach,
+  findCoachRosterRow,
+} from "../coachSelfFilter";
 
 async function resolvePaymentClubContextAsync(
   req: Request,
@@ -243,6 +247,77 @@ export type LessonPaymentStatusRow = {
   createdAt: string;
   lastUpdatedDate: string;
 };
+
+function filterLessonPaymentRowsForCoach(
+  clubId: string,
+  coachJwtSub: string,
+  coachUsername: string,
+  rows: LessonPaymentStatusRow[],
+): LessonPaymentStatusRow[] {
+  const crow = findCoachRosterRow(clubId, coachJwtSub);
+  if (!crow) {
+    return [];
+  }
+  return rows.filter((x) =>
+    csvCoachFieldMatchesLoggedCoach(x.coachName, crow, coachUsername),
+  );
+}
+
+function recomputeKpisAndPieFromRows(
+  rows: LessonPaymentStatusRow[],
+  totalCollectedPeriod: number,
+): {
+  kpis: {
+    totalCollectedPeriod: number;
+    outstandingBalance: number;
+    overdueAmount: number;
+    collectionRate: number;
+  };
+  chartPie: {
+    PAID: number;
+    PARTIALLY_PAID: number;
+    UNPAID: number;
+    OVERDUE: number;
+  };
+} {
+  let outstandingBalance = 0;
+  let overdueAmount = 0;
+  let totalDue = 0;
+  let totalPaidAll = 0;
+  const chartPie: {
+    PAID: number;
+    PARTIALLY_PAID: number;
+    UNPAID: number;
+    OVERDUE: number;
+  } = {
+    PAID: 0,
+    PARTIALLY_PAID: 0,
+    UNPAID: 0,
+    OVERDUE: 0,
+  };
+  for (const row of rows) {
+    outstandingBalance += row.outstanding;
+    totalDue += row.totalFee;
+    totalPaidAll += row.amountPaid;
+    if (row.displayStatus === "OVERDUE") {
+      overdueAmount += row.outstanding;
+    }
+    chartPie[row.displayStatus] += 1;
+  }
+  outstandingBalance = Math.round(outstandingBalance * 100) / 100;
+  overdueAmount = Math.round(overdueAmount * 100) / 100;
+  const collectionRate =
+    totalDue > 0.009 ? Math.round((totalPaidAll / totalDue) * 1000) / 10 : 0;
+  return {
+    kpis: {
+      totalCollectedPeriod,
+      outstandingBalance,
+      overdueAmount,
+      collectionRate,
+    },
+    chartPie,
+  };
+}
 
 export function buildLessonPaymentSnapshot(
   fileClub: string,
@@ -516,6 +591,20 @@ export function Lesson_payment_status(): Router {
           };
           chartPie = pie;
         }
+        if (req.user?.role === "Coach") {
+          rows = filterLessonPaymentRowsForCoach(
+            ctx.clubId,
+            String(req.user?.sub ?? ""),
+            String(req.user?.username ?? ""),
+            rows,
+          );
+          const next = recomputeKpisAndPieFromRows(
+            rows,
+            snapshot.kpis.totalCollectedPeriod,
+          );
+          kpis = next.kpis;
+          chartPie = next.chartPie;
+        }
         const base = "/backend";
         res.json({
           ok: true,
@@ -601,6 +690,21 @@ export function Lesson_payment_status(): Router {
           return;
         }
         const lesson = lessonById.get(resv.lessonId.trim().toUpperCase());
+        if (req.user?.role === "Coach") {
+          const crow = findCoachRosterRow(ctx.clubId, String(req.user.sub ?? ""));
+          const uname = String(req.user?.username ?? "");
+          if (
+            !lesson ||
+            !crow ||
+            !csvCoachFieldMatchesLoggedCoach(lesson.coachName, crow, uname)
+          ) {
+            res.status(403).json({
+              ok: false,
+              error: "You can only record payments for your own lessons.",
+            });
+            return;
+          }
+        }
         const entry = getLedgerEntry(ledger, resv.lessonReserveId);
         const due = defaultDueDate(entry, lesson, resv.createdAt);
         defaultDueDates[sp.lessonReserveId.trim().toUpperCase()] = due;
@@ -656,7 +760,16 @@ export function Lesson_payment_status(): Router {
         return;
       }
       const snapshot = buildLessonPaymentSnapshot(fileClub, undefined);
-      const row = snapshot.rows.find(
+      let searchRows = snapshot.rows;
+      if (req.user?.role === "Coach") {
+        searchRows = filterLessonPaymentRowsForCoach(
+          ctx.clubId,
+          String(req.user?.sub ?? ""),
+          String(req.user?.username ?? ""),
+          snapshot.rows,
+        );
+      }
+      const row = searchRows.find(
         (x) =>
           x.lessonReserveId.trim().toUpperCase() ===
           lessonReserveId.toUpperCase(),
@@ -712,7 +825,16 @@ export function Lesson_payment_status(): Router {
         return;
       }
       const snapshot = buildLessonPaymentSnapshot(fileClub, undefined);
-      const row = snapshot.rows.find(
+      let searchRowsVoid = snapshot.rows;
+      if (req.user?.role === "Coach") {
+        searchRowsVoid = filterLessonPaymentRowsForCoach(
+          ctx.clubId,
+          String(req.user?.sub ?? ""),
+          String(req.user?.username ?? ""),
+          snapshot.rows,
+        );
+      }
+      const row = searchRowsVoid.find(
         (x) =>
           x.lessonReserveId.trim().toUpperCase() ===
           lessonReserveId.toUpperCase(),
@@ -853,7 +975,16 @@ export function Lesson_payment_status(): Router {
       const onlyOverdue = body?.onlyOverdue === true;
       const fileClub = resolveLessonFileClubId(ctx.clubId);
       const snapshot = buildLessonPaymentSnapshot(fileClub, undefined);
-      const targets = snapshot.rows.filter((row) => {
+      let bulkRows = snapshot.rows;
+      if (req.user?.role === "Coach") {
+        bulkRows = filterLessonPaymentRowsForCoach(
+          ctx.clubId,
+          String(req.user?.sub ?? ""),
+          String(req.user?.username ?? ""),
+          snapshot.rows,
+        );
+      }
+      const targets = bulkRows.filter((row) => {
         if (row.outstanding <= 0.009) {
           return false;
         }
@@ -885,6 +1016,15 @@ export function Lesson_payment_status(): Router {
       const fileClub = resolveLessonFileClubId(ctx.clubId);
       const periodMonth = String(req.query?.periodMonth ?? "").trim() || undefined;
       const snapshot = buildLessonPaymentSnapshot(fileClub, periodMonth);
+      let exportRows = snapshot.rows;
+      if (req.user?.role === "Coach") {
+        exportRows = filterLessonPaymentRowsForCoach(
+          ctx.clubId,
+          String(req.user?.sub ?? ""),
+          String(req.user?.username ?? ""),
+          snapshot.rows,
+        );
+      }
       const headers = [
         "lessonReserveId",
         "lessonId",
@@ -909,7 +1049,7 @@ export function Lesson_payment_status(): Router {
         return s;
       };
       const lines = [headers.join(",")];
-      for (const row of snapshot.rows) {
+      for (const row of exportRows) {
         lines.push(
           [
             row.lessonReserveId,
