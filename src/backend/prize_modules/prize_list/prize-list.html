@@ -43,6 +43,26 @@
         </tbody>
       </table>
 
+      <div
+        id="prizePager"
+        class="hidden mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400 border-t border-white/10 pt-3">
+        <span id="prizePagerStatus"></span>
+        <div class="flex flex-wrap gap-2">
+          <button
+            type="button"
+            id="prizePagerPrev"
+            class="rounded-md border border-white/15 bg-slate-900/80 px-3 py-1.5 text-slate-200 hover:bg-slate-800 disabled:opacity-40 disabled:pointer-events-none">
+            Previous
+          </button>
+          <button
+            type="button"
+            id="prizePagerNext"
+            class="rounded-md border border-white/15 bg-slate-900/80 px-3 py-1.5 text-slate-200 hover:bg-slate-800 disabled:opacity-40 disabled:pointer-events-none">
+            Next
+          </button>
+        </div>
+      </div>
+
       <div class="mt-4 flex flex-wrap gap-2">
         <button type="button" id="btnCreateNewPrize"
           class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm">
@@ -752,8 +772,50 @@
 
       var loadPrizeListSeq = 0;
       var loadPrizeListAbort = null;
+      var PRIZE_LIST_PAGE_SIZE = 10;
+      var prizeListPage = 1;
+      var prizeListTotal = 0;
 
-      function loadPrizeList() {
+      function invalidatePrizeListCache() {
+        if (window.api && typeof window.api.clearJsonGetCache === "function") {
+          window.api.clearJsonGetCache();
+        }
+      }
+
+      function updatePrizePaginationUi() {
+        var bar = document.getElementById("prizePager");
+        var st = document.getElementById("prizePagerStatus");
+        if (!bar || !st) {
+          return;
+        }
+        var pages = Math.max(1, Math.ceil(prizeListTotal / PRIZE_LIST_PAGE_SIZE));
+        if (pages <= 1) {
+          bar.classList.add("hidden");
+          return;
+        }
+        bar.classList.remove("hidden");
+        st.textContent =
+          "Page " +
+          prizeListPage +
+          " of " +
+          pages +
+          " · " +
+          prizeListTotal +
+          " prizes";
+        var prev = document.getElementById("prizePagerPrev");
+        var next = document.getElementById("prizePagerNext");
+        if (prev) {
+          prev.disabled = prizeListPage <= 1;
+        }
+        if (next) {
+          next.disabled = prizeListPage >= pages;
+        }
+      }
+
+      function loadPrizeList(targetPage) {
+        if (typeof targetPage === "number" && !isNaN(targetPage)) {
+          prizeListPage = Math.max(1, Math.floor(targetPage));
+        }
         var errEl = document.getElementById("prizeListErr");
         var warnEl = document.getElementById("prizeListWarn");
         hideAllPrizePanels();
@@ -773,6 +835,7 @@
           }
           cachedPrizes = [];
           renderPrizeListRawFallback(null);
+          updatePrizePaginationUi();
           return;
         }
 
@@ -788,9 +851,17 @@
         loadPrizeListAbort =
           typeof AbortController !== "undefined" ? new AbortController() : null;
         var fetchOpts = loadPrizeListAbort ? { signal: loadPrizeListAbort.signal } : {};
+        if (!fetchOpts.signal) {
+          fetchOpts.cacheTtlMs = 6000;
+        }
+        var path =
+          "/coach-manager/prizes?page=" +
+          encodeURIComponent(String(prizeListPage)) +
+          "&limit=" +
+          encodeURIComponent(String(PRIZE_LIST_PAGE_SIZE));
 
         window.api
-          .api("/coach-manager/prizes", fetchOpts)
+          .api(path, fetchOpts)
           .then(function (data) {
             if (mySeq !== loadPrizeListSeq) {
               return;
@@ -804,6 +875,7 @@
               }
               cachedPrizes = [];
               renderPrizeListRawFallback(null);
+              updatePrizePaginationUi();
               return;
             }
             if (data.clubId) {
@@ -815,7 +887,14 @@
                 data.prizesParseWarning;
               warnEl.classList.remove("hidden");
             }
+            prizeListTotal =
+              typeof data.prizeTotal === "number"
+                ? data.prizeTotal
+                : Array.isArray(data.prizes)
+                  ? data.prizes.length
+                  : 0;
             cachedPrizes = Array.isArray(data.prizes) ? data.prizes.slice() : [];
+            updatePrizePaginationUi();
             try {
               if (cachedPrizes.length > 0) {
                 renderPrizeTableFromApi(cachedPrizes);
@@ -832,6 +911,7 @@
               }
               cachedPrizes = [];
               renderPrizeListRawFallback(data.prizeListRaw || null);
+              updatePrizePaginationUi();
             }
           })
           .catch(function (e) {
@@ -852,6 +932,7 @@
             }
             cachedPrizes = [];
             renderPrizeListRawFallback(null);
+            updatePrizePaginationUi();
           });
       }
 
@@ -1060,6 +1141,28 @@
             btn.disabled = false;
           });
       });
+
+      (function bindPrizePager() {
+        var prev = document.getElementById("prizePagerPrev");
+        var next = document.getElementById("prizePagerNext");
+        if (prev) {
+          prev.addEventListener("click", function () {
+            if (prizeListPage > 1) {
+              invalidatePrizeListCache();
+              loadPrizeList(prizeListPage - 1);
+            }
+          });
+        }
+        if (next) {
+          next.addEventListener("click", function () {
+            var pages = Math.max(1, Math.ceil(prizeListTotal / PRIZE_LIST_PAGE_SIZE));
+            if (prizeListPage < pages) {
+              invalidatePrizeListCache();
+              loadPrizeList(prizeListPage + 1);
+            }
+          });
+        }
+      })();
     })();
   </script>
 </body>

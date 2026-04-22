@@ -109,6 +109,30 @@ async function resolvePrizeClubContextAsync(
   return { ok: true, clubId, clubName };
 }
 
+const PRIZE_LIST_PAGE_MAX = 10;
+
+/** Optional `page` / `limit` (or `pageSize`): return at most 10 prizes per page. */
+function parsePrizeListQuery(req: Request): { page: number; limit: number } | null {
+  const q = req.query;
+  const hasPage = q.page != null && String(q.page).trim() !== "";
+  const hasLimit =
+    (q.limit != null && String(q.limit).trim() !== "") ||
+    (q.pageSize != null && String(q.pageSize).trim() !== "");
+  if (!hasPage && !hasLimit) {
+    return null;
+  }
+  const page = Math.max(1, parseInt(String(q.page ?? "1"), 10) || 1);
+  const limRaw =
+    q.limit != null && String(q.limit).trim() !== ""
+      ? String(q.limit)
+      : String(q.pageSize ?? String(PRIZE_LIST_PAGE_MAX));
+  const limit = Math.min(
+    PRIZE_LIST_PAGE_MAX,
+    Math.max(1, parseInt(limRaw, 10) || PRIZE_LIST_PAGE_MAX),
+  );
+  return { page, limit };
+}
+
 export function createCoachManagerPrizeRouter(): Router {
   const r = Router();
 
@@ -158,18 +182,40 @@ export function createCoachManagerPrizeRouter(): Router {
       const storageId = prizeListStorageClubId(ctx.clubId);
       const storageEnc = encodeURIComponent(storageId);
       const listFileUrl = `/backend/data_club/${storageEnc}/${fileEnc}`;
-      res.json({
+      const listQ = parsePrizeListQuery(_req);
+      const totalPrizes = prizes.length;
+      let pagePrizes = prizes;
+      if (listQ) {
+        const start = (listQ.page - 1) * listQ.limit;
+        pagePrizes = prizes.slice(start, start + listQ.limit);
+      }
+      const includeFullPrizeRaw =
+        listQ == null || listQ.page <= 1;
+      const prizeListRawOut = includeFullPrizeRaw
+        ? prizeListRawFiltered
+        : {
+            ...prizeListRawFiltered,
+            rows: [] as string[][],
+            truncated: true,
+          };
+      const payload: Record<string, unknown> = {
         ok: true,
         clubId: ctx.clubId,
         clubName: ctx.clubName,
         prizeListStorageClubId: storageId,
         prizeListFileUrl: listFileUrl,
         prizeListResolvedPath: prizeListResolvedPath(ctx.clubId),
-        prizes: prizes.map((p) => prizeCsvRowToApiFields(p)),
+        prizes: pagePrizes.map((p) => prizeCsvRowToApiFields(p)),
         /** Tabular view derived from PrizeList.json (not CSV). */
-        prizeListRaw: prizeListRawFiltered,
+        prizeListRaw: prizeListRawOut,
         ...(prizesParseWarning ? { prizesParseWarning } : {}),
-      });
+      };
+      if (listQ) {
+        payload.prizeTotal = totalPrizes;
+        payload.prizePage = listQ.page;
+        payload.prizePageSize = listQ.limit;
+      }
+      res.json(payload);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       res.status(500).json({ ok: false, error: msg });

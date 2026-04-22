@@ -57,6 +57,26 @@
         </tbody>
       </table>
 
+      <div
+        id="lessonPager"
+        class="hidden mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400 border-t border-white/10 pt-3">
+        <span id="lessonPagerStatus"></span>
+        <div class="flex flex-wrap gap-2">
+          <button
+            type="button"
+            id="lessonPagerPrev"
+            class="rounded-md border border-white/15 bg-slate-900/80 px-3 py-1.5 text-slate-200 hover:bg-slate-800 disabled:opacity-40 disabled:pointer-events-none">
+            Previous
+          </button>
+          <button
+            type="button"
+            id="lessonPagerNext"
+            class="rounded-md border border-white/15 bg-slate-900/80 px-3 py-1.5 text-slate-200 hover:bg-slate-800 disabled:opacity-40 disabled:pointer-events-none">
+            Next
+          </button>
+        </div>
+      </div>
+
       <div class="mt-4 flex flex-wrap gap-2">
         <button type="button" id="btnCreateNewLesson"
           class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm">
@@ -487,6 +507,7 @@
   </div>
 
   <script src="/js/api.js"></script>
+  <script src="/js/date-ddmm-ui.js"></script>
   <script src="/js/auth.js"></script>
   <script>
     (function () {
@@ -639,6 +660,45 @@
       var cachedBasicInfoSportTypes = [];
       /** Club Master SportType for the signed-in club folder (CoachManager only). */
       var cachedClubSportType = "";
+      var LESSON_LIST_PAGE_SIZE = 10;
+      var lessonListPage = 1;
+      var lessonListTotal = 0;
+
+      function invalidateLessonListCache() {
+        if (window.api && typeof window.api.clearJsonGetCache === "function") {
+          window.api.clearJsonGetCache();
+        }
+      }
+
+      function updateLessonPaginationUi() {
+        var bar = document.getElementById("lessonPager");
+        var st = document.getElementById("lessonPagerStatus");
+        if (!bar || !st) {
+          return;
+        }
+        var pages = Math.max(1, Math.ceil(lessonListTotal / LESSON_LIST_PAGE_SIZE));
+        if (pages <= 1) {
+          bar.classList.add("hidden");
+          return;
+        }
+        bar.classList.remove("hidden");
+        st.textContent =
+          "Page " +
+          lessonListPage +
+          " of " +
+          pages +
+          " · " +
+          lessonListTotal +
+          " lessons";
+        var prev = document.getElementById("lessonPagerPrev");
+        var next = document.getElementById("lessonPagerNext");
+        if (prev) {
+          prev.disabled = lessonListPage <= 1;
+        }
+        if (next) {
+          next.disabled = lessonListPage >= pages;
+        }
+      }
 
       function fieldGetClubSportType(f) {
         if (!f) {
@@ -1523,7 +1583,10 @@
       }
 
       /** Loads lessons from GET /coach-manager/lessons (backed by LessonList.json). */
-      function loadLessonListFromApi() {
+      function loadLessonListFromApi(targetPage) {
+        if (typeof targetPage === "number" && !isNaN(targetPage)) {
+          lessonListPage = Math.max(1, Math.floor(targetPage));
+        }
         var errEl = document.getElementById("fullLessonListError");
         var warnEl = document.getElementById("fullLessonListWarn");
         hideAllLessonPanels();
@@ -1548,6 +1611,7 @@
           populateSportCenterSelects([]);
           populateCoachNameSelects([]);
           renderLessonListRawFallback(null);
+          updateLessonPaginationUi();
           return;
         }
 
@@ -1563,9 +1627,23 @@
         lessonListLoadAbort =
           typeof AbortController !== "undefined" ? new AbortController() : null;
         var fetchOpts = lessonListLoadAbort ? { signal: lessonListLoadAbort.signal } : {};
+        if (!fetchOpts.signal) {
+          fetchOpts.cacheTtlMs = 6000;
+        }
+        var lessonsPath =
+          "/coach-manager/lessons?page=" +
+          encodeURIComponent(String(lessonListPage)) +
+          "&limit=" +
+          encodeURIComponent(String(LESSON_LIST_PAGE_SIZE));
+        if (role === "Coach") {
+          var cidLessons = getLessonModuleClubId();
+          if (cidLessons) {
+            lessonsPath += "&clubId=" + encodeURIComponent(cidLessons);
+          }
+        }
 
         window.api
-          .api("/coach-manager/lessons", fetchOpts)
+          .api(lessonsPath, fetchOpts)
           .then(function (data) {
             if (mySeq !== lessonListLoadSeq) {
               return;
@@ -1584,6 +1662,7 @@
               populateSportCenterSelects([]);
               populateCoachNameSelects([]);
               renderLessonListRawFallback(null);
+              updateLessonPaginationUi();
               return;
             }
             if (data.clubId) {
@@ -1627,10 +1706,17 @@
                 warnEl.textContent = parts.join(" ");
                 warnEl.classList.remove("hidden");
               }
+              lessonListTotal =
+                typeof data.lessonTotal === "number"
+                  ? data.lessonTotal
+                  : Array.isArray(data.lessons)
+                    ? data.lessons.length
+                    : 0;
               cachedLessons = Array.isArray(data.lessons) ? data.lessons.slice() : [];
               cachedLessonReservations = Array.isArray(data.lessonReservations)
                 ? data.lessonReservations.slice()
                 : [];
+              updateLessonPaginationUi();
               try {
                 if (cachedLessons.length > 0) {
                   renderLessonTableFromApi(cachedLessons);
@@ -1648,6 +1734,7 @@
                 cachedLessons = [];
                 cachedLessonReservations = [];
                 renderLessonListRawFallback(rawLessonTableFromResponse(data));
+                updateLessonPaginationUi();
               }
             });
           })
@@ -1674,6 +1761,7 @@
             populateSportCenterSelects([]);
             populateCoachNameSelects([]);
             renderLessonListRawFallback(null);
+            updateLessonPaginationUi();
           });
       }
 
@@ -1986,7 +2074,9 @@
               : null
           );
         }
-        loadLessonListFromApi();
+        lessonListPage = 1;
+        invalidateLessonListCache();
+        loadLessonListFromApi(1);
       });
 
       if (window.api && typeof window.api.api === "function") {
@@ -2159,6 +2249,28 @@
             btn.disabled = false;
           });
       });
+
+      (function bindLessonPager() {
+        var prev = document.getElementById("lessonPagerPrev");
+        var next = document.getElementById("lessonPagerNext");
+        if (prev) {
+          prev.addEventListener("click", function () {
+            if (lessonListPage > 1) {
+              invalidateLessonListCache();
+              loadLessonListFromApi(lessonListPage - 1);
+            }
+          });
+        }
+        if (next) {
+          next.addEventListener("click", function () {
+            var pages = Math.max(1, Math.ceil(lessonListTotal / LESSON_LIST_PAGE_SIZE));
+            if (lessonListPage < pages) {
+              invalidateLessonListCache();
+              loadLessonListFromApi(lessonListPage + 1);
+            }
+          });
+        }
+      })();
     })();
   </script>
 </body>

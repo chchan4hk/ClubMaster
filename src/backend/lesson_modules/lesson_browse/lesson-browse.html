@@ -122,6 +122,26 @@
         </tbody>
       </table>
 
+      <div
+        id="lessonBrowsePager"
+        class="hidden mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400 border-t border-white/10 pt-3">
+        <span id="lessonBrowsePagerStatus"></span>
+        <div class="flex flex-wrap gap-2">
+          <button
+            type="button"
+            id="lessonBrowsePagerPrev"
+            class="rounded-md border border-white/15 bg-slate-900/80 px-3 py-1.5 text-slate-200 hover:bg-slate-800 disabled:opacity-40 disabled:pointer-events-none">
+            Previous
+          </button>
+          <button
+            type="button"
+            id="lessonBrowsePagerNext"
+            class="rounded-md border border-white/15 bg-slate-900/80 px-3 py-1.5 text-slate-200 hover:bg-slate-800 disabled:opacity-40 disabled:pointer-events-none">
+            Next
+          </button>
+        </div>
+      </div>
+
       <div class="mt-4 flex flex-wrap gap-2">
         <button type="button" id="btnLessonTimetable"
           class="rounded-lg bg-yellow-100 hover:bg-yellow-200/90 border border-yellow-200 text-slate-800 font-medium px-4 py-2 text-sm shadow-sm">
@@ -302,6 +322,45 @@
       }
 
       var cachedLessons = [];
+      var LESSON_BROWSE_PAGE_SIZE = 10;
+      var lessonBrowsePage = 1;
+      var lessonBrowseTotal = 0;
+
+      function invalidateLessonBrowseCache() {
+        if (window.api && typeof window.api.clearJsonGetCache === "function") {
+          window.api.clearJsonGetCache();
+        }
+      }
+
+      function updateLessonBrowsePaginationUi() {
+        var bar = document.getElementById("lessonBrowsePager");
+        var st = document.getElementById("lessonBrowsePagerStatus");
+        if (!bar || !st) {
+          return;
+        }
+        var pages = Math.max(1, Math.ceil(lessonBrowseTotal / LESSON_BROWSE_PAGE_SIZE));
+        if (pages <= 1) {
+          bar.classList.add("hidden");
+          return;
+        }
+        bar.classList.remove("hidden");
+        st.textContent =
+          "Page " +
+          lessonBrowsePage +
+          " of " +
+          pages +
+          " · " +
+          lessonBrowseTotal +
+          " lessons";
+        var prev = document.getElementById("lessonBrowsePagerPrev");
+        var next = document.getElementById("lessonBrowsePagerNext");
+        if (prev) {
+          prev.disabled = lessonBrowsePage <= 1;
+        }
+        if (next) {
+          next.disabled = lessonBrowsePage >= pages;
+        }
+      }
 
       var LESSON_TABLE_COLS = [
         { key: "LessonID", label: "Lesson ID" },
@@ -480,19 +539,23 @@
       var loadAbort = null;
 
       function lessonsApiPath() {
+        var p = new URLSearchParams();
+        p.set("page", String(lessonBrowsePage));
+        p.set("limit", String(LESSON_BROWSE_PAGE_SIZE));
         if (role === "Coach" || isStudentRole) {
           var cid = (getLessonModuleClubId() || "").trim();
           if (!cid) {
             return null;
           }
-          return (
-            "/coach-manager/lessons?clubId=" + encodeURIComponent(cid)
-          );
+          p.set("clubId", cid);
         }
-        return "/coach-manager/lessons";
+        return "/coach-manager/lessons?" + p.toString();
       }
 
-      function loadLessonList() {
+      function loadLessonList(targetPage) {
+        if (typeof targetPage === "number" && !isNaN(targetPage)) {
+          lessonBrowsePage = Math.max(1, Math.floor(targetPage));
+        }
         var errEl = document.getElementById("fullLessonListError");
         var warnEl = document.getElementById("fullLessonListWarn");
         if (errEl) {
@@ -513,6 +576,7 @@
           }
           cachedLessons = [];
           renderLessonListRawFallback(null);
+          updateLessonBrowsePaginationUi();
           return;
         }
 
@@ -528,6 +592,9 @@
         loadAbort =
           typeof AbortController !== "undefined" ? new AbortController() : null;
         var fetchOpts = loadAbort ? { signal: loadAbort.signal } : {};
+        if (!fetchOpts.signal) {
+          fetchOpts.cacheTtlMs = 6000;
+        }
 
         var path = lessonsApiPath();
         if (!path) {
@@ -540,6 +607,7 @@
           }
           cachedLessons = [];
           renderLessonListRawFallback(null);
+          updateLessonBrowsePaginationUi();
           return;
         }
 
@@ -558,6 +626,7 @@
               }
               cachedLessons = [];
               renderLessonListRawFallback(null);
+              updateLessonBrowsePaginationUi();
               return;
             }
             if (data.clubId) {
@@ -574,7 +643,14 @@
               warnEl.textContent = parts.join(" ");
               warnEl.classList.remove("hidden");
             }
+            lessonBrowseTotal =
+              typeof data.lessonTotal === "number"
+                ? data.lessonTotal
+                : Array.isArray(data.lessons)
+                  ? data.lessons.length
+                  : 0;
             cachedLessons = Array.isArray(data.lessons) ? data.lessons.slice() : [];
+            updateLessonBrowsePaginationUi();
             try {
               if (cachedLessons.length > 0) {
                 renderLessonTableFromApi(cachedLessons);
@@ -591,6 +667,7 @@
               }
               cachedLessons = [];
               renderLessonListRawFallback(rawLessonTableFromResponse(data));
+              updateLessonBrowsePaginationUi();
             }
           })
           .catch(function (e) {
@@ -611,6 +688,7 @@
             }
             cachedLessons = [];
             renderLessonListRawFallback(null);
+            updateLessonBrowsePaginationUi();
           });
       }
 
@@ -637,7 +715,9 @@
               : null
           );
         }
-        loadLessonList();
+        lessonBrowsePage = 1;
+        invalidateLessonBrowseCache();
+        loadLessonList(1);
       });
 
       if (window.api && typeof window.api.api === "function") {
@@ -655,10 +735,10 @@
             /* ignore */
           })
           .finally(function () {
-            loadLessonList();
+            loadLessonList(1);
           });
       } else {
-        loadLessonList();
+        loadLessonList(1);
       }
 
       var pendingReserveLessonId = null;
@@ -1039,6 +1119,31 @@
         window.open(url, "_blank", "noopener,noreferrer");
         });
       }
+
+      (function bindLessonBrowsePager() {
+        var prev = document.getElementById("lessonBrowsePagerPrev");
+        var next = document.getElementById("lessonBrowsePagerNext");
+        if (prev) {
+          prev.addEventListener("click", function () {
+            if (lessonBrowsePage > 1) {
+              invalidateLessonBrowseCache();
+              loadLessonList(lessonBrowsePage - 1);
+            }
+          });
+        }
+        if (next) {
+          next.addEventListener("click", function () {
+            var pages = Math.max(
+              1,
+              Math.ceil(lessonBrowseTotal / LESSON_BROWSE_PAGE_SIZE),
+            );
+            if (lessonBrowsePage < pages) {
+              invalidateLessonBrowseCache();
+              loadLessonList(lessonBrowsePage + 1);
+            }
+          });
+        }
+      })();
     })();
   </script>
 </body>

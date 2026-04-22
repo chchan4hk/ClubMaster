@@ -221,8 +221,8 @@ function parseCoachManagerStudentListQuery(req: Request): {
     const limRaw =
       q.limit != null && String(q.limit).trim() !== ""
         ? String(q.limit)
-        : String(q.pageSize ?? "50");
-    const limit = Math.min(500, Math.max(1, parseInt(limRaw, 10) || 50));
+        : String(q.pageSize ?? "10");
+    const limit = Math.min(10, Math.max(1, parseInt(limRaw, 10) || 10));
     return { compact: false, page, limit };
   }
   return { compact: false, page: null, limit: null };
@@ -542,7 +542,9 @@ export function createCoachManagerStudentRouter(): Router {
     }
     res.json({
       ok: true,
-      message: "Student login account created in userLogin_Student.",
+      message: isMongoConfigured()
+        ? "Student login account created in MongoDB (userLogin)."
+        : "Student login account created in userLogin_Student.",
       uid: out.uid,
       clubId: ctx.clubId,
       clubName: ctx.clubName,

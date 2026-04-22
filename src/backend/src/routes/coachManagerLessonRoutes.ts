@@ -301,6 +301,33 @@ async function resolveLessonClubContextAsync(
   return { ok: false, status: 403, error: "Forbidden" };
 }
 
+const LESSON_LIST_PAGE_MAX = 10;
+
+/**
+ * When `page` and/or `limit` (or `pageSize`) is present, return at most 10 lessons per page.
+ * Omit both to return the full list (e.g. lesson timetable and legacy clients).
+ */
+function parseLessonListPagination(req: Request): { page: number; limit: number } | null {
+  const q = req.query;
+  const hasPage = q.page != null && String(q.page).trim() !== "";
+  const hasLimit =
+    (q.limit != null && String(q.limit).trim() !== "") ||
+    (q.pageSize != null && String(q.pageSize).trim() !== "");
+  if (!hasPage && !hasLimit) {
+    return null;
+  }
+  const page = Math.max(1, parseInt(String(q.page ?? "1"), 10) || 1);
+  const limRaw =
+    q.limit != null && String(q.limit).trim() !== ""
+      ? String(q.limit)
+      : String(q.pageSize ?? String(LESSON_LIST_PAGE_MAX));
+  const limit = Math.min(
+    LESSON_LIST_PAGE_MAX,
+    Math.max(1, parseInt(limRaw, 10) || LESSON_LIST_PAGE_MAX),
+  );
+  return { page, limit };
+}
+
 export function createCoachManagerLessonRouter(): Router {
   const r = Router();
 
@@ -459,6 +486,16 @@ export function createCoachManagerLessonRouter(): Router {
           ).rows,
         };
       }
+      const listPag = parseLessonListPagination(_req);
+      const totalLessonsForList = lessons.length;
+      let pageLessons = lessons;
+      if (listPag) {
+        const start = (listPag.page - 1) * listPag.limit;
+        pageLessons = lessons.slice(start, start + listPag.limit);
+      }
+      const pageLessonIdSet = new Set(
+        pageLessons.map((l) => l.lessonId.trim().toUpperCase()),
+      );
       const idEnc = encodeURIComponent(fileClub);
       const fileEnc = encodeURIComponent(LESSON_LIST_FILENAME);
       let activeSportCenters: string[] = [];
@@ -540,7 +577,12 @@ export function createCoachManagerLessonRouter(): Router {
           lessonReservationsPayload = [];
         }
       }
-      let lessonPayload: Record<string, string | boolean>[] = lessons.map((x) =>
+      if (listPag) {
+        lessonReservationsPayload = lessonReservationsPayload.filter((r) =>
+          pageLessonIdSet.has(r.lessonId.trim().toUpperCase()),
+        );
+      }
+      let lessonPayload: Record<string, string | boolean>[] = pageLessons.map((x) =>
         lessonCsvRowToApiFields(x),
       );
       if (_req.user?.role === "Student" && studentSub) {
@@ -555,13 +597,21 @@ export function createCoachManagerLessonRouter(): Router {
             )
             .map((r) => r.lessonId.trim().toUpperCase()),
         );
-        lessonPayload = lessons.map((x) => ({
+        lessonPayload = pageLessons.map((x) => ({
           ...lessonCsvRowToApiFields(x),
           studentHasActiveReservation: activeLessonIds.has(
             x.lessonId.trim().toUpperCase(),
           ),
         }));
       }
+      const includeFullLessonCsv = listPag == null || listPag.page <= 1;
+      const lessonListRawForResponse = includeFullLessonCsv
+        ? lessonCsvOut
+        : {
+            ...lessonCsvOut,
+            rows: [] as string[][],
+            truncated: true,
+          };
       const payload: Record<string, unknown> = {
         ok: true,
         clubId: ctx.clubId,
@@ -574,9 +624,9 @@ export function createCoachManagerLessonRouter(): Router {
           ? { lessonReservations: lessonReservationsPayload }
           : {}),
         /** Tabular mirror of LessonList.json columns (headers + rows). */
-        lessonListRaw: lessonCsvOut,
+        lessonListRaw: lessonListRawForResponse,
         /** @deprecated Prefer lessonListRaw; same value for older clients. */
-        lessonCsv: lessonCsvOut,
+        lessonCsv: lessonListRawForResponse,
         activeSportCenters,
         ...(activeSportCentersLoadError
           ? { activeSportCentersLoadError }
@@ -587,6 +637,11 @@ export function createCoachManagerLessonRouter(): Router {
           : {}),
         ...(lessonsParseWarning ? { lessonsParseWarning } : {}),
       };
+      if (listPag) {
+        payload.lessonTotal = totalLessonsForList;
+        payload.lessonPage = listPag.page;
+        payload.lessonPageSize = listPag.limit;
+      }
       if (sportCoachDebugOn()) {
         const dbg = {
           ...coachManagerLessonDebugSnapshot(_req, fileClub),
