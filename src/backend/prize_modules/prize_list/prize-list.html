@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Prize List — Coach Manager</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="dns-prefetch" href="https://cdn.tailwindcss.com" />
+  <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin />
+  <script defer src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/css/style.css" />
   <link rel="stylesheet" href="/css/profile-password-panels.css" />
   <link rel="stylesheet" href="/css/coach-manager-module-shell.css" />
@@ -483,7 +485,7 @@
         }
         lastClubSportTypeForDefaults = "";
         return window.api
-          .api("/basic-info")
+          .api("/basic-info", { cacheTtlMs: 120000 })
           .then(function (data) {
             if (!data || data.ok === false) {
               return Promise.resolve(null);
@@ -495,7 +497,7 @@
               return Promise.resolve({ sportTypes: sportTypes, clubSport: "" });
             }
             return window.api
-              .api("/coach-manager/clubinfo")
+              .api("/coach-manager/clubinfo", { cacheTtlMs: 60000 })
               .then(function (cdata) {
                 var clubSport = "";
                 if (cdata && cdata.fields) {
@@ -969,13 +971,10 @@
           });
       }
 
-      initSportTypeSelectsFromBasicInfo()
-        .catch(function () {
-          /* dropdowns stay empty if API fails */
-        })
-        .finally(function () {
-          loadPrizeList();
-        });
+      loadPrizeList();
+      initSportTypeSelectsFromBasicInfo().catch(function () {
+        /* dropdowns stay empty if API fails */
+      });
 
       document.getElementById("btnCreateNewPrize").addEventListener("click", function () {
         hideTableEditPanel();

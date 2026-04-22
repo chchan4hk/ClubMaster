@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Student Information — Coach Manager</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="dns-prefetch" href="https://cdn.tailwindcss.com" />
+  <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin />
+  <script defer src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/css/style.css" />
   <link rel="stylesheet" href="/css/profile-password-panels.css" />
   <link rel="stylesheet" href="/css/coach-manager-module-shell.css" />
@@ -813,7 +815,7 @@
           return Promise.resolve();
         }
         return window.api
-          .api("/basic-info")
+          .api("/basic-info", { cacheTtlMs: 120000 })
           .then(function (data) {
             if (!data || data.ok === false) {
               return;
@@ -850,7 +852,9 @@
         if (!window.api || typeof window.api.api !== "function") {
           return Promise.resolve();
         }
-        return window.api.api("/coach-manager/coaches").then(function (data) {
+        return window.api
+          .api("/coach-manager/coaches?compact=1", { cacheTtlMs: 120000 })
+          .then(function (data) {
           if (!data || data.ok === false) {
             return;
           }
@@ -1469,16 +1473,13 @@
           });
       }
 
+      loadFullCsv();
       Promise.all([
         initCountrySelectsFromBasicInfo(),
         loadStudentCoachSelectOptions(),
-      ])
-        .catch(function () {
-          /* dropdowns stay empty if API fails */
-        })
-        .finally(function () {
-          loadFullCsv();
-        });
+      ]).catch(function () {
+        /* dropdowns stay empty if API fails */
+      });
 
       document.getElementById("btnCreateNewStudent").addEventListener("click", function () {
         hideTableEditPanel();
