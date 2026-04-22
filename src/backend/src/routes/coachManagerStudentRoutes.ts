@@ -200,6 +200,34 @@ async function resolveStudentClubContextAsync(
   return { ok: true, clubId, clubName };
 }
 
+function parseCoachManagerStudentListQuery(req: Request): {
+  compact: boolean;
+  page: number | null;
+  limit: number | null;
+} {
+  const q = req.query;
+  const compact =
+    String(q.compact ?? "").trim() === "1" ||
+    String(q.compact ?? "").trim().toLowerCase() === "true";
+  const hasPage = q.page != null && String(q.page).trim() !== "";
+  const hasLimit =
+    (q.limit != null && String(q.limit).trim() !== "") ||
+    (q.pageSize != null && String(q.pageSize).trim() !== "");
+  if (compact && !hasPage && !hasLimit) {
+    return { compact: true, page: null, limit: null };
+  }
+  if (hasPage || hasLimit) {
+    const page = Math.max(1, parseInt(String(q.page ?? "1"), 10) || 1);
+    const limRaw =
+      q.limit != null && String(q.limit).trim() !== ""
+        ? String(q.limit)
+        : String(q.pageSize ?? "50");
+    const limit = Math.min(500, Math.max(1, parseInt(limRaw, 10) || 50));
+    return { compact: false, page, limit };
+  }
+  return { compact: false, page: null, limit: null };
+}
+
 export function createCoachManagerStudentRouter(): Router {
   const r = Router();
 
@@ -251,23 +279,72 @@ export function createCoachManagerStudentRouter(): Router {
       }
       const idEnc = encodeURIComponent(ctx.clubId);
       const fileEnc = encodeURIComponent(STUDENT_LIST_FILENAME);
+      const listQ = parseCoachManagerStudentListQuery(_req);
+
+      if (listQ.compact) {
+        const loginByStudentId = await findUsersByUidsPreferred(
+          students.map((s) => s.studentId),
+        );
+        const slim = students.map((s) => {
+          const fields = studentCsvRowToApiFields(s);
+          const ul = loginByStudentId.get(s.studentId.trim().toUpperCase());
+          return {
+            student_id: fields.student_id ?? fields.StudentID ?? s.studentId,
+            full_name: fields.full_name ?? "",
+            username: ul?.username ?? "",
+          };
+        });
+        res.json({
+          ok: true,
+          compact: true,
+          clubId: ctx.clubId,
+          clubName: ctx.clubName,
+          studentTotal: students.length,
+          students: slim,
+          ...(studentsParseWarning ? { studentsParseWarning } : {}),
+        });
+        return;
+      }
+
+      const totalStudents = students.length;
+      let pageStudents = students;
+      if (listQ.page != null && listQ.limit != null) {
+        const start = (listQ.page - 1) * listQ.limit;
+        pageStudents = students.slice(start, start + listQ.limit);
+      }
       const loginByStudentId = await findUsersByUidsPreferred(
-        students.map((s) => s.studentId),
+        pageStudents.map((s) => s.studentId),
       );
+      const includeFullCsv =
+        listQ.page == null ||
+        listQ.limit == null ||
+        listQ.page <= 1;
+      const studentCsvOut = includeFullCsv
+        ? studentCsv
+        : {
+            headers: studentCsv.headers,
+            rows: [] as typeof studentCsv.rows,
+            truncated: true,
+          };
       const payload: Record<string, unknown> = {
         ok: true,
         clubId: ctx.clubId,
         clubName: ctx.clubName,
         studentCsvFileUrl: `/backend/data_club/${idEnc}/${fileEnc}`,
         studentCsvResolvedPath: studentListResolvedPath(ctx.clubId),
-        students: students.map((s) => {
+        students: pageStudents.map((s) => {
           const fields = studentCsvRowToApiFields(s);
           const ul = loginByStudentId.get(s.studentId.trim().toUpperCase());
           return { ...fields, username: ul?.username ?? "" };
         }),
-        studentCsv,
+        studentCsv: studentCsvOut,
         ...(studentsParseWarning ? { studentsParseWarning } : {}),
       };
+      if (listQ.page != null && listQ.limit != null) {
+        payload.studentTotal = totalStudents;
+        payload.studentPage = listQ.page;
+        payload.studentPageSize = listQ.limit;
+      }
       if (sportCoachDebugOn()) {
         const dbg = {
           ...coachManagerStudentDebugSnapshot(_req),

@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "path";
 import express from "express";
 import cors from "cors";
+import compression from "compression";
 import cookieParser from "cookie-parser";
 import { createAuthRouter } from "./routes/authRoutes";
 import { createSubscriptionRenewalRouter } from "./routes/subscriptionRenewalRoutes";
@@ -96,6 +97,17 @@ app.use(
     origin: (_origin, callback) => callback(null, true),
     credentials: true,
   })
+);
+app.use(
+  compression({
+    threshold: 1024,
+    filter: (req, res) => {
+      if (req.headers["x-no-compression"]) {
+        return false;
+      }
+      return compression.filter(req, res);
+    },
+  }),
 );
 app.use(express.json());
 app.use(cookieParser());

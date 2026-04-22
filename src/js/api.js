@@ -3,7 +3,7 @@
  * backend dev default when process.env.PORT is unset (see backend resolveListenPort).
  * Override anytime: localStorage.setItem("API_ORIGIN", "http://127.0.0.1:8080")
  */
-const LOCAL_DEV_API_ORIGIN = "http://127.0.0.1:3000";
+const LOCAL_DEV_API_ORIGIN = "http://127.0.0.1:8080";
 
 /**
  * API base URL.
@@ -120,9 +120,17 @@ function clubDataFileUrl(relPath) {
   return `${getAppOrigin()}/backend/data_club/${encodeURIComponent(clubId)}/${rel}`;
 }
 
+/** Short-lived GET JSON cache (coach-manager roster pages, compact lists). */
+const jsonGetCache = new Map();
+const JSON_GET_CACHE_MAX_ENTRIES = 48;
+
+function clearJsonGetCache() {
+  jsonGetCache.clear();
+}
+
 /**
  * @param {string} path - e.g. "/auth/login" (leading slash optional)
- * @param {RequestInit} [options]
+ * @param {RequestInit & { cacheTtlMs?: number }} [options]
  */
 async function api(path, options = {}) {
   let p = path.startsWith("/") ? path : `/${path}`;
@@ -138,9 +146,27 @@ async function api(path, options = {}) {
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
+  const method = String(options.method || "GET").toUpperCase();
+  const ttlMs = Number(options.cacheTtlMs) || 0;
+  const restOptions = { ...options };
+  delete restOptions.cacheTtlMs;
+  if (
+    method === "GET" &&
+    ttlMs > 0 &&
+    !restOptions.signal &&
+    !p.includes("/auth/")
+  ) {
+    const cacheKey = `${token || ""}|${p}`;
+    const hit = jsonGetCache.get(cacheKey);
+    if (hit && hit.expires > Date.now()) {
+      return typeof structuredClone === "function"
+        ? structuredClone(hit.body)
+        : JSON.parse(JSON.stringify(hit.body));
+    }
+  }
   let res;
   try {
-    res = await fetch(url, { ...options, headers, credentials: "include" });
+    res = await fetch(url, { ...restOptions, headers, credentials: "include" });
   } catch (e) {
     const hint =
       "Cannot reach API. Start the backend (npm run dev in src/backend) and open main.html " +
@@ -158,6 +184,19 @@ async function api(path, options = {}) {
     err.status = res.status;
     err.data = data;
     throw err;
+  }
+  if (
+    method === "GET" &&
+    ttlMs > 0 &&
+    !restOptions.signal &&
+    !p.includes("/auth/")
+  ) {
+    const cacheKey = `${token || ""}|${p}`;
+    jsonGetCache.set(cacheKey, { expires: Date.now() + ttlMs, body: data });
+    while (jsonGetCache.size > JSON_GET_CACHE_MAX_ENTRIES) {
+      const firstKey = jsonGetCache.keys().next().value;
+      jsonGetCache.delete(firstKey);
+    }
   }
   return data;
 }
@@ -372,6 +411,7 @@ function fillSelectFromBasicList(sel, values, opts) {
 
 window.api = {
   api,
+  clearJsonGetCache,
   getApiBase,
   getAppOrigin,
   API_BASE,

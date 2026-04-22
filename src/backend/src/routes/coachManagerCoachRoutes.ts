@@ -217,6 +217,35 @@ async function resolveCoachListReadContextAsync(
   return { ok: false, status: 403, error: "Forbidden" };
 }
 
+/** `compact=1`: full roster, minimal JSON (no `coachCsv`). `page`/`limit`: paginated table + Mongo logins only for that page. */
+function parseCoachManagerListQuery(req: Request): {
+  compact: boolean;
+  page: number | null;
+  limit: number | null;
+} {
+  const q = req.query;
+  const compact =
+    String(q.compact ?? "").trim() === "1" ||
+    String(q.compact ?? "").trim().toLowerCase() === "true";
+  const hasPage = q.page != null && String(q.page).trim() !== "";
+  const hasLimit =
+    (q.limit != null && String(q.limit).trim() !== "") ||
+    (q.pageSize != null && String(q.pageSize).trim() !== "");
+  if (compact && !hasPage && !hasLimit) {
+    return { compact: true, page: null, limit: null };
+  }
+  if (hasPage || hasLimit) {
+    const page = Math.max(1, parseInt(String(q.page ?? "1"), 10) || 1);
+    const limRaw =
+      q.limit != null && String(q.limit).trim() !== ""
+        ? String(q.limit)
+        : String(q.pageSize ?? "50");
+    const limit = Math.min(500, Math.max(1, parseInt(limRaw, 10) || 50));
+    return { compact: false, page, limit };
+  }
+  return { compact: false, page: null, limit: null };
+}
+
 export function createCoachManagerCoachRouter(): Router {
   const r = Router();
 
@@ -247,23 +276,72 @@ export function createCoachManagerCoachRouter(): Router {
       }
       const idEnc = encodeURIComponent(ctx.clubId);
       const fileEnc = encodeURIComponent(COACH_LIST_FILENAME);
+      const listQ = parseCoachManagerListQuery(_req);
+
+      if (listQ.compact) {
+        const loginByCoachId = await findUsersByUidsPreferred(
+          coaches.map((c) => c.coachId),
+        );
+        const slim = coaches.map((c) => {
+          const fields = coachCsvRowToApiFields(c);
+          const ul = loginByCoachId.get(c.coachId.trim().toUpperCase());
+          return {
+            coach_id: fields.coach_id ?? fields.CoachID ?? c.coachId,
+            full_name: fields.full_name ?? "",
+            username: ul?.username ?? "",
+          };
+        });
+        res.json({
+          ok: true,
+          compact: true,
+          clubId: ctx.clubId,
+          clubName: ctx.clubName,
+          coachTotal: coaches.length,
+          coaches: slim,
+          ...(coachesParseWarning ? { coachesParseWarning } : {}),
+        });
+        return;
+      }
+
+      const totalCoaches = coaches.length;
+      let pageCoaches = coaches;
+      if (listQ.page != null && listQ.limit != null) {
+        const start = (listQ.page - 1) * listQ.limit;
+        pageCoaches = coaches.slice(start, start + listQ.limit);
+      }
       const loginByCoachId = await findUsersByUidsPreferred(
-        coaches.map((c) => c.coachId),
+        pageCoaches.map((c) => c.coachId),
       );
+      const includeFullCsv =
+        listQ.page == null ||
+        listQ.limit == null ||
+        listQ.page <= 1;
+      const coachCsvOut = includeFullCsv
+        ? coachCsv
+        : {
+            headers: coachCsv.headers,
+            rows: [] as typeof coachCsv.rows,
+            truncated: true,
+          };
       const payload: Record<string, unknown> = {
         ok: true,
         clubId: ctx.clubId,
         clubName: ctx.clubName,
         coachCsvFileUrl: `/backend/data_club/${idEnc}/${fileEnc}`,
         coachCsvResolvedPath: coachListResolvedPath(ctx.clubId),
-        coaches: coaches.map((c) => {
+        coaches: pageCoaches.map((c) => {
           const fields = coachCsvRowToApiFields(c);
           const ul = loginByCoachId.get(c.coachId.trim().toUpperCase());
           return { ...fields, username: ul?.username ?? "" };
         }),
-        coachCsv,
+        coachCsv: coachCsvOut,
         ...(coachesParseWarning ? { coachesParseWarning } : {}),
       };
+      if (listQ.page != null && listQ.limit != null) {
+        payload.coachTotal = totalCoaches;
+        payload.coachPage = listQ.page;
+        payload.coachPageSize = listQ.limit;
+      }
       if (sportCoachDebugOn()) {
         const dbg = {
           ...(await coachManagerDebugSnapshot(_req)),

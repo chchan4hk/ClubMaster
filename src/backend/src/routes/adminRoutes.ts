@@ -160,11 +160,61 @@ async function assertUsernameFreeForUid(
 export function createAdminRouter(): Router {
   const r = Router();
 
-  r.get("/login-accounts", requireAuth, requireRole("Admin"), async (_req, res) => {
+  r.get("/login-accounts", requireAuth, requireRole("Admin"), async (req, res) => {
     if (isMongoConfigured()) {
       try {
-        const { userLogin, coach, student } = await listAdminLoginAccountsFromMongo();
-        res.json({ ok: true, userLogin, coach, student });
+        const pickInt = (name: string): number | undefined => {
+          const v = req.query[name];
+          if (v == null || (Array.isArray(v) && v.length === 0)) {
+            return undefined;
+          }
+          const raw = Array.isArray(v) ? v[0] : v;
+          const n = parseInt(String(raw).trim(), 10);
+          return Number.isFinite(n) ? n : undefined;
+        };
+        const mongoOpts: {
+          userLoginPage?: number;
+          userLoginPageSize?: number;
+          coachPage?: number;
+          coachPageSize?: number;
+          studentPage?: number;
+          studentPageSize?: number;
+        } = {};
+        const ulP = pickInt("userLoginPage");
+        const ulS =
+          pickInt("userLoginPageSize") ?? pickInt("userLoginLimit");
+        if (ulP != null && ulS != null) {
+          mongoOpts.userLoginPage = ulP;
+          mongoOpts.userLoginPageSize = ulS;
+        }
+        const chP = pickInt("coachPage");
+        const chS = pickInt("coachPageSize") ?? pickInt("coachLimit");
+        if (chP != null && chS != null) {
+          mongoOpts.coachPage = chP;
+          mongoOpts.coachPageSize = chS;
+        }
+        const stP = pickInt("studentPage");
+        const stS = pickInt("studentPageSize") ?? pickInt("studentLimit");
+        if (stP != null && stS != null) {
+          mongoOpts.studentPage = stP;
+          mongoOpts.studentPageSize = stS;
+        }
+        const hasMongoPaging = Object.keys(mongoOpts).length > 0;
+        const {
+          userLogin,
+          coach,
+          student,
+          pagination,
+        } = await listAdminLoginAccountsFromMongo(
+          hasMongoPaging ? mongoOpts : undefined,
+        );
+        res.json({
+          ok: true,
+          userLogin,
+          coach,
+          student,
+          ...(pagination ? { pagination } : {}),
+        });
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         res.status(503).json({ ok: false, error: msg });

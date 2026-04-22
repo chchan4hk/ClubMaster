@@ -51,6 +51,26 @@
         </tbody>
       </table>
 
+      <div
+        id="coachPager"
+        class="hidden mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400 border-t border-white/10 pt-3">
+        <span id="coachPagerStatus"></span>
+        <div class="flex flex-wrap gap-2">
+          <button
+            type="button"
+            id="coachPagerPrev"
+            class="rounded-md border border-white/15 bg-slate-900/80 px-3 py-1.5 text-slate-200 hover:bg-slate-800 disabled:opacity-40 disabled:pointer-events-none">
+            Previous
+          </button>
+          <button
+            type="button"
+            id="coachPagerNext"
+            class="rounded-md border border-white/15 bg-slate-900/80 px-3 py-1.5 text-slate-200 hover:bg-slate-800 disabled:opacity-40 disabled:pointer-events-none">
+            Next
+          </button>
+        </div>
+      </div>
+
       <div class="mt-4 flex flex-wrap gap-2">
         <button type="button" id="btnCreateNewCoach"
           class="rounded-lg border border-orange-600/45 bg-gradient-to-b from-orange-800 via-orange-900 to-orange-950 px-4 py-2 text-sm font-semibold text-orange-50 shadow-[0_4px_16px_-4px_rgba(0,0,0,0.5),0_0_24px_-8px_rgba(234,88,12,0.22),inset_0_1px_0_rgba(255,237,213,0.2)] hover:from-orange-700 hover:via-orange-800 hover:to-orange-900">
@@ -472,10 +492,56 @@
       }
 
       var cachedCoaches = [];
+      var COACH_LIST_PAGE_SIZE = 50;
+      var coachListPage = 1;
+      var coachListTotal = 0;
+      var cachedAllCoachesForModal = null;
+      var useCoachPager = role === "CoachManager";
       /** Last countries from GET /basic-info — refill after form.reset() (reset clears dynamic &lt;option&gt;s). */
       var cachedBasicInfoCountries = [];
 
-      /** Options for New Login modal: full_name from club UserList_Coach.json (via GET /coach-manager/coaches). */
+      function invalidateCoachListCache() {
+        cachedAllCoachesForModal = null;
+        if (window.api && typeof window.api.clearJsonGetCache === "function") {
+          window.api.clearJsonGetCache();
+        }
+      }
+
+      function updateCoachPaginationUi() {
+        var bar = document.getElementById("coachPager");
+        var st = document.getElementById("coachPagerStatus");
+        if (!bar || !st) {
+          return;
+        }
+        if (!useCoachPager) {
+          bar.classList.add("hidden");
+          return;
+        }
+        var pages = Math.max(1, Math.ceil(coachListTotal / COACH_LIST_PAGE_SIZE));
+        if (pages <= 1) {
+          bar.classList.add("hidden");
+          return;
+        }
+        bar.classList.remove("hidden");
+        st.textContent =
+          "Page " +
+          coachListPage +
+          " of " +
+          pages +
+          " · " +
+          coachListTotal +
+          " coaches";
+        var prev = document.getElementById("coachPagerPrev");
+        var next = document.getElementById("coachPagerNext");
+        if (prev) {
+          prev.disabled = coachListPage <= 1;
+        }
+        if (next) {
+          next.disabled = coachListPage >= pages;
+        }
+      }
+
+      /** Options for New Login modal: full roster via GET /coach-manager/coaches?compact=1 */
       function fillNewCoachRoleFullNameSelect() {
         var sel = document.getElementById("newCoachRoleFullName");
         if (!sel || sel.tagName !== "SELECT") {
@@ -486,7 +552,9 @@
         lead.value = "";
         lead.textContent = "— Select —";
         sel.appendChild(lead);
-        var list = Array.isArray(cachedCoaches) ? cachedCoaches.slice() : [];
+        var list = Array.isArray(cachedAllCoachesForModal)
+          ? cachedAllCoachesForModal.slice()
+          : [];
         var rows = [];
         list.forEach(function (c) {
           var fn = c.full_name != null ? String(c.full_name).trim() : "";
@@ -943,7 +1011,10 @@
       var loadFullCsvSeq = 0;
       var loadFullCsvAbort = null;
 
-      function loadFullCsv() {
+      function loadFullCsv(targetPage) {
+        if (typeof targetPage === "number" && !isNaN(targetPage)) {
+          coachListPage = Math.max(1, Math.floor(targetPage));
+        }
         var errEl = document.getElementById("fullCsvError");
         var warnEl = document.getElementById("fullCsvWarn");
         hideAllCoachPanels();
@@ -978,9 +1049,20 @@
         loadFullCsvAbort =
           typeof AbortController !== "undefined" ? new AbortController() : null;
         var fetchOpts = loadFullCsvAbort ? { signal: loadFullCsvAbort.signal } : {};
+        var path = "/coach-manager/coaches";
+        if (useCoachPager) {
+          path +=
+            "?page=" +
+            encodeURIComponent(String(coachListPage)) +
+            "&limit=" +
+            encodeURIComponent(String(COACH_LIST_PAGE_SIZE));
+          if (!fetchOpts.signal) {
+            fetchOpts.cacheTtlMs = 6000;
+          }
+        }
 
         window.api
-          .api("/coach-manager/coaches", fetchOpts)
+          .api(path, fetchOpts)
           .then(function (data) {
             if (mySeq !== loadFullCsvSeq) {
               return;
@@ -994,6 +1076,7 @@
               }
               cachedCoaches = [];
               renderRawCsvFallback(null);
+              updateCoachPaginationUi();
               return;
             }
             if (data.clubId) {
@@ -1009,7 +1092,14 @@
                 data.coachesParseWarning;
               warnEl.classList.remove("hidden");
             }
+            coachListTotal =
+              typeof data.coachTotal === "number"
+                ? data.coachTotal
+                : Array.isArray(data.coaches)
+                  ? data.coaches.length
+                  : 0;
             cachedCoaches = Array.isArray(data.coaches) ? data.coaches.slice() : [];
+            updateCoachPaginationUi();
             try {
               if (cachedCoaches.length > 0) {
                 renderCoachTableFromApi(cachedCoaches);
@@ -1046,6 +1136,7 @@
             }
             cachedCoaches = [];
             renderRawCsvFallback(null);
+            updateCoachPaginationUi();
           });
       }
 
@@ -1100,7 +1191,8 @@
           })
           .then(function () {
             hideTableEditPanel();
-            loadFullCsv();
+            invalidateCoachListCache();
+            loadFullCsv(1);
           })
           .catch(function (e) {
             window.alert(e.message || "Remove failed.");
@@ -1213,7 +1305,8 @@
             body: JSON.stringify(putBody),
           })
           .then(function () {
-            loadFullCsv();
+            invalidateCoachListCache();
+            loadFullCsv(coachListPage);
           })
           .catch(function (e) {
             errBox.textContent = e.message || "Save failed.";
@@ -1247,7 +1340,8 @@
               : null
           );
         }
-        loadFullCsv();
+        invalidateCoachListCache();
+        loadFullCsv(1);
       });
 
       if (window.api && typeof window.api.api === "function") {
@@ -1386,7 +1480,8 @@
             document.getElementById("newCoachJoined").value = ymdTodayLocal();
             setNewCoachCountryToFirst();
             syncNewCoachClubNameField();
-            loadFullCsv();
+            invalidateCoachListCache();
+            loadFullCsv(1);
           })
           .catch(function (e) {
             errBox.textContent = e.message || "Could not create coach.";
@@ -1427,16 +1522,12 @@
             m.setAttribute("aria-hidden", "false");
           }
         }
-        if (
-          window.api &&
-          typeof window.api.api === "function" &&
-          (!cachedCoaches || cachedCoaches.length === 0)
-        ) {
+        if (window.api && typeof window.api.api === "function") {
           window.api
-            .api("/coach-manager/coaches")
+            .api("/coach-manager/coaches?compact=1", { cacheTtlMs: 15000 })
             .then(function (data) {
               if (data && data.ok && Array.isArray(data.coaches)) {
-                cachedCoaches = data.coaches.slice();
+                cachedAllCoachesForModal = data.coaches.slice();
               }
             })
             .catch(function () {
@@ -1565,6 +1656,8 @@
             if (cid || cname) {
               parts.push("Club: " + (cid || "—") + (cname ? " (" + cname + ")" : "") + ".");
             }
+            invalidateCoachListCache();
+            loadFullCsv(coachListPage);
             closeNewCoachRoleAccountModal();
             openLoginAccountSuccessModal(parts.join("\n"));
           })
@@ -1578,6 +1671,28 @@
             okBtn.disabled = false;
           });
       });
+
+      (function bindCoachPager() {
+        var prev = document.getElementById("coachPagerPrev");
+        var next = document.getElementById("coachPagerNext");
+        if (prev) {
+          prev.addEventListener("click", function () {
+            if (coachListPage > 1) {
+              invalidateCoachListCache();
+              loadFullCsv(coachListPage - 1);
+            }
+          });
+        }
+        if (next) {
+          next.addEventListener("click", function () {
+            var pages = Math.max(1, Math.ceil(coachListTotal / COACH_LIST_PAGE_SIZE));
+            if (coachListPage < pages) {
+              invalidateCoachListCache();
+              loadFullCsv(coachListPage + 1);
+            }
+          });
+        }
+      })();
     })();
   </script>
 </body>

@@ -38,6 +38,26 @@
         </tbody>
       </table>
 
+      <div
+        id="studentPager"
+        class="hidden mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400 border-t border-white/10 pt-3">
+        <span id="studentPagerStatus"></span>
+        <div class="flex flex-wrap gap-2">
+          <button
+            type="button"
+            id="studentPagerPrev"
+            class="rounded-md border border-white/15 bg-slate-900/80 px-3 py-1.5 text-slate-200 hover:bg-slate-800 disabled:opacity-40 disabled:pointer-events-none">
+            Previous
+          </button>
+          <button
+            type="button"
+            id="studentPagerNext"
+            class="rounded-md border border-white/15 bg-slate-900/80 px-3 py-1.5 text-slate-200 hover:bg-slate-800 disabled:opacity-40 disabled:pointer-events-none">
+            Next
+          </button>
+        </div>
+      </div>
+
       <div class="mt-4 flex flex-wrap gap-2">
         <button type="button" id="btnCreateNewStudent"
           class="rounded-lg border border-orange-600/45 bg-gradient-to-b from-orange-800 via-orange-900 to-orange-950 px-4 py-2 text-sm font-semibold text-orange-50 shadow-[0_4px_16px_-4px_rgba(0,0,0,0.5),0_0_24px_-8px_rgba(234,88,12,0.22),inset_0_1px_0_rgba(255,237,213,0.2)] hover:from-orange-700 hover:via-orange-800 hover:to-orange-900">
@@ -549,10 +569,56 @@
       }
 
       var cachedStudents = [];
+      var STUDENT_LIST_PAGE_SIZE = 50;
+      var studentListPage = 1;
+      var studentListTotal = 0;
+      var cachedAllStudentsForModal = null;
+      var useStudentPager = role === "CoachManager";
       /** Last countries from GET /basic-info — refill after form.reset() (reset clears dynamic &lt;option&gt;s). */
       var cachedBasicInfoCountries = [];
 
-      /** Options for New Login modal: full_name from club UserList_Student.json (via GET /coach-manager/students). */
+      function invalidateStudentListCache() {
+        cachedAllStudentsForModal = null;
+        if (window.api && typeof window.api.clearJsonGetCache === "function") {
+          window.api.clearJsonGetCache();
+        }
+      }
+
+      function updateStudentPaginationUi() {
+        var bar = document.getElementById("studentPager");
+        var st = document.getElementById("studentPagerStatus");
+        if (!bar || !st) {
+          return;
+        }
+        if (!useStudentPager) {
+          bar.classList.add("hidden");
+          return;
+        }
+        var pages = Math.max(1, Math.ceil(studentListTotal / STUDENT_LIST_PAGE_SIZE));
+        if (pages <= 1) {
+          bar.classList.add("hidden");
+          return;
+        }
+        bar.classList.remove("hidden");
+        st.textContent =
+          "Page " +
+          studentListPage +
+          " of " +
+          pages +
+          " · " +
+          studentListTotal +
+          " students";
+        var prev = document.getElementById("studentPagerPrev");
+        var next = document.getElementById("studentPagerNext");
+        if (prev) {
+          prev.disabled = studentListPage <= 1;
+        }
+        if (next) {
+          next.disabled = studentListPage >= pages;
+        }
+      }
+
+      /** Options for New Login modal: full roster via GET /coach-manager/students?compact=1 */
       function fillNewStudentRoleFullNameSelect() {
         var sel = document.getElementById("newStudentRoleFullName");
         if (!sel || sel.tagName !== "SELECT") {
@@ -563,7 +629,9 @@
         lead.value = "";
         lead.textContent = "— Select —";
         sel.appendChild(lead);
-        var list = Array.isArray(cachedStudents) ? cachedStudents.slice() : [];
+        var list = Array.isArray(cachedAllStudentsForModal)
+          ? cachedAllStudentsForModal.slice()
+          : [];
         var rows = [];
         list.forEach(function (s) {
           var fn = s.full_name != null ? String(s.full_name).trim() : "";
@@ -1019,7 +1087,10 @@
       var loadFullCsvSeq = 0;
       var loadFullCsvAbort = null;
 
-      function loadFullCsv() {
+      function loadFullCsv(targetPage) {
+        if (typeof targetPage === "number" && !isNaN(targetPage)) {
+          studentListPage = Math.max(1, Math.floor(targetPage));
+        }
         var errEl = document.getElementById("fullCsvError");
         var warnEl = document.getElementById("fullCsvWarn");
         hideAllStudentPanels();
@@ -1054,9 +1125,20 @@
         loadFullCsvAbort =
           typeof AbortController !== "undefined" ? new AbortController() : null;
         var fetchOpts = loadFullCsvAbort ? { signal: loadFullCsvAbort.signal } : {};
+        var path = "/coach-manager/students";
+        if (useStudentPager) {
+          path +=
+            "?page=" +
+            encodeURIComponent(String(studentListPage)) +
+            "&limit=" +
+            encodeURIComponent(String(STUDENT_LIST_PAGE_SIZE));
+          if (!fetchOpts.signal) {
+            fetchOpts.cacheTtlMs = 6000;
+          }
+        }
 
         window.api
-          .api("/coach-manager/students", fetchOpts)
+          .api(path, fetchOpts)
           .then(function (data) {
             if (mySeq !== loadFullCsvSeq) {
               return;
@@ -1070,6 +1152,7 @@
               }
               cachedStudents = [];
               renderRawCsvFallback(null);
+              updateStudentPaginationUi();
               return;
             }
             if (data.clubId) {
@@ -1086,7 +1169,14 @@
                 data.studentsParseWarning;
               warnEl.classList.remove("hidden");
             }
+            studentListTotal =
+              typeof data.studentTotal === "number"
+                ? data.studentTotal
+                : Array.isArray(data.students)
+                  ? data.students.length
+                  : 0;
             cachedStudents = Array.isArray(data.students) ? data.students.slice() : [];
+            updateStudentPaginationUi();
             try {
               if (cachedStudents.length > 0) {
                 renderStudentTableFromApi(cachedStudents);
@@ -1123,6 +1213,7 @@
             }
             cachedStudents = [];
             renderRawCsvFallback(null);
+            updateStudentPaginationUi();
           });
       }
 
@@ -1177,7 +1268,8 @@
           })
           .then(function () {
             hideTableEditPanel();
-            loadFullCsv();
+            invalidateStudentListCache();
+            loadFullCsv(1);
           })
           .catch(function (e) {
             window.alert(e.message || "Remove failed.");
@@ -1298,7 +1390,8 @@
             body: JSON.stringify(putBody),
           })
           .then(function () {
-            loadFullCsv();
+            invalidateStudentListCache();
+            loadFullCsv(studentListPage);
           })
           .catch(function (e) {
             errBox.textContent = e.message || "Save failed.";
@@ -1342,7 +1435,8 @@
             /* keep N/A-only select if coaches fail */
           })
           .finally(function () {
-            loadFullCsv();
+            invalidateStudentListCache();
+            loadFullCsv(1);
           });
       });
 
@@ -1500,7 +1594,8 @@
             if (cSel && cSel.tagName === "SELECT") {
               cSel.value = "N/A";
             }
-            loadFullCsv();
+            invalidateStudentListCache();
+            loadFullCsv(1);
           })
           .catch(function (e) {
             errBox.textContent = e.message || "Could not create student.";
@@ -1542,16 +1637,12 @@
               m.setAttribute("aria-hidden", "false");
             }
           }
-          if (
-            window.api &&
-            typeof window.api.api === "function" &&
-            (!cachedStudents || cachedStudents.length === 0)
-          ) {
+          if (window.api && typeof window.api.api === "function") {
             window.api
-              .api("/coach-manager/students")
+              .api("/coach-manager/students?compact=1", { cacheTtlMs: 15000 })
               .then(function (data) {
                 if (data && data.ok && Array.isArray(data.students)) {
-                  cachedStudents = data.students.slice();
+                  cachedAllStudentsForModal = data.students.slice();
                 }
               })
               .catch(function () {
@@ -1684,6 +1775,8 @@
                 if (cid || cname) {
                   parts.push("Club: " + (cid || "—") + (cname ? " (" + cname + ")" : "") + ".");
                 }
+                invalidateStudentListCache();
+                loadFullCsv(studentListPage);
                 closeNewStudentRoleAccountModal();
                 openLoginAccountSuccessModal(parts.join("\n"));
               })
@@ -1698,6 +1791,31 @@
               });
           });
       }
+
+      (function bindStudentPager() {
+        var prev = document.getElementById("studentPagerPrev");
+        var next = document.getElementById("studentPagerNext");
+        if (prev) {
+          prev.addEventListener("click", function () {
+            if (studentListPage > 1) {
+              invalidateStudentListCache();
+              loadFullCsv(studentListPage - 1);
+            }
+          });
+        }
+        if (next) {
+          next.addEventListener("click", function () {
+            var pages = Math.max(
+              1,
+              Math.ceil(studentListTotal / STUDENT_LIST_PAGE_SIZE)
+            );
+            if (studentListPage < pages) {
+              invalidateStudentListCache();
+              loadFullCsv(studentListPage + 1);
+            }
+          });
+        }
+      })();
     })();
   </script>
 </body>

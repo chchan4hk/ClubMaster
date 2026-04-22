@@ -84,6 +84,10 @@ async function ensureIndexes(): Promise<void> {
   await coll.createIndex({ uid: 1 }, { unique: true });
   await coll.createIndex({ username: 1 });
   await coll.createIndex({ usertype: 1 });
+  /** Admin / roster filters: match `usertype` then sort or scan by `uid`. */
+  await coll.createIndex({ usertype: 1, uid: 1 });
+  /** Coach Manager club-scoped lookups when `club_folder_uid` is set. */
+  await coll.createIndex({ club_folder_uid: 1, usertype: 1 });
 }
 
 let indexesEnsured = false;
@@ -102,69 +106,159 @@ async function collWithIndexes(): Promise<
   return coll;
 }
 
-/** GET /admin/login-accounts payload (same shape as file-based). */
-export async function listAdminLoginAccountsFromMongo(): Promise<{
+function adminUserLoginTableRow(
+  u: UserLoginDocument,
+): Record<string, unknown> | null {
+  const c = docToCsvUserForAdminMainTable(u);
+  if (!c) {
+    return null;
+  }
+  return {
+    uid: c.uid,
+    usertype: c.usertype,
+    role: c.role,
+    username: c.username,
+    fullName: c.fullName,
+    clubName: c.clubName,
+    status: c.status,
+    isActivated: c.isActivated,
+    creationDate: c.creationDate,
+    lastUpdateDate: c.lastUpdateDate,
+    expiryDate: c.expiryDate ?? "",
+  };
+}
+
+function adminRoleTableRow(r: UserLoginDocument): Record<string, unknown> {
+  const row = docToCoachStudentRow(r);
+  return {
+    uid: row.uid,
+    username: row.username,
+    fullName: row.fullName,
+    clubName: row.clubName,
+    status: row.status,
+    isActivated: row.isActivated,
+    creationDate: row.creationDate,
+    lastUpdateDate: row.lastUpdateDate,
+    expiryDate: row.expiryDate ?? "",
+  };
+}
+
+export type AdminLoginAccountsPagination = {
+  userLogin?: { total: number; page: number; pageSize: number };
+  coach?: { total: number; page: number; pageSize: number };
+  student?: { total: number; page: number; pageSize: number };
+};
+
+/**
+ * GET /admin/login-accounts (Mongo): three indexed `find` streams instead of loading the whole
+ * collection into Node. Optional pagination per bucket via `opts` (1-based `page`).
+ */
+export async function listAdminLoginAccountsFromMongo(opts?: {
+  userLoginPage?: number;
+  userLoginPageSize?: number;
+  coachPage?: number;
+  coachPageSize?: number;
+  studentPage?: number;
+  studentPageSize?: number;
+}): Promise<{
   userLogin: Array<Record<string, unknown>>;
   coach: Array<Record<string, unknown>>;
   student: Array<Record<string, unknown>>;
+  pagination?: AdminLoginAccountsPagination;
 }> {
   const coll = await collWithIndexes();
-  const rows = (await coll.find({}).toArray()) as UserLoginDocument[];
-  const userLogin = rows
-    .filter((d) => d.usertype === "Administrator" || d.usertype === "Coach Manager")
-    .map((u) => {
-      const c = docToCsvUserForAdminMainTable(u);
-      if (!c) {
-        return null;
-      }
-      return {
-        uid: c.uid,
-        usertype: c.usertype,
-        role: c.role,
-        username: c.username,
-        fullName: c.fullName,
-        clubName: c.clubName,
-        status: c.status,
-        isActivated: c.isActivated,
-        creationDate: c.creationDate,
-        lastUpdateDate: c.lastUpdateDate,
-        expiryDate: c.expiryDate ?? "",
-      };
-    })
+  const ulMatch = {
+    usertype: { $in: ["Administrator", "Coach Manager"] as const },
+  } as const;
+  const coachMatch = { usertype: "Coach" as const };
+  const studentMatch = { usertype: "Student" as const };
+
+  /** One aggregation per bucket: `$facet` returns page rows + total count (indexed `$match` on `usertype`). */
+  const facetLoginRows = async (
+    filter: Filter<UserLoginDocument>,
+    page?: number,
+    pageSize?: number,
+  ): Promise<{ rows: UserLoginDocument[]; total: number }> => {
+    const hasPage = page != null && pageSize != null;
+    const safePage = hasPage ? Math.max(1, page!) : 1;
+    const safeSize = hasPage ? Math.min(500, Math.max(1, pageSize!)) : 500;
+    const skip = hasPage ? (safePage - 1) * safeSize : 0;
+    const rowStages: object[] = [{ $sort: { uid: 1 } }];
+    if (hasPage) {
+      rowStages.push({ $skip: skip });
+      rowStages.push({ $limit: safeSize });
+    }
+    const [doc] = (await coll
+      .aggregate([
+        { $match: filter },
+        {
+          $facet: {
+            rows: rowStages,
+            total: [{ $count: "n" }],
+          },
+        },
+      ])
+      .toArray()) as {
+      rows: UserLoginDocument[];
+      total: { n: number }[];
+    }[];
+    const rows = doc?.rows ?? [];
+    const total = doc?.total?.[0]?.n ?? rows.length;
+    return { rows, total };
+  };
+
+  const ul = await facetLoginRows(
+    ulMatch as Filter<UserLoginDocument>,
+    opts?.userLoginPage,
+    opts?.userLoginPageSize,
+  );
+  const ch = await facetLoginRows(
+    coachMatch as Filter<UserLoginDocument>,
+    opts?.coachPage,
+    opts?.coachPageSize,
+  );
+  const st = await facetLoginRows(
+    studentMatch as Filter<UserLoginDocument>,
+    opts?.studentPage,
+    opts?.studentPageSize,
+  );
+
+  const userLogin = ul.rows
+    .map((u) => adminUserLoginTableRow(u))
     .filter(Boolean) as Array<Record<string, unknown>>;
-  const coach = rows
-    .filter((d) => d.usertype === "Coach")
-    .map((r) => {
-      const row = docToCoachStudentRow(r);
-      return {
-        uid: row.uid,
-        username: row.username,
-        fullName: row.fullName,
-        clubName: row.clubName,
-        status: row.status,
-        isActivated: row.isActivated,
-        creationDate: row.creationDate,
-        lastUpdateDate: row.lastUpdateDate,
-        expiryDate: row.expiryDate ?? "",
-      };
-    });
-  const student = rows
-    .filter((d) => d.usertype === "Student")
-    .map((r) => {
-      const row = docToCoachStudentRow(r);
-      return {
-        uid: row.uid,
-        username: row.username,
-        fullName: row.fullName,
-        clubName: row.clubName,
-        status: row.status,
-        isActivated: row.isActivated,
-        creationDate: row.creationDate,
-        lastUpdateDate: row.lastUpdateDate,
-        expiryDate: row.expiryDate ?? "",
-      };
-    });
-  return { userLogin, coach, student };
+  const coach = ch.rows.map((r) => adminRoleTableRow(r));
+  const student = st.rows.map((r) => adminRoleTableRow(r));
+
+  const pagination: AdminLoginAccountsPagination = {};
+  if (opts?.userLoginPage != null && opts?.userLoginPageSize != null) {
+    pagination.userLogin = {
+      total: ul.total,
+      page: Math.max(1, opts.userLoginPage),
+      pageSize: Math.min(500, Math.max(1, opts.userLoginPageSize)),
+    };
+  }
+  if (opts?.coachPage != null && opts?.coachPageSize != null) {
+    pagination.coach = {
+      total: ch.total,
+      page: Math.max(1, opts.coachPage),
+      pageSize: Math.min(500, Math.max(1, opts.coachPageSize)),
+    };
+  }
+  if (opts?.studentPage != null && opts?.studentPageSize != null) {
+    pagination.student = {
+      total: st.total,
+      page: Math.max(1, opts.studentPage),
+      pageSize: Math.min(500, Math.max(1, opts.studentPageSize)),
+    };
+  }
+
+  const hasPagination = Object.keys(pagination).length > 0;
+  return {
+    userLogin,
+    coach,
+    student,
+    ...(hasPagination ? { pagination } : {}),
+  };
 }
 
 export async function findUserByUsernameMongo(
@@ -1157,13 +1251,17 @@ export async function findUsersByUidsPreferred(
   if (isMongoConfigured()) {
     try {
       const coll = await collWithIndexes();
-      const docs = (await coll
-        .find({ uid: { $in: exactList } })
-        .toArray()) as UserLoginDocument[];
-      for (const doc of docs) {
-        const u = userLoginDocumentToCsvUser(doc);
-        if (u?.uid) {
-          out.set(String(u.uid).trim().toUpperCase(), u);
+      const chunkSize = 200;
+      for (let i = 0; i < exactList.length; i += chunkSize) {
+        const chunk = exactList.slice(i, i + chunkSize);
+        const docs = (await coll
+          .find({ uid: { $in: chunk } })
+          .toArray()) as UserLoginDocument[];
+        for (const doc of docs) {
+          const u = userLoginDocumentToCsvUser(doc);
+          if (u?.uid) {
+            out.set(String(u.uid).trim().toUpperCase(), u);
+          }
         }
       }
       const missing = exactList.filter((id) => !out.has(id.trim().toUpperCase()));
@@ -1174,13 +1272,16 @@ export async function findUsersByUidsPreferred(
             "i",
           ),
         }));
-        const extra = (await coll
-          .find({ $or: orCase })
-          .toArray()) as UserLoginDocument[];
-        for (const doc of extra) {
-          const u = userLoginDocumentToCsvUser(doc);
-          if (u?.uid) {
-            out.set(String(u.uid).trim().toUpperCase(), u);
+        for (let j = 0; j < orCase.length; j += chunkSize) {
+          const sub = orCase.slice(j, j + chunkSize);
+          const extra = (await coll
+            .find({ $or: sub })
+            .toArray()) as UserLoginDocument[];
+          for (const doc of extra) {
+            const u = userLoginDocumentToCsvUser(doc);
+            if (u?.uid) {
+              out.set(String(u.uid).trim().toUpperCase(), u);
+            }
           }
         }
       }

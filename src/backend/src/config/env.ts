@@ -30,7 +30,7 @@ export function loadLocalEnvFile(backendPackageRoot: string): void {
 
 /**
  * HTTP listen port: `process.env.PORT` at runtime (Zeabur, Railway, etc.).
- * Fallback `3000` only when PORT is unset — typical for local `npm run dev`.
+ * Fallback `8080` only when PORT is unset — typical for local `npm run dev`.
  */
 export function resolveListenPort(): number {
   const raw = process.env.PORT;
@@ -40,10 +40,10 @@ export function resolveListenPort(): number {
       return n;
     }
     console.warn(
-      `[config] Invalid PORT="${raw}" — using development fallback 3000`,
+      `[config] Invalid PORT="${raw}" — using development fallback 8080`,
     );
   }
-  return 3000;
+  return 8080;
 }
 
 /**

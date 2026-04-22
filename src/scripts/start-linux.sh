@@ -5,7 +5,7 @@
 # Or:    chmod +x src/scripts/start-linux.sh && ./src/scripts/start-linux.sh
 #
 # Env:
-#   PORT — listen port (platform default or unset → backend uses dev fallback 3000; optional in src/backend/.env)
+#   PORT — listen port (platform default or unset → backend uses dev fallback 8080; optional in src/backend/.env)
 #   SPORT_COACH_STATIC_ROOT — override web root (default: src/, sibling of backend/)
 #
 set -euo pipefail
