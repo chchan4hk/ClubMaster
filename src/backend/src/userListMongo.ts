@@ -67,7 +67,7 @@ function docToCoachStudentRow(doc: UserLoginDocument): CoachStudentLoginRow {
     lastUpdateDate: formatDateOnly(doc.lastUpdate_date as Date),
     expiryDate: formatDateOnly(doc.Expiry_date as Date | null),
   };
-  const cfu = String(doc.club_folder_uid ?? "").trim();
+  const cfu = String(doc.club_folder_uid ?? doc.club_id ?? "").trim();
   if (cfu) {
     base.clubFolderUid = cfu;
   }
@@ -619,6 +619,39 @@ export async function setRoleExpiryOnlyMongo(
   return { ok: true };
 }
 
+/** Bulk-set expiry for Coach/Student role logins with `club_folder_uid` (Mongo `userLogin`). */
+export async function setRoleLoginExpiryForClubFolderUidMongo(
+  clubFolderUid: string,
+  expiryYyyyMmDd: string,
+): Promise<
+  | { ok: true; coachUpdated: number; studentUpdated: number }
+  | { ok: false; error: string }
+> {
+  const clubKey = String(clubFolderUid ?? "").trim();
+  if (!clubKey) {
+    return { ok: false, error: "Club folder UID is required." };
+  }
+  const exp = expiryYyyyMmDd.trim()
+    ? parseYyyyMmDdToDate(expiryYyyyMmDd.trim())
+    : null;
+  const coll = await collWithIndexes();
+  const now = new Date();
+  const folderRe = new RegExp(`^${escapeRegex(clubKey)}$`, "i");
+  const coachR = await coll.updateMany(
+    { usertype: "Coach", club_folder_uid: folderRe },
+    { $set: { Expiry_date: exp, lastUpdate_date: now } },
+  );
+  const studentR = await coll.updateMany(
+    { usertype: "Student", club_folder_uid: folderRe },
+    { $set: { Expiry_date: exp, lastUpdate_date: now } },
+  );
+  return {
+    ok: true,
+    coachUpdated: coachR.modifiedCount,
+    studentUpdated: studentR.modifiedCount,
+  };
+}
+
 export async function setMainPasswordMongo(
   uid: string,
   plain: string,
@@ -882,7 +915,9 @@ export async function insertCoachRoleMongo(input: {
     lastUpdate_date: last,
     Expiry_date: exp,
     coach_id: uid,
-    ...(cfuCoach ? { club_folder_uid: cfuCoach } : {}),
+    ...(cfuCoach
+      ? { club_folder_uid: cfuCoach, club_id: cfuCoach }
+      : {}),
   };
   try {
     await coll.insertOne(doc);
@@ -923,7 +958,7 @@ export async function insertStudentRoleMongo(input: {
     lastUpdate_date: last,
     Expiry_date: exp,
     student_id: uid,
-    ...(cfuStu ? { club_folder_uid: cfuStu } : {}),
+    ...(cfuStu ? { club_folder_uid: cfuStu, club_id: cfuStu } : {}),
   };
   try {
     await coll.insertOne(doc);

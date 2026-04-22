@@ -19,7 +19,7 @@
       <p id="backLinkWrap">
         <a href="/coach-manager.html" target="_top"
           class="cm-module-backlink text-sm underline-offset-2 hover:underline">
-          ← Back to Coach Manager
+          ← Go Back
         </a>
       </p>
       <h1 class="profile-password-heading text-2xl font-semibold mt-3">Prize List</h1>
@@ -314,12 +314,12 @@
             );
             if (/\/coach\.html$/i.test(pp) || /\/coach$/i.test(pp)) {
               backA.setAttribute("href", "/coach.html");
-              backA.textContent = "← Back to Coach";
+              backA.textContent = "← Go Back";
             }
           } catch (e) {
             if (role === "Coach") {
               backA.setAttribute("href", "/coach.html");
-              backA.textContent = "← Back to Coach";
+              backA.textContent = "← Go Back";
             }
           }
         }
@@ -338,7 +338,7 @@
 
       (function primeClubIdFromUrlOrCache() {
         var q = new URLSearchParams(window.location.search || "");
-        var id = (q.get("clubId") || q.get("uid") || "").trim();
+        var id = (q.get("club_id") || q.get("clubId") || q.get("uid") || "").trim();
         var ctx =
           window.api &&
           window.api.getClubFolderContext &&
@@ -1018,7 +1018,7 @@
         if (!d || d.type !== "sportCoach.clubContext") {
           return;
         }
-        var cid = String(d.clubId || d.uid || "").trim();
+        var cid = String(d.club_id || d.clubId || d.uid || "").trim();
         if (cid) {
           setUidLabels(cid);
         }

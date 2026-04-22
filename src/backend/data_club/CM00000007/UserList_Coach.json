@@ -1,4 +1,22 @@
 {
   "version": 1,
-  "coaches": []
+  "coaches": [
+    {
+      "coach_id": "C000001",
+      "club_name": "TK Club",
+      "full_name": "6454",
+      "sex": "N/A",
+      "date_of_birth": "2018-02-15",
+      "joined_date": "2026-04-22",
+      "home_address": "",
+      "country": "Hong Kong",
+      "email": "121@sdfd.com",
+      "contact_number": "",
+      "status": "ACTIVE",
+      "creation_date": "2026-04-22",
+      "remark": "",
+      "lastUpdate_date": "2026-04-22",
+      "hourly_rate (HKD)": ""
+    }
+  ]
 }

@@ -1,4 +1,17 @@
 {
   "version": 1,
-  "reservations": []
+  "reservations": [
+    {
+      "lessonReserveId": "LR000001",
+      "lessonId": "LE000001",
+      "ClubID": "CM00000006",
+      "student_id": "S000000001",
+      "Student_Name": "CHAN HO SHUN",
+      "status": "ACTIVE",
+      "Payment_Status": "UNPAID",
+      "Payment_Confirm": false,
+      "createdAt": "2026-04-22",
+      "lastUpdatedDate": "2026-04-22"
+    }
+  ]
 }

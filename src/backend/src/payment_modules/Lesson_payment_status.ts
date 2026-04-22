@@ -2,10 +2,12 @@ import { Router, type Request } from "express";
 import { requireAuth, requireRole } from "../middleware/requireAuth";
 import {
   coachManagerClubContextAsync,
-  findCoachManagerUserRowForClubUid,
+  resolveClubFolderRoleContextAsync,
+  resolveClubFolderUidForCoachRequest,
+  resolveStudentClubSessionFromRequest,
 } from "../coachManagerSession";
-import { findClubUidForCoachId, loadCoaches } from "../coachListCsv";
-import { loadStudents, resolveStudentClubSession } from "../studentListCsv";
+import { loadCoaches } from "../coachListCsv";
+import { loadStudents } from "../studentListCsv";
 import {
   decrementLessonReservedNumber,
   ensureLessonListFile,
@@ -52,24 +54,12 @@ async function resolvePaymentClubContextAsync(
     if (!coachId) {
       return { ok: false, status: 403, error: "Invalid session." };
     }
-    const clubId = findClubUidForCoachId(coachId);
+    const clubId = resolveClubFolderUidForCoachRequest(req);
     if (!clubId) {
       return {
         ok: false,
         status: 403,
         error: "No club roster found for this coach account.",
-      };
-    }
-    const managerRow = await findCoachManagerUserRowForClubUid(clubId);
-    if (!managerRow || managerRow.role !== "CoachManager") {
-      return { ok: false, status: 403, error: "Invalid club for payment access." };
-    }
-    const clubName = (managerRow.clubName && managerRow.clubName.trim()) || "";
-    if (!clubName || clubName === "—") {
-      return {
-        ok: false,
-        status: 400,
-        error: "Your club has no name configured; contact an administrator.",
       };
     }
     const inRoster = loadCoaches(clubId).some(
@@ -78,6 +68,18 @@ async function resolvePaymentClubContextAsync(
     if (!inRoster) {
       return { ok: false, status: 403, error: "Coach not in club roster." };
     }
+    const folderCtx = await resolveClubFolderRoleContextAsync(clubId, "payment");
+    if (!folderCtx.ok) {
+      return folderCtx;
+    }
+    const clubName = folderCtx.clubName;
+    if (!clubName || clubName === "—") {
+      return {
+        ok: false,
+        status: 400,
+        error: "Your club has no name configured; contact an administrator.",
+      };
+    }
     return { ok: true, clubId, clubName };
   }
   if (role === "Student") {
@@ -85,17 +87,16 @@ async function resolvePaymentClubContextAsync(
     if (!studentId) {
       return { ok: false, status: 403, error: "Invalid session." };
     }
-    const session = resolveStudentClubSession(studentId);
+    const session = resolveStudentClubSessionFromRequest(req);
     if (!session.ok) {
       return { ok: false, status: 403, error: session.error };
     }
     const { clubId } = session;
-    const managerRow = await findCoachManagerUserRowForClubUid(clubId);
-    if (!managerRow || managerRow.role !== "CoachManager") {
-      return { ok: false, status: 403, error: "Invalid club for payment access." };
+    const folderCtx = await resolveClubFolderRoleContextAsync(clubId, "payment");
+    if (!folderCtx.ok) {
+      return folderCtx;
     }
-    const clubName = (managerRow.clubName && managerRow.clubName.trim()) || "";
-    return { ok: true, clubId, clubName };
+    return { ok: true, clubId, clubName: folderCtx.clubName };
   }
   return { ok: false, status: 403, error: "Forbidden" };
 }

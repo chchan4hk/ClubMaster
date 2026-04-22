@@ -16,7 +16,11 @@ import {
 import { readFileCached, readFileCachedStrict } from "./dataFileCache";
 import { isMongoConfigured } from "./db/DBConnection";
 import {
+  allocateNextCoachLoginUidMongo,
+  allocateNextStudentLoginUidMongo,
   findUserByUsernameAnyStoreMongo,
+  insertCoachRoleMongo,
+  insertStudentRoleMongo,
   userLoginUidExistsMongo,
 } from "./userListMongo";
 
@@ -1051,6 +1055,10 @@ function ensureOneRoleLoginStore(
 }
 
 export function ensureCoachStudentLoginFilesExist(): void {
+  /** Coach/student logins are stored in MongoDB `userLogin` — do not create `userLogin_Coach.*` / `userLogin_Student.*`. */
+  if (isMongoConfigured()) {
+    return;
+  }
   if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
   }
@@ -1635,7 +1643,7 @@ export async function appendCoachRoleLoginRow(input: {
   password: string;
   fullName: string;
   clubName: string;
-  /** data_club folder id; stored in JSON only as `club_folder_uid`. */
+  /** Coach Manager folder UID (`data_club/{id}/`); JSON writes `club_id` + `club_folder_uid`; Mongo writes both on `userLogin`. */
   clubFolderUid?: string;
   /** YYYY-MM-DD or empty */
   expiryDate?: string;
@@ -1666,6 +1674,26 @@ export async function appendCoachRoleLoginRow(input: {
   const safeExpiry = String(input.expiryDate ?? "")
     .trim()
     .replace(/,/g, "");
+  if (isMongoConfigured()) {
+    const uid = await allocateNextCoachLoginUidMongo();
+    if (await userLoginUidCollisionPreferred(uid)) {
+      return { ok: false, error: "Could not allocate a new Coach ID; try again." };
+    }
+    const ins = await insertCoachRoleMongo({
+      uid,
+      username: username.replace(/,/g, " "),
+      password: safePass,
+      fullName: safeFull,
+      clubName: safeClub,
+      clubFolderUid: safeFolderUid || undefined,
+      expiryDate: safeExpiry || undefined,
+    });
+    if (!ins.ok) {
+      return { ok: false, error: ins.error };
+    }
+    return { ok: true, uid };
+  }
+
   ensureCoachStudentLoginFilesExist();
   const uid = allocateNextCoachLoginUid();
   if (await userLoginUidCollisionPreferred(uid)) {
@@ -1747,6 +1775,26 @@ export async function appendStudentRoleLoginRow(input: {
   const safeExpiry = String(input.expiryDate ?? "")
     .trim()
     .replace(/,/g, "");
+  if (isMongoConfigured()) {
+    const uid = await allocateNextStudentLoginUidMongo();
+    if (await userLoginUidCollisionPreferred(uid)) {
+      return { ok: false, error: "Could not allocate a new Student ID; try again." };
+    }
+    const ins = await insertStudentRoleMongo({
+      uid,
+      username: username.replace(/,/g, " "),
+      password: safePass,
+      fullName: safeFull,
+      clubName: safeClub,
+      clubFolderUid: safeFolderUid || undefined,
+      expiryDate: safeExpiry || undefined,
+    });
+    if (!ins.ok) {
+      return { ok: false, error: ins.error };
+    }
+    return { ok: true, uid };
+  }
+
   ensureCoachStudentLoginFilesExist();
   const uid = allocateNextStudentLoginUid();
   if (await userLoginUidCollisionPreferred(uid)) {

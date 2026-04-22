@@ -38,7 +38,9 @@ if (window.dashboardInit("Coach", "Coach")) {
     }
     var sep = baseSrc.indexOf("?") >= 0 ? "&" : "?";
     var qs =
-      "clubId=" +
+      "club_id=" +
+      encodeURIComponent(cid) +
+      "&clubId=" +
       encodeURIComponent(cid) +
       (duplicateUid ? "&uid=" + encodeURIComponent(cid) : "") +
       (cname ? "&clubName=" + encodeURIComponent(cname) : "");

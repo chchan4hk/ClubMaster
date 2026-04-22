@@ -4,7 +4,9 @@ import { findStudentRoleLoginByUid } from "../coachStudentLoginCsv";
 import { requireAuth, requireRole } from "../middleware/requireAuth";
 import {
   coachManagerClubContextAsync,
-  findCoachManagerUserRowForClubUid,
+  resolveClubFolderRoleContextAsync,
+  resolveClubFolderUidForCoachRequest,
+  resolveStudentClubSessionFromRequest,
 } from "../coachManagerSession";
 import { sportCoachDebugOn } from "../sportCoachDebug";
 import {
@@ -12,12 +14,7 @@ import {
   filterRawRowsByIdColumn,
   findCoachRosterRow,
 } from "../coachSelfFilter";
-import {
-  findClubUidForCoachId,
-  getDataClubRootPath,
-  isValidClubFolderId,
-  loadCoaches,
-} from "../coachListCsv";
+import { getDataClubRootPath, isValidClubFolderId, loadCoaches } from "../coachListCsv";
 import {
   appendLessonRow,
   ensureLessonListFile,
@@ -45,7 +42,7 @@ import {
   removeActiveReservationForStudentLesson,
   removeLessonReservationByReserveId,
 } from "../lessonReserveList";
-import { loadStudents, resolveStudentClubSession } from "../studentListCsv";
+import { loadStudents } from "../studentListCsv";
 import { listActiveSportCenterNames } from "../sportCenterListCsv";
 import { createCoachManagerSalaryRouter } from "./coachManagerSalaryRoutes";
 
@@ -253,24 +250,12 @@ async function resolveLessonClubContextAsync(
     if (!coachId) {
       return { ok: false, status: 403, error: "Invalid session." };
     }
-    const clubId = findClubUidForCoachId(coachId);
+    const clubId = resolveClubFolderUidForCoachRequest(req);
     if (!clubId) {
       return {
         ok: false,
         status: 403,
         error: "No club roster found for this coach account.",
-      };
-    }
-    const managerRow = await findCoachManagerUserRowForClubUid(clubId);
-    if (!managerRow || managerRow.role !== "CoachManager") {
-      return { ok: false, status: 403, error: "Invalid club for lesson access." };
-    }
-    const clubName = (managerRow.clubName && managerRow.clubName.trim()) || "";
-    if (!clubName || clubName === "—") {
-      return {
-        ok: false,
-        status: 400,
-        error: "Your club has no name configured; contact an administrator.",
       };
     }
     const inRoster = loadCoaches(clubId).some(
@@ -279,6 +264,18 @@ async function resolveLessonClubContextAsync(
     if (!inRoster) {
       return { ok: false, status: 403, error: "Coach not in club roster." };
     }
+    const folderCtx = await resolveClubFolderRoleContextAsync(clubId, "lesson");
+    if (!folderCtx.ok) {
+      return folderCtx;
+    }
+    const clubName = folderCtx.clubName;
+    if (!clubName || clubName === "—") {
+      return {
+        ok: false,
+        status: 400,
+        error: "Your club has no name configured; contact an administrator.",
+      };
+    }
     return { ok: true, clubId, clubName };
   }
   if (role === "Student") {
@@ -286,17 +283,16 @@ async function resolveLessonClubContextAsync(
     if (!studentId) {
       return { ok: false, status: 403, error: "Invalid session." };
     }
-    const session = resolveStudentClubSession(studentId);
+    const session = resolveStudentClubSessionFromRequest(req);
     if (!session.ok) {
       return { ok: false, status: 403, error: session.error };
     }
     const { clubId } = session;
-    const managerRow = await findCoachManagerUserRowForClubUid(clubId);
-    if (!managerRow || managerRow.role !== "CoachManager") {
-      return { ok: false, status: 403, error: "Invalid club for lesson access." };
+    const folderCtx = await resolveClubFolderRoleContextAsync(clubId, "lesson");
+    if (!folderCtx.ok) {
+      return folderCtx;
     }
-    const clubName = (managerRow.clubName && managerRow.clubName.trim()) || "";
-    return { ok: true, clubId, clubName };
+    return { ok: true, clubId, clubName: folderCtx.clubName };
   }
   return { ok: false, status: 403, error: "Forbidden" };
 }
@@ -468,8 +464,10 @@ export function createCoachManagerLessonRouter(): Router {
         const crow = findCoachRosterRow(ctx.clubId, String(_req.user.sub));
         const uname = String(_req.user.username ?? "");
         if (crow) {
-          lessons = lessons.filter((x) =>
-            csvCoachFieldMatchesLoggedCoach(x.coachName, crow, uname),
+          lessons = lessons.filter(
+            (x) =>
+              !String(x.coachName ?? "").trim() ||
+              csvCoachFieldMatchesLoggedCoach(x.coachName, crow, uname),
           );
         } else {
           lessons = [];

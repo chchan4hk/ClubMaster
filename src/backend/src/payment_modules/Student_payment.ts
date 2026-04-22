@@ -1,11 +1,12 @@
-import { Router } from "express";
+import { Router, type Request } from "express";
 import {
   clubAssetPublicUrl,
   loadClubInfoExtended,
   CLUB_PAYMENT_QR_JSON_KEYS,
 } from "../clubInfoJson";
 import { requireAuth, requireRole } from "../middleware/requireAuth";
-import { loadStudents, resolveStudentClubSession } from "../studentListCsv";
+import { resolveStudentClubSessionFromRequest } from "../coachManagerSession";
+import { loadStudents } from "../studentListCsv";
 import { resolveLessonFileClubId } from "../lessonListCsv";
 import {
   buildLessonPaymentSnapshot,
@@ -20,16 +21,14 @@ import {
 } from "../paymentListJson";
 import { loadLessonReservations } from "../lessonReserveList";
 
-function resolveStudentPaymentClub(req: {
-  user?: { sub?: string; username?: string };
-}):
+function resolveStudentPaymentClub(req: Request):
   | { ok: true; studentId: string; clubId: string; fileClub: string }
   | { ok: false; status: number; error: string } {
   const studentId = String(req.user?.sub ?? "").trim();
   if (!studentId) {
     return { ok: false, status: 403, error: "Invalid session." };
   }
-  const session = resolveStudentClubSession(studentId);
+  const session = resolveStudentClubSessionFromRequest(req);
   if (!session.ok) {
     return { ok: false, status: 403, error: session.error };
   }

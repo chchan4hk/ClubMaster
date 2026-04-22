@@ -28,7 +28,9 @@ if (window.dashboardInit("CoachManager", "Coach manager")) {
           src =
             src +
             sep +
-            "clubId=" +
+            "club_id=" +
+            encodeURIComponent(cid) +
+            "&clubId=" +
             encodeURIComponent(cid) +
             (cname ? "&clubName=" + encodeURIComponent(cname) : "");
         }

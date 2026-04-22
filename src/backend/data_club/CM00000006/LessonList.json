@@ -1,4 +1,35 @@
 {
   "version": 1,
-  "lessons": []
+  "lessons": [
+    {
+      "lessonId": "LE000001",
+      "sportType": "Gymnasium",
+      "year": "2026",
+      "classId": "",
+      "classInfo": "培立BB班",
+      "classTime": "逢星期一 20:00 - 22:00",
+      "classFee": "2380",
+      "classSun": "N",
+      "classMon": "Y",
+      "classTue": "N",
+      "classWed": "N",
+      "classThur": "N",
+      "classFri": "N",
+      "classSat": "N",
+      "ageGroup": "30-45",
+      "maxNumber": "8",
+      "frequency": "Weekly",
+      "lessonStartDate": "2025-08-05",
+      "lessonEndDate": "2026-12-15",
+      "sportCenter": "Gym 247",
+      "courtNo": "",
+      "coachName": "KELVIN CHAN",
+      "status": "ACTIVE",
+      "createdAt": "2026-04-22",
+      "lastUpdatedDate": "2026-04-22",
+      "remarks": "",
+      "ClubID": "CM00000006",
+      "ReservedNumber": "1"
+    }
+  ]
 }

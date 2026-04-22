@@ -71,10 +71,15 @@ function userLoginDocToCoachStudentRow(doc: UserLoginDocument): CoachStudentLogi
   } else if (doc.usertype === "Student") {
     base.studentId = String(doc.uid ?? "").trim();
   }
-  const club = (doc.club_name ?? "").trim();
-  const folder = findCoachManagerClubUidByClubName(club);
-  if (folder) {
-    base.clubFolderUid = folder;
+  const fromDoc = String(doc.club_folder_uid ?? doc.club_id ?? "").trim();
+  if (fromDoc) {
+    base.clubFolderUid = fromDoc;
+  } else {
+    const club = (doc.club_name ?? "").trim();
+    const folder = findCoachManagerClubUidByClubName(club);
+    if (folder) {
+      base.clubFolderUid = folder;
+    }
   }
   return base;
 }

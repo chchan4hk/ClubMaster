@@ -89,7 +89,7 @@
 
       (function primeClubIdFromUrlOrCache() {
         var q = new URLSearchParams(window.location.search || "");
-        var id = (q.get("clubId") || q.get("uid") || "").trim();
+        var id = (q.get("club_id") || q.get("clubId") || q.get("uid") || "").trim();
         var ctx =
           window.api &&
           window.api.getClubFolderContext &&
@@ -104,7 +104,7 @@
 
       function getLessonModuleClubId() {
         var q = new URLSearchParams(window.location.search || "");
-        var id = (q.get("clubId") || q.get("uid") || "").trim();
+        var id = (q.get("club_id") || q.get("clubId") || q.get("uid") || "").trim();
         var ctx =
           window.api &&
           window.api.getClubFolderContext &&
@@ -288,7 +288,7 @@
         if (!d || d.type !== "sportCoach.clubContext") {
           return;
         }
-        var cid = String(d.clubId || d.uid || "").trim();
+        var cid = String(d.club_id || d.clubId || d.uid || "").trim();
         if (cid) {
           setUidLabels(cid);
         }
@@ -315,6 +315,15 @@
               u.club_folder_uid != null && String(u.club_folder_uid).trim() !== ""
                 ? String(u.club_folder_uid).trim()
                 : "";
+            if (cfu && window.api && typeof window.api.setClubFolderContext === "function") {
+              var cnSt =
+                u.club_name != null &&
+                String(u.club_name).trim() !== "" &&
+                u.club_name !== "—"
+                  ? String(u.club_name).trim()
+                  : null;
+              window.api.setClubFolderContext(cfu, cnSt);
+            }
             setUidLabels(cfu || u.uid);
           })
           .catch(function () {

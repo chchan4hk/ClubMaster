@@ -17,7 +17,7 @@
       <p id="backLinkWrap">
         <a href="/coach-manager.html" target="_top"
           class="cm-module-backlink text-sm underline-offset-2 hover:underline">
-          ← Back to Coach Manager
+          ← Go Back
         </a>
       </p>
       <h1 class="profile-password-heading text-2xl font-semibold mt-3">Club Master</h1>
@@ -961,7 +961,7 @@
         if (!d || d.type !== "sportCoach.clubContext") {
           return;
         }
-        var cid = String(d.clubId || d.uid || "").trim();
+        var cid = String(d.club_id || d.clubId || d.uid || "").trim();
         if (cid && window.api && typeof window.api.setClubFolderContext === "function") {
           window.api.setClubFolderContext(
             cid,

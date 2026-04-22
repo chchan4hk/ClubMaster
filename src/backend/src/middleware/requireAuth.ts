@@ -7,6 +7,8 @@ export type JwtPayload = {
   username: string;
   role: string;
   usertype?: string;
+  /** Set at Coach/Student sign-in: `data_club/{club_folder_uid}/` (disambiguates duplicate roster IDs). */
+  club_folder_uid?: string;
 };
 
 declare global {
@@ -38,11 +40,14 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
   }
   try {
     const p = jwt.verify(token, secret()) as jwt.JwtPayload;
+    const cfu =
+      p.club_folder_uid != null ? String(p.club_folder_uid).trim() : "";
     req.user = {
       sub: String(p.sub ?? ""),
       username: String(p.username || ""),
       role: String(p.role || ""),
       usertype: p.usertype != null ? String(p.usertype) : undefined,
+      ...(cfu ? { club_folder_uid: cfu } : {}),
     };
     next();
   } catch {

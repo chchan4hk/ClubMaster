@@ -153,7 +153,17 @@ export function createAuthRouter(): Router {
       },
       clubCtx?: { club_folder_uid: string; club_name?: string },
     ) => {
-      const token = jwt.sign(payload, jwtSecret(), { expiresIn: "12h" });
+      const cfu = String(clubCtx?.club_folder_uid ?? "").trim();
+      const jwtPayload: Record<string, string> = {
+        sub: payload.sub,
+        username: payload.username,
+        role: payload.role,
+        usertype: payload.usertype,
+      };
+      if (cfu && isValidClubFolderId(cfu)) {
+        jwtPayload.club_folder_uid = cfu;
+      }
+      const token = jwt.sign(jwtPayload, jwtSecret(), { expiresIn: "12h" });
       const user: Record<string, string> = {
         uid: payload.sub,
         username: payload.username,

@@ -53,7 +53,7 @@
       <p>
         <a href="/coach-manager.html" target="_top"
           class="text-sm text-amber-400/90 hover:text-amber-300 underline-offset-2 hover:underline">
-          ← Back to Coach Manager
+          ← Go Back
         </a>
       </p>
       <h1 class="text-2xl font-bold text-amber-300 mt-2">Lesson Time Table</h1>
@@ -160,7 +160,8 @@
           var h = parseInt(s, 10);
           return isNaN(h) ? [] : [h];
         }
-        var multi = s.split(/\s*[-–—]\s*/);
+        /** ASCII/en dash, en dash, em dash, fullwidth hyphen-minus (－), minus sign (−). */
+        var multi = s.split(/\s*[-–—\uFF0D\u2212]\s*/);
         function hourFromChunk(chunk) {
           var m = String(chunk).match(/(\d{1,2})/);
           return m ? parseInt(m[1], 10) : NaN;
@@ -179,6 +180,26 @@
               hrs.push(x);
             }
             return hrs;
+          }
+        }
+        /** e.g. Chinese weekday prefix + "20:00 - 22:00" or fullwidth punctuation. */
+        var mm = s.match(
+          /(\d{1,2})\s*:\s*\d{1,2}\s*[-–—\uFF0D\u2212]\s*(\d{1,2})\s*:\s*\d{1,2}/,
+        );
+        if (mm) {
+          var ha = parseInt(mm[1], 10);
+          var hb = parseInt(mm[2], 10);
+          if (!isNaN(ha) && !isNaN(hb)) {
+            if (hb < ha) {
+              var swap = ha;
+              ha = hb;
+              hb = swap;
+            }
+            var outR = [];
+            for (var y = ha; y <= hb; y++) {
+              outR.push(y);
+            }
+            return outR;
           }
         }
         var one = hourFromChunk(s);
@@ -255,10 +276,14 @@
         }
         var start = parseIsoDate(lesson.lesson_start_date);
         var end = parseIsoDate(lesson.lesson_end_date);
-        if (!start || !end) {
+        /** Missing or invalid dates: still show on weekday grid (common for draft rows). */
+        if (!start && !end) {
+          return true;
+        }
+        if (start && calendarDate < start) {
           return false;
         }
-        if (calendarDate < start || calendarDate > end) {
+        if (end && calendarDate > end) {
           return false;
         }
         return true;
@@ -721,7 +746,7 @@
 
       function readClubId() {
         var q = new URLSearchParams(window.location.search || "");
-        var id = (q.get("clubId") || q.get("uid") || "").trim();
+        var id = (q.get("club_id") || q.get("clubId") || q.get("uid") || "").trim();
         var ctx =
           window.api &&
           window.api.getClubFolderContext &&
@@ -786,7 +811,7 @@
       var backTop = document.querySelector('header p a[target="_top"]');
       if (backTop && role === "Coach") {
         backTop.setAttribute("href", "/coach.html");
-        backTop.textContent = "← Back to Coach";
+        backTop.textContent = "← Go Back";
       }
       if (backTop && role === "Student") {
         backTop.setAttribute("href", "/student.html");
@@ -869,7 +894,7 @@
         if (!d || d.type !== "sportCoach.clubContext") {
           return;
         }
-        var cid = String(d.clubId || d.uid || "").trim();
+        var cid = String(d.club_id || d.clubId || d.uid || "").trim();
         if (cid) {
           state.clubId = cid;
           if (hdr) {

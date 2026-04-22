@@ -139,7 +139,7 @@
       <p id="backLinkWrap">
         <a href="/coach.html" target="_top"
           class="text-sm text-amber-800 hover:text-amber-950 underline-offset-2 hover:underline font-medium">
-          ← Back to Coach
+          ← Go Back
         </a>
       </p>
       <h1 class="text-2xl font-bold text-amber-950 mt-2 tracking-tight">Coach Salary</h1>
@@ -261,7 +261,7 @@
 
       function getClubIdFromUrl() {
         var q = new URLSearchParams(window.location.search || "");
-        return (q.get("clubId") || q.get("uid") || "").trim();
+        return (q.get("club_id") || q.get("clubId") || q.get("uid") || "").trim();
       }
 
       function primeClubContext() {

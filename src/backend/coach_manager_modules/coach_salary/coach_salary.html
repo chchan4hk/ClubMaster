@@ -19,7 +19,7 @@
       <p id="backLinkWrap">
         <a href="/coach-manager.html" target="_top"
           class="cm-module-backlink text-sm underline-offset-2 hover:underline">
-          ← Back to Coach Manager
+          ← Go Back
         </a>
       </p>
       <h1 class="profile-password-heading text-2xl font-semibold mt-3 tracking-tight">Coach Salary</h1>
@@ -164,7 +164,7 @@
 
       function getClubIdFromUrl() {
         var q = new URLSearchParams(window.location.search || "");
-        return (q.get("clubId") || q.get("uid") || "").trim();
+        return (q.get("club_id") || q.get("clubId") || q.get("uid") || "").trim();
       }
 
       function primeClubContext() {

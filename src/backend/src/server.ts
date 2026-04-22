@@ -39,7 +39,7 @@ import { Lesson_payment_status } from "./payment_modules/Lesson_payment_status";
 import { createUserLoginPaymentStatusRouter } from "./payment_modules/UserLogin_payment_status";
 import { Student_payment } from "./payment_modules/Student_payment";
 import { createBasicInfoRouter } from "./routes/basicInfoRoutes";
-import { isValidClubFolderId } from "./coachListCsv";
+import { findClubUidForCoachId, isValidClubFolderId } from "./coachListCsv";
 import { resolveStudentClubSession } from "./studentListCsv";
 import { getDataFileCacheStats } from "./dataFileCache";
 import { getRdsPoolStats } from "./db/rdsPostgres";
@@ -248,18 +248,34 @@ app.get("/api/me", requireAuth, async (req, res) => {
     const fromLoginCoach = (coachLogin?.club_folder_uid ?? "").trim();
     if (fromLoginCoach && isValidClubFolderId(fromLoginCoach)) {
       club_folder_uid = fromLoginCoach;
-    } else if (clubNameTrimmed) {
-      club_folder_uid = findCoachManagerClubUidByClubName(clubNameTrimmed);
+    } else {
+      const fromJwt = String(req.user?.club_folder_uid ?? "").trim();
+      if (fromJwt && isValidClubFolderId(fromJwt)) {
+        club_folder_uid = fromJwt;
+      } else if (clubNameTrimmed) {
+        club_folder_uid = findCoachManagerClubUidByClubName(clubNameTrimmed);
+      }
+    }
+    if (!club_folder_uid) {
+      const fromRoster = findClubUidForCoachId(String(uid).trim());
+      if (fromRoster && isValidClubFolderId(fromRoster)) {
+        club_folder_uid = fromRoster;
+      }
     }
   } else if (req.user?.role === "Student" && uid != null) {
     const fromLoginStu = (studentLogin?.club_folder_uid ?? "").trim();
     if (fromLoginStu && isValidClubFolderId(fromLoginStu)) {
       club_folder_uid = fromLoginStu;
-    } else if (clubNameTrimmed) {
-      club_folder_uid = findCoachManagerClubUidByClubName(clubNameTrimmed);
     } else {
-      const sess = resolveStudentClubSession(String(uid).trim());
-      club_folder_uid = sess.ok ? sess.clubId : null;
+      const fromJwt = String(req.user?.club_folder_uid ?? "").trim();
+      if (fromJwt && isValidClubFolderId(fromJwt)) {
+        club_folder_uid = fromJwt;
+      } else if (clubNameTrimmed) {
+        club_folder_uid = findCoachManagerClubUidByClubName(clubNameTrimmed);
+      } else {
+        const sess = resolveStudentClubSession(String(uid).trim());
+        club_folder_uid = sess.ok ? sess.clubId : null;
+      }
     }
   }
 

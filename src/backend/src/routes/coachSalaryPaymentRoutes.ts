@@ -1,11 +1,10 @@
 import { Router, type Request } from "express";
 import { requireAuth, requireRole } from "../middleware/requireAuth";
-import { findCoachManagerUserRowForClubUid } from "../coachManagerSession";
 import {
-  findClubUidForCoachId,
-  isValidClubFolderId,
-  loadCoaches,
-} from "../coachListCsv";
+  resolveClubFolderRoleContextAsync,
+  resolveClubFolderUidForCoachRequest,
+} from "../coachManagerSession";
+import { isValidClubFolderId, loadCoaches } from "../coachListCsv";
 import { resolveLessonFileClubId } from "../lessonListCsv";
 import { clubInfoFirstRowObject } from "../clubInfoJson";
 import { clubCurrencyFromCountry } from "../countryCurrency";
@@ -32,17 +31,13 @@ async function coachSalaryPaymentContextAsync(
   if (!coachId) {
     return { ok: false, status: 403, error: "Invalid session." };
   }
-  const clubId = findClubUidForCoachId(coachId);
+  const clubId = resolveClubFolderUidForCoachRequest(req);
   if (!clubId || !isValidClubFolderId(clubId)) {
     return {
       ok: false,
       status: 403,
       error: "No club roster found for this coach account.",
     };
-  }
-  const managerRow = await findCoachManagerUserRowForClubUid(clubId);
-  if (!managerRow || managerRow.role !== "CoachManager") {
-    return { ok: false, status: 403, error: "Club folder is not available." };
   }
   const inRoster = loadCoaches(clubId).some(
     (c) =>
@@ -52,7 +47,11 @@ async function coachSalaryPaymentContextAsync(
   if (!inRoster) {
     return { ok: false, status: 403, error: "Coach not in club roster." };
   }
-  const clubName = (managerRow.clubName && managerRow.clubName.trim()) || "";
+  const folderCtx = await resolveClubFolderRoleContextAsync(clubId, "coach");
+  if (!folderCtx.ok) {
+    return { ok: false, status: folderCtx.status, error: folderCtx.error };
+  }
+  const clubName = folderCtx.clubName;
   return { ok: true, coachId, clubId, clubName };
 }
 

@@ -9,6 +9,13 @@ import {
   setRoleLoginExpiryForClubFolderUid,
 } from "../coachStudentLoginCsv";
 import { findUserByUid, setMainUserlistExpiryByUid } from "../userlistCsv";
+import { isMongoConfigured } from "../db/DBConnection";
+import {
+  findUserByUidPreferred,
+  setMainExpiryMongo,
+  setRoleExpiryOnlyMongo,
+  setRoleLoginExpiryForClubFolderUidMongo,
+} from "../userListMongo";
 
 const paymentListPath = path.join(
   __dirname,
@@ -176,12 +183,13 @@ function resolveCurrentExpiryForUid(uid: string): string {
   return "";
 }
 
-function applySubscriptionExpiryOnConfirm(
+async function applySubscriptionExpiryOnConfirm(
   uid: string,
   subscriptionOption: string,
-):
+): Promise<
   | { ok: true; newExpiry: string; updates: string[] }
-  | { ok: false; error: string } {
+  | { ok: false; error: string }
+> {
   const uidTrim = String(uid ?? "").trim();
   if (!uidTrim) {
     return { ok: false, error: "Payment row has no uid." };
@@ -194,6 +202,69 @@ function applySubscriptionExpiryOnConfirm(
         'Unknown subscription_option. Use "1 month", "3 months", or "1 year" (or similar).',
     };
   }
+
+  if (isMongoConfigured()) {
+    const main = await findUserByUidPreferred(uidTrim);
+    const current =
+      main?.expiryDate?.trim() ??
+      resolveCurrentExpiryForUid(uidTrim);
+    const newExpiry = computeNewExpiryFromSubscription(current, months);
+    const updates: string[] = [];
+
+    if (
+      main &&
+      (main.role === "CoachManager" || main.role === "Administrator")
+    ) {
+      const m = await setMainExpiryMongo(uidTrim, newExpiry);
+      if (!m.ok) {
+        return { ok: false, error: m.error };
+      }
+      updates.push(`Mongo userLogin (${uidTrim})`);
+    }
+
+    const coachUp = await setRoleExpiryOnlyMongo(
+      uidTrim,
+      "coach",
+      newExpiry,
+    );
+    if (coachUp.ok) {
+      updates.push(`Mongo userLogin (Coach login ${uidTrim})`);
+    } else if (coachUp.error !== "Could not update row.") {
+      return { ok: false, error: coachUp.error };
+    }
+
+    const stuUp = await setRoleExpiryOnlyMongo(
+      uidTrim,
+      "student",
+      newExpiry,
+    );
+    if (stuUp.ok) {
+      updates.push(`Mongo userLogin (Student login ${uidTrim})`);
+    } else if (stuUp.error !== "Could not update row.") {
+      return { ok: false, error: stuUp.error };
+    }
+
+    const club = await setRoleLoginExpiryForClubFolderUidMongo(
+      uidTrim,
+      newExpiry,
+    );
+    if (!club.ok) {
+      return { ok: false, error: club.error };
+    }
+    if (club.coachUpdated > 0) {
+      updates.push(
+        `Mongo userLogin (club_folder_uid=${uidTrim}, ${club.coachUpdated} Coach row(s))`,
+      );
+    }
+    if (club.studentUpdated > 0) {
+      updates.push(
+        `Mongo userLogin (club_folder_uid=${uidTrim}, ${club.studentUpdated} Student row(s))`,
+      );
+    }
+
+    return { ok: true, newExpiry, updates };
+  }
+
   const current = resolveCurrentExpiryForUid(uidTrim);
   const newExpiry = computeNewExpiryFromSubscription(current, months);
   const updates: string[] = [];
@@ -380,7 +451,7 @@ export function createUserLoginPaymentStatusRouter(): Router {
     }
   });
 
-  r.post("/confirm-payment", requireRole("Admin"), (req, res) => {
+  r.post("/confirm-payment", requireRole("Admin"), async (req, res) => {
     const paymentId = String(
       (req.body as Record<string, unknown> | null)?.paymentId ?? "",
     ).trim();
@@ -412,7 +483,7 @@ export function createUserLoginPaymentStatusRouter(): Router {
         });
         return;
       }
-      const exp = applySubscriptionExpiryOnConfirm(
+      const exp = await applySubscriptionExpiryOnConfirm(
         row.uid,
         row.subscription_option,
       );

@@ -13,7 +13,8 @@ import {
 } from "../userListMongo";
 import {
   coachManagerClubContextAsync,
-  findCoachManagerUserRowForClubUid,
+  resolveClubFolderRoleContextAsync,
+  resolveClubFolderUidForCoachRequest,
 } from "../coachManagerSession";
 import {
   appendStudentRoleLoginRow,
@@ -28,12 +29,7 @@ import {
   filterRawRowsByIdColumn,
   findCoachRosterRow,
 } from "../coachSelfFilter";
-import {
-  findClubUidForCoachId,
-  getDataClubRootPath,
-  isValidClubFolderId,
-  loadCoaches,
-} from "../coachListCsv";
+import { getDataClubRootPath, isValidClubFolderId, loadCoaches } from "../coachListCsv";
 import {
   allocateNextStudentId,
   appendStudentRow,
@@ -171,7 +167,7 @@ async function resolveStudentClubContextAsync(
   if (!coachId) {
     return { ok: false, status: 403, error: "Invalid session." };
   }
-  const clubId = findClubUidForCoachId(coachId);
+  const clubId = resolveClubFolderUidForCoachRequest(req);
   if (!clubId) {
     return {
       ok: false,
@@ -179,23 +175,23 @@ async function resolveStudentClubContextAsync(
       error: "No club roster found for this coach account.",
     };
   }
-  const managerRow = await findCoachManagerUserRowForClubUid(clubId);
-  if (!managerRow || managerRow.role !== "CoachManager") {
-    return { ok: false, status: 403, error: "Invalid club for student access." };
+  const inRoster = loadCoaches(clubId).some(
+    (c) => c.coachId.trim().toUpperCase() === coachId.toUpperCase()
+  );
+  if (!inRoster) {
+    return { ok: false, status: 403, error: "Coach not in club roster." };
   }
-  const clubName = (managerRow.clubName && managerRow.clubName.trim()) || "";
+  const folderCtx = await resolveClubFolderRoleContextAsync(clubId, "student");
+  if (!folderCtx.ok) {
+    return folderCtx;
+  }
+  const clubName = folderCtx.clubName;
   if (!clubName || clubName === "—") {
     return {
       ok: false,
       status: 400,
       error: "Your club has no name configured; contact an administrator.",
     };
-  }
-  const inRoster = loadCoaches(clubId).some(
-    (c) => c.coachId.trim().toUpperCase() === coachId.toUpperCase()
-  );
-  if (!inRoster) {
-    return { ok: false, status: 403, error: "Coach not in club roster." };
   }
   return { ok: true, clubId, clubName };
 }

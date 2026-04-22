@@ -8,7 +8,15 @@ window.initDashboardPanels = function initDashboardPanels() {
   var navProfile = document.getElementById("navProfile");
   var navSettings = document.getElementById("navSettings");
 
-  var activeClasses = ["ring-2", "ring-amber-500/60", "bg-white/10"];
+  var metalActive =
+    document.body &&
+    document.body.dataset &&
+    document.body.dataset.dashboardNavActive
+      ? String(document.body.dataset.dashboardNavActive).trim()
+      : "";
+  var activeClasses = metalActive
+    ? [metalActive]
+    : ["ring-2", "ring-amber-500/60", "bg-white/10"];
 
   function clearNavActive() {
     [navOverview, navProfile, navSettings].forEach(function (el) {
@@ -80,6 +88,7 @@ window.initDashboardPanels = function initDashboardPanels() {
     var payload = {
       type: "sportCoach.clubContext",
       clubId: cid,
+      club_id: cid,
       clubName: cname || "",
     };
     function send() {

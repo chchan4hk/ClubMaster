@@ -84,6 +84,15 @@ window.dashboardInit = function dashboardInit(expectedRole, shortRoleLabel) {
               ? String(data.user.club_name).trim()
               : null;
           window.api.setClubFolderContext(cfu, cnCoach);
+          var dockCoach = document.getElementById("clubDock");
+          if (dockCoach && dockCoach.dataset) {
+            dockCoach.dataset.clubId = cfu;
+            if (cnCoach) {
+              dockCoach.dataset.clubName = cnCoach;
+            } else {
+              delete dockCoach.dataset.clubName;
+            }
+          }
         }
       }
       if (

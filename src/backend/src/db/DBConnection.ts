@@ -78,7 +78,10 @@ export interface UserLoginDocument {
   student_id?: string;
   /** Optional class grouping (e.g. lesson roster / billing context). */
   class_id?: string;
-  /** Optional club identifier (e.g. matches `club_id` on login rows / club folder). */
+  /**
+   * Coach Manager club folder id for Coach/Student logins (e.g. `CM00000001`);
+   * set together with `club_folder_uid` when the manager creates the login.
+   */
   club_id?: string;
 }
 

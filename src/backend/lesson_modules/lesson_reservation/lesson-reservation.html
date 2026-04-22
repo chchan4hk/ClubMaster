@@ -24,6 +24,53 @@
     #assignStudentBackdrop .assign-student-surface .assign-student-student-id {
       color: #44403c !important;
     }
+
+    /* Edit lesson: light surface + dark type (readable on pale gold / cream) */
+    #tableEditPanel.table-edit-panel-surface {
+      background: linear-gradient(180deg, #faf7f0 0%, #f3ead8 100%) !important;
+      border-color: rgba(180, 140, 60, 0.35) !important;
+      color: #1c1917;
+    }
+    #tableEditPanel.table-edit-panel-surface h3,
+    #tableEditPanel.table-edit-panel-surface p,
+    #tableEditPanel.table-edit-panel-surface label,
+    #tableEditPanel.table-edit-panel-surface .text-slate-500,
+    #tableEditPanel.table-edit-panel-surface .text-slate-400 {
+      color: #292524 !important;
+    }
+    #tableEditPanel.table-edit-panel-surface .text-slate-200 {
+      color: #44403c !important;
+    }
+    #tableEditPanel.table-edit-panel-surface input[type="text"],
+    #tableEditPanel.table-edit-panel-surface input.date-field-ddmm,
+    #tableEditPanel.table-edit-panel-surface select {
+      color: #1c1917 !important;
+      background-color: rgba(255, 255, 255, 0.92) !important;
+      border-color: rgba(120, 100, 70, 0.35) !important;
+    }
+    #tableEditPanel.table-edit-panel-surface input[readonly] {
+      color: #57534e !important;
+      background-color: rgba(245, 245, 244, 0.95) !important;
+    }
+    #tableEditPanel.table-edit-panel-surface .text-amber-200 {
+      color: #92400e !important;
+    }
+    #tableEditPanel.table-edit-panel-surface .cm-edit-class-time-box {
+      border: 1px solid rgba(120, 100, 70, 0.28) !important;
+      background: rgba(255, 252, 245, 0.9) !important;
+    }
+
+    /* Lesson list: Class time column — pale gold */
+    .lr-col-class-time {
+      background: linear-gradient(180deg, #fdf6e3 0%, #f5e6c8 100%) !important;
+      color: #422006 !important;
+    }
+    thead .lr-col-class-time {
+      font-weight: 600;
+    }
+    #fullLessonListBody td.lr-col-class-time {
+      color: #292524;
+    }
   </style>
 </head>
 <body class="profile-password-page cm-module-shell min-h-full p-4 sm:p-6">
@@ -33,7 +80,7 @@
       <p id="backLinkWrap">
         <a href="/coach-manager.html" target="_top"
           class="cm-module-backlink text-sm underline-offset-2 hover:underline">
-          ← Back to Coach Manager
+          ← Go Back
         </a>
       </p>
       <h1 class="profile-password-heading text-2xl font-semibold mt-3">Lesson Reservation</h1>
@@ -257,7 +304,7 @@
         </form>
       </div>
 
-      <div id="tableEditPanel" class="hidden mt-6 pt-6 border-t border-white/10 rounded-lg bg-slate-900/40 p-4">
+      <div id="tableEditPanel" class="table-edit-panel-surface hidden mt-6 pt-6 border-t border-white/10 rounded-lg bg-slate-900/40 p-4">
         <h3 class="text-base font-semibold text-amber-200 mb-3">Edit lesson</h3>
         <p class="text-xs text-slate-500 mb-4">
           Click <strong>Confirm</strong> to save your changes.
@@ -320,7 +367,7 @@
                 class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
           </div>
-          <div class="rounded-lg border border-white/10 bg-slate-900/40 p-4 space-y-3">
+          <div class="cm-edit-class-time-box rounded-lg border border-white/10 bg-slate-900/40 p-4 space-y-3">
             <p class="text-sm font-semibold text-amber-200">Class Time</p>
             <p class="text-xs text-slate-500">Days this class runs.</p>
             <div class="flex flex-wrap gap-x-4 gap-y-2">
@@ -550,7 +597,7 @@
 
       (function primeClubIdFromUrlOrCache() {
         var q = new URLSearchParams(window.location.search || "");
-        var id = (q.get("clubId") || q.get("uid") || "").trim();
+        var id = (q.get("club_id") || q.get("clubId") || q.get("uid") || "").trim();
         var ctx =
           window.api &&
           window.api.getClubFolderContext &&
@@ -565,7 +612,7 @@
 
       function getLessonModuleClubId() {
         var q = new URLSearchParams(window.location.search || "");
-        var id = (q.get("clubId") || q.get("uid") || "").trim();
+        var id = (q.get("club_id") || q.get("clubId") || q.get("uid") || "").trim();
         var ctx =
           window.api &&
           window.api.getClubFolderContext &&
@@ -1149,6 +1196,23 @@
         { key: "SportType", label: "Sport Type" },
       ];
 
+      function lessonTableThClass(col) {
+        var base = "py-2 pr-3 font-medium whitespace-nowrap max-w-[14rem]";
+        if (col.key === "class_time") {
+          return base + " lr-col-class-time";
+        }
+        return base + " text-slate-400";
+      }
+
+      function lessonTableTdClass(col) {
+        var base =
+          "py-2 pr-3 text-xs align-top whitespace-pre-wrap break-words max-w-[16rem]";
+        if (col.key === "class_time") {
+          return base + " lr-col-class-time";
+        }
+        return base;
+      }
+
       function hideCreateLessonPanel() {
         var p = document.getElementById("createLessonPanel");
         if (p) {
@@ -1361,7 +1425,7 @@
             '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap w-32">Actions</th>' +
             LESSON_TABLE_COLS.map(function (col) {
               return (
-                '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap max-w-[14rem]">' +
+                '<th class="' + lessonTableThClass(col) + '">' +
                 escapeHtml(col.label) +
                 "</th>"
               );
@@ -1375,7 +1439,7 @@
                     ? window.api.formatDateDisplayDdMmYyyy(v)
                     : v;
                 return (
-                  '<td class="py-2 pr-3 text-xs align-top whitespace-pre-wrap break-words max-w-[16rem]">' +
+                  '<td class="' + lessonTableTdClass(col) + '">' +
                   escapeHtml(disp) +
                   "</td>"
                 );
@@ -1397,7 +1461,7 @@
           '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap w-36">Actions</th>' +
           LESSON_TABLE_COLS.map(function (col) {
             return (
-              '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap max-w-[14rem]">' +
+              '<th class="' + lessonTableThClass(col) + '">' +
               escapeHtml(col.label) +
               "</th>"
             );
@@ -1411,7 +1475,7 @@
                   ? window.api.formatDateDisplayDdMmYyyy(v)
                   : v;
               return (
-                '<td class="py-2 pr-3 text-xs align-top whitespace-pre-wrap break-words max-w-[16rem]">' +
+                '<td class="' + lessonTableTdClass(col) + '">' +
                 escapeHtml(disp) +
                 "</td>"
               );
@@ -1464,10 +1528,17 @@
         var colCount = filteredHeaders.length;
         headRow.innerHTML = filteredHeaders
           .map(function (h) {
+            var hn = String(h || "")
+              .trim()
+              .toLowerCase()
+              .replace(/\s+/g, "");
+            var isClassTime =
+              hn === "classtime" || hn === "class_time" || hn === "class-time";
+            var thCls =
+              "py-2 pr-3 font-medium whitespace-nowrap max-w-[14rem]" +
+              (isClassTime ? " lr-col-class-time" : " text-slate-400");
             return (
-              '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap max-w-[14rem]">' +
-              escapeHtml(h) +
-              "</th>"
+              '<th class="' + thCls + '">' + escapeHtml(h) + "</th>"
             );
           })
           .join("");
@@ -1483,10 +1554,22 @@
             .map(function (row) {
               var cells = Array.isArray(row) ? row : [];
               var parts = [];
+              var outCi = 0;
               for (var ci = 0; ci < cells.length && ci < keepCol.length; ci++) {
                 if (!keepCol[ci]) {
                   continue;
                 }
+                var hdr = filteredHeaders[outCi] || "";
+                outCi++;
+                var hn = String(hdr || "")
+                  .trim()
+                  .toLowerCase()
+                  .replace(/\s+/g, "");
+                var isClassTime =
+                  hn === "classtime" || hn === "class_time" || hn === "class-time";
+                var tdCls =
+                  "py-2 pr-3 text-xs align-top whitespace-pre-wrap break-words max-w-[16rem]" +
+                  (isClassTime ? " lr-col-class-time" : "");
                 var cStr = cells[ci] != null ? String(cells[ci]) : "";
                 var disp =
                   window.api &&
@@ -1494,9 +1577,7 @@
                     ? window.api.formatDateDisplayDdMmYyyy(cStr)
                     : cStr;
                 parts.push(
-                  '<td class="py-2 pr-3 text-xs align-top whitespace-pre-wrap break-words max-w-[16rem]">' +
-                    escapeHtml(disp) +
-                    "</td>"
+                  '<td class="' + tdCls + '">' + escapeHtml(disp) + "</td>"
                 );
               }
               return '<tr class="border-b border-white/5">' + parts.join("") + "</tr>";
@@ -2059,7 +2140,7 @@
         if (!d || d.type !== "sportCoach.clubContext") {
           return;
         }
-        var cid = String(d.clubId || d.uid || "").trim();
+        var cid = String(d.club_id || d.clubId || d.uid || "").trim();
         if (cid) {
           setUidLabels(cid);
         }

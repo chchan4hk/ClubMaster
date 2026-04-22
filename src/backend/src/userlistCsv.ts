@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { looksLikeBcrypt, verifyPassword } from "./userLoginPassword";
 import { readFileCached } from "./dataFileCache";
+import { isMongoConfigured } from "./db/DBConnection";
 
 export type CsvUser = {
   uid: string;
@@ -73,6 +74,10 @@ C0000,administrator,admin,admin123,System Admin,YES,2024-01-15,,,ACTIVE,
 
 export function ensureUserlistFileExists(): void {
   ensureDataDir();
+  /** Login accounts live in MongoDB `ClubMaster_DB.userLogin` — do not seed `userLogin.csv`. */
+  if (isMongoConfigured()) {
+    return;
+  }
   const csvEnv =
     Boolean(process.env.USERLOGIN_CSV_PATH?.trim()) ||
     Boolean(process.env.USERLIST_CSV_PATH?.trim());
