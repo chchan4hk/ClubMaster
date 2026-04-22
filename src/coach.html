@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>ClubMaster - Coach</title>
   <link rel="stylesheet" href="css/dashboard-metal-nav.css" />
+  <link rel="stylesheet" href="css/overview-stage-photo.css" />
   <style>
     *,
     *::before,
@@ -251,14 +252,11 @@
     <div id="panelOverview" class="cm-middle-frame" aria-label="Coach shortcuts">
       <div class="cm-image-stage">
         <div class="cm-image-pin">
-          <img
-            class="cm-middle-frame__photo"
-            src="source/image/coach.webp"
-            alt=""
-            width="2400"
-            height="1416"
-            decoding="async"
-            loading="lazy" />
+          <div
+            class="cm-middle-frame__photo cm-overview-bg-lazy"
+            role="img"
+            aria-label="Coach overview"
+            data-overview-bg="source/image/coach.webp"></div>
           <a class="cm-hotspot" href="#" data-dashboard-iframe="backend/student_modules/student_information/student-information.html" title="Student Information"
             style="left: 2.5%; top: 3.5%; width: 29.5%; height: 44%;" aria-label="Student Information"></a>
           <a class="cm-hotspot" href="#" data-dashboard-iframe="backend/prize_modules/prize_list/prize-list.html" title="Prize List"
@@ -277,6 +275,7 @@
     <iframe id="panelFrame" title="Dashboard panel" class="cm-iframe-panel hidden"></iframe>
   </main>
 
+  <script src="js/overview-lazy-bg.js"></script>
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/dashboard-common.js"></script>

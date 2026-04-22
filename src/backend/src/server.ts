@@ -79,6 +79,7 @@ function resolveStaticRoot(): string {
 }
 
 const staticRoot = resolveStaticRoot();
+const sourceImageStatic = path.join(staticRoot, "source", "image");
 const dataClubStatic = path.join(backendRoot, "data_club");
 const adminDataStatic = path.join(backendRoot, "data", "admin");
 
@@ -118,6 +119,10 @@ app.use(slowRequestLogger);
 
 const isProd = process.env.NODE_ENV === "production";
 const STATIC_MAX_AGE_MS = 86400000;
+/** WebP/JPEG overview art: long cache + ETag (mounted before generic static). */
+const SOURCE_IMAGE_CACHE_MS = isProd
+  ? 7 * 24 * 60 * 60 * 1000
+  : 60 * 60 * 1000;
 
 /** Homepage: serve login UI (avoid redirect — some proxies/CDNs mishandle `/` → `/main.html`). */
 app.get("/", (_req, res) => {
@@ -394,6 +399,13 @@ app.use("/api/coach/salary-payment", createCoachSalaryPaymentRouter());
  * Web UI (main.html, js/, …). Mounted after /api routes so paths like `/api/coach-manager/coachsalary`
  * are never shadowed by a static file under the web root.
  */
+app.use(
+  "/source/image",
+  express.static(sourceImageStatic, {
+    maxAge: SOURCE_IMAGE_CACHE_MS,
+    etag: true,
+  }),
+);
 app.use(
   express.static(staticRoot, isProd ? { maxAge: STATIC_MAX_AGE_MS, etag: true } : {}),
 );

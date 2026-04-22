@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>ClubMaster - Admin</title>
   <link rel="stylesheet" href="css/dashboard-metal-nav.css" />
+  <link rel="stylesheet" href="css/overview-stage-photo.css" />
   <style>
     *,
     *::before,
@@ -278,14 +279,11 @@
     <div id="panelOverview" class="cm-middle-frame" aria-label="Administrator shortcuts">
       <div class="cm-image-stage">
         <div class="cm-image-pin">
-          <img
-            class="cm-middle-frame__photo"
-            src="source/image/admin.webp"
-            alt=""
-            width="2400"
-            height="1416"
-            decoding="async"
-            fetchpriority="high" />
+          <div
+            class="cm-middle-frame__photo cm-overview-bg-lazy"
+            role="img"
+            aria-label="Administrator overview"
+            data-overview-bg="source/image/admin.webp"></div>
           <div class="cm-hotspot-layer cm-hotspot-layer--2x3">
             <a class="cm-hotspot" href="coming_soon.html?m=admin-sport-activation" title="Sport Activation"
               aria-label="Sport Activation"></a>
@@ -304,6 +302,7 @@
     <iframe id="panelFrame" title="Dashboard panel" class="cm-iframe-panel hidden"></iframe>
   </main>
 
+  <script src="js/overview-lazy-bg.js"></script>
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/dashboard-common.js"></script>

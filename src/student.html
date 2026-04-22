@@ -6,6 +6,7 @@
   <title>ClubMaster - Student</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/overview-stage-photo.css" />
 </head>
 <body
   class="dashboard-dynamic-bg min-h-screen text-slate-100 p-6"
@@ -50,9 +51,11 @@
         <div
           class="relative w-full rounded-lg overflow-hidden border border-white/10 shadow-lg bg-slate-900/40"
           aria-label="Student shortcuts">
-          <img src="source/image/student.webp" alt=""
-            class="w-full h-auto max-w-full block pointer-events-none select-none"
-            loading="lazy" />
+          <div
+            class="student-overview-photo cm-overview-bg-lazy w-full max-w-full block pointer-events-none select-none"
+            role="img"
+            aria-label="Student overview"
+            data-overview-bg="source/image/student.webp"></div>
           <!-- 2×3 tile links; HKIT_Dashboard-style hotspots -->
           <a class="cm-hotspot" href="#" data-student-panel="/backend/coach_manager_modules/coach_information/coach-information.html" title="Coach Details"
             style="left: 2.5%; top: 3.5%; width: 29.5%; height: 44%;" aria-label="Coach Details"></a>
@@ -73,6 +76,7 @@
     </div>
   </main>
 
+  <script src="js/overview-lazy-bg.js"></script>
   <script src="js/dashboard-dynamic-bg.js"></script>
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>

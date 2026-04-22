@@ -1,0 +1,56 @@
+/**
+ * Overview stage: large WebP as CSS background (lazy-loaded via data-overview-bg + overview-lazy-bg.js).
+ * Replaces <img> so decoding does not block layout; background-size matches prior object-fit: contain.
+ *
+ * With a lazy <div>, hotspots stay position:absolute and no longer contribute to the pin’s size.
+ * The pin must establish a width so the child’s width:100% + aspect-ratio resolve (otherwise ~0×0,
+ * IO never loads, and no background appears).
+ */
+.cm-middle-frame .cm-image-pin {
+  width: 100%;
+}
+
+.cm-middle-frame__photo.cm-overview-bg-lazy {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 2400 / 1416;
+  max-height: min(78vh, 1200px);
+  margin: 0 auto;
+  align-self: center;
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: contain;
+  background-color: #050505;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.cm-middle-frame__photo.cm-overview-bg-lazy.cm-overview-bg-loaded {
+  background-color: transparent;
+}
+
+.cm-middle-frame__photo.cm-overview-bg-lazy.cm-overview-bg-error {
+  background-color: #1c1917;
+}
+
+/* Student glass dashboard overview (same lazy pattern, no .cm-middle-frame wrapper) */
+.student-overview-photo.cm-overview-bg-lazy {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 2400 / 1416;
+  min-height: 8rem;
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: contain;
+  background-color: #0f172a;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.student-overview-photo.cm-overview-bg-lazy.cm-overview-bg-loaded {
+  background-color: transparent;
+}
