@@ -24,6 +24,8 @@ const doc: ClubInfoInsert = {
   Club_name: "流星羽毛球會",
   country: "Hong Kong",
   setup_date: "2023/7/26",
+  contact_point: "",
+  contact_email: "",
   club_desc:
     "建立羽毛球聯誼交流平台, 增加波友之間的友誼, 將他們的羽毛球經驗和心得",
   club_logo: "Image/club_logo.jpg",

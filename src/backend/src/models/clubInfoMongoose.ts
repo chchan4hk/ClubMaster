@@ -43,6 +43,8 @@ export interface IClubInfo {
   Club_name: string;
   country: string;
   setup_date: Date;
+  contact_point: string;
+  contact_email: string;
   club_desc: string;
   club_logo: string;
   club_payment_payme: string;
@@ -90,6 +92,18 @@ const clubInfoSchema = new Schema<IClubInfo>(
     setup_date: {
       type: Date,
       required: [true, "setup_date is required"],
+    },
+    contact_point: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: [200, "contact_point is too long"],
+    },
+    contact_email: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: [320, "contact_email is too long"],
     },
     club_desc: {
       type: String,

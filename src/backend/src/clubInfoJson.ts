@@ -14,13 +14,15 @@ export const CLUB_INFO_CSV_LEGACY = "ClubInfo.csv";
 
 /** Human-readable field order label (API `headerLine` / tabular view). */
 export const CLUB_INFO_FIELD_ORDER_LABEL =
-  "Sport_type, Club_name,country,setup_date, club_desc,club_logo,lastUpdate_date";
+  "Sport_type, Club_name,country,setup_date,contact_point,contact_email, club_desc,club_logo,lastUpdate_date";
 
 const CLUB_INFO_FIELD_KEYS: string[] = [
   "Sport_type",
   "Club_name",
   "country",
   "setup_date",
+  "contact_point",
+  "contact_email",
   "club_desc",
   "club_logo",
   "lastUpdate_date",
@@ -280,6 +282,8 @@ function canonicalRowFromLegacyCsv(
     Club_name: idx.clubName >= 0 ? getCell(c, idx.clubName) : "",
     country: idx.country >= 0 ? getCell(c, idx.country) : "",
     setup_date: idx.setupDate >= 0 ? getCell(c, idx.setupDate) : "",
+    contact_point: "",
+    contact_email: "",
     club_desc: idx.clubDesc >= 0 ? getCell(c, idx.clubDesc) : "",
     club_logo: idx.clubLogo >= 0 ? getCell(c, idx.clubLogo) : "",
     lastUpdate_date: idx.lastUpdate >= 0 ? getCell(c, idx.lastUpdate) : "",
@@ -448,6 +452,16 @@ export function writeClubInfoFromPatch(
   const name = pickField(body, ["Club_name", "club_name"], can.Club_name);
   const country = pickField(body, ["country", "Country"], can.country);
   const setup = pickField(body, ["setup_date", "setupDate"], can.setup_date);
+  const contactPoint = pickField(
+    body,
+    ["contact_point", "Contact_Point", "Contact Point", "contactPoint"],
+    can.contact_point,
+  );
+  const contactEmail = pickField(
+    body,
+    ["contact_email", "Contact_Email", "Contact Email", "contactEmail"],
+    can.contact_email,
+  );
   const desc = pickField(body, ["club_desc", "clubDesc"], can.club_desc);
   const logo = pickField(body, ["club_logo", "clubLogo"], can.club_logo);
 
@@ -455,6 +469,8 @@ export function writeClubInfoFromPatch(
   can.Club_name = name;
   can.country = country;
   can.setup_date = setup;
+  can.contact_point = contactPoint;
+  can.contact_email = contactEmail;
   can.club_desc = desc;
   can.club_logo = logo;
   can.lastUpdate_date = lastUpdateDate;

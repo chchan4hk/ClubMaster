@@ -81,7 +81,7 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           <div>
             <label for="fClubName" class="block text-xs text-slate-400 mb-1">Club Name</label>
             <input id="fClubName" type="text" readonly
@@ -90,6 +90,16 @@
           <div>
             <label for="fSetupDate" class="block text-xs text-slate-400 mb-1">Setup Date</label>
             <input id="fSetupDate" type="text" readonly placeholder="DD/MM/YYYY"
+              class="club-field w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-100 text-sm cursor-not-allowed" />
+          </div>
+          <div>
+            <label for="fContactPoint" class="block text-xs text-slate-400 mb-1">Contact Point</label>
+            <input id="fContactPoint" type="text" readonly
+              class="club-field w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-100 text-sm cursor-not-allowed" />
+          </div>
+          <div>
+            <label for="fContactEmail" class="block text-xs text-slate-400 mb-1">Contact Email</label>
+            <input id="fContactEmail" type="email" readonly autocomplete="email"
               class="club-field w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-100 text-sm cursor-not-allowed" />
           </div>
         </div>
@@ -491,6 +501,18 @@
               ? window.api.formatStoredDateToDdMmYyyy(sd)
               : sd;
         })();
+        document.getElementById("fContactPoint").value = fieldGet(f, [
+          "contact_point",
+          "Contact_Point",
+          "Contact Point",
+          "contactPoint",
+        ]);
+        document.getElementById("fContactEmail").value = fieldGet(f, [
+          "contact_email",
+          "Contact_Email",
+          "Contact Email",
+          "contactEmail",
+        ]);
         document.getElementById("fClubDesc").value = fieldGet(f, ["club_desc", "clubDesc"]);
         document.getElementById("fClubLogo").value = fieldGet(f, ["club_logo", "clubLogo"]);
         applyPaymentQrHiddens(f);
@@ -508,6 +530,8 @@
                   document.getElementById("fSetupDate").value,
                 )
               : document.getElementById("fSetupDate").value.trim(),
+          contact_point: document.getElementById("fContactPoint").value.trim(),
+          contact_email: document.getElementById("fContactEmail").value.trim(),
           club_desc: document.getElementById("fClubDesc").value.trim(),
           club_logo: document.getElementById("fClubLogo").value.trim(),
           club_payment_payme: document.getElementById("fPayQrRel-payme").value.trim(),

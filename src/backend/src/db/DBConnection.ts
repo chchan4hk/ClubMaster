@@ -98,6 +98,10 @@ export interface ClubInfoDocument {
   Club_name: string;
   country: string;
   setup_date: string;
+  /** Club contact person (Coach Manager / Club Master). */
+  contact_point: string;
+  /** Club contact email. */
+  contact_email: string;
   club_desc: string;
   club_logo: string;
   club_payment_payme: string;
@@ -344,6 +348,8 @@ export const clubInfoJsonSchema: Document = {
     Club_name: { bsonType: "string" },
     country: { bsonType: "string" },
     setup_date: { bsonType: "string" },
+    contact_point: { bsonType: "string" },
+    contact_email: { bsonType: "string" },
     club_desc: { bsonType: "string" },
     club_logo: { bsonType: "string" },
     club_payment_payme: { bsonType: "string" },

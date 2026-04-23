@@ -46,6 +46,8 @@ function defaultClubInfoInsert(
     Club_name: clubDisplayName.trim(),
     country: "",
     setup_date: "",
+    contact_point: "",
+    contact_email: "",
     club_desc: "",
     club_logo: "",
     club_payment_payme: "",
@@ -83,6 +85,8 @@ export function clubInfoDocumentToCoachFields(
     Club_name: String(doc.Club_name ?? ""),
     country: String(doc.country ?? ""),
     setup_date: String(doc.setup_date ?? ""),
+    contact_point: String(doc.contact_point ?? ""),
+    contact_email: String(doc.contact_email ?? ""),
     club_desc: String(doc.club_desc ?? ""),
     club_logo: String(doc.club_logo ?? ""),
     lastUpdate_date: String(doc.lastUpdate_date ?? ""),
@@ -103,6 +107,8 @@ export function clubInfoDocumentToRaw(doc: ClubInfoDocument): ClubInfoRaw {
     "Club_name",
     "country",
     "setup_date",
+    "contact_point",
+    "contact_email",
     "club_desc",
     "club_logo",
     "lastUpdate_date",
@@ -140,6 +146,16 @@ export async function updateClubInfoFromBodyPatch(
   const name = pickField(body, ["Club_name", "club_name"], can.Club_name);
   const country = pickField(body, ["country", "Country"], can.country);
   const setup = pickField(body, ["setup_date", "setupDate"], can.setup_date);
+  const contactPoint = pickField(
+    body,
+    ["contact_point", "Contact_Point", "Contact Point", "contactPoint"],
+    can.contact_point,
+  );
+  const contactEmail = pickField(
+    body,
+    ["contact_email", "Contact_Email", "Contact Email", "contactEmail"],
+    can.contact_email,
+  );
   const desc = pickField(body, ["club_desc", "clubDesc"], can.club_desc);
   const logo = pickField(body, ["club_logo", "clubLogo"], can.club_logo);
   const currency = pickField(body, ["Currency", "currency"], can.Currency);
@@ -149,6 +165,8 @@ export async function updateClubInfoFromBodyPatch(
     Club_name: name,
     country,
     setup_date: setup,
+    contact_point: contactPoint,
+    contact_email: contactEmail,
     club_desc: desc,
     club_logo: logo,
     Currency: (currency || cur.Currency || "HKD").trim() || "HKD",
