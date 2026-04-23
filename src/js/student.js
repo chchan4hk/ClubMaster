@@ -7,7 +7,8 @@ if (window.dashboardInit("Student", "Student")) {
     }
     return (
       src.indexOf("coach_manager_modules") !== -1 ||
-      src.indexOf("lesson_modules") !== -1
+      src.indexOf("lesson_modules") !== -1 ||
+      src.indexOf("payment_modules") !== -1
     );
   }
 
@@ -56,67 +57,50 @@ if (window.dashboardInit("Student", "Student")) {
     });
   }
 
-  function refreshStudentPaymentLinkWithClub() {
-    var pay = document.getElementById("studentPaymentLink");
-    if (!pay) {
-      return;
-    }
-    function apply(cid) {
-      if (!cid) {
-        return;
-      }
-      pay.href =
-        "/student/payment?club_id=" +
-        encodeURIComponent(cid) +
-        "&clubId=" +
-        encodeURIComponent(cid);
+  function appendClubToIframeSrcIfNeeded(src) {
+    var s = String(src || "").trim();
+    if (!s || !moduleSrcNeedsClubFolder(s)) {
+      return s;
     }
     var r = resolveClubFolderFromDom();
     if (r.cid) {
-      apply(r.cid);
-      return;
+      return applyClubQueryToSrc(s, r.cid, r.cname);
     }
-    syncClubFolderFromMe()
-      .then(function (next) {
-        apply(next.cid);
-      })
-      .catch(function () {
-        /* keep default href */
-      });
+    return s;
   }
 
-  document.querySelectorAll("a.cm-hotspot[data-student-panel]").forEach(function (a) {
-    a.addEventListener("click", function (ev) {
-      ev.preventDefault();
-      var src = a.getAttribute("data-student-panel");
-      if (!src || typeof window.openDashboardPanelIframe !== "function") {
-        return;
-      }
+  document.getElementById("panelOverview")?.addEventListener("click", function (ev) {
+    var link = ev.target.closest("a.cm-hotspot[data-dashboard-iframe]");
+    if (!link) {
+      return;
+    }
+    ev.preventDefault();
+    var src = link.getAttribute("data-dashboard-iframe");
+    if (!src || typeof window.openDashboardPanelIframe !== "function") {
+      return;
+    }
 
-      function openResolved(finalSrc) {
-        window.openDashboardPanelIframe(finalSrc, null);
-      }
+    function openResolved(finalSrc) {
+      window.openDashboardPanelIframe(finalSrc, document.getElementById("navOverview"));
+    }
 
-      if (!moduleSrcNeedsClubFolder(src)) {
+    var withClub = appendClubToIframeSrcIfNeeded(src);
+    if (withClub !== src || resolveClubFolderFromDom().cid) {
+      openResolved(withClub);
+      return;
+    }
+
+    syncClubFolderFromMe()
+      .then(function (next) {
+        openResolved(
+          moduleSrcNeedsClubFolder(src)
+            ? applyClubQueryToSrc(src, next.cid, next.cname)
+            : src
+        );
+      })
+      .catch(function () {
         openResolved(src);
-        return;
-      }
-
-      var r = resolveClubFolderFromDom();
-      if (r.cid) {
-        openResolved(applyClubQueryToSrc(src, r.cid, r.cname));
-        return;
-      }
-
-      syncClubFolderFromMe()
-        .then(function (next) {
-          openResolved(applyClubQueryToSrc(src, next.cid, next.cname));
-        })
-        .catch(function () {
-          openResolved(applyClubQueryToSrc(src, r.cid, r.cname));
-        });
-    });
+      });
   });
 
-  refreshStudentPaymentLinkWithClub();
 }
