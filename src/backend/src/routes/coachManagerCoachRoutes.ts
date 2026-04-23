@@ -30,6 +30,8 @@ import { sportCoachDebugOn } from "../sportCoachDebug";
 import {
   allocateNextCoachId,
   appendCoachRow,
+  bumpNumericCoachLoginStyleId,
+  coachIdsEqual,
   COACH_LIST_FILENAME,
   coachCsvRowToApiFields,
   coachListPath,
@@ -376,11 +378,31 @@ export function createCoachManagerCoachRouter(): Router {
       return;
     }
     const w = readCoachWriteBody(req.body);
-    const coachId = allocateNextCoachId(ctx.clubId);
-    if (await findUserByUidPreferred(coachId)) {
+    const rosterSnapshot = loadCoaches(ctx.clubId);
+    const rosterHasCoachId = (id: string) =>
+      rosterSnapshot.some((r) => coachIdsEqual(r.coachId, id));
+    let coachId = allocateNextCoachId(ctx.clubId);
+    const maxUidAttempts = 10_000;
+    for (let attempt = 0; attempt < maxUidAttempts; attempt++) {
+      if (!rosterHasCoachId(coachId) && !(await findUserByUidPreferred(coachId))) {
+        break;
+      }
+      const nextId = bumpNumericCoachLoginStyleId(coachId);
+      if (nextId === coachId) {
+        res.status(500).json({
+          ok: false,
+          error:
+            "Could not allocate a coach ID (unexpected ID format after collisions).",
+        });
+        return;
+      }
+      coachId = nextId;
+    }
+    if (rosterHasCoachId(coachId) || (await findUserByUidPreferred(coachId))) {
       res.status(409).json({
         ok: false,
-        error: "Coach UID already exists in user list; cannot allocate a new ID.",
+        error:
+          "Could not allocate a free coach UID after many attempts; check userLogin and roster consistency.",
       });
       return;
     }

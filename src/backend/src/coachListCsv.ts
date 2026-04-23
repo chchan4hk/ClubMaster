@@ -880,12 +880,26 @@ function nextCoachId(rows: CoachCsvRow[]): string {
   return `C${String(max + 1).padStart(COACH_NEW_ID_PAD, "0")}`;
 }
 
+/** Bump `C######` by one (Mongo `userLogin.uid` is global across clubs). */
+export function bumpNumericCoachLoginStyleId(current: string): string {
+  const s = String(current ?? "").replace(/^\uFEFF/, "").trim();
+  const m = s.match(/^C(\d+)$/i);
+  if (!m) {
+    return s;
+  }
+  const n = Number.parseInt(m[1]!, 10);
+  if (Number.isNaN(n) || n < 0) {
+    return s;
+  }
+  return `C${String(n + 1).padStart(COACH_NEW_ID_PAD, "0")}`;
+}
+
 function sanitizeCell(s: string): string {
   return String(s ?? "").replace(/,/g, " ").trim();
 }
 
 /** Match CoachID from CSV vs request (trim, strip BOM, ignore case). */
-function coachIdsEqual(a: string, b: string): boolean {
+export function coachIdsEqual(a: string, b: string): boolean {
   const x = String(a ?? "")
     .replace(/^\uFEFF/, "")
     .trim();

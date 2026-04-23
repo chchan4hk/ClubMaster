@@ -740,6 +740,20 @@ function nextStudentId(rows: StudentCsvRow[]): string {
   return `S${String(max + 1).padStart(STUDENT_NEW_ID_PAD, "0")}`;
 }
 
+/** Bump `S#########` by one (Mongo `userLogin.uid` is global across clubs). */
+export function bumpNumericStudentLoginStyleId(current: string): string {
+  const s = String(current ?? "").replace(/^\uFEFF/, "").trim();
+  const m = s.match(STUDENT_ID_RE);
+  if (!m) {
+    return s;
+  }
+  const n = Number.parseInt(m[1]!, 10);
+  if (Number.isNaN(n) || n < 0) {
+    return s;
+  }
+  return `S${String(n + 1).padStart(STUDENT_NEW_ID_PAD, "0")}`;
+}
+
 export function allocateNextStudentId(clubId: string): string {
   ensureStudentListFile(clubId);
   return nextStudentId(readStudentRowsFromDisk(clubId));
@@ -749,7 +763,7 @@ function sanitizeCell(s: string): string {
   return String(s ?? "").replace(/,/g, " ").trim();
 }
 
-function studentIdsEqual(a: string, b: string): boolean {
+export function studentIdsEqual(a: string, b: string): boolean {
   const x = String(a ?? "")
     .replace(/^\uFEFF/, "")
     .trim();

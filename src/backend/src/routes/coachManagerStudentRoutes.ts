@@ -33,12 +33,14 @@ import { getDataClubRootPath, isValidClubFolderId, loadCoaches } from "../coachL
 import {
   allocateNextStudentId,
   appendStudentRow,
+  bumpNumericStudentLoginStyleId,
   ensureStudentListFile,
   loadStudentListRaw,
   loadStudents,
   purgeStudentRowFromAllClubFolders,
   STUDENT_LIST_FILENAME,
   studentCsvRowToApiFields,
+  studentIdsEqual,
   studentListPath,
   studentListResolvedPath,
   updateStudentRow,
@@ -385,11 +387,31 @@ export function createCoachManagerStudentRouter(): Router {
       }
       studentCoach = (crow.coachName && crow.coachName.trim()) || studentCoach;
     }
-    const studentId = allocateNextStudentId(ctx.clubId);
-    if (await findUserByUidPreferred(studentId)) {
+    const rosterStudents = loadStudents(ctx.clubId);
+    const rosterHasStudentId = (id: string) =>
+      rosterStudents.some((r) => studentIdsEqual(r.studentId, id));
+    let studentId = allocateNextStudentId(ctx.clubId);
+    const maxUidAttempts = 10_000;
+    for (let attempt = 0; attempt < maxUidAttempts; attempt++) {
+      if (!rosterHasStudentId(studentId) && !(await findUserByUidPreferred(studentId))) {
+        break;
+      }
+      const nextId = bumpNumericStudentLoginStyleId(studentId);
+      if (nextId === studentId) {
+        res.status(500).json({
+          ok: false,
+          error:
+            "Could not allocate a student ID (unexpected ID format after collisions).",
+        });
+        return;
+      }
+      studentId = nextId;
+    }
+    if (rosterHasStudentId(studentId) || (await findUserByUidPreferred(studentId))) {
       res.status(409).json({
         ok: false,
-        error: "Student UID already exists in user list; cannot allocate a new ID.",
+        error:
+          "Could not allocate a free student UID after many attempts; check userLogin and roster consistency.",
       });
       return;
     }
