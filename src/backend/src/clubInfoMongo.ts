@@ -69,9 +69,25 @@ export async function getOrCreateClubInfoDocument(
   const id = clubId.trim();
   const onInsert = defaultClubInfoInsert(id, defaultClubDisplayName);
   await col.updateOne({ club_id: id }, { $setOnInsert: onInsert }, { upsert: true });
-  const doc = await col.findOne({ club_id: id });
+  let doc = await col.findOne({ club_id: id });
   if (!doc) {
     throw new Error("clubInfo: could not read document after upsert.");
+  }
+  /** Older rows pre-date these keys; `$setOnInsert` does not add them. Materialize so Mongo shows the fields. */
+  const row = doc as unknown as Record<string, unknown>;
+  const patch: Record<string, string> = {};
+  if (!Object.prototype.hasOwnProperty.call(row, "contact_point")) {
+    patch.contact_point = "";
+  }
+  if (!Object.prototype.hasOwnProperty.call(row, "contact_email")) {
+    patch.contact_email = "";
+  }
+  if (Object.keys(patch).length > 0) {
+    await col.updateOne({ club_id: id }, { $set: patch });
+    doc = await col.findOne({ club_id: id });
+    if (!doc) {
+      throw new Error("clubInfo: could not read document after contact field patch.");
+    }
   }
   return doc as ClubInfoDocument;
 }

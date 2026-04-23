@@ -224,6 +224,13 @@
       column-gap: var(--cm-hot-gap-col, 1.4%);
       row-gap: var(--cm-hot-gap-row, 1.05%);
     }
+    /* Same 5px nudge: Sign out + Overview / Profile / Password nav. */
+    body.coach-manager-page #logoutBtn {
+      margin-left: 5px;
+    }
+    body.coach-manager-page .cm-metal-panel {
+      padding-left: calc(0.65rem + 5px);
+    }
     .cm-hotspot-layer .cm-hotspot {
       position: relative;
       left: auto;
@@ -246,6 +253,21 @@
     a.cm-hotspot:focus-visible {
       outline: 2px solid rgba(212, 175, 55, 0.65);
       outline-offset: 2px;
+    }
+    /* 5px nudge: Club Master, Lesson Reservation, Coach Salary. */
+    .cm-hotspot-layer--3x3 > a.cm-hotspot:nth-child(1),
+    .cm-hotspot-layer--3x3 > a.cm-hotspot:nth-child(4),
+    .cm-hotspot-layer--3x3 > a.cm-hotspot:nth-child(7) {
+      transform: translateX(5px);
+    }
+    /* 10px nudge: Coach Information, Student Information, Lesson Payment Status, Prize List, Revenue, Upcoming Events. */
+    .cm-hotspot-layer--3x3 > a.cm-hotspot:nth-child(2),
+    .cm-hotspot-layer--3x3 > a.cm-hotspot:nth-child(3),
+    .cm-hotspot-layer--3x3 > a.cm-hotspot:nth-child(5),
+    .cm-hotspot-layer--3x3 > a.cm-hotspot:nth-child(6),
+    .cm-hotspot-layer--3x3 > a.cm-hotspot:nth-child(8),
+    .cm-hotspot-layer--3x3 > a.cm-hotspot:nth-child(9) {
+      transform: translateX(10px);
     }
 
     .cm-iframe-panel {
