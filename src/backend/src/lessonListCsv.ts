@@ -6,7 +6,7 @@ import {
   isValidClubFolderId,
   getDataClubRootPath,
 } from "./coachListCsv";
-import { readFileCached } from "./dataFileCache";
+import { invalidateDataFileCache, readFileCached } from "./dataFileCache";
 
 const LESSON_ID_RE = /^LE(\d+)$/i;
 
@@ -332,6 +332,8 @@ function writeLessonsToJsonFile(p: string, lessons: LessonCsvRow[]): void {
     lessons: lessons.map(lessonRowToStoredJson),
   };
   fs.writeFileSync(p, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+  /** So the next `loadLessons` sees this write (avoids stale cache on back-to-back increments). */
+  invalidateDataFileCache(p);
   retireLegacyLessonListCsvBesideJson(p);
 }
 
