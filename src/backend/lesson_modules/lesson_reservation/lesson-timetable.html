@@ -289,6 +289,66 @@
         return true;
       }
 
+      /**
+       * Each Mongo `LessonSeriesInfo` session row becomes one timetable row on that
+       * calendar date only (start = end = lesson_date, single weekday flag).
+       */
+      function lessonSeriesRowsToTimetableLessons(rows) {
+        var out = [];
+        if (!Array.isArray(rows)) {
+          return out;
+        }
+        for (var i = 0; i < rows.length; i++) {
+          var r = rows[i] || {};
+          if (String(r.status || "ACTIVE").trim().toUpperCase() === "INACTIVE") {
+            continue;
+          }
+          var dateStr = String(r.lesson_date || "").trim();
+          var dt = parseIsoDate(dateStr);
+          if (!dt) {
+            continue;
+          }
+          var dow = dt.getDay();
+          var ct = String(r.lesson_time || "").trim();
+          if (!ct) {
+            ct = "10:00";
+          }
+          var lid = String(r.lessonId || "").trim();
+          var cid = String(r.classId || "").trim();
+          var infoParts = [];
+          if (r.sportType && String(r.sportType).trim()) {
+            infoParts.push(String(r.sportType).trim());
+          }
+          if (r.year && String(r.year).trim()) {
+            infoParts.push(String(r.year).trim());
+          }
+          var n = normalizeLessonRow({
+            LessonID: lid,
+            class_id: cid || lid,
+            class_info: infoParts.length ? infoParts.join(" · ") : "—",
+            Sport_center: String(r.sportCenter || "").trim(),
+            coachName: String(r.coachName || "").trim(),
+            lesson_start_date: dateStr,
+            lesson_end_date: dateStr,
+            class_time: ct,
+            Year: String(r.year || "").trim(),
+            SportType: String(r.sportType || "").trim(),
+            Remarks: String(r.remarks || "").trim(),
+            status: String(r.status || "ACTIVE").trim() || "ACTIVE",
+            class_sun: dow === 0 ? "Y" : "N",
+            class_mon: dow === 1 ? "Y" : "N",
+            class_tue: dow === 2 ? "Y" : "N",
+            class_wed: dow === 3 ? "Y" : "N",
+            class_thur: dow === 4 ? "Y" : "N",
+            class_fri: dow === 5 ? "Y" : "N",
+            class_sat: dow === 6 ? "Y" : "N",
+          });
+          n.studentList = String(r.studentList || "").trim();
+          out.push(n);
+        }
+        return out;
+      }
+
       function collectYearsFromLessons(lessons) {
         var set = {};
         var y;
@@ -361,6 +421,9 @@
             L.class_sat,
           "Remarks: " + (L.Remarks || "—"),
         ];
+        if (L.studentList && String(L.studentList).trim()) {
+          lines.push("Roster: " + String(L.studentList).trim());
+        }
         return lines.join("\n");
       }
 
@@ -689,7 +752,7 @@
             return;
           }
           lessonsPath =
-            "/coach-manager/lessons/student-bookings?clubId=" +
+            "/coach-manager/lessons/student-lesson-series?clubId=" +
             encodeURIComponent(cidForApi);
         } else if (userRole === "Coach" && browseAllLessons) {
           if (!cidForApi) {
@@ -712,8 +775,30 @@
                 (data && data.error) || "Could not load lessons from server.",
               );
             }
-            var list = Array.isArray(data.lessons) ? data.lessons : [];
-            state.lessons = list.map(normalizeLessonRow);
+            var list;
+            if (studentMyLessonsOnly) {
+              list = lessonSeriesRowsToTimetableLessons(
+                Array.isArray(data.rows) ? data.rows : [],
+              );
+              var subSt = document.querySelector("header p.text-xs.text-slate-500");
+              if (subSt) {
+                var baseMsg =
+                  "Showing <strong>your lesson sessions</strong> from <code class=\"text-slate-400\">MongoDB LessonSeriesInfo</code> (same dates and times as <strong>List of Lessons</strong>).";
+                if (data.mongo === false && data.info) {
+                  subSt.innerHTML =
+                    '<span class="text-amber-200/90">' +
+                    escapeHtml(String(data.info)) +
+                    "</span><br/>" +
+                    baseMsg;
+                } else {
+                  subSt.innerHTML = baseMsg;
+                }
+              }
+            } else {
+              list = Array.isArray(data.lessons) ? data.lessons : [];
+              list = list.map(normalizeLessonRow);
+            }
+            state.lessons = list;
             if (data.clubId) {
               var cid = String(data.clubId).trim();
               state.clubId = cid;
@@ -837,7 +922,7 @@
           var qStu = new URLSearchParams(window.location.search || "");
           if (qStu.get("myLessons") === "1") {
             subSt.innerHTML =
-              "Showing only <strong>your lessons</strong> — reserved slots from <code class=\"text-slate-400\">LessonReserveList.json</code> with details from <code class=\"text-slate-400\">LessonList.json</code> (same as Student My Bookings).";
+              "Loading <strong>your lesson sessions</strong> from <code class=\"text-slate-400\">MongoDB LessonSeriesInfo</code> (same as <strong>List of Lessons</strong>)…";
           } else {
             subSt.innerHTML =
               "Timetable uses the full club lesson list from the server.";

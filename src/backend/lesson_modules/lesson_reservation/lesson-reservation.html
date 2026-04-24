@@ -71,6 +71,21 @@
     #fullLessonListBody td.lr-col-class-time {
       color: #292524;
     }
+
+    /* Lesson Series — green / gold metallic */
+    .btn-lesson-series-metallic {
+      background: linear-gradient(165deg, #ecfccb 0%, #a3e635 22%, #65a30d 55%, #3f6212 100%);
+      border: 1px solid rgba(250, 250, 210, 0.65);
+      color: #1a2e05;
+      text-shadow: 0 1px 0 rgba(255, 255, 240, 0.45);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.55),
+        inset 0 -1px 0 rgba(54, 83, 20, 0.35),
+        0 2px 8px rgba(22, 40, 5, 0.35);
+    }
+    .btn-lesson-series-metallic:hover {
+      filter: brightness(1.06);
+    }
   </style>
 </head>
 <body class="profile-password-page cm-module-shell min-h-full p-4 sm:p-6">
@@ -87,7 +102,7 @@
     </header>
 
     <section class="glass rounded-xl border border-white/15 p-4 mb-6 overflow-x-auto">
-      <h2 class="text-lg font-semibold text-amber-200 mb-1">Lesson list</h2>
+      <h2 class="text-lg font-semibold text-amber-200 mb-1">Lesson List</h2>
       <p class="text-xs text-slate-500 mb-3">
         Use <strong>Update</strong> on a row to edit, or <strong>Create New Lesson</strong> below to add.
       </p>
@@ -519,6 +534,37 @@
     </div>
   </div>
 
+  <div id="lessonSeriesBackdrop" class="hidden fixed inset-0 z-[101] flex items-center justify-center bg-stone-950/65 backdrop-blur-sm p-4"
+    aria-modal="true" role="dialog" aria-labelledby="lessonSeriesTitle">
+    <div
+      class="relative max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col rounded-xl border border-amber-200/55 bg-gradient-to-br from-amber-50 via-stone-200 to-stone-500 text-stone-800 shadow-[0_18px_50px_rgba(55,45,30,0.38),inset_0_1px_0_rgba(255,253,240,0.9)] ring-1 ring-amber-100/45">
+      <div class="pointer-events-none absolute inset-0 rounded-xl bg-gradient-to-b from-amber-100/35 via-amber-50/10 to-stone-600/25"></div>
+      <div class="relative flex flex-col min-h-0 flex-1 p-5 sm:p-6">
+        <h3 id="lessonSeriesTitle" class="text-lg font-semibold text-stone-900 mb-1 tracking-tight drop-shadow-[0_1px_0_rgba(255,251,235,0.8)]">
+          Lesson series
+        </h3>
+        <p id="lessonSeriesSubtitle" class="text-xs text-stone-600 mb-3 border-b border-amber-200/45 pb-3">
+        </p>
+        <p id="lessonSeriesLoadErr" class="hidden text-sm text-red-700 mb-2"></p>
+        <div id="lessonSeriesRowsScroll" class="overflow-y-auto flex-1 min-h-0 pr-1 space-y-3 mb-4">
+          <div id="lessonSeriesRowsContainer" class="space-y-3"></div>
+        </div>
+        <p id="lessonSeriesSaveErr" class="hidden text-sm text-red-700 mb-2"></p>
+        <p id="lessonSeriesSaveOk" class="hidden text-sm text-emerald-800 mb-2"></p>
+        <div class="flex flex-wrap justify-end gap-2 pt-2 border-t border-amber-200/45 shrink-0">
+          <button type="button" id="lessonSeriesCancel"
+            class="btn-cancel-metallic-brown rounded-lg px-4 py-2 text-sm font-medium">
+            Cancel
+          </button>
+          <button type="button" id="lessonSeriesConfirm"
+            class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="assignStudentBackdrop" class="hidden fixed inset-0 z-[102] flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4"
     aria-modal="true" role="dialog" aria-labelledby="assignStudentTitle">
     <div
@@ -710,6 +756,10 @@
       var LESSON_LIST_PAGE_SIZE = 10;
       var lessonListPage = 1;
       var lessonListTotal = 0;
+      /** Lesson ID for the open Lesson series modal (Coach Manager). */
+      var lessonSeriesWorkingLessonId = "";
+      /** Editable rows: { lesson_date, lesson_time, sportCenter, courtNo, coachName, studentList, status, expanded } */
+      var lessonSeriesRowsState = [];
 
       function invalidateLessonListCache() {
         if (window.api && typeof window.api.clearJsonGetCache === "function") {
@@ -935,6 +985,325 @@
         if (backdrop) {
           backdrop.classList.add("hidden");
         }
+      }
+
+      function lessonSeriesSportOptionsHtml(selected) {
+        var sel = String(selected || "").trim();
+        var opts =
+          '<option value="">—</option>' +
+          cachedActiveSportCenters
+            .map(function (n) {
+              var v = String(n || "").trim();
+              if (!v) {
+                return "";
+              }
+              return (
+                '<option value="' +
+                escapeHtml(v) +
+                '"' +
+                (v === sel ? " selected" : "") +
+                ">" +
+                escapeHtml(v) +
+                "</option>"
+              );
+            })
+            .join("");
+        if (sel && cachedActiveSportCenters.indexOf(sel) < 0) {
+          opts +=
+            '<option value="' +
+            escapeHtml(sel) +
+            '" selected>' +
+            escapeHtml(sel) +
+            "</option>";
+        }
+        return opts;
+      }
+
+      function lessonSeriesCoachOptionsHtml(selected) {
+        var sel = String(selected || "").trim();
+        var opts =
+          '<option value="">—</option>' +
+          cachedCoachNames
+            .map(function (n) {
+              var v = String(n || "").trim();
+              if (!v) {
+                return "";
+              }
+              return (
+                '<option value="' +
+                escapeHtml(v) +
+                '"' +
+                (v === sel ? " selected" : "") +
+                ">" +
+                escapeHtml(v) +
+                "</option>"
+              );
+            })
+            .join("");
+        if (sel && cachedCoachNames.indexOf(sel) < 0) {
+          opts +=
+            '<option value="' +
+            escapeHtml(sel) +
+            '" selected>' +
+            escapeHtml(sel) +
+            "</option>";
+        }
+        return opts;
+      }
+
+      function lessonSeriesRowHtml(row, idx) {
+        var exp = row.expanded === true;
+        var summary =
+          '<div class="flex flex-wrap items-center gap-2 text-sm text-stone-800">' +
+          "<span class=\"font-semibold\">" +
+          escapeHtml(row.lesson_date || "") +
+          "</span>" +
+          '<span class="text-stone-600">' +
+          escapeHtml(row.lesson_time || "") +
+          "</span>" +
+          '<span class="text-stone-500 text-xs">' +
+          escapeHtml(row.sportCenter || "—") +
+          " · Court " +
+          escapeHtml(row.courtNo || "—") +
+          "</span>" +
+          "</div>";
+        var detailCls = exp ? "" : " hidden";
+        return (
+          '<div class="lesson-series-row rounded-lg border border-amber-200/55 bg-gradient-to-b from-amber-50/95 to-stone-200/90 p-3 shadow-sm" data-series-idx="' +
+          idx +
+          '">' +
+          '<div class="flex flex-wrap items-start justify-between gap-2">' +
+          summary +
+          '<span class="inline-flex flex-nowrap gap-1.5 shrink-0">' +
+          '<button type="button" class="lesson-series-btn-update rounded-md bg-amber-700/90 hover:bg-amber-600 text-white text-xs font-medium px-2.5 py-1.5" data-series-idx="' +
+          idx +
+          '">' +
+          (exp ? "Collapse" : "Update") +
+          "</button>" +
+          '<button type="button" class="lesson-series-btn-remove rounded-md bg-stone-700 hover:bg-stone-600 text-white text-xs font-medium px-2.5 py-1.5" data-series-idx="' +
+          idx +
+          '">Remove</button>' +
+          "</span>" +
+          "</div>" +
+          '<div class="lesson-series-detail mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm' +
+          detailCls +
+          '">' +
+          '<div><label class="block text-[11px] font-semibold text-stone-600 mb-0.5">Date</label>' +
+          '<input type="text" readonly class="ls-inp w-full rounded border border-stone-300 bg-stone-100 px-2 py-1.5 text-stone-700 text-sm" data-field="lesson_date" value="' +
+          escapeHtml(row.lesson_date || "") +
+          '" /></div>' +
+          '<div><label class="block text-[11px] font-semibold text-stone-600 mb-0.5">Class time</label>' +
+          '<input type="text" class="ls-inp w-full rounded border border-stone-300 bg-white px-2 py-1.5 text-stone-900 text-sm" data-field="lesson_time" value="' +
+          escapeHtml(row.lesson_time || "") +
+          '" /></div>' +
+          '<div class="sm:col-span-2"><label class="block text-[11px] font-semibold text-stone-600 mb-0.5">Sport Center</label>' +
+          '<select class="ls-inp w-full rounded border border-stone-300 bg-white px-2 py-1.5 text-stone-900 text-sm" data-field="sportCenter">' +
+          lessonSeriesSportOptionsHtml(row.sportCenter) +
+          "</select></div>" +
+          '<div><label class="block text-[11px] font-semibold text-stone-600 mb-0.5">Court no.</label>' +
+          '<input type="text" class="ls-inp w-full rounded border border-stone-300 bg-white px-2 py-1.5 text-stone-900 text-sm" data-field="courtNo" value="' +
+          escapeHtml(row.courtNo || "") +
+          '" /></div>' +
+          '<div><label class="block text-[11px] font-semibold text-stone-600 mb-0.5">Coach Name</label>' +
+          '<select class="ls-inp w-full rounded border border-stone-300 bg-white px-2 py-1.5 text-stone-900 text-sm" data-field="coachName">' +
+          lessonSeriesCoachOptionsHtml(row.coachName) +
+          "</select></div>" +
+          '<div class="sm:col-span-2"><label class="block text-[11px] font-semibold text-stone-600 mb-0.5">Student list</label>' +
+          '<textarea rows="2" class="ls-inp w-full rounded border border-stone-300 bg-white px-2 py-1.5 text-stone-900 text-sm" data-field="studentList">' +
+          escapeHtml(row.studentList || "") +
+          "</textarea></div>" +
+          '<div><label class="block text-[11px] font-semibold text-stone-600 mb-0.5">Status</label>' +
+          '<select class="ls-inp w-full rounded border border-stone-300 bg-white px-2 py-1.5 text-stone-900 text-sm" data-field="status">' +
+          '<option value="ACTIVE"' +
+          (String(row.status || "").toUpperCase() !== "INACTIVE" ? " selected" : "") +
+          ">ACTIVE</option>" +
+          '<option value="INACTIVE"' +
+          (String(row.status || "").toUpperCase() === "INACTIVE" ? " selected" : "") +
+          ">INACTIVE</option>" +
+          "</select></div>" +
+          "</div>" +
+          "</div>"
+        );
+      }
+
+      function renderLessonSeriesModalRows() {
+        var box = document.getElementById("lessonSeriesRowsContainer");
+        if (!box) {
+          return;
+        }
+        if (!lessonSeriesRowsState.length) {
+          box.innerHTML =
+            '<p class="text-sm text-stone-600 py-4">No session dates in the lesson period for the selected weekdays (check lesson start/end dates and day flags).</p>';
+          return;
+        }
+        box.innerHTML = lessonSeriesRowsState
+          .map(function (row, idx) {
+            return lessonSeriesRowHtml(row, idx);
+          })
+          .join("");
+      }
+
+      /**
+       * Rebuilds `lessonSeriesRowsState` from the DOM in document order so removed rows
+       * cannot leave stale entries in the array (which used to be POSTed on Confirm).
+       */
+      function syncLessonSeriesStateFromDom() {
+        var box = document.getElementById("lessonSeriesRowsContainer");
+        if (!box) {
+          return;
+        }
+        var prevByKey = {};
+        lessonSeriesRowsState.forEach(function (o) {
+          var k =
+            String(o.lesson_date || "").trim() +
+            "\t" +
+            String(o.lesson_time || "").trim();
+          prevByKey[k] = o;
+        });
+        var next = [];
+        box.querySelectorAll(".lesson-series-row").forEach(function (wrap) {
+          var fields = {};
+          wrap.querySelectorAll(".ls-inp").forEach(function (inp) {
+            var f = inp.getAttribute("data-field");
+            if (!f) {
+              return;
+            }
+            if (
+              inp.tagName === "SELECT" ||
+              inp.tagName === "TEXTAREA" ||
+              inp.tagName === "INPUT"
+            ) {
+              fields[f] = inp.value;
+            }
+          });
+          var lesson_date = String(fields.lesson_date || "").trim();
+          var lesson_time = String(fields.lesson_time || "").trim();
+          var k = lesson_date + "\t" + lesson_time;
+          var prev = prevByKey[k];
+          next.push({
+            lesson_date: lesson_date,
+            lesson_time: lesson_time,
+            sportCenter: String(fields.sportCenter || "").trim(),
+            courtNo: String(fields.courtNo || "").trim(),
+            coachName: String(fields.coachName || "").trim(),
+            studentList: String(fields.studentList || "").trim(),
+            status: String(fields.status || "ACTIVE").trim() || "ACTIVE",
+            expanded: prev && prev.expanded === true,
+          });
+        });
+        lessonSeriesRowsState = next;
+      }
+
+      function closeLessonSeriesModal() {
+        var bd = document.getElementById("lessonSeriesBackdrop");
+        if (bd) {
+          bd.classList.add("hidden");
+        }
+        lessonSeriesWorkingLessonId = "";
+        lessonSeriesRowsState = [];
+        var le = document.getElementById("lessonSeriesLoadErr");
+        var se = document.getElementById("lessonSeriesSaveErr");
+        var so = document.getElementById("lessonSeriesSaveOk");
+        if (le) {
+          le.classList.add("hidden");
+          le.textContent = "";
+        }
+        if (se) {
+          se.classList.add("hidden");
+          se.textContent = "";
+        }
+        if (so) {
+          so.classList.add("hidden");
+          so.textContent = "";
+        }
+      }
+
+      function openLessonSeriesModal(lessonId) {
+        var id = String(lessonId || "").trim();
+        if (!id) {
+          return;
+        }
+        var bd = document.getElementById("lessonSeriesBackdrop");
+        var sub = document.getElementById("lessonSeriesSubtitle");
+        var le = document.getElementById("lessonSeriesLoadErr");
+        if (!bd || !sub) {
+          return;
+        }
+        if (le) {
+          le.classList.add("hidden");
+          le.textContent = "";
+        }
+        lessonSeriesWorkingLessonId = id;
+        lessonSeriesRowsState = [];
+        sub.textContent = "Loading…";
+        var seriesCont = document.getElementById("lessonSeriesRowsContainer");
+        if (seriesCont) {
+          seriesCont.innerHTML =
+            '<p class="text-sm text-stone-600 py-3">Loading series…</p>';
+        }
+        bd.classList.remove("hidden");
+        window.api
+          .api(
+            "/coach-manager/lessons/lesson-series?lessonId=" + encodeURIComponent(id),
+            { method: "GET" },
+          )
+          .then(function (data) {
+            if (!data || !data.ok) {
+              throw new Error((data && data.error) || "Could not load lesson series.");
+            }
+            var meta =
+              (data.class_info ? data.class_info + " · " : "") +
+              (data.lessonId || id);
+            sub.textContent =
+              meta +
+              (data.source === "mongo"
+                ? " — saved series (MongoDB)"
+                : " — generated from lesson dates") +
+              (data.mongoConfigured === false
+                ? " — MongoDB not configured (Confirm will be unavailable)"
+                : "");
+            var rows = Array.isArray(data.rows) ? data.rows : [];
+            lessonSeriesRowsState = rows.map(function (r) {
+              return {
+                lesson_date: String(r.lesson_date || "").trim(),
+                lesson_time: String(r.lesson_time || "").trim(),
+                sportCenter: String(r.sportCenter || "").trim(),
+                courtNo: String(r.courtNo || "").trim(),
+                coachName: String(r.coachName || "").trim(),
+                studentList: String(r.studentList || "").trim(),
+                status: String(r.status || "ACTIVE").trim() || "ACTIVE",
+                expanded: false,
+              };
+            });
+            renderLessonSeriesModalRows();
+          })
+          .catch(function (e) {
+            var msg = e.message || "Could not load lesson series.";
+            if (le) {
+              le.textContent = msg;
+              le.classList.remove("hidden");
+            }
+            sub.textContent = id;
+            var seriesCont2 = document.getElementById("lessonSeriesRowsContainer");
+            if (seriesCont2) {
+              seriesCont2.innerHTML = "";
+            }
+          });
+      }
+
+      function collectLessonSeriesRowsForSave() {
+        syncLessonSeriesStateFromDom();
+        return lessonSeriesRowsState.map(function (r) {
+          return {
+            lesson_date: String(r.lesson_date || "").trim(),
+            lesson_time: String(r.lesson_time || "").trim(),
+            sportCenter: String(r.sportCenter || "").trim(),
+            courtNo: String(r.courtNo || "").trim(),
+            coachName: String(r.coachName || "").trim(),
+            studentList: String(r.studentList || "").trim(),
+            status: String(r.status || "ACTIVE").trim() || "ACTIVE",
+          };
+        });
       }
 
       function studentIdsWithActiveReservationForLesson(lessonId) {
@@ -1407,6 +1776,17 @@
         }
       }
 
+      function lessonSeriesButtonHtml(idx) {
+        if (role !== "CoachManager" || coachLessonsReadOnly) {
+          return "";
+        }
+        return (
+          '<button type="button" class="cm-row-lesson-series btn-lesson-series-metallic rounded-md text-xs font-semibold px-2.5 py-1.5" data-idx="' +
+          idx +
+          '">Lesson Series</button>'
+        );
+      }
+
       function renderLessonTableFromApi(lessons) {
         var headRow = document.getElementById("fullLessonListHeadRow");
         var tb = document.getElementById("fullLessonListBody");
@@ -1422,7 +1802,7 @@
         }
         if (coachLessonsReadOnly) {
           headRow.innerHTML =
-            '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap w-32">Actions</th>' +
+            '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap min-w-[11rem]">Actions</th>' +
             LESSON_TABLE_COLS.map(function (col) {
               return (
                 '<th class="' + lessonTableThClass(col) + '">' +
@@ -1447,9 +1827,12 @@
               return (
                 '<tr class="border-b border-white/5">' +
                 '<td class="py-2 pr-3 align-middle whitespace-nowrap">' +
+                '<span class="inline-flex flex-nowrap items-center gap-1.5">' +
                 '<button type="button" class="cm-row-reserved rounded-md bg-black hover:bg-neutral-900 text-white text-xs font-medium px-2.5 py-1.5 border border-white/10" data-idx="' +
                 idx +
-                '">Status</button></td>' +
+                '">Status</button>' +
+                lessonSeriesButtonHtml(idx) +
+                "</span></td>" +
                 tds +
                 "</tr>"
               );
@@ -1458,7 +1841,7 @@
           return;
         }
         headRow.innerHTML =
-          '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap w-36">Actions</th>' +
+          '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap min-w-[14rem]">Actions</th>' +
           LESSON_TABLE_COLS.map(function (col) {
             return (
               '<th class="' + lessonTableThClass(col) + '">' +
@@ -1489,7 +1872,9 @@
               '">Update</button>' +
               '<button type="button" class="cm-row-reserved rounded-md bg-black hover:bg-neutral-900 text-white text-xs font-medium px-2.5 py-1.5 border border-white/10" data-idx="' +
               idx +
-              '">Status</button></span></td>' +
+              '">Status</button>' +
+              lessonSeriesButtonHtml(idx) +
+              "</span></td>" +
               tds +
               "</tr>"
             );
@@ -1853,16 +2238,29 @@
         }
         tb.dataset.cmRowBound = "1";
         tb.addEventListener("click", function (ev) {
+          var btnSeries =
+            ev.target &&
+            ev.target.closest &&
+            ev.target.closest("button.cm-row-lesson-series");
           var btnUp =
             ev.target && ev.target.closest && ev.target.closest("button.cm-row-update");
           var btnRes =
             ev.target && ev.target.closest && ev.target.closest("button.cm-row-reserved");
-          var btn = btnUp || btnRes;
+          var btn = btnSeries || btnUp || btnRes;
           if (!btn) {
             return;
           }
           var idx = parseInt(btn.getAttribute("data-idx"), 10);
           if (isNaN(idx) || idx < 0 || idx >= cachedLessons.length) {
+            return;
+          }
+          if (btnSeries) {
+            var Ls = cachedLessons[idx];
+            var lid = String(Ls.LessonID || Ls.lessonId || "").trim();
+            if (!lid) {
+              return;
+            }
+            openLessonSeriesModal(lid);
             return;
           }
           if (btnRes) {
@@ -1910,6 +2308,115 @@
           closeReservedStatusModal();
         });
       }
+
+      (function bindLessonSeriesModalUi() {
+        var bd = document.getElementById("lessonSeriesBackdrop");
+        var rowsBox = document.getElementById("lessonSeriesRowsContainer");
+        if (!bd || bd.dataset.cmSeriesBound === "1") {
+          return;
+        }
+        bd.dataset.cmSeriesBound = "1";
+        bd.addEventListener("click", function (ev) {
+          if (ev.target === bd) {
+            closeLessonSeriesModal();
+          }
+        });
+        var cancel = document.getElementById("lessonSeriesCancel");
+        if (cancel) {
+          cancel.addEventListener("click", function () {
+            closeLessonSeriesModal();
+          });
+        }
+        var confirmBtn = document.getElementById("lessonSeriesConfirm");
+        if (confirmBtn) {
+          confirmBtn.addEventListener("click", function () {
+            var se = document.getElementById("lessonSeriesSaveErr");
+            var so = document.getElementById("lessonSeriesSaveOk");
+            var btn = document.getElementById("lessonSeriesConfirm");
+            if (se) {
+              se.classList.add("hidden");
+              se.textContent = "";
+            }
+            if (so) {
+              so.classList.add("hidden");
+              so.textContent = "";
+            }
+            if (!lessonSeriesWorkingLessonId) {
+              if (se) {
+                se.textContent = "No lesson selected.";
+                se.classList.remove("hidden");
+              }
+              return;
+            }
+            var rows = collectLessonSeriesRowsForSave();
+            if (btn) {
+              btn.disabled = true;
+            }
+            window.api
+              .api("/coach-manager/lessons/lesson-series/confirm", {
+                method: "POST",
+                body: JSON.stringify({
+                  lessonId: lessonSeriesWorkingLessonId,
+                  rows: rows,
+                }),
+              })
+              .then(function (data) {
+                if (!data || !data.ok) {
+                  throw new Error((data && data.error) || "Save failed.");
+                }
+                if (so) {
+                  so.textContent =
+                    data.message ||
+                    "Saved to MongoDB LessonSeriesInfo (" +
+                    (data.count != null ? data.count : rows.length) +
+                    " row(s)).";
+                  so.classList.remove("hidden");
+                }
+              })
+              .catch(function (e) {
+                if (se) {
+                  se.textContent = e.message || "Could not save lesson series.";
+                  se.classList.remove("hidden");
+                }
+              })
+              .finally(function () {
+                if (btn) {
+                  btn.disabled = false;
+                }
+              });
+          });
+        }
+        if (rowsBox) {
+          rowsBox.addEventListener("click", function (ev) {
+            var bUp =
+              ev.target &&
+              ev.target.closest &&
+              ev.target.closest("button.lesson-series-btn-update");
+            var bRm =
+              ev.target &&
+              ev.target.closest &&
+              ev.target.closest("button.lesson-series-btn-remove");
+            if (bUp) {
+              var iu = parseInt(bUp.getAttribute("data-series-idx"), 10);
+              syncLessonSeriesStateFromDom();
+              if (!isNaN(iu) && iu >= 0 && iu < lessonSeriesRowsState.length) {
+                lessonSeriesRowsState[iu].expanded =
+                  !lessonSeriesRowsState[iu].expanded;
+                renderLessonSeriesModalRows();
+              }
+              return;
+            }
+            if (bRm) {
+              var ir = parseInt(bRm.getAttribute("data-series-idx"), 10);
+              syncLessonSeriesStateFromDom();
+              if (!isNaN(ir) && ir >= 0 && ir < lessonSeriesRowsState.length) {
+                lessonSeriesRowsState.splice(ir, 1);
+                renderLessonSeriesModalRows();
+              }
+            }
+          });
+        }
+      })();
 
       var btnAssignStudent = document.getElementById("btnAssignStudentFromEdit");
       if (btnAssignStudent) {

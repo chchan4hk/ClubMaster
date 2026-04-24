@@ -47,6 +47,10 @@
       </table>
 
       <div class="mt-4 flex flex-wrap gap-2">
+        <button type="button" id="btnLessonSeriesMongo"
+          class="rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-100 font-medium px-4 py-2 text-sm shadow-sm">
+          List of Lessons
+        </button>
         <button type="button" id="btnLessonTimetable"
           class="rounded-lg bg-yellow-100 hover:bg-yellow-200/90 border border-yellow-200 text-slate-800 font-medium px-4 py-2 text-sm shadow-sm">
           Lesson TimeTable
@@ -335,6 +339,18 @@
       } else {
         loadStudentBookings();
       }
+
+      document.getElementById("btnLessonSeriesMongo").addEventListener("click", function () {
+        var cid = getLessonModuleClubId();
+        var qs = [];
+        if (cid) {
+          qs.push("clubId=" + encodeURIComponent(cid));
+        }
+        var url =
+          "/backend/student_modules/lessonSeries_booking/lesson-series-booking.html" +
+          (qs.length ? "?" + qs.join("&") : "");
+        window.open(url, "_blank", "noopener,noreferrer");
+      });
 
       document.getElementById("btnLessonTimetable").addEventListener("click", function () {
         var cid = getLessonModuleClubId();

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson series — Student</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body
+  class="dashboard-dynamic-bg min-h-screen text-slate-100 p-6"
+  style="--dashboard-bg-img: url('/source/image/student.webp');">
+  <div class="dynamic-bg-stack" aria-hidden="true">
+    <div class="dynamic-bg-photo"></div>
+    <div class="dynamic-bg-overlay"></div>
+    <canvas class="dynamic-bg-star-net"></canvas>
+    <div class="dynamic-bg-spot-glow"></div>
+  </div>
+
+  <div class="max-w-6xl mx-auto">
+    <header class="mb-6">
+      <p id="backLinkWrap">
+        <a id="backTopLink" href="/student.html" target="_top"
+          class="text-sm text-amber-400/90 hover:text-amber-300 underline-offset-2 hover:underline">
+          ← Go Back
+        </a>
+      </p>
+      <h1 class="text-2xl font-bold text-amber-300 mt-2">Lesson series (Mongo)</h1>
+      <p class="text-sm text-slate-400 mt-1">
+        Sessions from <code class="text-slate-500">ClubMaster_DB.LessonSeriesInfo</code> for your club, where the roster text includes your student ID or name.
+      </p>
+    </header>
+
+    <section class="glass rounded-xl border border-white/15 p-4 mb-6 overflow-x-auto">
+      <p id="seriesError" class="hidden text-sm text-red-300 mb-2"></p>
+      <p id="seriesWarn" class="hidden text-sm text-amber-200/90 mb-2"></p>
+      <table class="w-full text-sm text-left border-collapse min-w-max">
+        <thead>
+          <tr class="border-b border-white/10 text-slate-400">
+            <th class="py-2 pr-3 font-medium">Date</th>
+            <th class="py-2 pr-3 font-medium">Time</th>
+            <th class="py-2 pr-3 font-medium">Lesson</th>
+            <th class="py-2 pr-3 font-medium">Sport / Year / Class</th>
+            <th class="py-2 pr-3 font-medium">Centre</th>
+            <th class="py-2 pr-3 font-medium">Court</th>
+            <th class="py-2 pr-3 font-medium">Coach</th>
+            <th class="py-2 pr-3 font-medium">Status</th>
+            <th class="py-2 pr-3 font-medium">Roster</th>
+            <th class="py-2 pr-3 font-medium">Remarks</th>
+          </tr>
+        </thead>
+        <tbody id="seriesBody">
+          <tr><td class="py-4 text-slate-500" colspan="10">Loading…</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <script src="/js/dashboard-dynamic-bg.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    (function () {
+      var isFramed = false;
+      try {
+        isFramed = window.self !== window.top;
+      } catch (e) {
+        isFramed = true;
+      }
+
+      if (isFramed) {
+        var bw = document.getElementById("backLinkWrap");
+        if (bw) {
+          bw.classList.add("hidden");
+        }
+      }
+
+      if (!isFramed) {
+        if (!window.auth.guardPage("Student")) {
+          return;
+        }
+      }
+
+      function getLessonModuleClubId() {
+        var q = new URLSearchParams(window.location.search || "");
+        var id = (q.get("club_id") || q.get("clubId") || q.get("uid") || "").trim();
+        var ctx =
+          window.api &&
+          window.api.getClubFolderContext &&
+          window.api.getClubFolderContext();
+        if (ctx && ctx.clubId) {
+          id = id || String(ctx.clubId).trim();
+        }
+        return id;
+      }
+
+      function escapeHtml(s) {
+        if (s == null) {
+          return "";
+        }
+        return String(s)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function showErr(id, msg) {
+        var el = document.getElementById(id);
+        if (!el) {
+          return;
+        }
+        if (msg) {
+          el.textContent = msg;
+          el.classList.remove("hidden");
+        } else {
+          el.textContent = "";
+          el.classList.add("hidden");
+        }
+      }
+
+      function renderRows(rows) {
+        var body = document.getElementById("seriesBody");
+        if (!body) {
+          return;
+        }
+        body.innerHTML = "";
+        if (!rows || !rows.length) {
+          var tr = document.createElement("tr");
+          var td = document.createElement("td");
+          td.className = "py-4 text-slate-500";
+          td.colSpan = 10;
+          td.textContent = "No matching lesson series rows.";
+          tr.appendChild(td);
+          body.appendChild(tr);
+          return;
+        }
+        rows.forEach(function (r) {
+          var tr = document.createElement("tr");
+          tr.className = "border-b border-white/5 align-top";
+          var lessonLabel =
+            (r.lessonId && String(r.lessonId).trim()) ||
+            "—";
+          var sportLine = [
+            r.sportType,
+            r.year,
+            r.classId,
+          ]
+            .map(function (x) {
+              return x != null && String(x).trim() !== "" ? String(x).trim() : "";
+            })
+            .filter(Boolean)
+            .join(" · ");
+          [
+            r.lesson_date,
+            r.lesson_time,
+            lessonLabel,
+            sportLine || "—",
+            r.sportCenter,
+            r.courtNo,
+            r.coachName,
+            r.status,
+            r.studentList,
+            r.remarks,
+          ].forEach(function (cell) {
+            var td = document.createElement("td");
+            td.className = "py-2 pr-3 text-slate-200";
+            td.innerHTML = escapeHtml(cell);
+            tr.appendChild(td);
+          });
+          body.appendChild(tr);
+        });
+      }
+
+      function loadLessonSeries() {
+        showErr("seriesError", "");
+        showErr("seriesWarn", "");
+        var cid = getLessonModuleClubId();
+        if (!cid) {
+          showErr(
+            "seriesWarn",
+            "No club context. Open this page from the student dashboard or add ?clubId=CM… to the URL.",
+          );
+          renderRows([]);
+          return;
+        }
+        if (!window.api || typeof window.api.api !== "function") {
+          showErr("seriesError", "API client not loaded.");
+          renderRows([]);
+          return;
+        }
+        var qs = "clubId=" + encodeURIComponent(cid);
+        window.api
+          .api("/coach-manager/lessons/student-lesson-series?" + qs)
+          .then(function (d) {
+            if (!d || !d.ok) {
+              showErr("seriesError", (d && d.error) || "Request failed.");
+              renderRows([]);
+              return;
+            }
+            if (d.mongo === false && d.info) {
+              showErr("seriesWarn", String(d.info));
+            }
+            renderRows(d.rows || []);
+          })
+          .catch(function (e) {
+            var msg =
+              e && e.message
+                ? String(e.message)
+                : "Could not load lesson series.";
+            showErr("seriesError", msg);
+            renderRows([]);
+          });
+      }
+
+      window.addEventListener("message", function (ev) {
+        var d = ev && ev.data;
+        if (!d || typeof d !== "object") {
+          return;
+        }
+        if (d.type === "clubmaster:set-club-folder-context" && window.api && typeof window.api.setClubFolderContext === "function") {
+          var cid =
+            d.clubId != null && String(d.clubId).trim() !== ""
+              ? String(d.clubId).trim()
+              : "";
+          if (cid) {
+            window.api.setClubFolderContext(
+              cid,
+              d.clubName != null && String(d.clubName).trim() !== ""
+                ? String(d.clubName).trim()
+                : null,
+            );
+          }
+          loadLessonSeries();
+        }
+      });
+
+      if (window.api && typeof window.api.api === "function") {
+        window.api
+          .api("/me")
+          .then(function (d) {
+            var u = d.user || {};
+            var cfu =
+              u.club_folder_uid != null && String(u.club_folder_uid).trim() !== ""
+                ? String(u.club_folder_uid).trim()
+                : "";
+            if (cfu && window.api && typeof window.api.setClubFolderContext === "function") {
+              var cnSt =
+                u.club_name != null &&
+                String(u.club_name).trim() !== "" &&
+                u.club_name !== "—"
+                  ? String(u.club_name).trim()
+                  : null;
+              window.api.setClubFolderContext(cfu, cnSt);
+            }
+          })
+          .catch(function () {
+            /* ignore */
+          })
+          .finally(function () {
+            loadLessonSeries();
+          });
+      } else {
+        loadLessonSeries();
+      }
+    })();
+  </script>
+</body>
+</html>
