@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "lessons": [
+    {
+      "lessonId": "LE000001",
+      "sportType": "Badminton",
+      "year": "2026",
+      "classId": "2026221TD",
+      "classInfo": "Mic Club 成人精英班",
+      "classTime": "逢星期一 20:00 - 22:00",
+      "classFee": "1200",
+      "classSun": "N",
+      "classMon": "Y",
+      "classTue": "N",
+      "classWed": "N",
+      "classThur": "N",
+      "classFri": "N",
+      "classSat": "N",
+      "ageGroup": "Over 20",
+      "maxNumber": "8",
+      "frequency": "Weekly",
+      "lessonStartDate": "2026-04-07",
+      "lessonEndDate": "2026-07-09",
+      "sportCenter": "One silversea",
+      "courtNo": "",
+      "coachName": "Leslie NG",
+      "status": "ACTIVE",
+      "createdAt": "2026-04-23",
+      "lastUpdatedDate": "2026-04-23",
+      "remarks": "",
+      "ClubID": "CM00000008",
+      "ReservedNumber": "2"
+    }
+  ]
+}

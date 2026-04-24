@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "entries": {
+    "LR000003": {
+      "lessonReserveId": "LR000003",
+      "dueDate": "2026-03-31",
+      "payments": [
+        {
+          "paymentId": "PAY-mobr3fio-akbpfn",
+          "amount": 1200,
+          "method": "PayMe",
+          "reference": "—",
+          "paidAt": "2026-04-23"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "prizes": [
+    {
+      "PrizeID": "PR000001",
+      "ClubID": "CM00000008",
+      "Club_name": "Mic少Club",
+      "SportType": "Badminton",
+      "Year": "2026",
+      "Association": "Haaha",
+      "Competition": "Ncbda",
+      "Age_group": "20",
+      "Prize_type": "Men's Single",
+      "StudentName": "Leslie NG",
+      "Ranking": "Gold",
+      "Status": "ACTIVE",
+      "Created_at": "2026-04-23",
+      "LastUpdated_Date": "2026-04-23",
+      "VerifiedBy": "Leslie NG",
+      "Remarks": ""
+    },
+    {
+      "PrizeID": "PR000002",
+      "ClubID": "CM00000008",
+      "Club_name": "Mic少Club",
+      "SportType": "Badminton",
+      "Year": "2026",
+      "Association": "Jjh",
+      "Competition": "Hhh",
+      "Age_group": "10",
+      "Prize_type": "Men's Single",
+      "StudentName": "Student A",
+      "Ranking": "Silver",
+      "Status": "ACTIVE",
+      "Created_at": "2026-04-23",
+      "LastUpdated_Date": "2026-04-23",
+      "VerifiedBy": "Leslie NG",
+      "Remarks": ""
+    }
+  ]
+}

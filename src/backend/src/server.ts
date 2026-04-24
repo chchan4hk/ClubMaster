@@ -15,6 +15,7 @@ import {
 } from "./routes/userAccountRoutes";
 import {
   ensureClubInfoCollection,
+  ensureLessonSeriesInfoCollection,
   ensureUserLoginCollection,
   isMongoConfigured,
 } from "./db/DBConnection";
@@ -436,15 +437,19 @@ const server = app.listen(PORT, "0.0.0.0", () => {
     void Promise.all([
       ensureUserLoginCollection(),
       ensureClubInfoCollection(),
+      ensureLessonSeriesInfoCollection(),
     ])
       .then(() => {
         console.log(
-          "MongoDB: `userLogin` + `clubInfo` collections validated (see src/backend/src/db/DBConnection.ts).",
+          "MongoDB: `userLogin`, `clubInfo`, and `LessonSeriesInfo` collections validated (see src/backend/src/db/DBConnection.ts).",
         );
       })
       .catch((e) => {
         const msg = e instanceof Error ? e.message : String(e);
-        console.warn("MongoDB collection init (userLogin / clubInfo):", msg);
+        console.warn(
+          "MongoDB collection init (userLogin / clubInfo / LessonSeriesInfo):",
+          msg,
+        );
       });
   }
 });

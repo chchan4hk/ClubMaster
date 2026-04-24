@@ -1,5 +1,5 @@
 /**
- * MongoDB client + collections (`userLogin`, `clubInfo`, `basicInfo`, `LessonList`, `CoachSalary`, `PrizeList`, etc.) on the app database
+ * MongoDB client + collections (`userLogin`, `clubInfo`, `basicInfo`, `LessonList`, `LessonSeriesInfo`, `CoachSalary`, `PrizeList`, etc.) on the app database
  * (default name `ClubMaster_DB`, overridable via env — see `resolveUserLoginDatabaseName`).
  */
 import {
@@ -37,6 +37,12 @@ export const BASIC_INFO_LISTS_DOC_ID = "basicInfoLists";
 
 /** Per-club `LessonList.json` mirror in Mongo (`LessonList` collection, `_id` = club folder UID). */
 export const LESSON_LIST_COLLECTION = "LessonList";
+
+/**
+ * Per-session / series rows for lessons (e.g. one document per club + lesson + date/time slot).
+ * Lives in {@link DEFAULT_MONGO_APP_DATABASE} by default (see {@link resolveLessonSeriesInfoDatabaseName}).
+ */
+export const LESSON_SERIES_INFO_COLLECTION = "LessonSeriesInfo";
 
 /** Per-club coach salary rows (mirror of `data_club/{clubId}/CoachSalary.json` entries). */
 export const COACH_SALARY_COLLECTION = "CoachSalary";
@@ -190,6 +196,79 @@ export const lessonListJsonSchema: Document = {
     version: { bsonType: ["int", "long", "double"] },
     lessons: { bsonType: "array" },
     lastImportedAt: { bsonType: ["date", "null"] },
+  },
+  additionalProperties: true,
+};
+
+/**
+ * One row per lesson series / session instance in Mongo `LessonSeriesInfo`.
+ * Field names match the requested API shape (`ClubID`, `lessonId`, …).
+ */
+export interface LessonSeriesInfoDocument {
+  _id?: ObjectId;
+  ClubID: string;
+  lessonId: string;
+  sportType: string;
+  year: string;
+  classId: string;
+  /** Preferred format YYYY-MM-DD (stored as string for parity with file-backed lesson data). */
+  lesson_date: string;
+  lesson_time: string;
+  sportCenter: string;
+  courtNo: string;
+  coachName: string;
+  status: string;
+  createdAt: string;
+  lastUpdatedDate: string;
+  /** Optional free text; omit or use "" when not needed. */
+  remarks?: string;
+  /**
+   * Roster for this session row: prefer `string[]` in MongoDB; legacy docs may use a single
+   * comma / newline separated string.
+   */
+  studentList?: string | string[];
+}
+
+export type LessonSeriesInfoInsert = Omit<LessonSeriesInfoDocument, "_id">;
+
+/** MongoDB `$jsonSchema` validator for the `LessonSeriesInfo` collection. */
+export const lessonSeriesInfoJsonSchema: Document = {
+  bsonType: "object",
+  required: [
+    "ClubID",
+    "lessonId",
+    "sportType",
+    "year",
+    "classId",
+    "lesson_date",
+    "lesson_time",
+    "sportCenter",
+    "courtNo",
+    "coachName",
+    "status",
+    "createdAt",
+    "lastUpdatedDate",
+  ],
+  properties: {
+    _id: { bsonType: "objectId" },
+    ClubID: { bsonType: "string" },
+    lessonId: { bsonType: "string" },
+    sportType: { bsonType: "string" },
+    year: { bsonType: "string" },
+    classId: { bsonType: "string" },
+    lesson_date: { bsonType: "string" },
+    lesson_time: { bsonType: "string" },
+    sportCenter: { bsonType: "string" },
+    courtNo: { bsonType: "string" },
+    coachName: { bsonType: "string" },
+    status: { bsonType: "string" },
+    createdAt: { bsonType: "string" },
+    lastUpdatedDate: { bsonType: "string" },
+    remarks: { bsonType: "string" },
+    studentList: {
+      bsonType: ["array", "string"],
+      items: { bsonType: "string" },
+    },
   },
   additionalProperties: true,
 };
@@ -602,6 +681,21 @@ export function resolveLessonListDatabaseName(explicit?: string): string {
 }
 
 /**
+ * Database for the `LessonSeriesInfo` collection: explicit arg, else `MONGO_LESSON_SERIES_INFO_TARGET_DB`,
+ * else {@link DEFAULT_MONGO_APP_DATABASE} (`ClubMaster_DB`).
+ */
+export function resolveLessonSeriesInfoDatabaseName(explicit?: string): string {
+  const t = explicit?.trim();
+  if (t) {
+    return t;
+  }
+  return (
+    process.env.MONGO_LESSON_SERIES_INFO_TARGET_DB?.trim() ||
+    DEFAULT_MONGO_APP_DATABASE
+  );
+}
+
+/**
  * Database for the `CoachSalary` collection: explicit arg, else `MONGO_COACH_SALARY_TARGET_DB`,
  * else {@link DEFAULT_MONGO_APP_DATABASE}.
  */
@@ -805,6 +899,51 @@ export async function ensureLessonListCollection(
   await db
     .collection<LessonListClubDocument>(name)
     .createIndex({ club_id: 1 }, { unique: true });
+}
+
+/** Typed handle to the `LessonSeriesInfo` collection (see {@link resolveLessonSeriesInfoDatabaseName}). */
+export async function getLessonSeriesInfoCollection(
+  databaseName?: string,
+): Promise<Collection<LessonSeriesInfoDocument>> {
+  const db = await getMongoDb(resolveLessonSeriesInfoDatabaseName(databaseName));
+  return db.collection<LessonSeriesInfoDocument>(LESSON_SERIES_INFO_COLLECTION);
+}
+
+/**
+ * Creates the `LessonSeriesInfo` collection if missing, applies `$jsonSchema` validation,
+ * and ensures indexes for club + lesson + date queries.
+ */
+export async function ensureLessonSeriesInfoCollection(
+  databaseName?: string,
+): Promise<void> {
+  const db = await getMongoDb(resolveLessonSeriesInfoDatabaseName(databaseName));
+  const name = LESSON_SERIES_INFO_COLLECTION;
+  const exists =
+    (await db.listCollections({ name }, { nameOnly: true }).toArray()).length >
+    0;
+  const validator: Document = { $jsonSchema: lessonSeriesInfoJsonSchema };
+
+  if (!exists) {
+    await db.createCollection(name, {
+      validator,
+      validationLevel: "strict",
+      validationAction: "error",
+    });
+  } else {
+    await db.command({
+      collMod: name,
+      validator,
+      validationLevel: "strict",
+      validationAction: "error",
+    });
+  }
+
+  const coll = db.collection<LessonSeriesInfoDocument>(name);
+  await coll.createIndex(
+    { ClubID: 1, lessonId: 1, lesson_date: 1, lesson_time: 1 },
+    { name: "lessonSeries_club_lesson_date_time" },
+  );
+  await coll.createIndex({ ClubID: 1, status: 1 }, { name: "lessonSeries_club_status" });
 }
 
 /** Typed handle to the `CoachSalary` collection (see {@link resolveCoachSalaryDatabaseName}). */

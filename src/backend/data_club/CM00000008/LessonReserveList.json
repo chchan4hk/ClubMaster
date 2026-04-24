@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "reservations": [
+    {
+      "lessonReserveId": "LR000002",
+      "lessonId": "LE000001",
+      "ClubID": "CM00000008",
+      "student_id": "S000000002",
+      "Student_Name": "潘曉朗",
+      "status": "ACTIVE",
+      "Payment_Status": "UNPAID",
+      "Payment_Confirm": false,
+      "createdAt": "2026-04-23",
+      "lastUpdatedDate": "2026-04-23"
+    },
+    {
+      "lessonReserveId": "LR000003",
+      "lessonId": "LE000001",
+      "ClubID": "CM00000008",
+      "student_id": "S000000001",
+      "Student_Name": "Student A",
+      "status": "ACTIVE",
+      "Payment_Status": "PAID",
+      "Payment_Confirm": false,
+      "createdAt": "2026-04-23",
+      "lastUpdatedDate": "2026-04-23"
+    },
+    {
+      "lessonReserveId": "LR000004",
+      "lessonId": "LE000001",
+      "ClubID": "CM00000008",
+      "student_id": "S000000003",
+      "Student_Name": "金魚",
+      "status": "ACTIVE",
+      "Payment_Status": "UNPAID",
+      "Payment_Confirm": false,
+      "createdAt": "2026-04-23",
+      "lastUpdatedDate": "2026-04-23"
+    }
+  ]
+}

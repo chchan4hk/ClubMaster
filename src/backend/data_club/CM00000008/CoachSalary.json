@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "coachSalaries": [
+    {
+      "CoachSalaryID": "CS000001",
+      "lessonId": "LE000001",
+      "ClubID": "CM00000008",
+      "club_name": "Mic少Club",
+      "coach_id": "C000004",
+      "salary_amount": 3000,
+      "Payment_Method": "Bank Transfer",
+      "Payment_Status": "Paid",
+      "Payment_Confirm": false,
+      "createdAt": "2026-04-23",
+      "lastUpdatedDate": "2026-04-23T09:46:25.794Z"
+    }
+  ]
+}
