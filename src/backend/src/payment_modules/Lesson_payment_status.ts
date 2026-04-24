@@ -37,6 +37,8 @@ import {
   csvCoachFieldMatchesLoggedCoach,
   findCoachRosterRow,
 } from "../coachSelfFilter";
+import { isMongoConfigured } from "../db/DBConnection";
+import { removeStudentFromLessonSeriesForLessonMongo } from "../lessonSeriesInfoStudentSync";
 
 async function resolvePaymentClubContextAsync(
   req: Request,
@@ -954,11 +956,34 @@ export function Lesson_payment_status(): Router {
         res.status(400).json({ ok: false, error: rmPay.error });
         return;
       }
+      let lessonSeriesInfoUpdated = 0;
+      let lessonSeriesMongoError: string | undefined;
+      if (isMongoConfigured()) {
+        try {
+          lessonSeriesInfoUpdated =
+            await removeStudentFromLessonSeriesForLessonMongo({
+              clubId: ctx.clubId,
+              lessonCanonicalId: resv.lessonId.trim(),
+              studentId: resv.student_id.trim(),
+            });
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          lessonSeriesMongoError = msg;
+          console.warn(
+            "[lesson-payment/cancel-lesson-reservation] LessonSeriesInfo:",
+            msg,
+          );
+        }
+      }
       res.json({
         ok: true,
         message: "Lesson reservation cancelled.",
         newReserved: dec.newReserved,
         removedPaymentListRows: rmPay.removed,
+        lessonSeriesInfoUpdated,
+        ...(lessonSeriesMongoError
+          ? { lessonSeriesMongoError }
+          : {}),
       });
     },
   );

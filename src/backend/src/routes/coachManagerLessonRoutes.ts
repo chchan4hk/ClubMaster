@@ -44,6 +44,20 @@ import {
 } from "../lessonReserveList";
 import { loadStudents } from "../studentListCsv";
 import { listActiveSportCenterNames } from "../sportCenterListCsv";
+import {
+  appendStudentToLessonSeriesForLessonMongo,
+  escapeRegexClubIdSegment,
+  formatLessonSeriesStudentListForApi,
+  lessonSeriesStudentListMatchesRoster,
+  normalizeLessonSeriesStudentListToArray,
+  removeStudentFromLessonSeriesForLessonMongo,
+  resolveStudentLessonSeriesMatchTokens,
+} from "../lessonSeriesInfoStudentSync";
+import {
+  getLessonSeriesInfoCollection,
+  isMongoConfigured,
+  type LessonSeriesInfoDocument,
+} from "../db/DBConnection";
 import { createCoachManagerSalaryRouter } from "./coachManagerSalaryRoutes";
 
 function readDayYn(b: Record<string, unknown>, key: string): string {
@@ -303,6 +317,183 @@ const LESSON_LIST_PAGE_MAX = 10;
  * When `page` and/or `limit` (or `pageSize`) is present, return at most 10 lessons per page.
  * Omit both to return the full list (e.g. lesson timetable and legacy clients).
  */
+function parseYmdUtc(s: string): Date | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s ?? "").trim());
+  if (!m) {
+    return null;
+  }
+  const y = Number(m[1]);
+  const mo = Number(m[2]) - 1;
+  const d = Number(m[3]);
+  return new Date(Date.UTC(y, mo, d));
+}
+
+function formatYmdUtc(d: Date): string {
+  const y = d.getUTCFullYear();
+  const mo = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const da = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${mo}-${da}`;
+}
+
+/** Pulls a compact "HH:MM - HH:MM" slot from free-text class time (e.g. Chinese weekday prefix). */
+function extractLessonTimeSlotFromClassTime(classTime: string): string {
+  const s = String(classTime ?? "").trim();
+  if (!s) {
+    return "";
+  }
+  const re = /(\d{1,2}:\d{2})\s*[-–—~～]\s*(\d{1,2}:\d{2})/;
+  const m = re.exec(s);
+  if (m) {
+    return `${m[1]} - ${m[2]}`;
+  }
+  return s.length > 96 ? `${s.slice(0, 93)}...` : s;
+}
+
+function lessonRowDayEnabled(row: LessonCsvRow, utcDow0Sun6Sat: number): boolean {
+  const keys: (keyof LessonCsvRow)[] = [
+    "classSun",
+    "classMon",
+    "classTue",
+    "classWed",
+    "classThur",
+    "classFri",
+    "classSat",
+  ];
+  const k = keys[utcDow0Sun6Sat];
+  if (!k) {
+    return false;
+  }
+  const v = row[k] as unknown;
+  if (v === true || v === "true" || v === "Y" || v === "y" || v === 1) {
+    return true;
+  }
+  const t = String(v ?? "")
+    .trim()
+    .toUpperCase();
+  return t === "Y" || t === "1" || t === "TRUE" || t === "YES";
+}
+
+type LessonSeriesRowPayload = {
+  lesson_date: string;
+  lesson_time: string;
+  sportCenter: string;
+  courtNo: string;
+  coachName: string;
+  studentList: string;
+  status: string;
+};
+
+/** API row for `GET /student-lesson-series` (Student role). */
+type StudentLessonSeriesApiRow = {
+  lessonId: string;
+  sportType: string;
+  year: string;
+  classId: string;
+  lesson_date: string;
+  lesson_time: string;
+  sportCenter: string;
+  courtNo: string;
+  coachName: string;
+  status: string;
+  studentList: string;
+  remarks: string;
+};
+
+/**
+ * Expands one lesson definition into dated session rows between start/end on selected weekdays.
+ */
+function expandLessonSeriesDatesFromRow(
+  row: LessonCsvRow,
+  defaultStudentList: string,
+): LessonSeriesRowPayload[] {
+  const start = parseYmdUtc(row.lessonStartDate);
+  const end = parseYmdUtc(row.lessonEndDate);
+  if (!start || !end) {
+    return [];
+  }
+  if (end.getTime() < start.getTime()) {
+    return [];
+  }
+  const slot = extractLessonTimeSlotFromClassTime(row.classTime);
+  const lesson_time =
+    slot || String(row.classTime ?? "").trim().slice(0, 80) || "—";
+  const out: LessonSeriesRowPayload[] = [];
+  for (
+    let d = new Date(start.getTime());
+    d.getTime() <= end.getTime();
+    d = new Date(d.getTime() + 86400000)
+  ) {
+    const dow = d.getUTCDay();
+    if (!lessonRowDayEnabled(row, dow)) {
+      continue;
+    }
+    out.push({
+      lesson_date: formatYmdUtc(d),
+      lesson_time,
+      sportCenter: String(row.sportCenter ?? "").trim(),
+      courtNo: String(row.courtNo ?? "").trim(),
+      coachName: String(row.coachName ?? "").trim(),
+      studentList: defaultStudentList,
+      status: "ACTIVE",
+    });
+  }
+  return out;
+}
+
+function defaultStudentListForLesson(
+  fileClub: string,
+  lessonId: string,
+): string {
+  const id = lessonId.trim().toUpperCase();
+  if (!id) {
+    return "";
+  }
+  try {
+    ensureLessonReserveListFile(fileClub);
+    const names = loadLessonReservations(fileClub)
+      .filter(
+        (r) =>
+          r.lessonId.trim().toUpperCase() === id &&
+          r.status.trim().toUpperCase() === "ACTIVE",
+      )
+      .map((r) => String(r.Student_Name ?? "").trim())
+      .filter(Boolean);
+    return Array.from(new Set(names)).join(", ");
+  } catch {
+    return "";
+  }
+}
+
+function lessonSeriesRowFromMongoDoc(
+  doc: LessonSeriesInfoDocument,
+): LessonSeriesRowPayload {
+  return {
+    lesson_date: String(doc.lesson_date ?? "").trim(),
+    lesson_time: String(doc.lesson_time ?? "").trim(),
+    sportCenter: String(doc.sportCenter ?? "").trim(),
+    courtNo: String(doc.courtNo ?? "").trim(),
+    coachName: String(doc.coachName ?? "").trim(),
+    studentList: formatLessonSeriesStudentListForApi(doc.studentList),
+    status: String(doc.status ?? "ACTIVE").trim() || "ACTIVE",
+  };
+}
+
+function assertRowMatchesLessonSchedule(
+  lesson: LessonCsvRow,
+  r: LessonSeriesRowPayload,
+): boolean {
+  const d = parseYmdUtc(r.lesson_date);
+  const start = parseYmdUtc(lesson.lessonStartDate);
+  const end = parseYmdUtc(lesson.lessonEndDate);
+  if (!d || !start || !end) {
+    return false;
+  }
+  if (d.getTime() < start.getTime() || d.getTime() > end.getTime()) {
+    return false;
+  }
+  return lessonRowDayEnabled(lesson, d.getUTCDay());
+}
+
 function parseLessonListPagination(req: Request): { page: number; limit: number } | null {
   const q = req.query;
   const hasPage = q.page != null && String(q.page).trim() !== "";
@@ -419,6 +610,96 @@ export function createCoachManagerLessonRouter(): Router {
       lessonStorageClubId: fileClub,
       lessons: merged,
     });
+  });
+
+  /**
+   * Student: MongoDB `LessonSeriesInfo` for this club folder, filtered to rows whose
+   * `studentList` text mentions the logged-in student (ID or resolved display name).
+   */
+  r.get("/student-lesson-series", requireRole("Student"), async (req, res) => {
+    const ctx = await resolveLessonClubContextAsync(req);
+    if (!ctx.ok) {
+      res.status(ctx.status).json({ ok: false, error: ctx.error });
+      return;
+    }
+    const qClubParam = String(req.query?.clubId ?? "").trim();
+    if (qClubParam && qClubParam !== ctx.clubId) {
+      res.status(403).json({
+        ok: false,
+        error: "clubId does not match your club folder.",
+      });
+      return;
+    }
+    const studentId = String(req.user?.sub ?? "").trim();
+    if (!isMongoConfigured()) {
+      res.json({
+        ok: true,
+        clubId: ctx.clubId,
+        clubName: ctx.clubName,
+        mongo: false,
+        info: "MongoDB is not configured; no lesson series data is available.",
+        rows: [] as StudentLessonSeriesApiRow[],
+      });
+      return;
+    }
+    let tokens: string[];
+    try {
+      tokens = await resolveStudentLessonSeriesMatchTokens(studentId, ctx.clubId);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      res.status(500).json({ ok: false, error: msg });
+      return;
+    }
+    if (tokens.length === 0) {
+      res.json({
+        ok: true,
+        clubId: ctx.clubId,
+        clubName: ctx.clubName,
+        mongo: true,
+        rows: [] as StudentLessonSeriesApiRow[],
+      });
+      return;
+    }
+    const clubNorm = ctx.clubId.trim();
+    try {
+      const coll = await getLessonSeriesInfoCollection();
+      const clubRe = new RegExp(`^${escapeRegexClubIdSegment(clubNorm)}$`, "i");
+      const docs = await coll.find({ ClubID: clubRe }).toArray();
+      const rows: StudentLessonSeriesApiRow[] = docs
+        .filter((d) =>
+          lessonSeriesStudentListMatchesRoster(d.studentList, tokens),
+        )
+        .map((d) => ({
+          lessonId: String(d.lessonId ?? "").trim(),
+          sportType: String(d.sportType ?? "").trim(),
+          year: String(d.year ?? "").trim(),
+          classId: String(d.classId ?? "").trim(),
+          lesson_date: String(d.lesson_date ?? "").trim(),
+          lesson_time: String(d.lesson_time ?? "").trim(),
+          sportCenter: String(d.sportCenter ?? "").trim(),
+          courtNo: String(d.courtNo ?? "").trim(),
+          coachName: String(d.coachName ?? "").trim(),
+          status: String(d.status ?? "ACTIVE").trim() || "ACTIVE",
+          studentList: formatLessonSeriesStudentListForApi(d.studentList),
+          remarks: String(d.remarks ?? "").trim(),
+        }));
+      rows.sort((a, b) => {
+        const ka = `${a.lesson_date}\t${a.lesson_time}`;
+        const kb = `${b.lesson_date}\t${b.lesson_time}`;
+        return ka.localeCompare(kb);
+      });
+      res.json({
+        ok: true,
+        clubId: ctx.clubId,
+        clubName: ctx.clubName,
+        mongo: true,
+        rows,
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.warn("[coach-manager/lessons/student-lesson-series]", msg);
+      res.status(500).json({ ok: false, error: msg });
+    }
   });
 
   r.get("/", requireRole("CoachManager", "Coach", "Student"), async (_req, res) => {
@@ -745,11 +1026,29 @@ export function createCoachManagerLessonRouter(): Router {
       res.status(500).json({ ok: false, error: inc.error });
       return;
     }
+    let lessonSeriesInfoUpdated = 0;
+    let lessonSeriesMongoError: string | undefined;
+    if (isMongoConfigured()) {
+      try {
+        lessonSeriesInfoUpdated = await appendStudentToLessonSeriesForLessonMongo({
+          clubId: ctx.clubId,
+          lessonCanonicalId: row.lessonId,
+          studentId,
+          displayName: studentName,
+        });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        lessonSeriesMongoError = msg;
+        console.warn("[coach-manager/lessons/reserve] LessonSeriesInfo:", msg);
+      }
+    }
     res.json({
       ok: true,
       lessonReserveId: append.lessonReserveId,
       ReservedNumber: inc.newReserved,
       message: "Reservation created.",
+      lessonSeriesInfoUpdated,
+      ...(lessonSeriesMongoError ? { lessonSeriesMongoError } : {}),
     });
   });
 
@@ -940,11 +1239,30 @@ export function createCoachManagerLessonRouter(): Router {
       res.status(500).json({ ok: false, error: dec.error });
       return;
     }
+    let lessonSeriesInfoUpdated = 0;
+    let lessonSeriesMongoError: string | undefined;
+    if (isMongoConfigured()) {
+      try {
+        lessonSeriesInfoUpdated = await removeStudentFromLessonSeriesForLessonMongo({
+          clubId: ctx.clubId,
+          lessonCanonicalId: row.lessonId,
+          studentId,
+        });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        lessonSeriesMongoError = msg;
+        console.warn("[coach-manager/lessons/cancel-reserve] LessonSeriesInfo:", msg);
+      }
+    }
     res.json({
       ok: true,
       lessonReserveId: removed.lessonReserveId,
       ReservedNumber: dec.newReserved,
       message: "Booking cancelled.",
+      lessonSeriesInfoUpdated,
+      ...(lessonSeriesMongoError
+        ? { lessonSeriesMongoError }
+        : {}),
     });
   });
 
@@ -1227,6 +1545,242 @@ export function createCoachManagerLessonRouter(): Router {
       message: "Lesson marked INACTIVE.",
       status: "INACTIVE",
       LastUpdated_Date: new Date().toISOString().slice(0, 10),
+    });
+  });
+
+  const LESSON_SERIES_POST_ROW_CAP = 520;
+
+  /** Coach Manager: dated session rows for a lesson (Mongo `LessonSeriesInfo` or generated from lesson dates). */
+  r.get("/lesson-series", requireRole("CoachManager"), async (req, res) => {
+    const ctx = await coachManagerClubContextAsync(req);
+    if (!ctx.ok) {
+      res.status(ctx.status).json({ ok: false, error: ctx.error });
+      return;
+    }
+    const lessonId = String(req.query?.lessonId ?? "").trim();
+    if (!lessonId) {
+      res.status(400).json({ ok: false, error: "lessonId is required." });
+      return;
+    }
+    const fileClub = resolveLessonFileClubId(ctx.clubId);
+    try {
+      ensureLessonListFile(fileClub);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      res.status(500).json({ ok: false, error: msg });
+      return;
+    }
+    let lessons: ReturnType<typeof loadLessons> = [];
+    try {
+      lessons = loadLessons(fileClub);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      res.status(500).json({ ok: false, error: msg });
+      return;
+    }
+    const lessonRow = lessons.find((x) =>
+      lessonIdsEqual(x.lessonId, lessonId),
+    );
+    if (!lessonRow) {
+      res.status(404).json({ ok: false, error: "Lesson not found in your list." });
+      return;
+    }
+    const clubIdForMongo = fileClub.trim();
+    const defaultStudents = defaultStudentListForLesson(
+      fileClub,
+      lessonRow.lessonId,
+    );
+    const computed = expandLessonSeriesDatesFromRow(lessonRow, defaultStudents);
+    let rows = computed;
+    let source: "mongo" | "lessonDates" = "lessonDates";
+    if (isMongoConfigured()) {
+      try {
+        const coll = await getLessonSeriesInfoCollection();
+        const existing = await coll
+          .find({
+            ClubID: clubIdForMongo,
+            lessonId: lessonRow.lessonId,
+          })
+          .sort({ lesson_date: 1, lesson_time: 1 })
+          .toArray();
+        if (existing.length > 0) {
+          rows = existing.map((doc) => lessonSeriesRowFromMongoDoc(doc));
+          source = "mongo";
+        }
+      } catch (e) {
+        console.warn(
+          "[coach-manager/lessons/lesson-series] Mongo read failed",
+          e instanceof Error ? e.message : String(e),
+        );
+      }
+    }
+    res.json({
+      ok: true,
+      lessonId: lessonRow.lessonId,
+      clubId: clubIdForMongo,
+      class_info: lessonRow.classInfo,
+      class_time: lessonRow.classTime,
+      lesson_start_date: lessonRow.lessonStartDate,
+      lesson_end_date: lessonRow.lessonEndDate,
+      rows,
+      source,
+      mongoConfigured: isMongoConfigured(),
+    });
+  });
+
+  /** Coach Manager: replace all `LessonSeriesInfo` rows for one lesson with the edited series. */
+  r.post("/lesson-series/confirm", requireRole("CoachManager"), async (req, res) => {
+    const ctx = await coachManagerClubContextAsync(req);
+    if (!ctx.ok) {
+      res.status(ctx.status).json({ ok: false, error: ctx.error });
+      return;
+    }
+    if (!isMongoConfigured()) {
+      res.status(503).json({
+        ok: false,
+        error:
+          "MongoDB is not configured. Set MONGODB_URI / MONGO_URI or MONGO_PASSWORD to save lesson series.",
+      });
+      return;
+    }
+    const body = req.body != null && typeof req.body === "object" ? req.body : {};
+    const lessonId = String(
+      (body as Record<string, unknown>).lessonId ??
+        (body as Record<string, unknown>).LessonID ??
+        "",
+    ).trim();
+    const rawRows = (body as Record<string, unknown>).rows;
+    if (!lessonId) {
+      res.status(400).json({ ok: false, error: "lessonId is required." });
+      return;
+    }
+    if (!Array.isArray(rawRows)) {
+      res.status(400).json({ ok: false, error: "rows must be an array." });
+      return;
+    }
+    if (rawRows.length > LESSON_SERIES_POST_ROW_CAP) {
+      res.status(400).json({
+        ok: false,
+        error: `At most ${LESSON_SERIES_POST_ROW_CAP} session rows per request.`,
+      });
+      return;
+    }
+    const fileClub = resolveLessonFileClubId(ctx.clubId);
+    try {
+      ensureLessonListFile(fileClub);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      res.status(500).json({ ok: false, error: msg });
+      return;
+    }
+    let lessons: ReturnType<typeof loadLessons> = [];
+    try {
+      lessons = loadLessons(fileClub);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      res.status(500).json({ ok: false, error: msg });
+      return;
+    }
+    const lessonRow = lessons.find((x) => lessonIdsEqual(x.lessonId, lessonId));
+    if (!lessonRow) {
+      res.status(404).json({ ok: false, error: "Lesson not found in your list." });
+      return;
+    }
+    const clubIdForMongo = fileClub.trim();
+    const parsedRows: LessonSeriesRowPayload[] = [];
+    for (const item of rawRows) {
+      if (item == null || typeof item !== "object") {
+        res.status(400).json({ ok: false, error: "Each row must be an object." });
+        return;
+      }
+      const o = item as Record<string, unknown>;
+      const lesson_date = String(o.lesson_date ?? "").trim();
+      const lesson_time = String(o.lesson_time ?? "").trim();
+      const sportCenter = String(o.sportCenter ?? o.Sport_center ?? "").trim();
+      const courtNo = String(o.courtNo ?? o.court_no ?? "").trim();
+      const coachName = String(o.coachName ?? o["Coach Name"] ?? "").trim();
+      const studentList = formatLessonSeriesStudentListForApi(o.studentList);
+      let status = String(o.status ?? "ACTIVE").trim().toUpperCase();
+      if (status !== "ACTIVE" && status !== "INACTIVE") {
+        status = "ACTIVE";
+      }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(lesson_date)) {
+        res.status(400).json({
+          ok: false,
+          error: `Invalid lesson_date: ${lesson_date || "(empty)"}`,
+        });
+        return;
+      }
+      if (!lesson_time) {
+        res.status(400).json({ ok: false, error: "lesson_time is required on each row." });
+        return;
+      }
+      const check: LessonSeriesRowPayload = {
+        lesson_date,
+        lesson_time,
+        sportCenter,
+        courtNo,
+        coachName,
+        studentList,
+        status,
+      };
+      parsedRows.push(check);
+    }
+    const validRows: LessonSeriesRowPayload[] = [];
+    const prunedDates: string[] = [];
+    for (const check of parsedRows) {
+      if (assertRowMatchesLessonSchedule(lessonRow, check)) {
+        validRows.push(check);
+      } else {
+        prunedDates.push(check.lesson_date);
+      }
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    const inserts: Omit<LessonSeriesInfoDocument, "_id">[] = validRows.map(
+      (r) => ({
+        ClubID: clubIdForMongo,
+        lessonId: lessonRow.lessonId,
+        sportType: lessonRow.sportType,
+        year: lessonRow.year,
+        classId: lessonRow.classId,
+        lesson_date: r.lesson_date,
+        lesson_time: r.lesson_time,
+        sportCenter: r.sportCenter,
+        courtNo: r.courtNo,
+        coachName: r.coachName,
+        status: r.status,
+        createdAt: today,
+        lastUpdatedDate: today,
+        remarks: "",
+        studentList: normalizeLessonSeriesStudentListToArray(r.studentList),
+      }),
+    );
+    try {
+      const coll = await getLessonSeriesInfoCollection();
+      await coll.deleteMany({
+        ClubID: clubIdForMongo,
+        lessonId: lessonRow.lessonId,
+      });
+      if (inserts.length > 0) {
+        await coll.insertMany(inserts, { ordered: true });
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.warn("[coach-manager/lessons/lesson-series/confirm]", msg);
+      res.status(500).json({ ok: false, error: msg });
+      return;
+    }
+    const msg =
+      inserts.length === 0 && prunedDates.length > 0 && parsedRows.length > 0
+        ? "Cleared MongoDB LessonSeriesInfo for this lesson; every submitted row was outside the current lesson period or weekday flags."
+        : prunedDates.length > 0
+          ? `Saved ${inserts.length} row(s) to MongoDB LessonSeriesInfo. Dropped ${prunedDates.length} row(s) that no longer match the lesson schedule (${prunedDates.join(", ")}).`
+          : `Saved ${inserts.length} row(s) to MongoDB LessonSeriesInfo.`;
+    res.json({
+      ok: true,
+      message: msg,
+      count: inserts.length,
+      ...(prunedDates.length ? { prunedDates } : {}),
     });
   });
 
