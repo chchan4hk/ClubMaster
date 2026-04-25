@@ -70,6 +70,7 @@ import {
   searchCoachManagersMongo,
   searchCoachRoleByUsernameOrClubMongo,
   searchStudentRoleByUsernameOrClubMongo,
+  maxCountryClubNumericFromMongo,
   setMainActivationMongo,
   setMainExpiryMongo,
   setMainPasswordMongo,
@@ -138,7 +139,10 @@ async function resolveCountryCodeForClubId(countryName: string): Promise<string>
   return fallback ? fallback.toUpperCase() : "";
 }
 
-function nextClubIdForCountryCode(root: string, countryCode: string): string {
+async function nextClubIdForCountryCode(
+  root: string,
+  countryCode: string,
+): Promise<string> {
   const cc = String(countryCode ?? "").trim().toUpperCase();
   if (!/^[A-Z]{2,3}$/.test(cc)) {
     // Fall back to legacy allocator (CM00000001…) when no usable country code.
@@ -159,6 +163,16 @@ function nextClubIdForCountryCode(root: string, countryCode: string): string {
     }
   } catch {
     /* ignore */
+  }
+  if (isMongoConfigured()) {
+    try {
+      const mongoMax = await maxCountryClubNumericFromMongo(cc);
+      if (Number.isFinite(mongoMax) && mongoMax > max) {
+        max = mongoMax;
+      }
+    } catch {
+      /* ignore */
+    }
   }
   const next = max + 1;
   return `${cc}${String(next).padStart(CLUB_ID_NUM_PAD, "0")}`;
@@ -956,7 +970,9 @@ export function createAdminRouter(): Router {
 
       const root = dataClubRoot();
       const cc = await resolveCountryCodeForClubId(country);
-      const clubId = cc ? nextClubIdForCountryCode(root, cc) : allocateNextClubUid();
+      const clubId = cc
+        ? await nextClubIdForCountryCode(root, cc)
+        : allocateNextClubUid();
       const srcDir = resolveClubTemplateDir(root);
       const clubDir = path.join(root, clubId);
       const imageDir = path.join(clubDir, "image");

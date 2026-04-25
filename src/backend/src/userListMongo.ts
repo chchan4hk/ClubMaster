@@ -23,6 +23,7 @@ const COACH_LOGIN_UID_NUM_RE = /^(?:CH|C)(\d+)$/i;
 const STUDENT_ID_NUM_RE = /^S(\d+)$/i;
 const COACH_LOGIN_UID_PAD = 6;
 const STUDENT_LOGIN_UID_PAD = 9;
+const COUNTRY_CLUB_UID_NUM_RE = /^([A-Z]{2,3})(\d{7})$/i;
 
 function formatDateOnly(d: Date | undefined | null): string {
   if (!d || !(d instanceof Date) || Number.isNaN(d.getTime())) {
@@ -470,6 +471,32 @@ async function maxStudentNumericFromMongo(): Promise<number> {
       .match(STUDENT_ID_NUM_RE);
     if (m) {
       const n = Number.parseInt(m[1]!, 10);
+      if (!Number.isNaN(n)) {
+        max = Math.max(max, n);
+      }
+    }
+  }
+  return max;
+}
+
+export async function maxCountryClubNumericFromMongo(
+  countryCode: string,
+): Promise<number> {
+  const cc = String(countryCode ?? "").trim().toUpperCase();
+  if (!/^[A-Z]{2,3}$/.test(cc)) {
+    return 0;
+  }
+  const coll = await collWithIndexes();
+  const re = new RegExp(`^${cc}(\\\\d{7})$`, "i");
+  const rows = await coll
+    .find({ uid: { $regex: re }, usertype: "Coach Manager" })
+    .project({ uid: 1 })
+    .toArray();
+  let max = 0;
+  for (const d of rows) {
+    const m = String(d.uid ?? "").trim().match(COUNTRY_CLUB_UID_NUM_RE);
+    if (m && String(m[1] ?? "").toUpperCase() === cc) {
+      const n = Number.parseInt(m[2]!, 10);
       if (!Number.isNaN(n)) {
         max = Math.max(max, n);
       }
