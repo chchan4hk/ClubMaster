@@ -7,6 +7,27 @@
     return "url(" + JSON.stringify(String(value)) + ")";
   }
 
+  function safeThemeSegment(raw) {
+    var s = String(raw == null ? "" : raw).trim();
+    if (!s) return "";
+    // keep simple: allow a-z0-9, dash, underscore; fold spaces to dashes
+    s = s.toLowerCase().replace(/\s+/g, "-");
+    s = s.replace(/[^a-z0-9_-]/g, "");
+    return s;
+  }
+
+  function getClubTheme() {
+    try {
+      var t = sessionStorage.getItem("sportCoach.clubTheme");
+      if (t && String(t).trim() !== "") return String(t).trim();
+    } catch {
+      /* ignore */
+    }
+    var dock = document.getElementById("clubDock");
+    var dt = dock && dock.dataset ? dock.dataset.clubTheme : "";
+    return dt && String(dt).trim() !== "" ? String(dt).trim() : "";
+  }
+
   function resolveUrl(rel) {
     var s = String(rel || "").trim();
     if (!s) {
@@ -17,6 +38,24 @@
     } catch {
       return s;
     }
+  }
+
+  function themedRelForDefault(rel, theme) {
+    var r = String(rel || "").trim();
+    if (!r) return "";
+    var seg = safeThemeSegment(theme);
+    if (!seg) return "";
+    // Only rewrite the standard default folder.
+    var marker = "source/image/";
+    var idx = r.toLowerCase().indexOf(marker);
+    if (idx === -1) return "";
+    var file = r.slice(idx + marker.length);
+    if (!file) return "";
+    // New canonical themed location: `source/image/<Theme>/...` (Theme uses original casing).
+    // Keep an old fallback path for earlier experiments: `source/<theme-seg>/image/...`.
+    var themedByFolder = "source/image/" + String(theme).trim() + "/" + file;
+    var themedBySegment = "source/" + seg + "/image/" + file;
+    return themedByFolder + "||" + themedBySegment;
   }
 
   function loadEl(el) {
@@ -31,17 +70,51 @@
     if (!url) {
       return;
     }
-    var img = new Image();
-    img.onload = function () {
-      el.style.backgroundImage = cssUrl(url);
+    var theme = getClubTheme();
+    var themedRel = theme ? themedRelForDefault(rel, theme) : "";
+    var themedCandidates = themedRel ? String(themedRel).split("||").filter(Boolean) : [];
+    var themedUrls = themedCandidates.map(resolveUrl).filter(Boolean);
+
+    function doneOk(finalUrl) {
+      el.style.backgroundImage = cssUrl(finalUrl);
       el.setAttribute("data-overview-loaded", "1");
       el.classList.add("cm-overview-bg-loaded");
-    };
-    img.onerror = function () {
+    }
+
+    function doneErr() {
       el.classList.add("cm-overview-bg-error");
       el.setAttribute("data-overview-loaded", "1");
-    };
-    img.src = url;
+    }
+
+    function loadUrl(candidateUrl, onOk, onErr) {
+      var img = new Image();
+      img.onload = function () {
+        onOk(candidateUrl);
+      };
+      img.onerror = onErr;
+      img.src = candidateUrl;
+    }
+
+    function loadFallback(i) {
+      if (i >= themedUrls.length) {
+        loadUrl(url, doneOk, doneErr);
+        return;
+      }
+      var candidate = themedUrls[i];
+      if (!candidate || candidate === url) {
+        loadFallback(i + 1);
+        return;
+      }
+      loadUrl(candidate, doneOk, function () {
+        loadFallback(i + 1);
+      });
+    }
+
+    if (themedUrls.length) {
+      loadFallback(0);
+    } else {
+      loadUrl(url, doneOk, doneErr);
+    }
   }
 
   function boot() {

@@ -65,7 +65,7 @@
       <input type="hidden" id="fPayQrRel-zhifubao" value="" />
 
       <div id="formWrap" class="space-y-5">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label for="fSportType" class="block text-xs text-slate-400 mb-1">Sport Type</label>
             <select id="fSportType" disabled
@@ -78,6 +78,16 @@
             <select id="fCountry" disabled
               class="club-field w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-100 text-sm cursor-not-allowed [color-scheme:dark]">
               <option value="">—</option>
+            </select>
+          </div>
+          <div>
+            <label for="fClubTheme" class="block text-xs text-slate-400 mb-1">Club Theme</label>
+            <select id="fClubTheme" disabled
+              class="club-field w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-100 text-sm cursor-not-allowed [color-scheme:dark]">
+              <option value="">—</option>
+              <option value="Black Gold">Black Gold</option>
+              <option value="Blue Metallic">Blue Metallic</option>
+              <option value="Sakura">Sakura</option>
             </select>
           </div>
         </div>
@@ -536,6 +546,12 @@
           "contactEmail",
         ]);
         document.getElementById("fClubDesc").value = fieldGet(f, ["club_desc", "clubDesc"]);
+        document.getElementById("fClubTheme").value = fieldGet(f, [
+          "club_theme",
+          "clubTheme",
+          "Club Theme",
+          "theme",
+        ]);
         document.getElementById("fClubLogo").value = fieldGet(f, ["club_logo", "clubLogo"]);
         applyPaymentQrHiddens(f);
       }
@@ -555,6 +571,7 @@
           contact_point: document.getElementById("fContactPoint").value.trim(),
           contact_email: document.getElementById("fContactEmail").value.trim(),
           club_desc: document.getElementById("fClubDesc").value.trim(),
+          club_theme: document.getElementById("fClubTheme").value.trim(),
           club_logo: document.getElementById("fClubLogo").value.trim(),
           club_payment_payme: document.getElementById("fPayQrRel-payme").value.trim(),
           club_payment_FPS: document.getElementById("fPayQrRel-fps").value.trim(),

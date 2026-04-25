@@ -26,6 +26,33 @@ window.dashboardInit = function dashboardInit(expectedRole, shortRoleLabel) {
   window.api
     .api("/me")
     .then(function (data) {
+      if (data && data.user) {
+        var theme =
+          data.user.club_theme != null && String(data.user.club_theme).trim() !== ""
+            ? String(data.user.club_theme).trim()
+            : "";
+        if (theme) {
+          try {
+            sessionStorage.setItem("sportCoach.clubTheme", theme);
+          } catch {
+            /* ignore storage errors */
+          }
+        } else {
+          try {
+            sessionStorage.removeItem("sportCoach.clubTheme");
+          } catch {
+            /* ignore storage errors */
+          }
+        }
+        var dockAny = document.getElementById("clubDock");
+        if (dockAny && dockAny.dataset) {
+          if (theme) {
+            dockAny.dataset.clubTheme = theme;
+          } else {
+            delete dockAny.dataset.clubTheme;
+          }
+        }
+      }
       if (welcome && data.user) {
         var typeLabel =
           data.user.usertype != null && String(data.user.usertype).trim() !== ""

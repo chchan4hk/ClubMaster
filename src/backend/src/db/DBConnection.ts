@@ -113,6 +113,8 @@ export interface ClubInfoDocument {
   Sport_type: string;
   Club_name: string;
   country: string;
+  /** Optional UI theme key for the club (e.g. "sakura", "blue"). */
+  club_theme?: string;
   setup_date: string;
   /** Club contact person (Coach Manager / Club Master). */
   contact_point: string;
@@ -557,6 +559,7 @@ export const clubInfoJsonSchema: Document = {
     Sport_type: { bsonType: "string" },
     Club_name: { bsonType: "string" },
     country: { bsonType: "string" },
+    club_theme: { bsonType: ["string", "null"] },
     setup_date: { bsonType: "string" },
     contact_point: { bsonType: "string" },
     contact_email: { bsonType: "string" },

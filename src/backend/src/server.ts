@@ -24,6 +24,7 @@ import {
   ensureLessonPaymentLedgerCollection,
   ensurePrizeListRowCollection,
   ensureUserLoginCollection,
+  getClubInfoCollection,
   isMongoConfigured,
 } from "./db/DBConnection";
 import { loadMeProfileFromUserLoginMongo } from "./userLoginCollectionMongo";
@@ -402,6 +403,18 @@ app.get("/api/me", requireAuth, async (req, res) => {
     profileContactNumber = ph || "—";
   }
 
+  let club_theme: string | null = null;
+  if (isMongoConfigured() && folderUidForClubAssets) {
+    try {
+      const clubInfoCol = await getClubInfoCollection();
+      const doc = await clubInfoCol.findOne({ club_id: folderUidForClubAssets });
+      const t = doc?.club_theme != null ? String(doc.club_theme).trim() : "";
+      club_theme = t || null;
+    } catch {
+      /* ignore clubInfo read errors */
+    }
+  }
+
   res.json({
     ok: true,
     user: {
@@ -433,6 +446,7 @@ app.get("/api/me", requireAuth, async (req, res) => {
       email_address: profileEmailAddress,
       club_photo: fromCsv?.club_photo ?? "",
       club_photo_url: fromCsv?.club_photo_url ?? null,
+      club_theme,
       creation_date:
         coachLogin?.creation_date ??
         studentLogin?.creation_date ??

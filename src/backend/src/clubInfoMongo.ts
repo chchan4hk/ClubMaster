@@ -45,6 +45,7 @@ function defaultClubInfoInsert(
     Sport_type: "",
     Club_name: clubDisplayName.trim(),
     country: "",
+    club_theme: "",
     setup_date: "",
     contact_point: "",
     contact_email: "",
@@ -82,6 +83,9 @@ export async function getOrCreateClubInfoDocument(
   if (!Object.prototype.hasOwnProperty.call(row, "contact_email")) {
     patch.contact_email = "";
   }
+  if (!Object.prototype.hasOwnProperty.call(row, "club_theme")) {
+    patch.club_theme = "";
+  }
   if (Object.keys(patch).length > 0) {
     await col.updateOne({ club_id: id }, { $set: patch });
     doc = await col.findOne({ club_id: id });
@@ -100,6 +104,7 @@ export function clubInfoDocumentToCoachFields(
     Sport_type: String(doc.Sport_type ?? ""),
     Club_name: String(doc.Club_name ?? ""),
     country: String(doc.country ?? ""),
+    club_theme: String(doc.club_theme ?? ""),
     setup_date: String(doc.setup_date ?? ""),
     contact_point: String(doc.contact_point ?? ""),
     contact_email: String(doc.contact_email ?? ""),
@@ -126,6 +131,7 @@ export function clubInfoDocumentToRaw(doc: ClubInfoDocument): ClubInfoRaw {
     "contact_point",
     "contact_email",
     "club_desc",
+    "club_theme",
     "club_logo",
     "lastUpdate_date",
   ];
@@ -173,6 +179,11 @@ export async function updateClubInfoFromBodyPatch(
     can.contact_email,
   );
   const desc = pickField(body, ["club_desc", "clubDesc"], can.club_desc);
+  const theme = pickField(
+    body,
+    ["club_theme", "clubTheme", "Club Theme", "club_theme_key", "theme"],
+    can.club_theme ?? "",
+  );
   const logo = pickField(body, ["club_logo", "clubLogo"], can.club_logo);
   const currency = pickField(body, ["Currency", "currency"], can.Currency);
 
@@ -184,6 +195,7 @@ export async function updateClubInfoFromBodyPatch(
     contact_point: contactPoint,
     contact_email: contactEmail,
     club_desc: desc,
+    club_theme: theme,
     club_logo: logo,
     Currency: (currency || cur.Currency || "HKD").trim() || "HKD",
     lastUpdate_date: lastUpdateDate,
