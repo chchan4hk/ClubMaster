@@ -10,6 +10,14 @@
   width: 100%;
 }
 
+/* In Overview, anchor the stage art to the top of the frame. */
+.cm-middle-frame .cm-image-stage {
+  align-items: flex-start;
+}
+.cm-middle-frame .cm-image-pin {
+  align-self: flex-start;
+}
+
 .cm-middle-frame__photo.cm-overview-bg-lazy {
   display: block;
   width: 100%;
