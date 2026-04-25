@@ -23,8 +23,8 @@ import {
 const STUDENT_ID_RE = /^S(\d+)$/i;
 /** New StudentID allocations: S + 9 digits (e.g. S000000001), aligned with student login UID. */
 const STUDENT_NEW_ID_PAD = 9;
-/** Club-scoped IDs in Mongo: `CM00000008-S0000001` (S + 7-digit sequence). */
-const CLUB_SCOPED_STUDENT_ID_RE = /^(CM\d+)-S(\d+)$/i;
+/** Club-scoped IDs in Mongo: `{ClubID}-S0000001` (S + 7-digit sequence). */
+const CLUB_SCOPED_STUDENT_ID_RE = /^([A-Za-z0-9]+)-S(\d+)$/i;
 const CLUB_SCOPED_SUFFIX_PAD = 7;
 
 /** Legacy filename; migrated to JSON on first access. */
@@ -912,7 +912,7 @@ export async function appendStudentRow(
       return {
         ok: false,
         error:
-          "Invalid StudentID format (expected S######### or CM…-S#######).",
+          "Invalid StudentID format (expected S######### or {Club_ID}-S#######).",
       };
     }
     if (rows.some((r) => studentIdsEqual(r.studentId, normalized))) {
