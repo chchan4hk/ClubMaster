@@ -45,6 +45,8 @@ import { isMongoConfigured } from "../db/DBConnection";
 import { patchClubInfoFields } from "../clubInfoMongo";
 import { todaySlashYmd } from "../clubInfoJson";
 import { clubCurrencyFromCountry } from "../countryCurrency";
+import { readBasicInfoFromMongo } from "../basicInfoMongo";
+import { lookupCountryCodeForBasicInfoName } from "../basicInfoCsv";
 import {
   activateCoachManagerMongo,
   activateCoachRoleLoginMongo,
@@ -80,6 +82,86 @@ import {
 
 function dataClubRoot(): string {
   return path.join(__dirname, "..", "..", "data_club");
+}
+
+const CLUB_ID_NUM_PAD = 7;
+
+function resolveClubTemplateDir(root: string): string {
+  // Preferred: repo-root Backup template (requested)
+  // When server runs from `src/backend`, repo root is `../..`.
+  const fromCwd = path.resolve(
+    process.cwd(),
+    "..",
+    "..",
+    "Backup",
+    "src",
+    "data_club",
+    "src",
+  );
+  if (fs.existsSync(fromCwd)) {
+    return fromCwd;
+  }
+  // Fallback: legacy template under `data_club/Src`
+  const legacy = path.join(root, "Src");
+  if (fs.existsSync(legacy)) {
+    return legacy;
+  }
+  return fromCwd; // return preferred path for error messaging
+}
+
+function resolveBackupDataClubRoot(): string {
+  // Repo root from `src/backend`
+  return path.resolve(process.cwd(), "..", "..", "Backup", "src", "data_club");
+}
+
+async function resolveCountryCodeForClubId(countryName: string): Promise<string> {
+  const name = String(countryName ?? "").trim();
+  if (!name) {
+    return "";
+  }
+  if (isMongoConfigured()) {
+    try {
+      const bi = await readBasicInfoFromMongo();
+      const rows = bi?.countries ?? [];
+      const hit = rows.find(
+        (r) => String(r.name ?? "").trim().toLowerCase() === name.toLowerCase(),
+      );
+      const code = String(hit?.country_code ?? "").trim();
+      if (code) {
+        return code.toUpperCase();
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+  const fallback = lookupCountryCodeForBasicInfoName(name);
+  return fallback ? fallback.toUpperCase() : "";
+}
+
+function nextClubIdForCountryCode(root: string, countryCode: string): string {
+  const cc = String(countryCode ?? "").trim().toUpperCase();
+  if (!/^[A-Z]{2,3}$/.test(cc)) {
+    // Fall back to legacy allocator (CM00000001…) when no usable country code.
+    return allocateNextClubUid();
+  }
+  let max = 0;
+  try {
+    const entries = fs.readdirSync(root, { withFileTypes: true });
+    const re = new RegExp(`^${cc}(\\d{${CLUB_ID_NUM_PAD}})$`, "i");
+    for (const e of entries) {
+      if (!e.isDirectory()) continue;
+      const m = re.exec(e.name);
+      if (!m) continue;
+      const n = parseInt(m[1], 10);
+      if (Number.isFinite(n) && n > max) {
+        max = n;
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  const next = max + 1;
+  return `${cc}${String(next).padStart(CLUB_ID_NUM_PAD, "0")}`;
 }
 
 /** Empty string, or YYYY-MM-DD from admin form field `Expiry_Date`. */
@@ -688,6 +770,8 @@ export function createAdminRouter(): Router {
       const clubName = String(req.body?.clubName ?? "").trim();
       const fullName = String(req.body?.full_name ?? "").trim();
       const country = String(req.body?.country ?? "").trim();
+      const sportType = String(req.body?.sportType ?? req.body?.Sport_type ?? "").trim();
+      const clubTheme = String(req.body?.club_theme ?? "").trim();
       const userRole = String(req.body?.userRole ?? "Coach Manager").trim();
       const expiryParsed = parseExpiryDateField(req.body?.Expiry_Date);
       if (!expiryParsed.ok) {
@@ -870,17 +954,20 @@ export function createAdminRouter(): Router {
         return;
       }
 
-      const clubId = allocateNextClubUid();
       const root = dataClubRoot();
-      const srcDir = path.join(root, "Src");
+      const cc = await resolveCountryCodeForClubId(country);
+      const clubId = cc ? nextClubIdForCountryCode(root, cc) : allocateNextClubUid();
+      const srcDir = resolveClubTemplateDir(root);
       const clubDir = path.join(root, clubId);
       const imageDir = path.join(clubDir, "image");
+      const backupRoot = resolveBackupDataClubRoot();
+      const backupClubDir = path.join(backupRoot, clubId);
 
       if (!fs.existsSync(srcDir)) {
         res.status(500).json({
           ok: false,
           error:
-            "Template folder backend/data_club/Src is missing. Add files there to copy into new clubs.",
+            "Template folder is missing. Expected Backup/src/data_club/src (preferred) or backend/data_club/Src (legacy).",
         });
         return;
       }
@@ -893,15 +980,33 @@ export function createAdminRouter(): Router {
         return;
       }
 
+      if (fs.existsSync(backupClubDir)) {
+        res.status(409).json({
+          ok: false,
+          error: `Backup club folder ${clubId} already exists under Backup/src/data_club. Refusing to overwrite.`,
+        });
+        return;
+      }
+
       const clubPhotoRel = "";
       try {
         fs.mkdirSync(clubDir, { recursive: true });
         fs.cpSync(srcDir, clubDir, { recursive: true });
         fs.mkdirSync(imageDir, { recursive: true });
+
+        // Keep a mirrored copy under Backup/src/data_club/<clubId> for templates/backups.
+        fs.mkdirSync(backupRoot, { recursive: true });
+        fs.mkdirSync(backupClubDir, { recursive: true });
+        fs.cpSync(srcDir, backupClubDir, { recursive: true });
       } catch (e) {
         try {
           fs.rmSync(clubDir, { recursive: true, force: true });
           invalidateDataFileCacheUnderDir(clubDir);
+        } catch {
+          /* ignore */
+        }
+        try {
+          fs.rmSync(backupClubDir, { recursive: true, force: true });
         } catch {
           /* ignore */
         }
@@ -930,18 +1035,19 @@ export function createAdminRouter(): Router {
           res.status(400).json({ ok: false, error: mongoResult.error });
           return;
         }
-        if (country) {
-          const cur = clubCurrencyFromCountry(country);
-          try {
-            await patchClubInfoFields(
-              clubId,
-              clubName,
-              { country, Currency: cur.currencyCode },
-              todaySlashYmd(),
-            );
-          } catch {
-            /* ignore clubInfo patch errors; account created */
+        try {
+          const patch: Record<string, string> = {
+            Sport_type: sportType,
+            club_theme: clubTheme || "Black Gold",
+          };
+          if (country) {
+            const cur = clubCurrencyFromCountry(country);
+            patch.country = country;
+            patch.Currency = cur.currencyCode;
           }
+          await patchClubInfoFields(clubId, clubName, patch, todaySlashYmd());
+        } catch {
+          /* ignore clubInfo patch errors; account created */
         }
         res.json({
           ok: true,

@@ -93,6 +93,24 @@
             </select>
           </div>
         </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="createSportType" class="block text-sm text-slate-400 mb-1">Type</label>
+            <select id="createSportType" name="sportType"
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+              <option value="">—</option>
+            </select>
+          </div>
+          <div>
+            <label for="createTheme" class="block text-sm text-slate-400 mb-1">Theme</label>
+            <select id="createTheme" name="club_theme"
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+              <option value="Black Gold" selected>Black Gold</option>
+              <option value="Blue Metallic">Blue Metallic</option>
+              <option value="Sakura">Sakura</option>
+            </select>
+          </div>
+        </div>
         <div>
           <label for="createExpiryDate" class="block text-sm text-slate-400 mb-1">Expiry_Date <span class="text-slate-600 font-normal">(optional)</span></label>
           <input id="createExpiryDate" name="Expiry_Date" type="date"
@@ -281,6 +299,8 @@
 
       var pageLoadError = document.getElementById("pageLoadError");
       var createCountry = document.getElementById("createCountry");
+      var createSportType = document.getElementById("createSportType");
+      var createTheme = document.getElementById("createTheme");
 
       function esc(s) {
         if (s == null) return "";
@@ -476,6 +496,7 @@
       var rowCache = { userLogin: [], coach: [], student: [] };
 
       var cachedCountries = [];
+      var cachedSportTypes = [];
 
       function normalizeCountryRow(c) {
         if (c == null) return null;
@@ -510,7 +531,43 @@
         }
       }
 
-      function loadCountriesFromBasicInfo() {
+      function defaultCountryNameFromList(values) {
+        var list = Array.isArray(values) ? values : [];
+        for (var i = 0; i < list.length; i++) {
+          var row = normalizeCountryRow(list[i]);
+          if (!row) continue;
+          if (String(row.name).trim().toLowerCase() === "hong kong") {
+            return row.name;
+          }
+        }
+        return "";
+      }
+
+      function fillSportTypeSelect(sel, values, selectedValue) {
+        if (!sel) return;
+        var want = selectedValue != null ? String(selectedValue).trim() : "";
+        sel.innerHTML = '<option value="">—</option>';
+        var list = Array.isArray(values) ? values : [];
+        for (var i = 0; i < list.length; i++) {
+          var raw = list[i];
+          var t = raw == null ? "" : String(raw).trim();
+          if (!t) continue;
+          var opt = document.createElement("option");
+          opt.value = t;
+          opt.textContent = t;
+          sel.appendChild(opt);
+        }
+        if (want) {
+          sel.value = want;
+        }
+      }
+
+      function ensureDefaultTheme() {
+        if (!createTheme) return;
+        createTheme.value = "Black Gold";
+      }
+
+      function loadBasicInfoLists() {
         if (!window.api || typeof window.api.api !== "function") {
           return Promise.resolve();
         }
@@ -518,11 +575,19 @@
           .api("/basic-info", { cacheTtlMs: 120000 })
           .then(function (data) {
             cachedCountries = data && Array.isArray(data.countries) ? data.countries : [];
-            fillCountrySelect(createCountry, cachedCountries, "");
+            cachedSportTypes = data && Array.isArray(data.sportTypes) ? data.sportTypes : [];
+            fillCountrySelect(
+              createCountry,
+              cachedCountries,
+              defaultCountryNameFromList(cachedCountries),
+            );
             fillCountrySelect(modalCountry, cachedCountries, modalCountry ? modalCountry.value : "");
+            fillSportTypeSelect(createSportType, cachedSportTypes, "");
+            ensureDefaultTheme();
           })
           .catch(function () {
             cachedCountries = [];
+            cachedSportTypes = [];
           });
       }
 
@@ -798,7 +863,13 @@
             }
             createOk.classList.remove("hidden");
             createForm.reset();
-            fillCountrySelect(createCountry, cachedCountries, "");
+            fillCountrySelect(
+              createCountry,
+              cachedCountries,
+              defaultCountryNameFromList(cachedCountries),
+            );
+            fillSportTypeSelect(createSportType, cachedSportTypes, "");
+            ensureDefaultTheme();
             document.getElementById("createUserRole").value = "Coach Manager";
             loadLists();
           })
@@ -816,7 +887,7 @@
       });
 
       loadLists();
-      loadCountriesFromBasicInfo();
+      loadBasicInfoLists();
     })();
   </script>
 </body>

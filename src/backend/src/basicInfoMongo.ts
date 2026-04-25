@@ -362,6 +362,7 @@ export async function removeSportTypeFromCanonicalMongo(
  */
 export async function addCountryToCanonicalMongo(
   name: string,
+  opts?: { country_code?: string },
 ): Promise<
   | { ok: true; countries: BasicInfoCountryEntry[] }
   | { ok: false; error: string }
@@ -381,7 +382,11 @@ export async function addCountryToCanonicalMongo(
   if (rows.some((r) => r.name.toLowerCase() === lower)) {
     return { ok: false, error: "That country already exists in basicInfo lists." };
   }
-  const nextRows = [...rows, { name: trimmed, prefix: "" }];
+  const cc = String(opts?.country_code ?? "").trim();
+  const nextRows = [
+    ...rows,
+    cc ? { name: trimmed, prefix: "", country_code: cc } : { name: trimmed, prefix: "" },
+  ];
   const countries = countriesForMongoWrite(nextRows);
   const sportTypes = Array.isArray(existing?.sportTypes)
     ? existing!.sportTypes.map((c) => String(c ?? "").trim()).filter(Boolean)

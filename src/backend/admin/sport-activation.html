@@ -85,8 +85,10 @@
           <li class="px-4 py-6 text-center text-slate-500 text-sm">Loading…</li>
         </ul>
         <div class="p-4 border-t border-slate-700/80 flex flex-col sm:flex-row gap-2 sm:items-center">
-          <input type="text" id="newCountryName" maxlength="120" placeholder="New country name"
+          <input type="text" id="newCountryName" maxlength="120" placeholder="New Country Name"
             class="btn-mongo-input flex-1 rounded-md border border-slate-600 bg-slate-900/90 px-3 py-2 text-sm text-white placeholder:text-slate-600 disabled:opacity-45" disabled />
+          <input type="text" id="newCountryCode" maxlength="10" placeholder="Country Code (e.g. HK)"
+            class="btn-mongo-input w-full sm:w-56 rounded-md border border-slate-600 bg-slate-900/90 px-3 py-2 text-sm text-white placeholder:text-slate-600 disabled:opacity-45 font-mono" disabled />
           <button type="button" id="btnAddCountry"
             class="btn-mongo rounded-md bg-teal-600 hover:bg-teal-500 disabled:opacity-40 disabled:pointer-events-none text-white text-sm font-medium px-4 py-2 shrink-0" disabled>
             Add

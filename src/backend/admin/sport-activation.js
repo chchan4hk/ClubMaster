@@ -247,7 +247,9 @@
   async function addCountry() {
     setBanner("");
     var input = el("newCountryName");
+    var codeInput = el("newCountryCode");
     var name = input ? String(input.value || "").trim() : "";
+    var code = codeInput ? String(codeInput.value || "").trim() : "";
     if (!name) {
       setBanner("Enter a country name.");
       return;
@@ -255,12 +257,13 @@
     try {
       var data = await window.api.api("/basic-info/admin/countries", {
         method: "POST",
-        body: JSON.stringify({ name: name }),
+        body: JSON.stringify({ name: name, country_code: code }),
       });
       if (!data || !data.ok) {
         throw new Error((data && data.error) || "Add failed");
       }
       if (input) input.value = "";
+      if (codeInput) codeInput.value = "";
       applyPayload(data);
     } catch (e) {
       setBanner(e && e.message ? e.message : String(e));
@@ -317,6 +320,15 @@
     var countryName = el("newCountryName");
     if (countryName) {
       countryName.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter") {
+          ev.preventDefault();
+          addCountry();
+        }
+      });
+    }
+    var countryCode = el("newCountryCode");
+    if (countryCode) {
+      countryCode.addEventListener("keydown", function (ev) {
         if (ev.key === "Enter") {
           ev.preventDefault();
           addCountry();

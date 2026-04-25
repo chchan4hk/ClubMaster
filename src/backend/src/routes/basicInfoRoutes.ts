@@ -150,7 +150,10 @@ export function createBasicInfoRouter(): Router {
           return;
         }
         const name = String(req.body?.name ?? "").trim();
-        const ins = await addCountryToCanonicalMongo(name);
+        const country_code = String(
+          req.body?.country_code ?? req.body?.countryCode ?? "",
+        ).trim();
+        const ins = await addCountryToCanonicalMongo(name, { country_code });
         if (!ins.ok) {
           res.status(400).json({ ok: false, error: ins.error });
           return;

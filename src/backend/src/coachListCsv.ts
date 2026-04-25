@@ -5,6 +5,8 @@ import { loadUsersFromCsv, mapUserTypeToRole } from "./userlistCsv";
 
 /** New coach-manager club folders: CM + 8 digits (e.g. CM00000001). */
 const COACH_MANAGER_FOLDER_RE = /^CM(\d+)$/i;
+/** New country-scoped club folders: 2–3 letters + 7 digits (e.g. HK0000001, USA0000001). */
+const COUNTRY_CLUB_FOLDER_RE = /^[A-Z]{2,3}(\d{7})$/i;
 /**
  * Legacy club folder ids: C + 1–5 digits (e.g. C0001, C99999).
  * Coach login UIDs use C + 6 digits (C000001); those must not match as folder ids.
@@ -215,6 +217,9 @@ export function clubDataDir(clubId: string): string {
 export function isValidClubFolderId(clubId: string): boolean {
   const s = clubId.trim();
   if (COACH_MANAGER_FOLDER_RE.test(s)) {
+    return true;
+  }
+  if (COUNTRY_CLUB_FOLDER_RE.test(s)) {
     return true;
   }
   return LEGACY_CLUB_FOLDER_C_RE.test(s);
