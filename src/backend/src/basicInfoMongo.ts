@@ -1,7 +1,14 @@
-import type { BasicInfoLists } from "./basicInfoCsv";
-import { normalizeBasicInfoKey, parseBasicInfoRow } from "./basicInfoCsv";
+import type { BasicInfoCountryEntry, BasicInfoLists } from "./basicInfoCsv";
+import {
+  basicInfoCountriesForMongoPayload,
+  mergeUniqueCountryLists,
+  normalizeBasicInfoCountryEntry,
+  normalizeBasicInfoKey,
+  parseBasicInfoRow,
+} from "./basicInfoCsv";
 import {
   BASIC_INFO_LISTS_DOC_ID,
+  ensureBasicInfoCollection,
   getBasicInfoCollection,
   getMongoDb,
   isMongoConfigured,
@@ -10,6 +17,11 @@ import {
 
 /** Legacy / Compass-style collection name (PascalCase) in `ClubMaster_DB`. */
 const BASIC_INFO_LEGACY_COLLECTION = "BasicInfo";
+
+/** Sync collection validator (object-shaped `countries` rows) before canonical writes. */
+async function ensureBasicInfoValidator(): Promise<void> {
+  await ensureBasicInfoCollection();
+}
 
 function mergeUniqueLists(first?: string[], second?: string[]): string[] {
   const seen = new Set<string>();
@@ -31,6 +43,20 @@ function mergeUniqueLists(first?: string[], second?: string[]): string[] {
   return out;
 }
 
+function countriesFromDocArray(raw: unknown): BasicInfoCountryEntry[] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+  const out: BasicInfoCountryEntry[] = [];
+  for (const c of raw) {
+    const e = normalizeBasicInfoCountryEntry(c);
+    if (e) {
+      out.push(e);
+    }
+  }
+  return mergeUniqueCountryLists(out, []);
+}
+
 async function readCanonicalBasicInfoListsDoc(
   databaseName?: string,
 ): Promise<BasicInfoLists | null> {
@@ -39,9 +65,7 @@ async function readCanonicalBasicInfoListsDoc(
   if (!doc) {
     return null;
   }
-  const countries = Array.isArray(doc.countries)
-    ? doc.countries.map((c) => String(c ?? "").trim()).filter(Boolean)
-    : [];
+  const countries = countriesFromDocArray(doc.countries);
   const sportTypes = Array.isArray(doc.sportTypes)
     ? doc.sportTypes.map((c) => String(c ?? "").trim()).filter(Boolean)
     : [];
@@ -73,18 +97,9 @@ async function readLegacyBasicInfoPascalCollection(
     return null;
   }
 
-  const countries: string[] = [];
+  const countryBuf: BasicInfoCountryEntry[] = [];
   const sportTypes: string[] = [];
-  const seenC = new Set<string>();
   const seenS = new Set<string>();
-  const addC = (v: string) => {
-    const t = v.trim();
-    if (!t || seenC.has(t.toLowerCase())) {
-      return;
-    }
-    seenC.add(t.toLowerCase());
-    countries.push(t);
-  };
   const addS = (v: string) => {
     const t = v.trim();
     if (!t || seenS.has(t.toLowerCase())) {
@@ -98,7 +113,10 @@ async function readLegacyBasicInfoPascalCollection(
     const d = raw as Record<string, unknown>;
     if (Array.isArray(d.countries)) {
       for (const c of d.countries) {
-        addC(String(c ?? ""));
+        const e = normalizeBasicInfoCountryEntry(c);
+        if (e) {
+          countryBuf.push(e);
+        }
       }
     }
     if (Array.isArray(d.sportTypes)) {
@@ -118,7 +136,7 @@ async function readLegacyBasicInfoPascalCollection(
     if (keyCol && valCol) {
       const row = parseBasicInfoRow(keyCol, valCol);
       if (row?.kind === "country") {
-        addC(row.value);
+        countryBuf.push({ name: row.value, prefix: "" });
       } else if (row?.kind === "sporttype") {
         addS(row.value);
       }
@@ -133,12 +151,14 @@ async function readLegacyBasicInfoPascalCollection(
       }
       const kind = normalizeBasicInfoKey(k);
       if (kind === "country") {
-        addC(v);
+        countryBuf.push({ name: v, prefix: "" });
       } else if (kind === "sporttype") {
         addS(v);
       }
     }
   }
+
+  const countries = mergeUniqueCountryLists(countryBuf, []);
 
   if (!countries.length && !sportTypes.length) {
     return null;
@@ -161,7 +181,10 @@ export async function readBasicInfoFromMongo(): Promise<BasicInfoLists | null> {
   try {
     const canon = await readCanonicalBasicInfoListsDoc();
     const legacy = await readLegacyBasicInfoPascalCollection();
-    const countries = mergeUniqueLists(canon?.countries, legacy?.countries);
+    const countries = mergeUniqueCountryLists(
+      canon?.countries ?? [],
+      legacy?.countries ?? [],
+    );
     const sportTypes = mergeUniqueLists(canon?.sportTypes, legacy?.sportTypes);
     if (!countries.length && !sportTypes.length) {
       return null;
@@ -174,4 +197,259 @@ export async function readBasicInfoFromMongo(): Promise<BasicInfoLists | null> {
     );
     return null;
   }
+}
+
+function countriesForMongoWrite(rows: BasicInfoCountryEntry[]) {
+  return basicInfoCountriesForMongoPayload(rows);
+}
+
+/**
+ * Append a sport type to the canonical `basicInfo` document (`basicInfoLists`) only.
+ * Merged reads may still include legacy `BasicInfo` collection entries.
+ */
+export async function addSportTypeToCanonicalMongo(
+  name: string,
+): Promise<
+  { ok: true; sportTypes: string[] } | { ok: false; error: string }
+> {
+  if (!isMongoConfigured()) {
+    return { ok: false, error: "MongoDB is not configured." };
+  }
+  const trimmed = String(name ?? "").trim();
+  if (!trimmed) {
+    return { ok: false, error: "Sport type name is required." };
+  }
+  await ensureBasicInfoValidator();
+  const coll = await getBasicInfoCollection();
+  const existing = await coll.findOne({ _id: BASIC_INFO_LISTS_DOC_ID });
+  const countries = countriesForMongoWrite(
+    countriesFromDocArray(existing?.countries),
+  );
+  let sportTypes = Array.isArray(existing?.sportTypes)
+    ? existing!.sportTypes.map((c) => String(c ?? "").trim()).filter(Boolean)
+    : [];
+  const lower = trimmed.toLowerCase();
+  if (sportTypes.some((s) => s.toLowerCase() === lower)) {
+    return { ok: false, error: "That sport type already exists in basicInfo lists." };
+  }
+  sportTypes = [...sportTypes, trimmed];
+  await coll.updateOne(
+    { _id: BASIC_INFO_LISTS_DOC_ID },
+    {
+      $set: {
+        countries,
+        sportTypes,
+        lastImportedAt: new Date(),
+      },
+      $setOnInsert: { _id: BASIC_INFO_LISTS_DOC_ID },
+    },
+    { upsert: true },
+  );
+  return { ok: true, sportTypes };
+}
+
+/**
+ * Rename one sport type in the canonical `basicInfo` document only (match by `oldName`, trim, case-insensitive).
+ */
+export async function updateSportTypeInCanonicalMongo(
+  oldName: string,
+  newName: string,
+): Promise<
+  { ok: true; sportTypes: string[] } | { ok: false; error: string }
+> {
+  if (!isMongoConfigured()) {
+    return { ok: false, error: "MongoDB is not configured." };
+  }
+  const o = String(oldName ?? "").trim();
+  const n = String(newName ?? "").trim();
+  if (!o || !n) {
+    return { ok: false, error: "Current and new sport type names are required." };
+  }
+  await ensureBasicInfoValidator();
+  const coll = await getBasicInfoCollection();
+  const existing = await coll.findOne({ _id: BASIC_INFO_LISTS_DOC_ID });
+  if (!existing) {
+    return {
+      ok: false,
+      error:
+        "No basicInfo lists document yet. Add a sport type first (creates the document).",
+    };
+  }
+  let sportTypes = Array.isArray(existing.sportTypes)
+    ? existing.sportTypes.map((c) => String(c ?? "").trim()).filter(Boolean)
+    : [];
+  const idx = sportTypes.findIndex((s) => s.toLowerCase() === o.toLowerCase());
+  if (idx < 0) {
+    return {
+      ok: false,
+      error:
+        "That sport type is not in the canonical basicInfo document (it may exist only in legacy BasicInfo data).",
+    };
+  }
+  if (sportTypes.some((s, i) => i !== idx && s.toLowerCase() === n.toLowerCase())) {
+    return { ok: false, error: "Another sport type already uses that name." };
+  }
+  const next = [...sportTypes];
+  next[idx] = n;
+  await coll.updateOne(
+    { _id: BASIC_INFO_LISTS_DOC_ID },
+    {
+      $set: {
+        sportTypes: next,
+        lastImportedAt: new Date(),
+      },
+    },
+  );
+  return { ok: true, sportTypes: next };
+}
+
+/**
+ * Remove one sport type from the canonical `basicInfo` document (case-insensitive name match).
+ */
+export async function removeSportTypeFromCanonicalMongo(
+  name: string,
+): Promise<
+  { ok: true; sportTypes: string[] } | { ok: false; error: string }
+> {
+  if (!isMongoConfigured()) {
+    return { ok: false, error: "MongoDB is not configured." };
+  }
+  const trimmed = String(name ?? "").trim();
+  if (!trimmed) {
+    return { ok: false, error: "Sport type name is required." };
+  }
+  await ensureBasicInfoValidator();
+  const coll = await getBasicInfoCollection();
+  const existing = await coll.findOne({ _id: BASIC_INFO_LISTS_DOC_ID });
+  if (!existing) {
+    return {
+      ok: false,
+      error:
+        "No basicInfo lists document yet. Add a sport type or country first (creates the document).",
+    };
+  }
+  let sportTypes = Array.isArray(existing.sportTypes)
+    ? existing.sportTypes.map((c) => String(c ?? "").trim()).filter(Boolean)
+    : [];
+  const lower = trimmed.toLowerCase();
+  const idx = sportTypes.findIndex((s) => s.toLowerCase() === lower);
+  if (idx < 0) {
+    return {
+      ok: false,
+      error:
+        "That sport type is not in the canonical basicInfo document (it may exist only in legacy BasicInfo data).",
+    };
+  }
+  const next = sportTypes.filter((_, i) => i !== idx);
+  const countries = countriesForMongoWrite(
+    countriesFromDocArray(existing.countries),
+  );
+  await coll.updateOne(
+    { _id: BASIC_INFO_LISTS_DOC_ID },
+    {
+      $set: {
+        sportTypes: next,
+        countries,
+        lastImportedAt: new Date(),
+      },
+    },
+  );
+  return { ok: true, sportTypes: next };
+}
+
+/**
+ * Append a country to the canonical `basicInfo` document (`basicInfoLists`) only.
+ */
+export async function addCountryToCanonicalMongo(
+  name: string,
+): Promise<
+  | { ok: true; countries: BasicInfoCountryEntry[] }
+  | { ok: false; error: string }
+> {
+  if (!isMongoConfigured()) {
+    return { ok: false, error: "MongoDB is not configured." };
+  }
+  const trimmed = String(name ?? "").trim();
+  if (!trimmed) {
+    return { ok: false, error: "Country name is required." };
+  }
+  await ensureBasicInfoValidator();
+  const coll = await getBasicInfoCollection();
+  const existing = await coll.findOne({ _id: BASIC_INFO_LISTS_DOC_ID });
+  const rows = countriesFromDocArray(existing?.countries);
+  const lower = trimmed.toLowerCase();
+  if (rows.some((r) => r.name.toLowerCase() === lower)) {
+    return { ok: false, error: "That country already exists in basicInfo lists." };
+  }
+  const nextRows = [...rows, { name: trimmed, prefix: "" }];
+  const countries = countriesForMongoWrite(nextRows);
+  const sportTypes = Array.isArray(existing?.sportTypes)
+    ? existing!.sportTypes.map((c) => String(c ?? "").trim()).filter(Boolean)
+    : [];
+  await coll.updateOne(
+    { _id: BASIC_INFO_LISTS_DOC_ID },
+    {
+      $set: {
+        countries,
+        sportTypes,
+        lastImportedAt: new Date(),
+      },
+      $setOnInsert: { _id: BASIC_INFO_LISTS_DOC_ID },
+    },
+    { upsert: true },
+  );
+  return { ok: true, countries: nextRows };
+}
+
+/**
+ * Remove one country from the canonical `basicInfo` document (case-insensitive name match).
+ */
+export async function removeCountryFromCanonicalMongo(
+  name: string,
+): Promise<
+  | { ok: true; countries: BasicInfoCountryEntry[] }
+  | { ok: false; error: string }
+> {
+  if (!isMongoConfigured()) {
+    return { ok: false, error: "MongoDB is not configured." };
+  }
+  const trimmed = String(name ?? "").trim();
+  if (!trimmed) {
+    return { ok: false, error: "Country name is required." };
+  }
+  await ensureBasicInfoValidator();
+  const coll = await getBasicInfoCollection();
+  const existing = await coll.findOne({ _id: BASIC_INFO_LISTS_DOC_ID });
+  if (!existing) {
+    return {
+      ok: false,
+      error:
+        "No basicInfo lists document yet. Add a sport type or country first (creates the document).",
+    };
+  }
+  const rows = countriesFromDocArray(existing.countries);
+  const lower = trimmed.toLowerCase();
+  const nextRows = rows.filter((r) => r.name.toLowerCase() !== lower);
+  if (nextRows.length === rows.length) {
+    return {
+      ok: false,
+      error:
+        "That country is not in the canonical basicInfo document (it may exist only in legacy BasicInfo data).",
+    };
+  }
+  const countries = countriesForMongoWrite(nextRows);
+  const sportTypes = Array.isArray(existing.sportTypes)
+    ? existing.sportTypes.map((c) => String(c ?? "").trim()).filter(Boolean)
+    : [];
+  await coll.updateOne(
+    { _id: BASIC_INFO_LISTS_DOC_ID },
+    {
+      $set: {
+        countries,
+        sportTypes,
+        lastImportedAt: new Date(),
+      },
+    },
+  );
+  return { ok: true, countries: nextRows };
 }

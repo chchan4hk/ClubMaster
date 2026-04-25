@@ -14,6 +14,7 @@ import {
   studentProfileFromUserLoginStudentCsv,
 } from "./routes/userAccountRoutes";
 import {
+  ensureBasicInfoCollection,
   ensureClubInfoCollection,
   ensureCoachSalaryCollection,
   ensureLessonListCollection,
@@ -101,6 +102,7 @@ const staticRoot = resolveStaticRoot();
 const sourceImageStatic = path.join(staticRoot, "source", "image");
 const dataClubStatic = path.join(backendRoot, "data_club");
 const adminDataStatic = path.join(backendRoot, "data", "admin");
+const adminUiStatic = path.join(backendRoot, "admin");
 
 ensureUserlistFileExists();
 ensureUserlistSchema();
@@ -172,6 +174,11 @@ app.use(
 app.use(
   "/backend/data/admin",
   express.static(adminDataStatic, isProd ? { maxAge: 60_000, etag: true } : {}),
+);
+/** Admin HTML modules (e.g. Sport Activation). */
+app.use(
+  "/backend/admin",
+  express.static(adminUiStatic, isProd ? { maxAge: STATIC_MAX_AGE_MS, etag: true } : {}),
 );
 
 app.get("/api/health", (_req, res) => {
@@ -504,6 +511,7 @@ const server = app.listen(PORT, "0.0.0.0", () => {
   if (isMongoConfigured()) {
     void Promise.all([
       ensureUserLoginCollection(),
+      ensureBasicInfoCollection(),
       ensureClubInfoCollection(),
       ensureLessonListCollection(),
       ensurePaymentListCollection(),
@@ -517,13 +525,13 @@ const server = app.listen(PORT, "0.0.0.0", () => {
     ])
       .then(() => {
         console.log(
-          "MongoDB: `userLogin`, `clubInfo`, `LessonList`, `PaymentList`, `LessonSeriesInfo`, `LessonReserveList`, `LessonPaymentLedger`, `PrizeList`, `CoachManager`, and `UserList_Student` indexes/roster index warmed (see src/backend/src/db/DBConnection.ts).",
+          "MongoDB: `userLogin`, `basicInfo`, `clubInfo`, `LessonList`, `PaymentList`, `LessonSeriesInfo`, `LessonReserveList`, `LessonPaymentLedger`, `PrizeList`, `CoachManager`, and `UserList_Student` indexes/roster index warmed (see src/backend/src/db/DBConnection.ts).",
         );
       })
       .catch((e) => {
         const msg = e instanceof Error ? e.message : String(e);
         console.warn(
-          "MongoDB collection init (userLogin / clubInfo / LessonList / PaymentList / LessonSeriesInfo / LessonReserveList / LessonPaymentLedger / PrizeList / CoachManager / UserList_Student):",
+          "MongoDB collection init (userLogin / basicInfo / clubInfo / LessonList / PaymentList / LessonSeriesInfo / LessonReserveList / LessonPaymentLedger / PrizeList / CoachManager / UserList_Student):",
           msg,
         );
       });

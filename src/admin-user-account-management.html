@@ -51,20 +51,31 @@
     <section id="addUserPanel" class="hidden glass rounded-xl border border-teal-500/20 p-6 mb-6">
       <h2 class="text-lg font-semibold text-teal-200 mb-4">Create new account</h2>
       <form id="createForm" class="space-y-4 max-w-xl">
-        <div>
-          <label for="createFullName" class="block text-sm text-slate-400 mb-1">Full name</label>
-          <input id="createFullName" name="full_name" type="text" required autocomplete="name"
-            class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="createFullName" class="block text-sm text-slate-400 mb-1">Full name</label>
+            <input id="createFullName" name="full_name" type="text" required autocomplete="name"
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+          </div>
+          <div>
+            <label for="createCountry" class="block text-sm text-slate-400 mb-1">Country</label>
+            <select id="createCountry" name="country"
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+              <option value="">—</option>
+            </select>
+          </div>
         </div>
-        <div>
-          <label for="createUsername" class="block text-sm text-slate-400 mb-1">Username</label>
-          <input id="createUsername" name="username" type="text" required autocomplete="username"
-            class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
-        </div>
-        <div>
-          <label for="createPassword" class="block text-sm text-slate-400 mb-1">Default password</label>
-          <input id="createPassword" name="password" type="password" required autocomplete="new-password"
-            class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="createUsername" class="block text-sm text-slate-400 mb-1">Username</label>
+            <input id="createUsername" name="username" type="text" required autocomplete="username"
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+          </div>
+          <div>
+            <label for="createPassword" class="block text-sm text-slate-400 mb-1">Default password</label>
+            <input id="createPassword" name="password" type="password" required autocomplete="new-password"
+              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+          </div>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -182,9 +193,20 @@
       <label for="modalUsername" class="block text-sm text-slate-400 mb-1">Username</label>
       <input id="modalUsername" type="text" autocomplete="off"
         class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-3 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
-      <label for="modalFullName" class="block text-sm text-slate-400 mb-1">Full name</label>
-      <input id="modalFullName" type="text" autocomplete="name"
-        class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-3 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
+        <div>
+          <label for="modalFullName" class="block text-sm text-slate-400 mb-1">Full name</label>
+          <input id="modalFullName" type="text" autocomplete="name"
+            class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
+        </div>
+        <div>
+          <label for="modalCountry" class="block text-sm text-slate-400 mb-1">Country</label>
+          <select id="modalCountry"
+            class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500/50">
+            <option value="">—</option>
+          </select>
+        </div>
+      </div>
       <label for="modalClubName" class="block text-sm text-slate-400 mb-1">Club</label>
       <input id="modalClubName" type="text" autocomplete="organization"
         class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 mb-3 focus:outline-none focus:ring-2 focus:ring-teal-500/50" />
@@ -258,6 +280,7 @@
       });
 
       var pageLoadError = document.getElementById("pageLoadError");
+      var createCountry = document.getElementById("createCountry");
 
       function esc(s) {
         if (s == null) return "";
@@ -283,6 +306,7 @@
       var modalUidLine = document.getElementById("modalUidLine");
       var modalUsername = document.getElementById("modalUsername");
       var modalFullName = document.getElementById("modalFullName");
+      var modalCountry = document.getElementById("modalCountry");
       var modalClubName = document.getElementById("modalClubName");
       var modalExpiryDate = document.getElementById("modalExpiryDate");
       var modalPassword = document.getElementById("modalPassword");
@@ -373,6 +397,9 @@
         modalUidLine.textContent = "UID " + row.uid;
         modalUsername.value = row.username != null ? String(row.username) : "";
         modalFullName.value = row.fullName != null ? String(row.fullName) : "";
+        if (modalCountry) {
+          modalCountry.value = row.country != null ? String(row.country) : "";
+        }
         modalClubName.value = row.clubName != null ? String(row.clubName) : "";
         var ex =
           (row.expiryDate != null && String(row.expiryDate).trim()) ||
@@ -417,6 +444,7 @@
           uid: pendingModal.uid,
           username: un,
           fullName: modalFullName.value,
+          country: modalCountry ? modalCountry.value : "",
           clubName: modalClubName.value,
           expiryDate: expVal,
           Expiry_date: expVal,
@@ -446,6 +474,57 @@
       });
 
       var rowCache = { userLogin: [], coach: [], student: [] };
+
+      var cachedCountries = [];
+
+      function normalizeCountryRow(c) {
+        if (c == null) return null;
+        if (typeof c === "string") {
+          var n1 = String(c).trim();
+          return n1 ? { name: n1, prefix: "" } : null;
+        }
+        if (typeof c === "object" && c.name != null) {
+          var n2 = String(c.name).trim();
+          if (!n2) return null;
+          var pfx = c.prefix != null ? String(c.prefix).trim() : "";
+          return { name: n2, prefix: pfx };
+        }
+        return null;
+      }
+
+      function fillCountrySelect(sel, values, selectedName) {
+        if (!sel) return;
+        var want = selectedName != null ? String(selectedName).trim() : "";
+        sel.innerHTML = '<option value="">—</option>';
+        var list = Array.isArray(values) ? values : [];
+        for (var i = 0; i < list.length; i++) {
+          var row = normalizeCountryRow(list[i]);
+          if (!row) continue;
+          var opt = document.createElement("option");
+          opt.value = row.name;
+          opt.textContent = row.prefix ? row.name + " (" + row.prefix + ")" : row.name;
+          sel.appendChild(opt);
+        }
+        if (want) {
+          sel.value = want;
+        }
+      }
+
+      function loadCountriesFromBasicInfo() {
+        if (!window.api || typeof window.api.api !== "function") {
+          return Promise.resolve();
+        }
+        return window.api
+          .api("/basic-info", { cacheTtlMs: 120000 })
+          .then(function (data) {
+            cachedCountries = data && Array.isArray(data.countries) ? data.countries : [];
+            fillCountrySelect(createCountry, cachedCountries, "");
+            fillCountrySelect(modalCountry, cachedCountries, modalCountry ? modalCountry.value : "");
+          })
+          .catch(function () {
+            cachedCountries = [];
+          });
+      }
 
       function actionButtons(store, row) {
         var uid = esc(row.uid);
@@ -719,6 +798,7 @@
             }
             createOk.classList.remove("hidden");
             createForm.reset();
+            fillCountrySelect(createCountry, cachedCountries, "");
             document.getElementById("createUserRole").value = "Coach Manager";
             loadLists();
           })
@@ -736,6 +816,7 @@
       });
 
       loadLists();
+      loadCountriesFromBasicInfo();
     })();
   </script>
 </body>

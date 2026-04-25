@@ -2,6 +2,8 @@
  * Imports `data/BasicInfo.json` into MongoDB `basicInfo` collection as one document
  * with `_id` {@link BASIC_INFO_LISTS_DOC_ID} (countries + sportTypes arrays).
  *
+ * `countries` may be a string array (legacy) or objects `{ name, prefix?, country_code? }`.
+ *
  * From `src/backend`:
  *   npm run mongo:seed-basicinfo-json
  *   npm run mongo:seed-basicinfo-json -- --dry-run
@@ -11,6 +13,11 @@
 import fs from "fs";
 import path from "path";
 import { loadLocalEnvFile } from "../src/config/env";
+import {
+  basicInfoCountriesForMongoPayload,
+  normalizeBasicInfoCountryEntry,
+  type BasicInfoCountryEntry,
+} from "../src/basicInfoCsv";
 import {
   BASIC_INFO_COLLECTION,
   BASIC_INFO_LISTS_DOC_ID,
@@ -26,7 +33,7 @@ function isStringArray(x: unknown): x is string[] {
 }
 
 function readBasicInfoJson(filePath: string): {
-  countries: string[];
+  countries: BasicInfoCountryEntry[];
   sportTypes: string[];
 } {
   const raw = fs.readFileSync(filePath, "utf8");
@@ -35,13 +42,23 @@ function readBasicInfoJson(filePath: string): {
     throw new Error("BasicInfo.json must be a JSON object.");
   }
   const o = data as Record<string, unknown>;
-  if (!isStringArray(o.countries) || !isStringArray(o.sportTypes)) {
+  if (!Array.isArray(o.countries) || !isStringArray(o.sportTypes)) {
     throw new Error(
-      "BasicInfo.json must include string arrays `countries` and `sportTypes`.",
+      "BasicInfo.json must include `countries` (array of strings or {name,prefix} objects) and string array `sportTypes`.",
     );
   }
+  const countries: BasicInfoCountryEntry[] = [];
+  for (const item of o.countries) {
+    const e = normalizeBasicInfoCountryEntry(item);
+    if (e) {
+      countries.push(e);
+    }
+  }
+  if (!countries.length) {
+    throw new Error("BasicInfo.json `countries` must contain at least one valid entry.");
+  }
   return {
-    countries: o.countries.map((s) => s.trim()).filter(Boolean),
+    countries,
     sportTypes: o.sportTypes.map((s) => s.trim()).filter(Boolean),
   };
 }
@@ -88,7 +105,7 @@ async function main(): Promise<void> {
     const coll = await getBasicInfoCollection(dbName);
     const doc = {
       _id: BASIC_INFO_LISTS_DOC_ID,
-      countries: lists.countries,
+      countries: basicInfoCountriesForMongoPayload(lists.countries),
       sportTypes: lists.sportTypes,
       lastImportedAt: new Date(),
     };

@@ -42,6 +42,9 @@ import {
   updateMainUserlistProfileByUid,
 } from "../userlistCsv";
 import { isMongoConfigured } from "../db/DBConnection";
+import { patchClubInfoFields } from "../clubInfoMongo";
+import { todaySlashYmd } from "../clubInfoJson";
+import { clubCurrencyFromCountry } from "../countryCurrency";
 import {
   activateCoachManagerMongo,
   activateCoachRoleLoginMongo,
@@ -289,6 +292,8 @@ export function createAdminRouter(): Router {
         typeof req.body?.clubName === "string";
 
       let expiryUpdated = false;
+      const countryRaw =
+        typeof req.body?.country === "string" ? String(req.body.country).trim() : "";
 
       if (hasProfile) {
         const username = String(req.body.username).trim();
@@ -361,6 +366,23 @@ export function createAdminRouter(): Router {
         if (!profileResult.ok) {
           res.status(400).json({ ok: false, error: profileResult.error });
           return;
+        }
+        if (
+          isMongoConfigured() &&
+          countryRaw &&
+          (store === "userlogin" || store === "main")
+        ) {
+          const cur = clubCurrencyFromCountry(countryRaw);
+          try {
+            await patchClubInfoFields(
+              uid,
+              clubName,
+              { country: countryRaw, Currency: cur.currencyCode },
+              todaySlashYmd(),
+            );
+          } catch {
+            /* ignore clubInfo update errors; login profile already updated */
+          }
         }
       } else {
         const expOnly = req.body?.expiryDate ?? req.body?.Expiry_date;
@@ -665,6 +687,7 @@ export function createAdminRouter(): Router {
       const password = String(req.body?.password ?? "").trim();
       const clubName = String(req.body?.clubName ?? "").trim();
       const fullName = String(req.body?.full_name ?? "").trim();
+      const country = String(req.body?.country ?? "").trim();
       const userRole = String(req.body?.userRole ?? "Coach Manager").trim();
       const expiryParsed = parseExpiryDateField(req.body?.Expiry_Date);
       if (!expiryParsed.ok) {
@@ -906,6 +929,19 @@ export function createAdminRouter(): Router {
           }
           res.status(400).json({ ok: false, error: mongoResult.error });
           return;
+        }
+        if (country) {
+          const cur = clubCurrencyFromCountry(country);
+          try {
+            await patchClubInfoFields(
+              clubId,
+              clubName,
+              { country, Currency: cur.currencyCode },
+              todaySlashYmd(),
+            );
+          } catch {
+            /* ignore clubInfo patch errors; account created */
+          }
         }
         res.json({
           ok: true,

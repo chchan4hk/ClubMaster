@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sport Activation — Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    body.sa-page {
+      min-height: 100vh;
+      background: #0b1220;
+      color: #e2e8f0;
+    }
+    .sa-card {
+      background: #111827;
+      border: 1px solid rgba(71, 85, 105, 0.55);
+      border-radius: 0.75rem;
+    }
+    .sa-list {
+      max-height: min(52vh, 28rem);
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body class="sa-page">
+  <div class="max-w-5xl mx-auto px-4 py-8 sm:px-6">
+    <header class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <p class="text-sm text-slate-500 mb-1">
+          <a href="/admin.html" class="text-teal-400 hover:text-teal-300 underline-offset-2 hover:underline">← Admin home</a>
+        </p>
+        <h1 class="text-2xl font-semibold text-white tracking-tight">Sport Activation</h1>
+        <p class="text-slate-400 text-sm mt-2 max-w-xl leading-relaxed">
+          Edit the canonical lists in MongoDB <span class="text-slate-300 font-mono text-xs">ClubMaster_DB.basicInfo</span>
+          (<span class="font-mono text-xs text-teal-300/90">basicInfoLists</span>). Add or remove sport types and countries.
+          When Mongo is not in use, lists are read-only from CSV.
+        </p>
+      </div>
+      <button type="button" id="btnReload"
+        class="shrink-0 rounded-lg bg-teal-600 hover:bg-teal-500 text-white text-sm font-medium px-4 py-2.5 shadow">
+        Reload
+      </button>
+    </header>
+
+    <div id="errorBanner" class="hidden mb-6 rounded-lg border border-red-500/35 bg-red-950/40 px-4 py-3 text-red-200 text-sm"></div>
+
+    <section class="sa-card p-4 sm:p-5 mb-6 text-sm">
+      <h2 class="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">Data source</h2>
+      <dl class="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4">
+        <div><dt class="text-slate-600">Source</dt><dd id="metaSource" class="text-slate-200 font-mono text-xs mt-0.5">—</dd></div>
+        <div><dt class="text-slate-600">Database</dt><dd id="metaDatabase" class="text-slate-200 font-mono text-xs mt-0.5">—</dd></div>
+        <div><dt class="text-slate-600">Collection</dt><dd id="metaCollection" class="text-slate-200 font-mono text-xs mt-0.5">—</dd></div>
+        <div><dt class="text-slate-600">Document</dt><dd id="metaDocId" class="text-slate-200 font-mono text-xs mt-0.5">—</dd></div>
+      </dl>
+    </section>
+
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <!-- Sport types -->
+      <section id="sportPanel" class="sa-card flex flex-col min-h-[14rem]">
+        <div class="px-4 py-3 border-b border-slate-700/80 flex items-center justify-between gap-2">
+          <h2 class="text-base font-medium text-white">Sport types</h2>
+          <span id="sportCount" class="text-xs text-slate-500 tabular-nums"></span>
+        </div>
+        <ul id="sportList" class="sa-list divide-y divide-slate-800/80 flex-1">
+          <li class="px-4 py-6 text-center text-slate-500 text-sm">Loading…</li>
+        </ul>
+        <div class="p-4 border-t border-slate-700/80 flex flex-col sm:flex-row gap-2 sm:items-center">
+          <input type="text" id="newSportName" maxlength="120" placeholder="New sport type"
+            class="btn-mongo-input flex-1 rounded-md border border-slate-600 bg-slate-900/90 px-3 py-2 text-sm text-white placeholder:text-slate-600 disabled:opacity-45" disabled />
+          <button type="button" id="btnAddSport"
+            class="btn-mongo rounded-md bg-teal-600 hover:bg-teal-500 disabled:opacity-40 disabled:pointer-events-none text-white text-sm font-medium px-4 py-2 shrink-0" disabled>
+            Add
+          </button>
+        </div>
+      </section>
+
+      <!-- Countries -->
+      <section id="countryPanel" class="sa-card flex flex-col min-h-[14rem]">
+        <div class="px-4 py-3 border-b border-slate-700/80 flex items-center justify-between gap-2">
+          <h2 class="text-base font-medium text-white">Countries</h2>
+          <span id="countryCount" class="text-xs text-slate-500 tabular-nums"></span>
+        </div>
+        <ul id="countryList" class="sa-list divide-y divide-slate-800/80 flex-1">
+          <li class="px-4 py-6 text-center text-slate-500 text-sm">Loading…</li>
+        </ul>
+        <div class="p-4 border-t border-slate-700/80 flex flex-col sm:flex-row gap-2 sm:items-center">
+          <input type="text" id="newCountryName" maxlength="120" placeholder="New country name"
+            class="btn-mongo-input flex-1 rounded-md border border-slate-600 bg-slate-900/90 px-3 py-2 text-sm text-white placeholder:text-slate-600 disabled:opacity-45" disabled />
+          <button type="button" id="btnAddCountry"
+            class="btn-mongo rounded-md bg-teal-600 hover:bg-teal-500 disabled:opacity-40 disabled:pointer-events-none text-white text-sm font-medium px-4 py-2 shrink-0" disabled>
+            Add
+          </button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/backend/admin/sport-activation.js"></script>
+</body>
+</html>

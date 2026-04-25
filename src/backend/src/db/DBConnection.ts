@@ -197,12 +197,26 @@ export interface UserListCoachDocument {
 
 export type UserListCoachInsert = Omit<UserListCoachDocument, "_id">;
 
+/** Country row in Mongo `basicInfo` (legacy docs may still use plain strings). */
+export interface BasicInfoCountryDocument {
+  name: string;
+  prefix?: string;
+  /** ISO-style territory code when set (e.g. HK, US). */
+  country_code?: string;
+}
+
 /**
  * One canonical document in Mongo `basicInfo` (same shape as `BasicInfoLists` from CSV/JSON).
  */
 export interface BasicInfoListsDocument {
   _id: string;
-  countries: string[];
+  /**
+   * Countries list supports:
+   * - legacy strings ("Hong Kong")
+   * - legacy objects ({ name, prefix?, country_code? })
+   * - canonical tuple rows ([country, country_code])
+   */
+  countries: Array<string | BasicInfoCountryDocument | [string, string]>;
   sportTypes: string[];
   /** Set when imported via `mongo:seed-basicinfo-json`. */
   lastImportedAt?: Date;
@@ -211,10 +225,16 @@ export interface BasicInfoListsDocument {
 /** MongoDB `$jsonSchema` validator for the `basicInfo` collection (lists document). */
 export const basicInfoJsonSchema: Document = {
   bsonType: "object",
-  required: ["_id", "countries", "sportTypes"],
+  /** Only `_id` is required so `collMod` does not fail if the collection has other sparse docs. */
+  required: ["_id"],
   properties: {
     _id: { bsonType: "string" },
-    countries: { bsonType: "array", items: { bsonType: "string" } },
+    /**
+     * Legacy rows are plain strings; canonical rows are objects
+     * `{ name, prefix?, country_code? }`. Do not constrain `items` so `collMod`
+     * stays compatible with legacy data and object-shaped rows always validate.
+     */
+    countries: { bsonType: "array" },
     sportTypes: { bsonType: "array", items: { bsonType: "string" } },
     lastImportedAt: { bsonType: ["date", "null"] },
   },

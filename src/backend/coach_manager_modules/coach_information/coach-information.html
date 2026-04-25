@@ -783,12 +783,22 @@
         var list = Array.isArray(values) ? values : [];
         for (var i = 0; i < list.length; i++) {
           var raw = list[i];
-          var label = raw == null ? "" : String(raw).trim();
-          if (!label) {
+          var value = "";
+          var label = "";
+          if (raw != null && typeof raw === "object" && raw.name != null) {
+            value = String(raw.name).trim();
+            var pfx =
+              raw.prefix != null ? String(raw.prefix).trim() : "";
+            label = pfx ? value + " (" + pfx + ")" : value;
+          } else {
+            value = raw == null ? "" : String(raw).trim();
+            label = value;
+          }
+          if (!value) {
             continue;
           }
           var o = document.createElement("option");
-          o.value = label;
+          o.value = value;
           o.textContent = label;
           sel.appendChild(o);
         }

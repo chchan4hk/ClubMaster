@@ -201,13 +201,37 @@ async function api(path, options = {}) {
   return data;
 }
 
-/** @type {{ countries: string[]; sportTypes: string[] } | null} */
+/** @type {{ countries: { name: string; prefix: string }[]; sportTypes: string[] } | null} */
 let basicInfoCache = null;
+
+/**
+ * @param {unknown} raw
+ * @returns {{ name: string; prefix: string } | null}
+ */
+function normalizeBasicInfoCountryClient(raw) {
+  if (raw == null) {
+    return null;
+  }
+  if (typeof raw === "string") {
+    const name = String(raw).trim();
+    return name ? { name, prefix: "" } : null;
+  }
+  if (typeof raw === "object") {
+    const o = /** @type {Record<string, unknown>} */ (raw);
+    const name = String(o.name ?? o.Name ?? "").trim();
+    if (!name) {
+      return null;
+    }
+    const prefix = String(o.prefix ?? o.Prefix ?? "").trim();
+    return { name, prefix };
+  }
+  return null;
+}
 
 /**
  * Same key rules as backend basicInfoCsv.ts (SportType / Country columns).
  * @param {string} text
- * @returns {{ countries: string[]; sportTypes: string[] }}
+ * @returns {{ countries: { name: string; prefix: string }[]; sportTypes: string[] }}
  */
 function parseBasicInfoCsvText(text) {
   const countries = [];
@@ -237,7 +261,7 @@ function parseBasicInfoCsvText(text) {
       sportTypes.push(val);
     } else if (compact === "country" && !seenC.has(val)) {
       seenC.add(val);
-      countries.push(val);
+      countries.push({ name: val, prefix: "" });
     }
   }
   return { countries, sportTypes };
@@ -253,8 +277,16 @@ async function fetchBasicInfo() {
   }
   try {
     const d = await api("/basic-info");
+    const rawCountries = Array.isArray(d.countries) ? d.countries : [];
+    const countries = [];
+    for (let i = 0; i < rawCountries.length; i++) {
+      const e = normalizeBasicInfoCountryClient(rawCountries[i]);
+      if (e) {
+        countries.push(e);
+      }
+    }
     basicInfoCache = {
-      countries: Array.isArray(d.countries) ? d.countries : [],
+      countries,
       sportTypes: Array.isArray(d.sportTypes) ? d.sportTypes : [],
     };
     return basicInfoCache;
@@ -437,13 +469,25 @@ function fillSelectFromBasicList(sel, values, opts) {
     sel.appendChild(o0);
   }
   (values || []).forEach(function (v) {
-    const t = String(v || "").trim();
-    if (!t) {
+    let value = "";
+    let text = "";
+    if (opts.asCountry) {
+      const e = normalizeBasicInfoCountryClient(v);
+      if (!e) {
+        return;
+      }
+      value = e.name;
+      text = e.prefix ? e.name + " (" + e.prefix + ")" : e.name;
+    } else {
+      value = String(v || "").trim();
+      text = value;
+    }
+    if (!value) {
       return;
     }
     const o = document.createElement("option");
-    o.value = t;
-    o.textContent = t;
+    o.value = value;
+    o.textContent = text;
     sel.appendChild(o);
   });
   const want = opts.selectedValue != null ? String(opts.selectedValue).trim() : "";

@@ -345,7 +345,9 @@
         return "";
       }
 
-      function refillSelectOptions(selectId, values) {
+      /** @param {{ asCountry?: boolean }} [opts] */
+      function refillSelectOptions(selectId, values, opts) {
+        opts = opts || {};
         var sel = document.getElementById(selectId);
         if (!sel) {
           return;
@@ -359,12 +361,27 @@
         var list = Array.isArray(values) ? values : [];
         for (var i = 0; i < list.length; i++) {
           var raw = list[i];
-          var label = raw == null ? "" : String(raw).trim();
-          if (!label) {
+          var value = "";
+          var label = "";
+          if (opts.asCountry) {
+            if (raw != null && typeof raw === "object" && raw.name != null) {
+              value = String(raw.name).trim();
+              var pfx =
+                raw.prefix != null ? String(raw.prefix).trim() : "";
+              label = pfx ? value + " (" + pfx + ")" : value;
+            } else {
+              value = raw == null ? "" : String(raw).trim();
+              label = value;
+            }
+          } else {
+            label = raw == null ? "" : String(raw).trim();
+            value = label;
+          }
+          if (!value) {
             continue;
           }
           var o = document.createElement("option");
-          o.value = label;
+          o.value = value;
           o.textContent = label;
           sel.appendChild(o);
         }
@@ -397,8 +414,12 @@
               return;
             }
             refillSelectOptions("fSportType", data.sportTypes || []);
-            refillSelectOptions("fCountry", data.countries || []);
-            refillSelectOptions("newVenueCountry", data.countries || []);
+            refillSelectOptions("fCountry", data.countries || [], {
+              asCountry: true,
+            });
+            refillSelectOptions("newVenueCountry", data.countries || [], {
+              asCountry: true,
+            });
             refillSelectOptions("newVenueSportType", data.sportTypes || []);
           })
           .catch(function () {
@@ -1224,7 +1245,9 @@
             .api("/basic-info")
             .then(function (data) {
               if (data && data.ok !== false) {
-                refillSelectOptions("newVenueCountry", data.countries || []);
+                refillSelectOptions("newVenueCountry", data.countries || [], {
+                  asCountry: true,
+                });
                 refillSelectOptions("newVenueSportType", data.sportTypes || []);
               }
             })
