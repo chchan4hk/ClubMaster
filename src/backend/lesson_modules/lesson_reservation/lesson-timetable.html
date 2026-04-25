@@ -394,8 +394,13 @@
       }
 
       function formatLessonAlert(L) {
+        var rawLid = (L && L.LessonID) != null ? String(L.LessonID).trim() : "";
+        var dispLid =
+          window.api && typeof window.api.displayLessonIdForUi === "function"
+            ? window.api.displayLessonIdForUi(rawLid) || rawLid
+            : rawLid;
         var lines = [
-          "LessonID: " + (L.LessonID || "—"),
+          "LessonID: " + (dispLid || "—"),
           "Class ID: " + (L.class_id || "—"),
           "Class info: " + (L.class_info || "—"),
           "Sport center: " + (L.Sport_center || "—"),
@@ -549,7 +554,12 @@
                   payload +
                   "\">" +
                   "<span class=\"font-semibold text-amber-200/90\">" +
-                  escapeHtml(item.class_id || item.LessonID || "—") +
+                  escapeHtml(
+                    window.api && typeof window.api.displayLessonIdForUi === "function"
+                      ? window.api.displayLessonIdForUi(item.class_id || item.LessonID || "—") ||
+                          (item.class_id || item.LessonID || "—")
+                      : (item.class_id || item.LessonID || "—")
+                  ) +
                   "</span><br/>" +
                   "<span class=\"text-slate-300\">" +
                   escapeHtml(item.class_info || "—") +

@@ -595,14 +595,12 @@
         paidRecorded = Math.round(paidRecorded * 100) / 100;
         recvTotal = Math.round(recvTotal * 100) / 100;
         var paidShown = Math.min(recvTotal, paidRecorded);
-        var pendingShown = Math.max(0, Math.round((recvTotal - paidRecorded) * 100) / 100);
-        var excessPaid = Math.max(0, Math.round((paidRecorded - recvTotal) * 100) / 100);
+        var pendingShown = Math.max(0, Math.round((recvTotal - paidShown) * 100) / 100);
         return {
           recvTotal: recvTotal,
           paidRecorded: paidRecorded,
           paidShown: paidShown,
           pendingShown: pendingShown,
-          excessPaid: excessPaid,
         };
       }
 
@@ -635,9 +633,8 @@
         }
         var rows = [
           { label: "Collected lesson fees (received)", v: s.recvTotal },
-          { label: "Salary marked Paid (sum)", v: s.paidRecorded },
-          { label: "Paid slice (in chart)", v: s.paidShown },
-          { label: "Pending slice (in chart)", v: s.pendingShown },
+          { label: "Salary marked Paid (Total)", v: s.paidShown },
+          { label: "To be Paid (Total)", v: s.pendingShown },
         ];
         var html = "";
         rows.forEach(function (r) {
@@ -651,16 +648,8 @@
         tb.innerHTML = html;
         var fn = document.getElementById("salaryPieFootnote");
         if (fn) {
-          if (s.excessPaid > 0) {
-            fn.textContent =
-              "Recorded salary marked Paid exceeds collected lesson fees by " +
-              formatMoneyWithCurrency(s.excessPaid) +
-              " (pie caps the Paid slice at collected fees).";
-            fn.classList.remove("hidden");
-          } else {
-            fn.textContent = "";
-            fn.classList.add("hidden");
-          }
+          fn.textContent = "";
+          fn.classList.add("hidden");
         }
       }
 
@@ -871,13 +860,18 @@
         }
         var html = "";
         rows.forEach(function (r) {
-          var lid = r.lessonId != null ? String(r.lessonId) : "";
+          var lid = r.lessonId != null ? String(r.lessonId).trim() : "";
+          var dispLid = lid;
+          var dashIdx = lid.indexOf("-");
+          if (dashIdx >= 0 && dashIdx < lid.length - 1) {
+            dispLid = lid.slice(dashIdx + 1).trim();
+          }
           var val =
             r.feeAllocation != null && String(r.feeAllocation).trim() !== ""
               ? String(r.feeAllocation).trim()
               : "";
           html += "<tr class=\"border-b border-amber-800/15 hover:bg-amber-500/[0.06]\" data-lesson-id=\"" + escapeHtml(lid) + "\">";
-          html += '<td class="py-2 pr-2 align-middle font-mono text-xs text-amber-100">' + escapeHtml(lid) + "</td>";
+          html += '<td class="py-2 pr-2 align-middle font-mono text-xs text-amber-100" title="' + escapeHtml(lid) + '">' + escapeHtml(dispLid) + "</td>";
           html +=
             '<td class="py-2 pr-2 align-middle text-right tabular-nums text-amber-100/90">' +
             formatMoneyWithCurrency(r.lessonFeeTotal) +
@@ -922,9 +916,15 @@
             r.Payment_Status != null && String(r.Payment_Status) !== ""
               ? r.Payment_Status
               : PAYMENT_STATUSES[0];
+          var rawLessonId = r.lessonId != null ? String(r.lessonId).trim() : "";
+          var dispLessonId = rawLessonId;
+          var dashIdx = rawLessonId.indexOf("-");
+          if (dashIdx >= 0 && dashIdx < rawLessonId.length - 1) {
+            dispLessonId = rawLessonId.slice(dashIdx + 1).trim();
+          }
           html += "<tr class=\"border-b border-amber-800/15 hover:bg-amber-500/[0.06]\" data-salary-id=\"" + escapeHtml(sid) + "\">";
           html += '<td class="py-2 pr-2 align-middle whitespace-nowrap text-amber-100/90">' + escapeHtml(r.coachFullName || "") + "</td>";
-          html += '<td class="py-2 pr-2 align-middle text-amber-100/85 text-xs">' + escapeHtml(r.lessonNameDate || "") + "</td>";
+          html += '<td class="py-2 pr-2 align-middle text-amber-100/85 text-xs" title="' + escapeHtml(rawLessonId) + '">' + escapeHtml(dispLessonId) + "</td>";
           html += '<td class="py-2 pr-2 align-middle whitespace-nowrap">' + escapeHtml(r.club_name || "") + "</td>";
           html +=
             '<td class="py-2 pr-2 align-middle text-right tabular-nums">' +

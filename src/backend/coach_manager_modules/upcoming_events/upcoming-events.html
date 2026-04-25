@@ -414,10 +414,18 @@
           .map(function (L) {
             var tds = LESSON_TABLE_COLS.map(function (col) {
               var v = L[col.key] != null ? String(L[col.key]) : "";
-              var disp =
-                window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
-                  ? window.api.formatDateDisplayDdMmYyyy(v)
-                  : v;
+              var disp;
+              if (String(col.key || "").trim().toLowerCase() === "lessonid") {
+                disp =
+                  window.api && typeof window.api.displayLessonIdForUi === "function"
+                    ? window.api.displayLessonIdForUi(v) || v
+                    : v;
+              } else {
+                disp =
+                  window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                    ? window.api.formatDateDisplayDdMmYyyy(v)
+                    : v;
+              }
               return (
                 '<td class="py-2 pr-3 text-xs align-top whitespace-pre-wrap break-words max-w-[16rem]">' +
                 escapeHtml(disp) +
@@ -870,7 +878,16 @@
           return "";
         }
         var v = L[key];
-        return v != null && String(v).trim() !== "" ? String(v) : "—";
+        var s = v != null && String(v).trim() !== "" ? String(v).trim() : "";
+        if (!s) {
+          return "—";
+        }
+        if (key && String(key).trim().toLowerCase() === "lessonid") {
+          return window.api && typeof window.api.displayLessonIdForUi === "function"
+            ? window.api.displayLessonIdForUi(s) || s
+            : s;
+        }
+        return s;
       }
 
       function lessonPeriodText(L) {

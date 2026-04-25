@@ -615,7 +615,13 @@
             " · " +
             escapeHtml(r.studentLevel) +
             "</span></div></td>";
-          var lessonLine = escapeHtml(r.lessonId) + " · " + escapeHtml(r.lessonPeriodLabel);
+          var rawLessonId = r.lessonId != null ? String(r.lessonId).trim() : "";
+          var dispLessonId = rawLessonId;
+          var dashIdx = rawLessonId.indexOf("-");
+          if (dashIdx >= 0 && dashIdx < rawLessonId.length - 1) {
+            dispLessonId = rawLessonId.slice(dashIdx + 1).trim();
+          }
+          var lessonLine = escapeHtml(dispLessonId) + " · " + escapeHtml(r.lessonPeriodLabel);
           html +=
             "<td class=\"py-1.5 pr-3 align-middle max-w-[10rem]\"><div class=\"min-w-0 text-[10px] leading-tight text-amber-100/90 truncate tabular-nums\" title=\"" +
             lessonLine +
@@ -763,10 +769,16 @@
           document.getElementById("modalPayTitle").textContent = "Verify payment";
           setPayModalMode("paidVerify");
           if (sub) {
+            var rawLessonId = r.lessonId != null ? String(r.lessonId).trim() : "";
+            var dispLessonId = rawLessonId;
+            var dashIdx = rawLessonId.indexOf("-");
+            if (dashIdx >= 0 && dashIdx < rawLessonId.length - 1) {
+              dispLessonId = rawLessonId.slice(dashIdx + 1).trim();
+            }
             sub.textContent =
               r.Student_Name +
               " · " +
-              r.lessonId +
+              dispLessonId +
               " · Status PAID · Total paid $" +
               fmtMoney(r.amountPaid) +
               " · Fee $" +
@@ -801,7 +813,11 @@
                   escapeHtml(p.reference || "—") +
                   "</div>" +
                   "<div class=\"ledger-line-dim text-xs\">Ledger ID: " +
-                  escapeHtml(p.paymentId) +
+                  escapeHtml(
+                    window.api && typeof window.api.displayPaymentIdForUi === "function"
+                      ? window.api.displayPaymentIdForUi(p.paymentId) || p.paymentId
+                      : p.paymentId
+                  ) +
                   "</div></div>"
                 );
               })
@@ -827,7 +843,14 @@
               : todayYmd;
         })();
         if (sub) {
-          sub.textContent = r.Student_Name + " · " + r.lessonId + " · Outstanding $" + fmtMoney(r.outstanding);
+          var rawLessonId = r.lessonId != null ? String(r.lessonId).trim() : "";
+          var dispLessonId = rawLessonId;
+          var dashIdx = rawLessonId.indexOf("-");
+          if (dashIdx >= 0 && dashIdx < rawLessonId.length - 1) {
+            dispLessonId = rawLessonId.slice(dashIdx + 1).trim();
+          }
+          sub.textContent =
+            r.Student_Name + " · " + dispLessonId + " · Outstanding $" + fmtMoney(r.outstanding);
         }
         var splitList = document.getElementById("splitList");
         splitList.innerHTML = "";
@@ -841,10 +864,16 @@
         sameStudent.forEach(function (o) {
           var row = document.createElement("div");
           row.className = "flex items-center gap-2";
+          var rawLessonId = o.lessonId != null ? String(o.lessonId).trim() : "";
+          var dispLessonId = rawLessonId;
+          var dashIdx = rawLessonId.indexOf("-");
+          if (dashIdx >= 0 && dashIdx < rawLessonId.length - 1) {
+            dispLessonId = rawLessonId.slice(dashIdx + 1).trim();
+          }
           row.innerHTML =
             "<label class=\"split-row-label flex items-center gap-2 cursor-pointer select-none\">" +
             "<input type=\"checkbox\" class=\"split-chk rounded border-amber-800/35 accent-amber-800\" data-rid=\"" + escapeHtml(o.lessonReserveId) + "\" />" +
-            "<span>" + escapeHtml(o.lessonId) + " (owe $" + fmtMoney(o.outstanding) + ")</span></label>" +
+            "<span>" + escapeHtml(dispLessonId) + " (owe $" + fmtMoney(o.outstanding) + ")</span></label>" +
             "<input type=\"number\" step=\"0.01\" min=\"0\" class=\"split-amt hidden w-24 rounded border px-2 py-1 text-xs\" placeholder=\"Amt\" data-rid=\"" + escapeHtml(o.lessonReserveId) + "\" />";
           splitList.appendChild(row);
           var chk = row.querySelector(".split-chk");

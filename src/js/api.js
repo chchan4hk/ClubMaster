@@ -390,11 +390,37 @@ function displayStudentIdForUi(raw) {
   if (!s) {
     return "";
   }
+  return displayIdSuffixAfterDash(s);
+}
+
+/**
+ * For IDs stored as `{club}-X000001` / `{club}-{something}`, show the suffix after the last `-`.
+ * Strings without `-` are returned unchanged.
+ * @param {unknown} raw
+ * @returns {string}
+ */
+function displayIdSuffixAfterDash(raw) {
+  const s = raw == null ? "" : String(raw).trim();
+  if (!s) {
+    return "";
+  }
   const i = s.lastIndexOf("-");
   if (i > 0 && i < s.length - 1) {
-    return s.slice(i + 1);
+    return s.slice(i + 1).trim();
   }
   return s;
+}
+
+function displayLessonIdForUi(raw) {
+  return displayIdSuffixAfterDash(raw);
+}
+
+function displayCoachIdForUi(raw) {
+  return displayIdSuffixAfterDash(raw);
+}
+
+function displayPaymentIdForUi(raw) {
+  return displayIdSuffixAfterDash(raw);
 }
 
 function fillSelectFromBasicList(sel, values, opts) {
@@ -446,4 +472,8 @@ window.api = {
   parseAnyDisplayDateToYmd,
   formatStoredDateToDdMmYyyy,
   displayStudentIdForUi,
+  displayIdSuffixAfterDash,
+  displayLessonIdForUi,
+  displayCoachIdForUi,
+  displayPaymentIdForUi,
 };

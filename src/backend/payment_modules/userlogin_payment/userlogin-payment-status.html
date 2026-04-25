@@ -416,9 +416,14 @@
         }
         var html = "";
         rows.forEach(function (r) {
-          var expandId = "ex-" + escapeHtml(r.paymentId).replace(/[^a-zA-Z0-9_-]/g, "");
+          var rawPid = r.paymentId != null ? String(r.paymentId).trim() : "";
+          var dispPid =
+            window.api && typeof window.api.displayPaymentIdForUi === "function"
+              ? window.api.displayPaymentIdForUi(rawPid) || rawPid
+              : rawPid;
+          var expandId = "ex-" + escapeHtml(rawPid).replace(/[^a-zA-Z0-9_-]/g, "");
           var sk = rowStatusKey(r);
-          html += "<tr class=\"border-b border-amber-800/15 hover:bg-amber-500/[0.06]\" data-pid=\"" + escapeHtml(r.paymentId) + "\">";
+          html += "<tr class=\"border-b border-amber-800/15 hover:bg-amber-500/[0.06]\" data-pid=\"" + escapeHtml(rawPid) + "\">";
           html += "<td class=\"py-1.5 pr-2 align-middle\"><button type=\"button\" class=\"text-amber-400 hover:text-amber-200 text-xs toggle-ex\" data-target=\"" + expandId + "\">▾</button></td>";
           html +=
             "<td class=\"py-1.5 pr-3 align-middle\"><div class=\"text-[11px] leading-tight text-amber-50/95\"><span class=\"font-medium\">" +
@@ -472,13 +477,13 @@
           if (sk === "PENDING") {
             html +=
               "<button type=\"button\" class=\"btn-confirm-black rounded-md btn-action-compact btn-confirm-sub\" data-id=\"" +
-              escapeHtml(r.paymentId) +
+              escapeHtml(rawPid) +
               "\">Confirm Payment</button>";
           }
           html += "</div></td></tr>";
           html += "<tr id=\"" + expandId + "\" class=\"hidden bg-amber-950/35\"><td colspan=\"10\" class=\"px-4 py-3 text-xs text-amber-200/75\">";
           html += "<p class=\"font-semibold text-amber-200 mb-1\">Subscription payment detail</p>";
-          html += "<p>Payment ID: <strong class=\"text-amber-100\">" + escapeHtml(r.paymentId) + "</strong></p>";
+          html += "<p>Payment ID: <strong class=\"text-amber-100\">" + escapeHtml(dispPid) + "</strong></p>";
           html +=
             "<p>Account expiry (at request): " +
             escapeHtml(

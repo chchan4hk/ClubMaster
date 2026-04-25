@@ -400,7 +400,11 @@
             L.outstanding +
             "\" />" +
             "<span>" +
-            escapeHtml(L.lessonId) +
+            escapeHtml(
+              window.api && typeof window.api.displayLessonIdForUi === "function"
+                ? window.api.displayLessonIdForUi(L.lessonId) || L.lessonId
+                : L.lessonId
+            ) +
             " <span class=\"text-amber-800/65\">(max $" +
             fmtMoney(L.outstanding) +
             ")</span></span></label>" +
@@ -715,7 +719,11 @@
           .map(function (L) {
             return (
               "<tr><td style='border:1px solid #ccc;padding:8px'>" +
-              escapeHtml(L.lessonId) +
+              escapeHtml(
+                window.api && typeof window.api.displayLessonIdForUi === "function"
+                  ? window.api.displayLessonIdForUi(L.lessonId) || L.lessonId
+                  : L.lessonId
+              ) +
               "</td><td style='border:1px solid #ccc;padding:8px;text-align:right'>" +
               fmtMoney(L.totalFee) +
               "</td><td style='border:1px solid #ccc;padding:8px;text-align:right'>" +
