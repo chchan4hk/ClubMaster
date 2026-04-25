@@ -52,11 +52,12 @@ const paymentQrUpload = multer({
 
 function paymentQrDiskPath(clubId: string, rel: string): string {
   const clubRoot = clubDataDir(clubId);
-  if (!clubRoot || rel.includes("..")) {
+  const cleaned = String(rel ?? "").trim().replace(/\\/g, "/");
+  if (!clubRoot || cleaned.includes("..")) {
     return "";
   }
   return path.normalize(
-    path.join(clubRoot, ...rel.split("/").filter(Boolean)),
+    path.join(clubRoot, ...cleaned.split("/").filter(Boolean)),
   );
 }
 
@@ -113,15 +114,18 @@ export function createCoachManagerClubInfoRouter(): Router {
       const fields = clubInfoDocumentToCoachFields(doc);
       const logoRel = clubLogoRelFromFields(fields);
       const clubRoot = clubDataDir(ctx.clubId);
+      const logoRelClean = String(logoRel ?? "").trim().replace(/\\/g, "/");
       const logoDisk =
-        logoRel && clubRoot && !logoRel.includes("..")
+        logoRelClean && clubRoot && !logoRelClean.includes("..")
           ? path.normalize(
-              path.join(clubRoot, ...logoRel.split("/").filter(Boolean)),
+              path.join(clubRoot, ...logoRelClean.split("/").filter(Boolean)),
             )
           : "";
       const logoExists = Boolean(logoDisk && fs.existsSync(logoDisk));
       const club_logo_url =
-        logoRel && logoExists ? clubAssetPublicUrl(ctx.clubId, logoRel) : null;
+        logoRelClean && logoExists
+          ? clubAssetPublicUrl(ctx.clubId, logoRelClean)
+          : null;
       const raw = clubInfoDocumentToRaw(doc);
       res.json({
         ok: true,
