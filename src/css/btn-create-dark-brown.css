@@ -1,0 +1,46 @@
+/**
+ * ClubMaster — “Create New Lesson” dark brown action (shared).
+ * Alias: `btn-create-lesson-dark-brown` (Lesson Reservation).
+ */
+
+.btn-create-dark-brown,
+.btn-create-lesson-dark-brown {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(180deg, #5c4033 0%, #3d291d 45%, #2a1b14 100%);
+  border: 1px solid rgba(120, 90, 70, 0.85);
+  color: #faf7f2 !important;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35),
+    0 2px 8px rgba(20, 12, 8, 0.4);
+}
+
+.btn-create-dark-brown:hover:not(:disabled),
+.btn-create-lesson-dark-brown:hover:not(:disabled) {
+  background: linear-gradient(180deg, #6d4c3d 0%, #4a3326 45%, #352218 100%);
+  filter: brightness(1.05);
+}
+
+.btn-create-dark-brown:active:not(:disabled),
+.btn-create-lesson-dark-brown:active:not(:disabled) {
+  filter: brightness(0.96);
+}
+
+.btn-create-dark-brown:focus-visible,
+.btn-create-lesson-dark-brown:focus-visible {
+  outline: 2px solid rgba(212, 165, 116, 0.55);
+  outline-offset: 2px;
+}
+
+.btn-create-dark-brown:disabled,
+.btn-create-lesson-dark-brown:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: none;
+}

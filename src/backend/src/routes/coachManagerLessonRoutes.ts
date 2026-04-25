@@ -13,8 +13,10 @@ import {
   csvCoachFieldMatchesLoggedCoach,
   filterRawRowsByIdColumn,
   findCoachRosterRow,
+  normCoachLabel,
 } from "../coachSelfFilter";
-import { getDataClubRootPath, isValidClubFolderId, loadCoaches } from "../coachListCsv";
+import { getDataClubRootPath, isValidClubFolderId } from "../coachListCsv";
+import { loadCoachesPreferred } from "../coachListMongo";
 import {
   appendLessonRow,
   ensureLessonListFile,
@@ -35,14 +37,16 @@ import {
   type LessonListRaw,
 } from "../lessonListCsv";
 import {
-  appendLessonReservation,
-  ensureLessonReserveListFile,
-  hasActiveReservationForStudentLesson,
-  loadLessonReservations,
-  removeActiveReservationForStudentLesson,
-  removeLessonReservationByReserveId,
-} from "../lessonReserveList";
-import { loadStudents } from "../studentListCsv";
+  appendLessonReservationPreferred,
+  ensureLessonReserveListPreferred,
+  hasActiveReservationForStudentLessonPreferred,
+  loadLessonReservationsPreferred,
+  removeActiveReservationForStudentLessonPreferred,
+  removeLessonReservationByReserveIdPreferred,
+} from "../lessonReserveListMongo";
+import { loadStudents, studentIdsEqual } from "../studentListCsv";
+import { findStudentRoleLoginByUidMongo } from "../userListMongo";
+import { findUserLoginDocumentByUid } from "../userLoginCollectionMongo";
 import { listActiveSportCenterNames } from "../sportCenterListCsv";
 import {
   appendStudentToLessonSeriesForLessonMongo,
@@ -56,8 +60,10 @@ import {
 import {
   getLessonSeriesInfoCollection,
   isMongoConfigured,
+  LESSON_LIST_COLLECTION,
   type LessonSeriesInfoDocument,
 } from "../db/DBConnection";
+import { lessonListUsesMongo } from "../lessonListMongo";
 import { createCoachManagerSalaryRouter } from "./coachManagerSalaryRoutes";
 
 function readDayYn(b: Record<string, unknown>, key: string): string {
@@ -264,7 +270,7 @@ async function resolveLessonClubContextAsync(
     if (!coachId) {
       return { ok: false, status: 403, error: "Invalid session." };
     }
-    const clubId = resolveClubFolderUidForCoachRequest(req);
+    const clubId = await resolveClubFolderUidForCoachRequest(req);
     if (!clubId) {
       return {
         ok: false,
@@ -272,10 +278,7 @@ async function resolveLessonClubContextAsync(
         error: "No club roster found for this coach account.",
       };
     }
-    const inRoster = loadCoaches(clubId).some(
-      (c) => c.coachId.trim().toUpperCase() === coachId.toUpperCase(),
-    );
-    if (!inRoster) {
+    if ((await findCoachRosterRow(clubId, coachId)) == null) {
       return { ok: false, status: 403, error: "Coach not in club roster." };
     }
     const folderCtx = await resolveClubFolderRoleContextAsync(clubId, "lesson");
@@ -297,7 +300,7 @@ async function resolveLessonClubContextAsync(
     if (!studentId) {
       return { ok: false, status: 403, error: "Invalid session." };
     }
-    const session = resolveStudentClubSessionFromRequest(req);
+    const session = await resolveStudentClubSessionFromRequest(req);
     if (!session.ok) {
       return { ok: false, status: 403, error: session.error };
     }
@@ -440,17 +443,17 @@ function expandLessonSeriesDatesFromRow(
   return out;
 }
 
-function defaultStudentListForLesson(
+async function defaultStudentListForLessonAsync(
   fileClub: string,
   lessonId: string,
-): string {
+): Promise<string> {
   const id = lessonId.trim().toUpperCase();
   if (!id) {
     return "";
   }
   try {
-    ensureLessonReserveListFile(fileClub);
-    const names = loadLessonReservations(fileClub)
+    await ensureLessonReserveListPreferred(fileClub);
+    const names = (await loadLessonReservationsPreferred(fileClub))
       .filter(
         (r) =>
           r.lessonId.trim().toUpperCase() === id &&
@@ -549,7 +552,7 @@ export function createCoachManagerLessonRouter(): Router {
   },
   );
 
-  /** Student: ACTIVE rows in LessonReserveList.json for JWT sub, joined with LessonList.json. */
+  /** Student: ACTIVE lesson reservations (Mongo `LessonReserveList` or `LessonReserveList.json`) for JWT sub, joined with the club lesson list (Mongo `LessonList` or `LessonList.json`). */
   r.get("/student-bookings", requireRole("Student"), async (req, res) => {
     const ctx = await resolveLessonClubContextAsync(req);
     if (!ctx.ok) {
@@ -567,21 +570,21 @@ export function createCoachManagerLessonRouter(): Router {
     const studentId = String(req.user?.sub ?? "").trim();
     const fileClub = resolveLessonFileClubId(ctx.clubId);
     try {
-      ensureLessonReserveListFile(fileClub);
-      ensureLessonListFile(fileClub);
+      await ensureLessonReserveListPreferred(fileClub);
+      await ensureLessonListFile(fileClub);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       res.status(500).json({ ok: false, error: msg });
       return;
     }
-    const reservations = loadLessonReservations(fileClub).filter(
+    const reservations = (await loadLessonReservationsPreferred(fileClub)).filter(
       (r) =>
         r.student_id.trim().toUpperCase() === studentId.toUpperCase() &&
         r.status.toUpperCase() === "ACTIVE",
     );
-    let lessons: ReturnType<typeof loadLessons> = [];
+    let lessons: LessonCsvRow[] = [];
     try {
-      lessons = loadLessons(fileClub);
+      lessons = await loadLessons(fileClub);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       res.status(500).json({ ok: false, error: msg });
@@ -723,12 +726,12 @@ export function createCoachManagerLessonRouter(): Router {
     }
     try {
       const fileClub = resolveLessonFileClubId(ctx.clubId);
-      ensureLessonListFile(fileClub);
-      let lessonCsv = loadLessonListRaw(fileClub);
-      let lessons: ReturnType<typeof loadLessons> = [];
+      await ensureLessonListFile(fileClub);
+      let lessonCsv = await loadLessonListRaw(fileClub);
+      let lessons: LessonCsvRow[] = [];
       let lessonsParseWarning: string | null = null;
       try {
-        lessons = loadLessons(fileClub);
+        lessons = await loadLessons(fileClub);
       } catch (parseErr) {
         lessonsParseWarning =
           parseErr instanceof Error ? parseErr.message : String(parseErr);
@@ -742,14 +745,39 @@ export function createCoachManagerLessonRouter(): Router {
       if (_req.user?.role === "Student") {
         /* full club lesson list for browse + reserve */
       } else if (_req.user?.role === "Coach" && !coachBrowseAll) {
-        const crow = findCoachRosterRow(ctx.clubId, String(_req.user.sub));
+        const crow = await findCoachRosterRow(
+          ctx.clubId,
+          String(_req.user.sub),
+        );
         const uname = String(_req.user.username ?? "");
-        if (crow) {
+        let loginFullName = "";
+        if (isMongoConfigured()) {
+          try {
+            const loginDoc = await findUserLoginDocumentByUid(
+              String(_req.user.sub),
+            );
+            loginFullName = String(loginDoc?.full_name ?? "").trim();
+          } catch {
+            loginFullName = "";
+          }
+        }
+        if (loginFullName) {
+          const target = normCoachLabel(loginFullName);
           lessons = lessons.filter(
-            (x) =>
-              !String(x.coachName ?? "").trim() ||
-              csvCoachFieldMatchesLoggedCoach(x.coachName, crow, uname),
+            (x) => normCoachLabel(String(x.coachName ?? "")) === target,
           );
+        } else if (crow) {
+          lessons = lessons.filter((x) => {
+            const coachCell = String(x.coachName ?? "").trim();
+            const studentCoachCell = String(x.studentCoach ?? "").trim();
+            const matchCoachName =
+              coachCell &&
+              csvCoachFieldMatchesLoggedCoach(coachCell, crow, uname);
+            const matchStudentCoach =
+              studentCoachCell &&
+              csvCoachFieldMatchesLoggedCoach(studentCoachCell, crow, uname);
+            return Boolean(matchCoachName || matchStudentCoach);
+          });
         } else {
           lessons = [];
         }
@@ -777,6 +805,9 @@ export function createCoachManagerLessonRouter(): Router {
       );
       const idEnc = encodeURIComponent(fileClub);
       const fileEnc = encodeURIComponent(LESSON_LIST_FILENAME);
+      const lessonListFileUrl = lessonListUsesMongo()
+        ? `mongodb:${LESSON_LIST_COLLECTION}/${idEnc}`
+        : `/backend/data_club/${idEnc}/${fileEnc}`;
       let activeSportCenters: string[] = [];
       let activeSportCentersLoadError: string | null = null;
       try {
@@ -790,12 +821,12 @@ export function createCoachManagerLessonRouter(): Router {
           activeSportCentersLoadError,
         );
       }
-      /** Distinct coach display names (`full_name`) from ACTIVE rows in UserList_Coach.json. */
+      /** Distinct coach display names (`full_name`) from ACTIVE rows in the club coach roster. */
       let coachNameOptions: string[] = [];
       let coachNameOptionsLoadError: string | null = null;
       try {
         const seen = new Set<string>();
-        for (const c of loadCoaches(fileClub)) {
+        for (const c of await loadCoachesPreferred(fileClub)) {
           if (String(c.status ?? "").trim().toUpperCase() !== "ACTIVE") {
             continue;
           }
@@ -812,7 +843,7 @@ export function createCoachManagerLessonRouter(): Router {
         coachNameOptionsLoadError =
           e instanceof Error ? e.message : String(e);
         console.warn(
-          "[coach-manager/lessons] coachNameOptions from UserList_Coach failed",
+          "[coach-manager/lessons] coachNameOptions from coach roster failed",
           coachNameOptionsLoadError,
         );
       }
@@ -828,8 +859,8 @@ export function createCoachManagerLessonRouter(): Router {
       }[] = [];
       if (_req.user?.role === "CoachManager" || _req.user?.role === "Coach") {
         try {
-          ensureLessonReserveListFile(fileClub);
-          let resvList = loadLessonReservations(fileClub);
+          await ensureLessonReserveListPreferred(fileClub);
+          let resvList = await loadLessonReservationsPreferred(fileClub);
           /** Coach (narrow list): only reservations for lessons this coach teaches — smaller payload & less client work. */
           if (_req.user?.role === "Coach" && !coachBrowseAll) {
             const allowedLessonIds = new Set(
@@ -865,8 +896,8 @@ export function createCoachManagerLessonRouter(): Router {
         lessonCsvRowToApiFields(x),
       );
       if (_req.user?.role === "Student" && studentSub) {
-        ensureLessonReserveListFile(fileClub);
-        const reservations = loadLessonReservations(fileClub);
+        await ensureLessonReserveListPreferred(fileClub);
+        const reservations = await loadLessonReservationsPreferred(fileClub);
         const activeLessonIds = new Set(
           reservations
             .filter(
@@ -896,13 +927,13 @@ export function createCoachManagerLessonRouter(): Router {
         clubId: ctx.clubId,
         clubName: ctx.clubName,
         lessonStorageClubId: fileClub,
-        lessonCsvFileUrl: `/backend/data_club/${idEnc}/${fileEnc}`,
+        lessonCsvFileUrl: lessonListFileUrl,
         lessonCsvResolvedPath: lessonListResolvedPath(fileClub),
         lessons: lessonPayload,
         ...(_req.user?.role === "CoachManager" || _req.user?.role === "Coach"
           ? { lessonReservations: lessonReservationsPayload }
           : {}),
-        /** Tabular mirror of LessonList.json columns (headers + rows). */
+        /** Tabular mirror of lesson list columns (headers + rows); source is Mongo `LessonList` or `LessonList.json`. */
         lessonListRaw: lessonListRawForResponse,
         /** @deprecated Prefer lessonListRaw; same value for older clients. */
         lessonCsv: lessonListRawForResponse,
@@ -965,10 +996,10 @@ export function createCoachManagerLessonRouter(): Router {
     }
     const studentId = String(req.user?.sub ?? "").trim();
     const fileClub = resolveLessonFileClubId(ctx.clubId);
-    ensureLessonListFile(fileClub);
-    let lessons: ReturnType<typeof loadLessons> = [];
+    await ensureLessonListFile(fileClub);
+    let lessons: LessonCsvRow[] = [];
     try {
-      lessons = loadLessons(fileClub);
+      lessons = await loadLessons(fileClub);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       res.status(500).json({ ok: false, error: msg });
@@ -992,25 +1023,33 @@ export function createCoachManagerLessonRouter(): Router {
       });
       return;
     }
-    if (hasActiveReservationForStudentLesson(fileClub, lessonId, studentId)) {
+    if (
+      await hasActiveReservationForStudentLessonPreferred(
+        fileClub,
+        lessonId,
+        studentId,
+      )
+    ) {
       res.status(409).json({
         ok: false,
         error: "You already have an ACTIVE reservation for this lesson.",
       });
       return;
     }
-    const roster = loadStudents(fileClub);
-    const stu = roster.find(
-      (s) => s.studentId.trim().toUpperCase() === studentId.toUpperCase(),
-    );
-    const login = findStudentRoleLoginByUid(studentId);
+    const roster = await loadStudents(fileClub);
+    const stu = roster.find((s) => studentIdsEqual(s.studentId, studentId));
+    let login = findStudentRoleLoginByUid(studentId);
+    if (!login && isMongoConfigured()) {
+      login =
+        (await findStudentRoleLoginByUidMongo(studentId)) ?? undefined;
+    }
     const studentName =
       (login?.fullName && login.fullName.trim()) ||
       (stu?.studentName && stu.studentName.trim()) ||
       "—";
 
-    ensureLessonReserveListFile(fileClub);
-    const append = appendLessonReservation(fileClub, {
+    await ensureLessonReserveListPreferred(fileClub);
+    const append = await appendLessonReservationPreferred(fileClub, {
       lessonId,
       ClubID: ctx.clubId,
       student_id: studentId,
@@ -1021,7 +1060,7 @@ export function createCoachManagerLessonRouter(): Router {
       res.status(400).json({ ok: false, error: append.error });
       return;
     }
-    const inc = incrementLessonReservedNumber(fileClub, lessonId);
+    const inc = await incrementLessonReservedNumber(fileClub, lessonId);
     if (!inc.ok) {
       res.status(500).json({ ok: false, error: inc.error });
       return;
@@ -1054,7 +1093,7 @@ export function createCoachManagerLessonRouter(): Router {
 
   /**
    * Coach Manager: create ACTIVE lesson reservations for selected roster students
-   * (UserList_Student.json). Skips invalid / inactive / already-reserved / when full.
+   * (Mongo `UserList_Student` or legacy `UserList_Student.json`). Skips invalid / inactive / already-reserved / when full.
    */
   r.post("/assign-students", requireRole("CoachManager"), async (req, res) => {
     const ctx = await resolveLessonClubContextAsync(req);
@@ -1081,11 +1120,11 @@ export function createCoachManagerLessonRouter(): Router {
       return;
     }
     const fileClub = resolveLessonFileClubId(ctx.clubId);
-    ensureLessonListFile(fileClub);
-    ensureLessonReserveListFile(fileClub);
-    let lessons: ReturnType<typeof loadLessons> = [];
+    await ensureLessonListFile(fileClub);
+    await ensureLessonReserveListPreferred(fileClub);
+    let lessons: LessonCsvRow[] = [];
     try {
-      lessons = loadLessons(fileClub);
+      lessons = await loadLessons(fileClub);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       res.status(500).json({ ok: false, error: msg });
@@ -1100,7 +1139,7 @@ export function createCoachManagerLessonRouter(): Router {
       res.status(400).json({ ok: false, error: "Lesson is not ACTIVE." });
       return;
     }
-    const roster = loadStudents(fileClub);
+    const roster = await loadStudents(fileClub);
     const rosterByUpper = new Map(
       roster.map((s) => [s.studentId.trim().toUpperCase(), s]),
     );
@@ -1144,7 +1183,13 @@ export function createCoachManagerLessonRouter(): Router {
         skipped.push({ studentId: sid, reason: "Student is not ACTIVE." });
         continue;
       }
-      if (hasActiveReservationForStudentLesson(fileClub, lessonId, stu.studentId)) {
+      if (
+        await hasActiveReservationForStudentLessonPreferred(
+          fileClub,
+          lessonId,
+          stu.studentId,
+        )
+      ) {
         skipped.push({
           studentId: stu.studentId,
           reason: "Already has an ACTIVE reservation for this lesson.",
@@ -1158,12 +1203,16 @@ export function createCoachManagerLessonRouter(): Router {
         });
         continue;
       }
-      const login = findStudentRoleLoginByUid(stu.studentId);
+      let login = findStudentRoleLoginByUid(stu.studentId);
+      if (!login && isMongoConfigured()) {
+        login =
+          (await findStudentRoleLoginByUidMongo(stu.studentId)) ?? undefined;
+      }
       const studentName =
         (login?.fullName && login.fullName.trim()) ||
         (stu.studentName && stu.studentName.trim()) ||
         "—";
-      const append = appendLessonReservation(fileClub, {
+      const append = await appendLessonReservationPreferred(fileClub, {
         lessonId,
         ClubID: ctx.clubId,
         student_id: stu.studentId,
@@ -1174,9 +1223,12 @@ export function createCoachManagerLessonRouter(): Router {
         skipped.push({ studentId: stu.studentId, reason: append.error });
         continue;
       }
-      const inc = incrementLessonReservedNumber(fileClub, lessonId);
+      const inc = await incrementLessonReservedNumber(fileClub, lessonId);
       if (!inc.ok) {
-        removeLessonReservationByReserveId(fileClub, append.lessonReserveId);
+        await removeLessonReservationByReserveIdPreferred(
+          fileClub,
+          append.lessonReserveId,
+        );
         skipped.push({ studentId: stu.studentId, reason: inc.error });
         continue;
       }
@@ -1211,10 +1263,10 @@ export function createCoachManagerLessonRouter(): Router {
     }
     const studentId = String(req.user?.sub ?? "").trim();
     const fileClub = resolveLessonFileClubId(ctx.clubId);
-    ensureLessonListFile(fileClub);
-    let lessons: ReturnType<typeof loadLessons> = [];
+    await ensureLessonListFile(fileClub);
+    let lessons: LessonCsvRow[] = [];
     try {
-      lessons = loadLessons(fileClub);
+      lessons = await loadLessons(fileClub);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       res.status(500).json({ ok: false, error: msg });
@@ -1225,7 +1277,7 @@ export function createCoachManagerLessonRouter(): Router {
       res.status(404).json({ ok: false, error: "Lesson not found." });
       return;
     }
-    const removed = removeActiveReservationForStudentLesson(
+    const removed = await removeActiveReservationForStudentLessonPreferred(
       fileClub,
       lessonId,
       studentId,
@@ -1234,7 +1286,7 @@ export function createCoachManagerLessonRouter(): Router {
       res.status(404).json({ ok: false, error: removed.error });
       return;
     }
-    const dec = decrementLessonReservedNumber(fileClub, lessonId);
+    const dec = await decrementLessonReservedNumber(fileClub, lessonId);
     if (!dec.ok) {
       res.status(500).json({ ok: false, error: dec.error });
       return;
@@ -1274,7 +1326,7 @@ export function createCoachManagerLessonRouter(): Router {
     }
     const w = readLessonWriteBody(req.body);
     const fileClub = resolveLessonFileClubId(ctx.clubId);
-    const result = appendLessonRow(
+    const result = await appendLessonRow(
       fileClub,
       {
         sportType: w.sportType,
@@ -1320,13 +1372,13 @@ export function createCoachManagerLessonRouter(): Router {
       req.body?.LessonID ?? req.body?.lessonId ?? "",
     ).trim();
     const fileClub = resolveLessonFileClubId(ctx.clubId);
-    ensureLessonListFile(fileClub);
-    const existingRow = loadLessons(fileClub).find(
+    await ensureLessonListFile(fileClub);
+    const existingRow = (await loadLessons(fileClub)).find(
       (x) => x.lessonId.trim().toUpperCase() === lessonId.toUpperCase(),
     );
     const w = readLessonWriteBody(req.body);
     const merged = mergeLessonPutWithExisting(req.body, w, existingRow);
-    const result = updateLessonRow(
+    const result = await updateLessonRow(
       fileClub,
       lessonId,
       {
@@ -1373,7 +1425,10 @@ export function createCoachManagerLessonRouter(): Router {
     const lessonId = String(
       req.body?.LessonID ?? req.body?.lessonId ?? "",
     ).trim();
-    const result = removeLessonRow(resolveLessonFileClubId(ctx.clubId), lessonId);
+    const result = await removeLessonRow(
+      resolveLessonFileClubId(ctx.clubId),
+      lessonId,
+    );
     if (!result.ok) {
       res.status(400).json({ ok: false, error: result.error });
       return;
@@ -1397,14 +1452,14 @@ export function createCoachManagerLessonRouter(): Router {
       res.status(400).json({
         ok: false,
         error:
-          "Enter at least one: class_info and/or SportType (LessonList.json for your club).",
+          "Enter at least one: class_info and/or SportType (lesson list for your club).",
       });
       return;
     }
     try {
       const fileClub = resolveLessonFileClubId(ctx.clubId);
-      ensureLessonListFile(fileClub);
-      const list = searchLessonsInClub(
+      await ensureLessonListFile(fileClub);
+      const list = await searchLessonsInClub(
         fileClub,
         classInfo || undefined,
         sportType || undefined,
@@ -1433,8 +1488,8 @@ export function createCoachManagerLessonRouter(): Router {
       return;
     }
     const fileClub = resolveLessonFileClubId(ctx.clubId);
-    ensureLessonListFile(fileClub);
-    const lessons = loadLessons(fileClub);
+    await ensureLessonListFile(fileClub);
+    const lessons = await loadLessons(fileClub);
     const row = lessons.find(
       (x) => x.lessonId.trim().toUpperCase() === lessonId.trim().toUpperCase(),
     );
@@ -1446,7 +1501,7 @@ export function createCoachManagerLessonRouter(): Router {
       res.status(400).json({ ok: false, error: "Lesson is already ACTIVE." });
       return;
     }
-    const result = updateLessonRow(
+    const result = await updateLessonRow(
       fileClub,
       row.lessonId,
       {
@@ -1483,7 +1538,7 @@ export function createCoachManagerLessonRouter(): Router {
     }
     res.json({
       ok: true,
-      message: "Marked ACTIVE in LessonList.json.",
+      message: "Marked ACTIVE in the lesson list.",
       LastUpdated_Date: new Date().toISOString().slice(0, 10),
     });
   });
@@ -1504,8 +1559,8 @@ export function createCoachManagerLessonRouter(): Router {
       return;
     }
     const fileClub = resolveLessonFileClubId(ctx.clubId);
-    ensureLessonListFile(fileClub);
-    const list = searchLessonsInClub(
+    await ensureLessonListFile(fileClub);
+    const list = await searchLessonsInClub(
       fileClub,
       classInfo || undefined,
       sportType || undefined,
@@ -1513,10 +1568,11 @@ export function createCoachManagerLessonRouter(): Router {
     if (list.length === 0) {
       res.status(404).json({
         ok: false,
-        error:
-          "No lesson found in backend/data_club/" +
-          fileClub +
-          "/LessonList.json for that class_info and/or SportType.",
+        error: lessonListUsesMongo()
+          ? `No lesson found in MongoDB ${LESSON_LIST_COLLECTION} for club ${fileClub} for that class_info and/or SportType.`
+          : "No lesson found in backend/data_club/" +
+            fileClub +
+            "/LessonList.json for that class_info and/or SportType.",
       });
       return;
     }
@@ -1535,7 +1591,7 @@ export function createCoachManagerLessonRouter(): Router {
       });
       return;
     }
-    const result = removeLessonRow(fileClub, target.lessonId);
+    const result = await removeLessonRow(fileClub, target.lessonId);
     if (!result.ok) {
       res.status(400).json({ ok: false, error: result.error });
       return;
@@ -1564,15 +1620,15 @@ export function createCoachManagerLessonRouter(): Router {
     }
     const fileClub = resolveLessonFileClubId(ctx.clubId);
     try {
-      ensureLessonListFile(fileClub);
+      await ensureLessonListFile(fileClub);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       res.status(500).json({ ok: false, error: msg });
       return;
     }
-    let lessons: ReturnType<typeof loadLessons> = [];
+    let lessons: LessonCsvRow[] = [];
     try {
-      lessons = loadLessons(fileClub);
+      lessons = await loadLessons(fileClub);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       res.status(500).json({ ok: false, error: msg });
@@ -1586,7 +1642,7 @@ export function createCoachManagerLessonRouter(): Router {
       return;
     }
     const clubIdForMongo = fileClub.trim();
-    const defaultStudents = defaultStudentListForLesson(
+    const defaultStudents = await defaultStudentListForLessonAsync(
       fileClub,
       lessonRow.lessonId,
     );
@@ -1667,15 +1723,15 @@ export function createCoachManagerLessonRouter(): Router {
     }
     const fileClub = resolveLessonFileClubId(ctx.clubId);
     try {
-      ensureLessonListFile(fileClub);
+      await ensureLessonListFile(fileClub);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       res.status(500).json({ ok: false, error: msg });
       return;
     }
-    let lessons: ReturnType<typeof loadLessons> = [];
+    let lessons: LessonCsvRow[] = [];
     try {
-      lessons = loadLessons(fileClub);
+      lessons = await loadLessons(fileClub);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       res.status(500).json({ ok: false, error: msg });

@@ -148,13 +148,14 @@ async function main(): Promise<void> {
       const body: Document = {
         ...c,
         coach_id,
+        /** Keep in sync with `coach_id` for legacy unique indexes on `CoachID` + `club_folder_uid`. */
+        CoachID: coach_id,
         club_id: clubIdFromRow || clubFolder,
         club_folder_uid: clubFolder,
         json_file_version: version,
         lastImportedAt: now,
       };
       delete body._id;
-      delete body.CoachID;
       return {
         replaceOne: {
           filter: { coach_id, club_folder_uid: clubFolder },

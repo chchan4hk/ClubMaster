@@ -1,5 +1,5 @@
 /**
- * MongoDB client + collections (`userLogin`, `clubInfo`, `basicInfo`, `LessonList`, `LessonSeriesInfo`, `CoachSalary`, `PrizeList`, etc.) on the app database
+ * MongoDB client + collections (`userLogin`, `clubInfo`, `basicInfo`, `LessonList`, `PaymentList`, `LessonSeriesInfo`, `LessonReserveList`, `LessonPaymentLedger`, `CoachManager`, `PrizeList`, etc.) on the app database
  * (default name `ClubMaster_DB`, overridable via env — see `resolveUserLoginDatabaseName`).
  */
 import {
@@ -7,6 +7,7 @@ import {
   type Db,
   type Document,
   MongoClient,
+  MongoServerError,
   type MongoClientOptions,
   type ObjectId,
 } from "mongodb";
@@ -38,17 +39,26 @@ export const BASIC_INFO_LISTS_DOC_ID = "basicInfoLists";
 /** Per-club `LessonList.json` mirror in Mongo (`LessonList` collection, `_id` = club folder UID). */
 export const LESSON_LIST_COLLECTION = "LessonList";
 
+/** Per-club `PaymentList.json` mirror in Mongo (`PaymentList` collection, `_id` = club folder UID). */
+export const PAYMENT_LIST_COLLECTION = "PaymentList";
+
 /**
  * Per-session / series rows for lessons (e.g. one document per club + lesson + date/time slot).
  * Lives in {@link DEFAULT_MONGO_APP_DATABASE} by default (see {@link resolveLessonSeriesInfoDatabaseName}).
  */
 export const LESSON_SERIES_INFO_COLLECTION = "LessonSeriesInfo";
 
-/** Per-club coach salary rows (mirror of `data_club/{clubId}/CoachSalary.json` entries). */
-export const COACH_SALARY_COLLECTION = "CoachSalary";
+/** Per-club coach salary rows in MongoDB `ClubMaster_DB.CoachManager` (scoped by `ClubID` / manager UID). */
+export const COACH_SALARY_COLLECTION = "CoachManager";
 
-/** Per-club prize rows (mirror of `data_club/{clubId}/PrizeList.json` entries, API field names). */
+/** Per-club prize rows in Mongo (`PrizeList`); JSON under `data_club/{clubId}/PrizeList.json` when Mongo is off. */
 export const PRIZE_LIST_ROW_COLLECTION = "PrizeList";
+
+/** Per-row lesson reservations (`LessonReserveList`); JSON `data_club/{clubId}/LessonReserveList.json` when Mongo is off. */
+export const LESSON_RESERVE_LIST_COLLECTION = "LessonReserveList";
+
+/** Per-reservation payment ledger rows (`LessonPaymentLedger` in Mongo `ClubMaster_DB` by default; JSON mirror `data_club/{clubId}/LessonPaymentLedger.json` when Mongo is off or as fallback). */
+export const LESSON_PAYMENT_LEDGER_COLLECTION = "LessonPaymentLedger";
 
 export const USER_TYPE_VALUES = [
   "Administrator",
@@ -131,6 +141,8 @@ export interface UserListStudentDocument {
   student_id: string;
   /** Same as `club_id` in `UserList_Student.json` (folder UID, e.g. `CM00000003`). */
   club_id: string;
+  /** Legacy / external imports mirroring JSON `ClubID` (same value as `club_id`). */
+  ClubID?: string;
   full_name: string;
   sex: string;
   email: string;
@@ -150,6 +162,40 @@ export interface UserListStudentDocument {
 }
 
 export type UserListStudentInsert = Omit<UserListStudentDocument, "_id">;
+
+/**
+ * One coach roster row in Mongo `UserList_Coach` (mirrors club folder JSON + `club_folder_uid` for scope).
+ */
+export interface UserListCoachDocument {
+  _id?: ObjectId;
+  /** Club folder UID (e.g. `CM00000008`); scopes the row to one `data_club/{id}/` club. */
+  club_folder_uid: string;
+  /** Same as roster `club_id` / folder UID in JSON exports. */
+  club_id: string;
+  coach_id: string;
+  /**
+   * Legacy / index alias for `coach_id` (some DBs use a unique index on `CoachID` + `club_folder_uid`).
+   * Always keep in sync with `coach_id` when writing.
+   */
+  CoachID?: string;
+  club_name: string;
+  full_name: string;
+  sex: string;
+  date_of_birth: string;
+  joined_date: string;
+  home_address: string;
+  country: string;
+  email: string;
+  contact_number: string;
+  status: string;
+  creation_date: string;
+  remark: string;
+  lastUpdate_date: string;
+  /** Matches JSON key `hourly_rate (HKD)` when present. */
+  "hourly_rate (HKD)"?: string;
+}
+
+export type UserListCoachInsert = Omit<UserListCoachDocument, "_id">;
 
 /**
  * One canonical document in Mongo `basicInfo` (same shape as `BasicInfoLists` from CSV/JSON).
@@ -195,6 +241,31 @@ export const lessonListJsonSchema: Document = {
     club_id: { bsonType: "string" },
     version: { bsonType: ["int", "long", "double"] },
     lessons: { bsonType: "array" },
+    lastImportedAt: { bsonType: ["date", "null"] },
+  },
+  additionalProperties: true,
+};
+
+/**
+ * One document per club: mirrors `data_club/{clubId}/PaymentList.json` (`version` + `payments`).
+ */
+export interface PaymentListClubDocument {
+  _id: string;
+  club_id: string;
+  version: number;
+  payments: Document[];
+  lastImportedAt?: Date;
+}
+
+/** MongoDB `$jsonSchema` validator for the `PaymentList` collection (per-club document). */
+export const paymentListJsonSchema: Document = {
+  bsonType: "object",
+  required: ["_id", "club_id", "version", "payments"],
+  properties: {
+    _id: { bsonType: "string" },
+    club_id: { bsonType: "string" },
+    version: { bsonType: ["int", "long", "double"] },
+    payments: { bsonType: "array" },
     lastImportedAt: { bsonType: ["date", "null"] },
   },
   additionalProperties: true,
@@ -274,8 +345,8 @@ export const lessonSeriesInfoJsonSchema: Document = {
 };
 
 /**
- * One document per salary row (`CoachSalary.json` / API shape). Dates stay as strings
- * to match the JSON file; optional `lastImportedAt` for seed scripts.
+ * One document per salary row (ClubMaster_DB `CoachManager` / API shape). Dates stay as strings;
+ * optional `lastImportedAt` for seed scripts.
  */
 export interface CoachSalaryDocument {
   _id?: ObjectId;
@@ -288,6 +359,8 @@ export interface CoachSalaryDocument {
   Payment_Method: string;
   Payment_Status: string;
   Payment_Confirm: boolean;
+  /** Payment date (string; e.g. YYYY-MM-DD). Optional for older rows. */
+  Payment_date?: string;
   createdAt: string;
   lastUpdatedDate: string;
   lastImportedAt?: Date;
@@ -295,7 +368,7 @@ export interface CoachSalaryDocument {
 
 export type CoachSalaryInsert = Omit<CoachSalaryDocument, "_id">;
 
-/** MongoDB `$jsonSchema` validator for the `CoachSalary` collection. */
+/** MongoDB `$jsonSchema` validator for the `CoachManager` collection (coach salary rows). */
 export const coachSalaryJsonSchema: Document = {
   bsonType: "object",
   required: [
@@ -322,6 +395,7 @@ export const coachSalaryJsonSchema: Document = {
     Payment_Method: { bsonType: "string" },
     Payment_Status: { bsonType: "string" },
     Payment_Confirm: { bsonType: "bool" },
+    Payment_date: { bsonType: ["string", "null"] },
     createdAt: { bsonType: "string" },
     lastUpdatedDate: { bsonType: "string" },
     lastImportedAt: { bsonType: ["date", "null"] },
@@ -355,6 +429,43 @@ export interface PrizeListRowDocument {
 }
 
 export type PrizeListRowInsert = Omit<PrizeListRowDocument, "_id">;
+
+/** One reservation row in Mongo `LessonReserveList` (same shape as `LessonReserveList.json` entries). */
+export interface LessonReserveListDocument {
+  _id?: ObjectId;
+  lessonReserveId: string;
+  lessonId: string;
+  ClubID: string;
+  student_id: string;
+  Student_Name: string;
+  status: string;
+  Payment_Status: string;
+  Payment_Confirm: boolean;
+  createdAt: string;
+  lastUpdatedDate: string;
+}
+
+export type LessonReserveListInsert = Omit<LessonReserveListDocument, "_id">;
+
+/** One line inside a reservation ledger entry (`LessonPaymentLedger` / `LessonPaymentLedger.json`). */
+export interface LessonPaymentLedgerPaymentLine {
+  paymentId: string;
+  amount: number;
+  method: string;
+  reference: string;
+  paidAt: string;
+}
+
+/** One reservation’s ledger in Mongo `LessonPaymentLedger` (same logical shape as file `entries` values). */
+export interface LessonPaymentLedgerDocument {
+  _id?: ObjectId;
+  ClubID: string;
+  lessonReserveId: string;
+  dueDate: string;
+  payments: LessonPaymentLedgerPaymentLine[];
+}
+
+export type LessonPaymentLedgerInsert = Omit<LessonPaymentLedgerDocument, "_id">;
 
 /** MongoDB `$jsonSchema` validator for the `PrizeList` collection (per-row documents). */
 export const prizeListRowJsonSchema: Document = {
@@ -681,6 +792,51 @@ export function resolveLessonListDatabaseName(explicit?: string): string {
 }
 
 /**
+ * Database for the `PaymentList` collection: explicit arg, else `MONGO_PAYMENTLIST_TARGET_DB`,
+ * else {@link DEFAULT_MONGO_APP_DATABASE}.
+ */
+export function resolvePaymentListDatabaseName(explicit?: string): string {
+  const t = explicit?.trim();
+  if (t) {
+    return t;
+  }
+  return (
+    process.env.MONGO_PAYMENTLIST_TARGET_DB?.trim() ||
+    DEFAULT_MONGO_APP_DATABASE
+  );
+}
+
+/**
+ * Database for the `LessonReserveList` collection: explicit arg, else `MONGO_LESSON_RESERVE_TARGET_DB`,
+ * else {@link DEFAULT_MONGO_APP_DATABASE} (`ClubMaster_DB`).
+ */
+export function resolveLessonReserveListDatabaseName(explicit?: string): string {
+  const t = explicit?.trim();
+  if (t) {
+    return t;
+  }
+  return (
+    process.env.MONGO_LESSON_RESERVE_TARGET_DB?.trim() ||
+    DEFAULT_MONGO_APP_DATABASE
+  );
+}
+
+/**
+ * Database for the `LessonPaymentLedger` collection: explicit arg, else
+ * `MONGO_LESSON_PAYMENT_LEDGER_TARGET_DB`, else {@link resolveLessonReserveListDatabaseName} chain.
+ */
+export function resolveLessonPaymentLedgerDatabaseName(explicit?: string): string {
+  const t = explicit?.trim();
+  if (t) {
+    return t;
+  }
+  return (
+    process.env.MONGO_LESSON_PAYMENT_LEDGER_TARGET_DB?.trim() ||
+    resolveLessonReserveListDatabaseName()
+  );
+}
+
+/**
  * Database for the `LessonSeriesInfo` collection: explicit arg, else `MONGO_LESSON_SERIES_INFO_TARGET_DB`,
  * else {@link DEFAULT_MONGO_APP_DATABASE} (`ClubMaster_DB`).
  */
@@ -696,7 +852,7 @@ export function resolveLessonSeriesInfoDatabaseName(explicit?: string): string {
 }
 
 /**
- * Database for the `CoachSalary` collection: explicit arg, else `MONGO_COACH_SALARY_TARGET_DB`,
+ * Database for the `CoachManager` coach-salary collection: explicit arg, else `MONGO_COACH_SALARY_TARGET_DB`,
  * else {@link DEFAULT_MONGO_APP_DATABASE}.
  */
 export function resolveCoachSalaryDatabaseName(explicit?: string): string {
@@ -774,9 +930,9 @@ export async function getUserListStudentCollection(
  */
 export async function getUserListCoachCollection(
   databaseName?: string,
-): Promise<Collection<Document>> {
+): Promise<Collection<UserListCoachDocument>> {
   const db = await getMongoDb(resolveUserListRosterDatabaseName(databaseName));
-  return db.collection(USER_LIST_COACH_COLLECTION);
+  return db.collection<UserListCoachDocument>(USER_LIST_COACH_COLLECTION);
 }
 
 /** Typed handle to the `clubInfo` collection (same DB as sign-in — {@link resolveAuthLoginDatabaseName}). */
@@ -901,6 +1057,48 @@ export async function ensureLessonListCollection(
     .createIndex({ club_id: 1 }, { unique: true });
 }
 
+/** Typed handle to the `PaymentList` collection (see {@link resolvePaymentListDatabaseName}). */
+export async function getPaymentListCollection(
+  databaseName?: string,
+): Promise<Collection<PaymentListClubDocument>> {
+  const db = await getMongoDb(resolvePaymentListDatabaseName(databaseName));
+  return db.collection<PaymentListClubDocument>(PAYMENT_LIST_COLLECTION);
+}
+
+/**
+ * Creates the `PaymentList` collection if missing and applies `$jsonSchema` validation.
+ * Unique index on `club_id` (matches `_id` for seeded club documents).
+ */
+export async function ensurePaymentListCollection(
+  databaseName?: string,
+): Promise<void> {
+  const db = await getMongoDb(resolvePaymentListDatabaseName(databaseName));
+  const name = PAYMENT_LIST_COLLECTION;
+  const exists =
+    (await db.listCollections({ name }, { nameOnly: true }).toArray()).length >
+    0;
+  const validator: Document = { $jsonSchema: paymentListJsonSchema };
+
+  if (!exists) {
+    await db.createCollection(name, {
+      validator,
+      validationLevel: "strict",
+      validationAction: "error",
+    });
+  } else {
+    await db.command({
+      collMod: name,
+      validator,
+      validationLevel: "strict",
+      validationAction: "error",
+    });
+  }
+
+  await db
+    .collection<PaymentListClubDocument>(name)
+    .createIndex({ club_id: 1 }, { unique: true });
+}
+
 /** Typed handle to the `LessonSeriesInfo` collection (see {@link resolveLessonSeriesInfoDatabaseName}). */
 export async function getLessonSeriesInfoCollection(
   databaseName?: string,
@@ -946,7 +1144,7 @@ export async function ensureLessonSeriesInfoCollection(
   await coll.createIndex({ ClubID: 1, status: 1 }, { name: "lessonSeries_club_status" });
 }
 
-/** Typed handle to the `CoachSalary` collection (see {@link resolveCoachSalaryDatabaseName}). */
+/** Typed handle to the `CoachManager` collection (see {@link resolveCoachSalaryDatabaseName}). */
 export async function getCoachSalaryCollection(
   databaseName?: string,
 ): Promise<Collection<CoachSalaryDocument>> {
@@ -955,7 +1153,7 @@ export async function getCoachSalaryCollection(
 }
 
 /**
- * Creates the `CoachSalary` collection if missing, applies `$jsonSchema` validation,
+ * Creates the `CoachManager` collection if missing, applies `$jsonSchema` validation,
  * and ensures a unique index on `CoachSalaryID`.
  */
 export async function ensureCoachSalaryCollection(
@@ -983,9 +1181,97 @@ export async function ensureCoachSalaryCollection(
     });
   }
 
-  await db
-    .collection<CoachSalaryDocument>(name)
-    .createIndex({ CoachSalaryID: 1 }, { unique: true });
+  const salaryColl = db.collection<CoachSalaryDocument>(name);
+  await salaryColl.createIndex({ CoachSalaryID: 1 }, { unique: true });
+  await salaryColl.createIndex({ ClubID: 1 }, { name: "coach_salary_club" });
+}
+
+/** Typed handle to the `LessonReserveList` collection (see {@link resolveLessonReserveListDatabaseName}). */
+export async function getLessonReserveListCollection(
+  databaseName?: string,
+): Promise<Collection<LessonReserveListDocument>> {
+  const db = await getMongoDb(resolveLessonReserveListDatabaseName(databaseName));
+  return db.collection<LessonReserveListDocument>(LESSON_RESERVE_LIST_COLLECTION);
+}
+
+/**
+ * Ensures the `LessonReserveList` collection exists and compound indexes are present.
+ * No strict `$jsonSchema` (seeded / legacy field variants); validates at application layer.
+ */
+export async function ensureLessonReserveListCollection(
+  databaseName?: string,
+): Promise<void> {
+  const db = await getMongoDb(resolveLessonReserveListDatabaseName(databaseName));
+  const name = LESSON_RESERVE_LIST_COLLECTION;
+  const exists =
+    (await db.listCollections({ name }, { nameOnly: true }).toArray()).length > 0;
+  if (!exists) {
+    await db.createCollection(name);
+  }
+  const coll = db.collection<LessonReserveListDocument>(name);
+  const tryLessonReserveIndex = async (
+    keys: Record<string, 1>,
+    options: { unique?: boolean; name: string },
+  ): Promise<void> => {
+    try {
+      await coll.createIndex(keys, options);
+    } catch (e) {
+      if (e instanceof MongoServerError && (e.code === 85 || e.code === 86)) {
+        return;
+      }
+      throw e;
+    }
+  };
+  await tryLessonReserveIndex(
+    { ClubID: 1, lessonReserveId: 1 },
+    { unique: true, name: "lesson_reserve_club_reserve_id" },
+  );
+  await tryLessonReserveIndex(
+    { ClubID: 1, lessonId: 1 },
+    { name: "lesson_reserve_club_lesson" },
+  );
+  await tryLessonReserveIndex(
+    { ClubID: 1, student_id: 1 },
+    { name: "lesson_reserve_club_student" },
+  );
+}
+
+/** Typed handle to the `LessonPaymentLedger` collection (see {@link resolveLessonPaymentLedgerDatabaseName}). */
+export async function getLessonPaymentLedgerCollection(
+  databaseName?: string,
+): Promise<Collection<LessonPaymentLedgerDocument>> {
+  const db = await getMongoDb(resolveLessonPaymentLedgerDatabaseName(databaseName));
+  return db.collection<LessonPaymentLedgerDocument>(LESSON_PAYMENT_LEDGER_COLLECTION);
+}
+
+/**
+ * Ensures the `LessonPaymentLedger` collection exists and compound index on `ClubID` + `lessonReserveId`.
+ */
+export async function ensureLessonPaymentLedgerCollection(
+  databaseName?: string,
+): Promise<void> {
+  const db = await getMongoDb(resolveLessonPaymentLedgerDatabaseName(databaseName));
+  const name = LESSON_PAYMENT_LEDGER_COLLECTION;
+  const exists =
+    (await db.listCollections({ name }, { nameOnly: true }).toArray()).length > 0;
+  if (!exists) {
+    await db.createCollection(name);
+  }
+  const coll = db.collection<LessonPaymentLedgerDocument>(name);
+  try {
+    await coll.createIndex(
+      { ClubID: 1, lessonReserveId: 1 },
+      { unique: true, name: "lesson_payment_ledger_club_reserve" },
+    );
+  } catch (e) {
+    if (
+      e instanceof MongoServerError &&
+      (e.code === 85 || e.code === 86 || e.codeName === "IndexOptionsConflict")
+    ) {
+      return;
+    }
+    throw e;
+  }
 }
 
 /** Typed handle to the `PrizeList` collection (see {@link resolvePrizeListRowDatabaseName}). */

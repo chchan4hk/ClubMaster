@@ -10,37 +10,9 @@
   <link rel="stylesheet" href="/css/profile-password-panels.css" />
   <link rel="stylesheet" href="/css/coach-manager-module-shell.css" />
   <link rel="stylesheet" href="/css/btn-cancel-metallic-brown.css" />
+  <link rel="stylesheet" href="/css/btn-dark-blue-green.css" />
+  <link rel="stylesheet" href="/css/btn-create-dark-brown.css" />
   <style>
-    .btn-metal-gold {
-      background: linear-gradient(145deg, #e8c547 0%, #a67c1a 42%, #2a1f08 100%);
-      color: #0c0a06;
-      border: 1px solid rgba(255, 224, 130, 0.45);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 2px 10px rgba(0, 0, 0, 0.45);
-      font-weight: 600;
-    }
-    .btn-metal-gold:hover {
-      filter: brightness(1.09);
-    }
-    .btn-metal-red {
-      background: linear-gradient(145deg, #dc2626 0%, #7f1d1d 48%, #1a0a0a 100%);
-      color: #fecaca;
-      border: 1px solid rgba(248, 113, 113, 0.4);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 2px 10px rgba(0, 0, 0, 0.5);
-      font-weight: 600;
-    }
-    .btn-metal-red:hover {
-      filter: brightness(1.08);
-    }
-    .btn-metal-dark {
-      background: linear-gradient(145deg, #52525b 0%, #3f3f46 45%, #18181b 100%);
-      color: #fafafa;
-      border: 1px solid rgba(161, 161, 170, 0.45);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 2px 8px rgba(0, 0, 0, 0.35);
-      font-weight: 600;
-    }
-    .btn-metal-dark:hover {
-      filter: brightness(1.08);
-    }
     /* Compact action row: keep three controls on one line */
     .lesson-pay-actions {
       display: flex;
@@ -57,6 +29,66 @@
       white-space: nowrap;
     }
 
+    /* Record payment modal — pale gold shell, dark typography */
+    .record-payment-shell {
+      background: linear-gradient(
+        165deg,
+        #faf4e8 0%,
+        #f5e9cc 42%,
+        #efe2bc 100%
+      );
+      border-color: rgba(160, 120, 55, 0.38) !important;
+      color: #1c1917;
+      box-shadow: 0 12px 40px rgba(28, 25, 23, 0.12);
+    }
+    .record-payment-shell h3 {
+      color: #1c1917;
+    }
+    .record-payment-shell .record-pay-subtitle,
+    .record-payment-shell .record-pay-muted {
+      color: #44403c;
+    }
+    .record-payment-shell label {
+      color: #292524;
+    }
+    .record-payment-shell input[type="text"],
+    .record-payment-shell input[type="number"],
+    .record-payment-shell select {
+      background-color: #fffdf6 !important;
+      color: #1c1917 !important;
+      border-color: rgba(110, 85, 40, 0.35) !important;
+    }
+    .record-payment-shell input::placeholder {
+      color: #78716c;
+    }
+    .record-payment-split-zone {
+      background: rgba(255, 252, 244, 0.92);
+      border: 1px solid rgba(140, 105, 45, 0.28);
+      color: #292524;
+    }
+    .record-payment-split-zone .split-row-label {
+      color: #1c1917;
+    }
+    .record-payment-ledger-zone {
+      background: rgba(255, 250, 235, 0.95);
+      border: 1px solid rgba(140, 105, 45, 0.28);
+      color: #292524;
+    }
+    .record-payment-ledger-block {
+      background: #fff9eb;
+      border: 1px solid rgba(130, 100, 45, 0.25);
+      color: #1c1917;
+    }
+    .record-payment-ledger-block .ledger-line-title {
+      color: #1c1917;
+      font-weight: 600;
+    }
+    .record-payment-ledger-block .ledger-line-meta {
+      color: #44403c;
+    }
+    .record-payment-ledger-block .ledger-line-dim {
+      color: #57534e;
+    }
   </style>
 </head>
 <body class="lesson-payment-status-page profile-password-page cm-module-shell min-h-full p-4 sm:p-6 pb-16">
@@ -145,9 +177,9 @@
         <button type="button" id="btnReload"
           class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium px-4 py-2">Reload data</button>
         <button type="button" id="btnExportCsv"
-          class="hidden rounded-lg bg-amber-800 hover:bg-amber-700 border border-amber-600/30 text-amber-50 text-sm px-4 py-2">Export CSV</button>
+          class="hidden btn-create-dark-brown rounded-lg text-sm px-4 py-2">Export CSV</button>
         <button type="button" id="btnBulkRemind"
-          class="hidden rounded-lg bg-amber-700/80 hover:bg-amber-600 border border-amber-500/30 text-amber-50 text-sm px-4 py-2">Send bulk reminders</button>
+          class="hidden btn-dark-blue-green rounded-lg text-sm px-4 py-2">Send bulk reminders</button>
       </div>
     </section>
 
@@ -155,7 +187,7 @@
     <section id="chartSection" class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
       <div class="glass rounded-xl border border-amber-600/25 p-4">
         <h3 class="text-sm font-semibold text-amber-200 mb-2">Collections By Month</h3>
-        <p class="text-xs text-amber-100/75 mb-2">Sum of recorded payments per calendar month (ledger).</p>
+        <p class="text-xs text-amber-100/75 mb-2">Sum of recorded payments per calendar month (Mongo <code class="text-amber-200/90">LessonPaymentLedger</code> in <code class="text-amber-200/90">ClubMaster_DB</code>, or <code class="text-amber-200/90">LessonPaymentLedger.json</code> when Mongo is off).</p>
         <div class="h-56"><canvas id="chartBar"></canvas></div>
       </div>
       <div class="glass rounded-xl border border-amber-600/25 p-4">
@@ -194,29 +226,29 @@
 
   <!-- Record payment modal -->
   <div id="modalPay" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" aria-modal="true">
-    <div class="glass rounded-xl border border-amber-500/35 max-w-lg w-full max-h-[90vh] overflow-y-auto p-5 shadow-xl">
-      <h3 id="modalPayTitle" class="text-lg font-semibold text-amber-200 mb-1">Record payment</h3>
-      <p id="modalPaySubtitle" class="text-xs text-amber-100/75 mb-4"></p>
+    <div class="record-payment-shell rounded-xl border max-w-lg w-full max-h-[90vh] overflow-y-auto p-5 shadow-xl">
+      <h3 id="modalPayTitle" class="text-lg font-semibold mb-1">Record payment</h3>
+      <p id="modalPaySubtitle" class="record-pay-subtitle text-xs mb-4"></p>
       <form id="formPay" class="space-y-3">
         <input type="hidden" id="payPrimaryReserveId" />
         <input type="hidden" id="payModalMode" value="edit" />
 
         <div id="payFlowPaidVerify" class="hidden space-y-3">
-          <p class="text-xs text-amber-200/70">Recorded payment details (ledger). Confirm to mark <span class="text-amber-300/90">Payment_Confirm</span> in the reservation, or cancel payment to remove ledger and PaymentList rows and set status to UNPAID.</p>
-          <div id="paidVerifySummary" class="rounded-lg border border-amber-600/20 bg-amber-950/45 p-3 text-sm text-amber-50 space-y-2"></div>
-          <p id="paidVerifyEmpty" class="hidden text-xs text-amber-200/90">No ledger lines found; you can still confirm or void this PAID row.</p>
+          <p class="text-xs record-pay-muted">Recorded payment details (ledger). Confirm to mark <span class="font-semibold text-stone-900">Payment_Confirm</span> in the reservation, or cancel payment to remove ledger lines (<code class="text-stone-800 bg-stone-200/60 px-1 rounded">LessonPaymentLedger</code> / JSON mirror) and club payment list rows (<code class="text-stone-800 bg-stone-200/60 px-1 rounded">PaymentList</code> / <code class="text-stone-800 bg-stone-200/60 px-1 rounded">PaymentList.json</code>) and set status to UNPAID.</p>
+          <div id="paidVerifySummary" class="record-payment-ledger-zone rounded-lg p-3 text-sm space-y-2"></div>
+          <p id="paidVerifyEmpty" class="hidden text-xs text-stone-700">No ledger lines found; you can still confirm or void this PAID row.</p>
         </div>
 
         <div id="payFlowEdit" class="space-y-3">
           <div>
-            <label class="block text-xs text-amber-200/70 mb-1">Amount</label>
+            <label class="block text-xs mb-1">Amount</label>
             <input id="payAmount" type="number" step="0.01" min="0" required
-              class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-amber-50 text-sm" />
+              class="w-full rounded-lg border px-3 py-2 text-sm" />
           </div>
           <div>
-            <label class="block text-xs text-amber-200/70 mb-1">Payment method</label>
+            <label class="block text-xs mb-1">Payment method</label>
             <select id="payMethod"
-              class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-amber-50 text-sm">
+              class="w-full rounded-lg border px-3 py-2 text-sm">
               <option value="PayMe">PayMe</option>
               <option value="FPS">FPS</option>
               <option value="Credit Card">Credit Card</option>
@@ -224,18 +256,18 @@
             </select>
           </div>
           <div>
-            <label class="block text-xs text-amber-200/70 mb-1">Reference / transaction ID</label>
+            <label class="block text-xs mb-1">Reference / transaction ID</label>
             <input id="payReference" type="text"
-              class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-amber-50 text-sm" />
+              class="w-full rounded-lg border px-3 py-2 text-sm" />
           </div>
           <div>
-            <label class="block text-xs text-amber-200/70 mb-1">Date of payment</label>
+            <label class="block text-xs mb-1">Date of payment</label>
             <input id="payDate" type="text" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="DD/MM/YYYY"
-              class="date-field-ddmm w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-amber-50 text-sm" />
+              class="date-field-ddmm w-full rounded-lg border px-3 py-2 text-sm" />
           </div>
-          <div id="splitWrap" class="rounded-lg border border-amber-600/20 bg-amber-950/35 p-3 space-y-2">
-            <p class="text-xs font-semibold text-amber-200">Split across lessons (same student)</p>
-            <p class="text-xs text-amber-100/75">Allocate part of this payment to other outstanding reservations.</p>
+          <div id="splitWrap" class="record-payment-split-zone rounded-lg p-3 space-y-2">
+            <p class="text-xs font-semibold text-stone-900">Split across lessons (same student)</p>
+            <p class="text-xs record-pay-muted">Allocate part of this payment to other outstanding reservations.</p>
             <div id="splitList" class="space-y-2 max-h-40 overflow-y-auto text-xs"></div>
           </div>
         </div>
@@ -246,12 +278,12 @@
         </div>
         <div id="payActionsPaid" class="hidden gap-3 pt-2">
           <div class="flex flex-wrap gap-2">
-            <button type="button" id="btnConfirmPaidPayment" class="btn-metal-gold rounded-lg text-sm px-4 py-2.5">Confirm Payment</button>
-            <button type="button" id="btnVoidPaidPayment" class="btn-metal-red rounded-lg text-sm px-4 py-2.5">Cancel Payment</button>
+            <button type="button" id="btnConfirmPaidPayment" class="btn-confirm-black rounded-lg text-sm px-4 py-2.5">Confirm Payment</button>
+            <button type="button" id="btnVoidPaidPayment" class="btn-cancel-metallic-brown rounded-lg text-sm px-4 py-2.5">Cancel Payment</button>
           </div>
-          <button type="button" id="btnPayDismiss" class="text-left text-xs text-slate-300/90 hover:text-teal-200/95 underline-offset-2 hover:underline w-fit">Close without changes</button>
+          <button type="button" id="btnPayDismiss" class="text-left text-xs text-stone-600 hover:text-teal-800 underline-offset-2 hover:underline w-fit">Close without changes</button>
         </div>
-        <p id="payFormError" class="hidden text-sm text-red-300"></p>
+        <p id="payFormError" class="hidden text-sm text-red-800 font-medium"></p>
       </form>
     </div>
   </div>
@@ -351,7 +383,7 @@
         return String(status || "").replace(/_/g, " ");
       }
 
-      /** Mirrors LessonReserveList.json Payment_Confirm (API: paymentConfirmedByCoach). */
+      /** Mirrors Mongo `LessonReserveList` / JSON mirror `Payment_Confirm` (API: paymentConfirmedByCoach). Ledger: Mongo `LessonPaymentLedger` / JSON mirror. */
       function confirmPaymentDisplay(r) {
         return r && r.paymentConfirmedByCoach === true ? "Yes" : "No";
       }
@@ -409,8 +441,17 @@
         return rows.filter(function (r) {
           if (search) {
             var nm = (r.Student_Name || "").toLowerCase();
-            var id = (r.student_id || r.StudentID || "").toLowerCase();
-            if (nm.indexOf(search) < 0 && id.indexOf(search) < 0) {
+            var rawId = String(r.student_id || r.StudentID || "");
+            var id = rawId.toLowerCase();
+            var idShort =
+              window.api && typeof window.api.displayStudentIdForUi === "function"
+                ? String(window.api.displayStudentIdForUi(rawId) || "").toLowerCase()
+                : id;
+            if (
+              nm.indexOf(search) < 0 &&
+              id.indexOf(search) < 0 &&
+              idShort.indexOf(search) < 0
+            ) {
               return false;
             }
           }
@@ -545,21 +586,32 @@
           var studentUrl = studentProfileUrl(ctx.clubId, ctx.clubName);
           html += "<tr class=\"border-b border-amber-800/15 hover:bg-amber-500/[0.06]\" data-rid=\"" + escapeHtml(r.lessonReserveId) + "\">";
           html += "<td class=\"py-1.5 pr-2 align-middle\"><button type=\"button\" class=\"text-amber-400 hover:text-amber-200 text-xs toggle-ex\" data-target=\"" + expandId + "\">▾</button></td>";
+          var rawStudentId = String(r.student_id || r.StudentID || "");
+          var dispStudentId =
+            window.api && typeof window.api.displayStudentIdForUi === "function"
+              ? window.api.displayStudentIdForUi(rawStudentId) || rawStudentId
+              : rawStudentId;
           var studentLine =
             escapeHtml(r.Student_Name) +
             " · " +
-            escapeHtml(r.student_id || r.StudentID) +
+            escapeHtml(dispStudentId) +
+            " · " +
+            escapeHtml(r.studentLevel);
+          var studentLineTitle =
+            escapeHtml(r.Student_Name) +
+            " · " +
+            escapeHtml(rawStudentId) +
             " · " +
             escapeHtml(r.studentLevel);
           html +=
             "<td class=\"py-1.5 pr-3 align-middle max-w-[11rem]\"><div class=\"min-w-0 text-[10px] leading-tight text-amber-100/85 truncate\" title=\"" +
-            escapeHtml(studentLine) +
+            studentLineTitle +
             "\"><a href=\"" +
             escapeHtml(studentUrl) +
             "\" target=\"_blank\" rel=\"noopener\" class=\"text-amber-300/95 hover:underline font-medium\">" +
             escapeHtml(r.Student_Name) +
             "</a><span class=\"text-amber-100/70\"> · " +
-            escapeHtml(r.student_id || r.StudentID) +
+            escapeHtml(dispStudentId) +
             " · " +
             escapeHtml(r.studentLevel) +
             "</span></div></td>";
@@ -597,14 +649,14 @@
               escapeHtml(r.lessonReserveId) +
               "\">Payment Record</button>";
             html +=
-              "<button type=\"button\" class=\"rounded-md btn-metal-dark btn-action-compact btn-cancel-lesson\" data-id=\"" +
+              "<button type=\"button\" class=\"rounded-md btn-cancel-metallic-brown btn-action-compact btn-cancel-lesson\" data-id=\"" +
               escapeHtml(r.lessonReserveId) +
               "\">Cancel Lesson</button>";
             html +=
-              "<button type=\"button\" class=\"rounded-md bg-amber-800/90 hover:bg-amber-700 btn-action-compact text-amber-50 btn-remind\" data-id=\"" +
+              "<button type=\"button\" class=\"rounded-md btn-dark-blue-green btn-action-compact btn-remind\" data-id=\"" +
               escapeHtml(r.lessonReserveId) +
               "\" data-sid=\"" +
-              escapeHtml(r.student_id || r.StudentID) +
+              escapeHtml(rawStudentId) +
               "\">Remind</button>";
             html += "</div>";
           }
@@ -736,19 +788,19 @@
                         String(p.paidAt || "")
                     : String(p.paidAt || "");
                 return (
-                  "<div class=\"rounded border border-amber-600/20 bg-amber-950/55 px-3 py-2\">" +
-                  "<div class=\"text-amber-200 font-medium\">$" +
+                  "<div class=\"rounded record-payment-ledger-block px-3 py-2\">" +
+                  "<div class=\"ledger-line-title\">$" +
                   fmtMoney(p.amount) +
                   " · " +
                   escapeHtml(p.method) +
                   "</div>" +
-                  "<div class=\"text-xs text-amber-200/70 mt-1\">Date: " +
+                  "<div class=\"ledger-line-meta text-xs mt-1\">Date: " +
                   escapeHtml(paidDisp) +
                   "</div>" +
-                  "<div class=\"text-xs text-amber-200/70\">Reference / transaction ID: " +
+                  "<div class=\"ledger-line-meta text-xs\">Reference / transaction ID: " +
                   escapeHtml(p.reference || "—") +
                   "</div>" +
-                  "<div class=\"text-xs text-amber-100/75\">Ledger ID: " +
+                  "<div class=\"ledger-line-dim text-xs\">Ledger ID: " +
                   escapeHtml(p.paymentId) +
                   "</div></div>"
                 );
@@ -790,10 +842,10 @@
           var row = document.createElement("div");
           row.className = "flex items-center gap-2";
           row.innerHTML =
-            "<label class=\"flex items-center gap-2 cursor-pointer select-none\">" +
-            "<input type=\"checkbox\" class=\"split-chk rounded border-amber-500/30 bg-amber-950\" data-rid=\"" + escapeHtml(o.lessonReserveId) + "\" />" +
+            "<label class=\"split-row-label flex items-center gap-2 cursor-pointer select-none\">" +
+            "<input type=\"checkbox\" class=\"split-chk rounded border-amber-800/35 accent-amber-800\" data-rid=\"" + escapeHtml(o.lessonReserveId) + "\" />" +
             "<span>" + escapeHtml(o.lessonId) + " (owe $" + fmtMoney(o.outstanding) + ")</span></label>" +
-            "<input type=\"number\" step=\"0.01\" min=\"0\" class=\"split-amt hidden w-24 rounded bg-amber-950 border border-amber-600/25 px-2 py-1 text-xs\" placeholder=\"Amt\" data-rid=\"" + escapeHtml(o.lessonReserveId) + "\" />";
+            "<input type=\"number\" step=\"0.01\" min=\"0\" class=\"split-amt hidden w-24 rounded border px-2 py-1 text-xs\" placeholder=\"Amt\" data-rid=\"" + escapeHtml(o.lessonReserveId) + "\" />";
           splitList.appendChild(row);
           var chk = row.querySelector(".split-chk");
           var amt = row.querySelector(".split-amt");
@@ -802,7 +854,7 @@
           });
         });
         if (!sameStudent.length) {
-          splitList.innerHTML = "<p class=\"text-amber-100/75\">No other outstanding lessons for this student.</p>";
+          splitList.innerHTML = "<p class=\"text-stone-600\">No other outstanding lessons for this student.</p>";
         }
         modal.classList.remove("hidden");
       }
@@ -918,7 +970,7 @@
         }
         if (
           !window.confirm(
-            "Cancel this payment? This removes PaymentList and ledger entries for this reservation and sets status to UNPAID."
+            "Cancel this payment? This removes payment-list and ledger entries for this reservation and sets status to UNPAID."
           )
         ) {
           return;

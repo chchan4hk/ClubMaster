@@ -7,8 +7,111 @@ import {
   getDataClubRootPath,
 } from "./coachListCsv";
 import { invalidateDataFileCache, readFileCached } from "./dataFileCache";
+import {
+  findLessonListClubDocument,
+  iterateLessonListClubDocuments,
+  lessonListUsesMongo,
+  replaceLessonListForClub,
+} from "./lessonListMongo";
+import { LESSON_LIST_COLLECTION } from "./db/DBConnection";
 
-const LESSON_ID_RE = /^LE(\d+)$/i;
+function escapeRegExpLiteral(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Coach-manager folder ids (`CM` + digits): new lesson IDs use `{club}-LE0000001`. */
+const CM_FOLDER_UID_RE = /^CM\d+$/i;
+
+function maxLessonSequenceNumber(rows: LessonCsvRow[]): number {
+  let max = 0;
+  for (const r of rows) {
+    const id = r.lessonId.replace(/^\uFEFF/, "").trim();
+    const suff = id.match(/-LE(\d+)$/i);
+    if (suff) {
+      const n = Number.parseInt(suff[1]!, 10);
+      if (!Number.isNaN(n) && n > max) {
+        max = n;
+      }
+      continue;
+    }
+    const leg = id.match(/^LE(\d+)$/i);
+    if (leg) {
+      const n = Number.parseInt(leg[1]!, 10);
+      if (!Number.isNaN(n) && n > max) {
+        max = n;
+      }
+    }
+  }
+  return max;
+}
+
+function nextAllocatedLessonId(clubUid: string, rows: LessonCsvRow[]): string {
+  const max = maxLessonSequenceNumber(rows);
+  const club = clubUid.replace(/^\uFEFF/, "").trim();
+  if (CM_FOLDER_UID_RE.test(club)) {
+    const c = club.toUpperCase();
+    return `${c}-LE${String(max + 1).padStart(7, "0")}`;
+  }
+  return `LE${String(max + 1).padStart(6, "0")}`;
+}
+
+function normalizeRequestedLessonId(
+  clubFolderUid: string,
+  requested: string,
+):
+  | { ok: true; lessonId: string }
+  | { ok: false; error: string } {
+  const r = requested.replace(/^\uFEFF/, "").trim();
+  if (!r) {
+    return { ok: false, error: "LessonID is empty." };
+  }
+  const club = clubFolderUid.replace(/^\uFEFF/, "").trim();
+  const prefixed = r.match(
+    new RegExp(`^${escapeRegExpLiteral(club)}-LE(\\d+)$`, "i"),
+  );
+  if (prefixed) {
+    const n = Number.parseInt(prefixed[1]!, 10);
+    if (Number.isNaN(n) || n < 0) {
+      return { ok: false, error: "Invalid LessonID numeric part." };
+    }
+    return {
+      ok: true,
+      lessonId: `${club.toUpperCase()}-LE${String(n).padStart(7, "0")}`,
+    };
+  }
+  const legacy = r.match(/^LE(\d+)$/i);
+  if (legacy) {
+    const n = Number.parseInt(legacy[1]!, 10);
+    if (Number.isNaN(n) || n < 0) {
+      return { ok: false, error: "Invalid LessonID numeric part." };
+    }
+    return { ok: true, lessonId: `LE${String(n).padStart(6, "0")}` };
+  }
+  return {
+    ok: false,
+    error:
+      "Invalid LessonID format (expected LE###### or {ClubFolderUid}-LE#######).",
+  };
+}
+
+async function persistLessons(
+  clubId: string,
+  lessons: LessonCsvRow[],
+): Promise<void> {
+  const id = clubId.trim();
+  if (lessonListUsesMongo()) {
+    await replaceLessonListForClub(
+      id,
+      lessons.map((row) => lessonRowToStoredJson(row)),
+    );
+    return;
+  }
+  const p = lessonListPath(id);
+  if (!p) {
+    throw new Error("Invalid club ID.");
+  }
+  writeLessonsToJsonFile(p, lessons);
+}
 
 /** Legacy filename; migrated to JSON on first access. */
 const LEGACY_LESSON_LIST_CSV = "LessonList.csv";
@@ -40,6 +143,8 @@ export type LessonCsvRow = {
   sportCenter: string;
   courtNo: string;
   coachName: string;
+  /** Optional: Mongo / imports may set `student_coach` (assigned coach display name). */
+  studentCoach: string;
   status: string;
   createdAt: string;
   lastUpdatedDate: string;
@@ -74,6 +179,7 @@ export const LESSON_LIST_COLUMNS: string[] = [
   "Sport_center",
   "court_no",
   "Coach Name",
+  "student_coach",
   "status",
   "Created_at",
   "LastUpdated_Date",
@@ -105,6 +211,7 @@ const LESSON_ROW_KEYS: (keyof LessonCsvRow)[] = [
   "sportCenter",
   "courtNo",
   "coachName",
+  "studentCoach",
   "status",
   "createdAt",
   "lastUpdatedDate",
@@ -178,6 +285,7 @@ function defaultEmptyLessonRow(): LessonCsvRow {
     sportCenter: "",
     courtNo: "",
     coachName: "",
+    studentCoach: "",
     status: "ACTIVE",
     createdAt: "",
     lastUpdatedDate: "",
@@ -213,6 +321,33 @@ function sanitizeReservedNumber(s: string): string {
 function reservedNumberFromUnknown(o: Record<string, unknown>): string {
   const s = pickStr(o, "reservedNumber", "ReservedNumber", "reserved_number");
   return sanitizeReservedNumber(s);
+}
+
+/**
+ * Normalises lesson `status` from Mongo/JSON (booleans, "true", empty) to `ACTIVE` / `INACTIVE`
+ * or another explicit string so fee-allocation and list filters behave consistently.
+ */
+function normalizeLessonListStatus(x: Record<string, unknown>): string {
+  const raw =
+    x.status ?? x.Status ?? x.LESSON_STATUS ?? x.lesson_status;
+  if (raw === true || raw === 1) {
+    return "ACTIVE";
+  }
+  if (raw === false || raw === 0) {
+    return "INACTIVE";
+  }
+  const s = String(raw ?? "").trim();
+  if (!s) {
+    return "ACTIVE";
+  }
+  const u = s.toUpperCase();
+  if (u === "TRUE" || u === "1" || u === "YES") {
+    return "ACTIVE";
+  }
+  if (u === "FALSE" || u === "0" || u === "NO") {
+    return "INACTIVE";
+  }
+  return s;
 }
 
 function ynFromUnknown(v: unknown): string {
@@ -266,7 +401,16 @@ export function lessonFromUnknown(o: unknown): LessonCsvRow {
     sportCenter: pickStr(x, "sportCenter", "Sport_center", "sport_center"),
     courtNo: pickStr(x, "courtNo", "court_no", "Court_no"),
     coachName: pickStr(x, "coachName", "Coach Name", "coach_name"),
-    status: pickStr(x, "status", "Status") || "ACTIVE",
+    studentCoach: pickStr(
+      x,
+      "studentCoach",
+      "student_coach",
+      "Student_coach",
+      "Student Coach",
+      "UserCoach",
+      "user_coach",
+    ),
+    status: normalizeLessonListStatus(x),
     createdAt: pickStr(x, "createdAt", "Created_at", "created_at"),
     lastUpdatedDate: pickStr(
       x,
@@ -302,8 +446,17 @@ function readLessonsFromJsonFile(p: string): LessonCsvRow[] {
 }
 
 function lessonRowToStoredJson(r: LessonCsvRow): Record<string, unknown> {
-  const { clubUid, reservedNumber, ...rest } = r;
-  return { ...rest, ClubID: clubUid, ReservedNumber: reservedNumber };
+  const { clubUid, reservedNumber, studentCoach, ...rest } = r;
+  const out: Record<string, unknown> = {
+    ...rest,
+    ClubID: clubUid,
+    ReservedNumber: reservedNumber,
+  };
+  const sc = String(studentCoach ?? "").trim();
+  if (sc) {
+    out.student_coach = sc;
+  }
+  return out;
 }
 
 /**
@@ -376,6 +529,7 @@ type LessonColIdx = {
   sportCenter: number;
   courtNo: number;
   coachName: number;
+  studentCoach: number;
   status: number;
   createdAt: number;
   lastUpdatedDate: number;
@@ -489,6 +643,12 @@ function resolveLessonColumnIndices(headerCells: string[]): LessonColIdx {
       "CoachName",
       "coach_name",
     ]),
+    studentCoach: colIndex(headerCells, [
+      "student_coach",
+      "Student_coach",
+      "Student Coach",
+      "student coach",
+    ]),
     status: colIndex(headerCells, ["status", "Status"]),
     createdAt: colIndex(headerCells, [
       "Created_at",
@@ -571,6 +731,7 @@ function parseAllLessonsFromLegacyCsvPath(csvPath: string): LessonCsvRow[] {
       sportCenter: get(cells, idx.sportCenter),
       courtNo: get(cells, idx.courtNo),
       coachName: get(cells, idx.coachName),
+      studentCoach: get(cells, idx.studentCoach),
       status: get(cells, idx.status) || "ACTIVE",
       createdAt: get(cells, idx.createdAt),
       lastUpdatedDate: get(cells, idx.lastUpdatedDate),
@@ -632,6 +793,7 @@ export function lessonCsvRowToApiFields(r: LessonCsvRow): Record<string, string>
     Sport_center: r.sportCenter,
     court_no: r.courtNo,
     "Coach Name": r.coachName,
+    student_coach: r.studentCoach,
     status: r.status,
     Created_at: r.createdAt,
     LastUpdated_Date: r.lastUpdatedDate,
@@ -643,13 +805,38 @@ function lessonRowToStringArray(r: LessonCsvRow): string[] {
   return LESSON_ROW_KEYS.map((k) => String(r[k] ?? ""));
 }
 
-export function ensureLessonListFile(clubId: string): void {
+export async function ensureLessonListFile(clubId: string): Promise<void> {
   if (!isValidClubFolderId(clubId)) {
     throw new Error("Invalid club ID.");
   }
-  const clubDir = path.join(dataClubRoot(), clubId.trim());
+  const id = clubId.trim();
+  const clubDir = path.join(dataClubRoot(), id);
   if (!fs.existsSync(clubDir)) {
     fs.mkdirSync(clubDir, { recursive: true });
+  }
+  if (lessonListUsesMongo()) {
+    const existing = await findLessonListClubDocument(id);
+    if (existing) {
+      return;
+    }
+    migrateLegacyCsvToJson(clubId);
+    const p = lessonListPath(clubId);
+    let lessons: LessonCsvRow[] = [];
+    if (p && fs.existsSync(p)) {
+      lessons = readLessonsFromJsonFile(p).map((r) => ({
+        ...r,
+        clubUid: r.clubUid || id,
+        reservedNumber: sanitizeReservedNumber(r.reservedNumber),
+      }));
+      if (fs.existsSync(p)) {
+        retireLegacyLessonListCsvBesideJson(p);
+      }
+    }
+    await replaceLessonListForClub(
+      id,
+      lessons.map((row) => lessonRowToStoredJson(row)),
+    );
+    return;
   }
   const p = lessonListPath(clubId);
   if (!p) {
@@ -664,15 +851,27 @@ export function ensureLessonListFile(clubId: string): void {
   }
 }
 
-export function loadLessons(clubId: string): LessonCsvRow[] {
+export async function loadLessons(clubId: string): Promise<LessonCsvRow[]> {
   if (!isValidClubFolderId(clubId)) {
     return [];
+  }
+  const id = clubId.trim();
+  if (lessonListUsesMongo()) {
+    await ensureLessonListFile(clubId);
+    const doc = await findLessonListClubDocument(id);
+    if (!doc || !Array.isArray(doc.lessons)) {
+      return [];
+    }
+    return doc.lessons.map((x) => lessonFromUnknown(x)).map((r) => ({
+      ...r,
+      clubUid: r.clubUid || id,
+      reservedNumber: sanitizeReservedNumber(r.reservedNumber),
+    }));
   }
   const p = lessonListPath(clubId);
   if (!p || !fs.existsSync(p)) {
     return [];
   }
-  const id = clubId.trim();
   return readLessonsFromJsonFile(p).map((r) => ({
     ...r,
     clubUid: r.clubUid || id,
@@ -684,32 +883,25 @@ export function loadLessons(clubId: string): LessonCsvRow[] {
 const lessonIdToClubId = new Map<string, string>();
 let lessonIdClubIndexReady = false;
 
+let lessonIdClubIndexRebuild: Promise<void> | null = null;
+
 /**
- * Rebuilds LessonID → club UID from distinct `LessonList.json` files (dedupes LESSON_LIST_CLUB_ID pin).
+ * Rebuilds LessonID → club UID from Mongo `LessonList` when configured, else from distinct
+ * `LessonList.json` files (dedupes LESSON_LIST_CLUB_ID pin).
  */
-export function rebuildLessonIdClubIndex(): void {
+export async function rebuildLessonIdClubIndex(): Promise<void> {
   const next = new Map<string, string>();
-  const root = dataClubRoot();
-  if (fs.existsSync(root)) {
-    const seenFiles = new Set<string>();
-    for (const name of fs.readdirSync(root)) {
+  if (lessonListUsesMongo()) {
+    const docs = await iterateLessonListClubDocuments();
+    for (const doc of docs) {
+      const name = String(doc._id ?? "").trim();
       if (!isValidClubFolderId(name)) {
         continue;
       }
       const fileClub = resolveLessonFileClubId(name);
-      const p = lessonListPath(fileClub);
-      if (!p) {
-        continue;
-      }
-      const abs = path.normalize(p);
-      if (seenFiles.has(abs)) {
-        continue;
-      }
-      if (!fs.existsSync(p)) {
-        continue;
-      }
-      seenFiles.add(abs);
-      const lessons = loadLessons(fileClub);
+      const lessons = (Array.isArray(doc.lessons) ? doc.lessons : []).map((x) =>
+        lessonFromUnknown(x),
+      );
       for (const row of lessons) {
         const u = row.lessonId.replace(/^\uFEFF/, "").trim().toUpperCase();
         if (!u || next.has(u)) {
@@ -717,6 +909,42 @@ export function rebuildLessonIdClubIndex(): void {
         }
         const logical = (row.clubUid && row.clubUid.trim()) || fileClub;
         next.set(u, logical);
+      }
+    }
+  } else {
+    const root = dataClubRoot();
+    if (fs.existsSync(root)) {
+      const seenFiles = new Set<string>();
+      for (const name of fs.readdirSync(root)) {
+        if (!isValidClubFolderId(name)) {
+          continue;
+        }
+        const fileClub = resolveLessonFileClubId(name);
+        const p = lessonListPath(fileClub);
+        if (!p) {
+          continue;
+        }
+        const abs = path.normalize(p);
+        if (seenFiles.has(abs)) {
+          continue;
+        }
+        if (!fs.existsSync(p)) {
+          continue;
+        }
+        seenFiles.add(abs);
+        const lessons = readLessonsFromJsonFile(p).map((r) => ({
+          ...r,
+          clubUid: r.clubUid || fileClub,
+          reservedNumber: sanitizeReservedNumber(r.reservedNumber),
+        }));
+        for (const row of lessons) {
+          const u = row.lessonId.replace(/^\uFEFF/, "").trim().toUpperCase();
+          if (!u || next.has(u)) {
+            continue;
+          }
+          const logical = (row.clubUid && row.clubUid.trim()) || fileClub;
+          next.set(u, logical);
+        }
       }
     }
   }
@@ -727,10 +955,16 @@ export function rebuildLessonIdClubIndex(): void {
   lessonIdClubIndexReady = true;
 }
 
-function ensureLessonIdClubIndex(): void {
-  if (!lessonIdClubIndexReady) {
-    rebuildLessonIdClubIndex();
+async function ensureLessonIdClubIndex(): Promise<void> {
+  if (lessonIdClubIndexReady) {
+    return;
   }
+  if (!lessonIdClubIndexRebuild) {
+    lessonIdClubIndexRebuild = rebuildLessonIdClubIndex().finally(() => {
+      lessonIdClubIndexRebuild = null;
+    });
+  }
+  await lessonIdClubIndexRebuild;
 }
 
 function registerLessonIdInIndex(lessonId: string, clubUid: string): void {
@@ -754,20 +988,22 @@ function upsertLessonIdInIndex(lessonId: string, clubUid: string): void {
 }
 
 /** Club folder UID for this LessonID (from row ClubID / first roster match), or null. */
-export function findClubUidForLessonId(lessonId: string): string | null {
+export async function findClubUidForLessonId(
+  lessonId: string,
+): Promise<string | null> {
   const id = lessonId.trim();
   if (!id) {
     return null;
   }
-  ensureLessonIdClubIndex();
+  await ensureLessonIdClubIndex();
   return lessonIdToClubId.get(id.toUpperCase()) ?? null;
 }
 
-export function searchLessonsInClub(
+export async function searchLessonsInClub(
   clubId: string,
   classInfo?: string,
   sportType?: string,
-): LessonCsvRow[] {
+): Promise<LessonCsvRow[]> {
   const ci = (classInfo ?? "").trim();
   const st = (sportType ?? "").trim();
   if (!ci && !st) {
@@ -776,7 +1012,8 @@ export function searchLessonsInClub(
   if (!isValidClubFolderId(clubId)) {
     return [];
   }
-  return loadLessons(clubId).filter((row) => {
+  const rows = await loadLessons(clubId);
+  return rows.filter((row) => {
     if (ci && !normEqLessonField(row.classInfo, ci)) {
       return false;
     }
@@ -799,13 +1036,15 @@ export type LessonListRaw = {
   rows: string[][];
 };
 
-export function loadLessonListRaw(clubId: string): LessonListRaw {
+export async function loadLessonListRaw(clubId: string): Promise<LessonListRaw> {
   const id = clubId.trim();
-  const relativePath = `data_club/${id}/${LESSON_LIST_FILENAME}`;
+  const relativePath = lessonListUsesMongo()
+    ? `mongodb:${LESSON_LIST_COLLECTION}/${id}`
+    : `data_club/${id}/${LESSON_LIST_FILENAME}`;
   if (!isValidClubFolderId(id)) {
     return { relativePath, headers: [], rows: [] };
   }
-  const lessons = loadLessons(id);
+  const lessons = await loadLessons(id);
   const headers = [...LESSON_LIST_COLUMNS];
   const rows = lessons.map(lessonRowToStringArray);
   const maxW = Math.max(headers.length, ...rows.map((r) => r.length), 1);
@@ -823,23 +1062,10 @@ export function loadLessonListRaw(clubId: string): LessonListRaw {
   };
 }
 
-export function allocateNextLessonId(clubId: string): string {
-  ensureLessonListFile(clubId);
-  return nextLessonId(loadLessons(clubId));
-}
-
-function nextLessonId(rows: LessonCsvRow[]): string {
-  let max = 0;
-  for (const r of rows) {
-    const m = r.lessonId.match(LESSON_ID_RE);
-    if (m) {
-      const n = Number.parseInt(m[1]!, 10);
-      if (!Number.isNaN(n) && n > max) {
-        max = n;
-      }
-    }
-  }
-  return `LE${String(max + 1).padStart(6, "0")}`;
+export async function allocateNextLessonId(clubId: string): Promise<string> {
+  await ensureLessonListFile(clubId);
+  const rows = await loadLessons(clubId);
+  return nextAllocatedLessonId(clubId.trim(), rows);
 }
 
 function sanitizeCell(s: string): string {
@@ -895,6 +1121,7 @@ function mergeInputIntoRow(
     sportCenter?: string;
     courtNo?: string;
     coachName?: string;
+    studentCoach?: string;
     remarks?: string;
     status?: string;
   },
@@ -929,6 +1156,9 @@ function mergeInputIntoRow(
     sportCenter: sanitizeCell(input.sportCenter ?? row.sportCenter),
     courtNo: sanitizeCell(input.courtNo ?? row.courtNo),
     coachName: sanitizeCell(input.coachName ?? row.coachName),
+    studentCoach: sanitizeCell(
+      input.studentCoach !== undefined ? input.studentCoach : row.studentCoach,
+    ),
     remarks: sanitizeCell(input.remarks ?? row.remarks),
     status,
     createdAt: row.createdAt || today,
@@ -936,7 +1166,7 @@ function mergeInputIntoRow(
   };
 }
 
-export function appendLessonRow(
+export async function appendLessonRow(
   clubId: string,
   input: {
     sportType: string;
@@ -961,36 +1191,34 @@ export function appendLessonRow(
     sportCenter?: string;
     courtNo?: string;
     coachName?: string;
+    studentCoach?: string;
     remarks?: string;
     status?: string;
     lessonId?: string;
   },
   /** Signed-in club UID stored as ClubID (may differ from clubId when LESSON_LIST_CLUB_ID pins file path). */
   ownerClubUid?: string,
-): { ok: true; lessonId: string } | { ok: false; error: string } {
+): Promise<{ ok: true; lessonId: string } | { ok: false; error: string }> {
   const sport = sanitizeCell(input.sportType);
   if (!sport) {
     return { ok: false, error: "SportType is required." };
   }
-  ensureLessonListFile(clubId);
-  const p = lessonListPath(clubId);
-  if (!p) {
-    return { ok: false, error: "Invalid club." };
-  }
-  const lessons = loadLessons(clubId);
+  await ensureLessonListFile(clubId);
+  const owner = (ownerClubUid ?? clubId).trim();
+  const lessons = await loadLessons(clubId);
   const requested = input.lessonId?.trim();
   let lessonId: string;
   if (requested) {
-    if (!LESSON_ID_RE.test(requested)) {
-      return { ok: false, error: "Invalid LessonID format (expected LE######)." };
+    const norm = normalizeRequestedLessonId(owner, requested);
+    if (!norm.ok) {
+      return norm;
     }
-    const normalized = `LE${requested.match(LESSON_ID_RE)![1]!.padStart(6, "0")}`;
-    if (lessons.some((r) => lessonIdsEqual(r.lessonId, normalized))) {
+    lessonId = norm.lessonId;
+    if (lessons.some((r) => lessonIdsEqual(r.lessonId, lessonId))) {
       return { ok: false, error: "LessonID already exists in lesson list." };
     }
-    lessonId = normalized;
   } else {
-    lessonId = nextLessonId(lessons);
+    lessonId = nextAllocatedLessonId(owner, lessons);
   }
   const blank = defaultEmptyLessonRow();
   const newRow = mergeInputIntoRow(
@@ -1004,7 +1232,7 @@ export function appendLessonRow(
   newRow.clubUid = sanitizeCell((ownerClubUid ?? clubId).trim());
   newRow.reservedNumber = "0";
   lessons.push(newRow);
-  writeLessonsToJsonFile(p, lessons);
+  await persistLessons(clubId, lessons);
   registerLessonIdInIndex(
     lessonId,
     (newRow.clubUid && newRow.clubUid.trim()) || clubId.trim(),
@@ -1012,7 +1240,7 @@ export function appendLessonRow(
   return { ok: true, lessonId };
 }
 
-export function updateLessonRow(
+export async function updateLessonRow(
   clubId: string,
   lessonId: string,
   input: {
@@ -1038,11 +1266,12 @@ export function updateLessonRow(
     sportCenter?: string;
     courtNo?: string;
     coachName?: string;
+    studentCoach?: string;
     remarks?: string;
     status?: string;
   },
   ownerClubUid?: string,
-): { ok: true } | { ok: false; error: string } {
+): Promise<{ ok: true } | { ok: false; error: string }> {
   const id = lessonId.trim();
   if (!id) {
     return { ok: false, error: "LessonID is required." };
@@ -1051,12 +1280,14 @@ export function updateLessonRow(
   if (!sport) {
     return { ok: false, error: "SportType is required." };
   }
-  ensureLessonListFile(clubId);
-  const p = lessonListPath(clubId);
-  if (!p || !fs.existsSync(p)) {
-    return { ok: false, error: "Lesson list not found." };
+  await ensureLessonListFile(clubId);
+  if (!lessonListUsesMongo()) {
+    const p = lessonListPath(clubId);
+    if (!p || !fs.existsSync(p)) {
+      return { ok: false, error: "Lesson list not found." };
+    }
   }
-  const lessons = loadLessons(clubId);
+  const lessons = await loadLessons(clubId);
   let found = false;
   const next = lessons.map((row) => {
     if (!lessonIdsEqual(row.lessonId, id)) {
@@ -1072,7 +1303,7 @@ export function updateLessonRow(
   if (!found) {
     return { ok: false, error: "Lesson not found." };
   }
-  writeLessonsToJsonFile(p, next);
+  await persistLessons(clubId, next);
   const upd = next.find((r) => lessonIdsEqual(r.lessonId, id));
   if (upd) {
     upsertLessonIdInIndex(
@@ -1084,20 +1315,22 @@ export function updateLessonRow(
 }
 
 /** Bump ReservedNumber by 1 for an existing lesson row. */
-export function incrementLessonReservedNumber(
+export async function incrementLessonReservedNumber(
   clubId: string,
   lessonId: string,
-): { ok: true; newReserved: string } | { ok: false; error: string } {
+): Promise<{ ok: true; newReserved: string } | { ok: false; error: string }> {
   const id = lessonId.trim();
   if (!id) {
     return { ok: false, error: "LessonID is required." };
   }
-  ensureLessonListFile(clubId);
-  const p = lessonListPath(clubId);
-  if (!p || !fs.existsSync(p)) {
-    return { ok: false, error: "Lesson list not found." };
+  await ensureLessonListFile(clubId);
+  if (!lessonListUsesMongo()) {
+    const p = lessonListPath(clubId);
+    if (!p || !fs.existsSync(p)) {
+      return { ok: false, error: "Lesson list not found." };
+    }
   }
-  const lessons = loadLessons(clubId);
+  const lessons = await loadLessons(clubId);
   let found = false;
   const today = new Date().toISOString().slice(0, 10);
   const next = lessons.map((row) => {
@@ -1115,26 +1348,28 @@ export function incrementLessonReservedNumber(
   if (!found) {
     return { ok: false, error: "Lesson not found." };
   }
-  writeLessonsToJsonFile(p, next);
+  await persistLessons(clubId, next);
   const updated = next.find((r) => lessonIdsEqual(r.lessonId, id))!;
   return { ok: true, newReserved: updated.reservedNumber };
 }
 
 /** Decrease ReservedNumber by 1 for an existing lesson row (floors at 0). */
-export function decrementLessonReservedNumber(
+export async function decrementLessonReservedNumber(
   clubId: string,
   lessonId: string,
-): { ok: true; newReserved: string } | { ok: false; error: string } {
+): Promise<{ ok: true; newReserved: string } | { ok: false; error: string }> {
   const id = lessonId.trim();
   if (!id) {
     return { ok: false, error: "LessonID is required." };
   }
-  ensureLessonListFile(clubId);
-  const p = lessonListPath(clubId);
-  if (!p || !fs.existsSync(p)) {
-    return { ok: false, error: "Lesson list not found." };
+  await ensureLessonListFile(clubId);
+  if (!lessonListUsesMongo()) {
+    const p = lessonListPath(clubId);
+    if (!p || !fs.existsSync(p)) {
+      return { ok: false, error: "Lesson list not found." };
+    }
   }
-  const lessons = loadLessons(clubId);
+  const lessons = await loadLessons(clubId);
   let found = false;
   const today = new Date().toISOString().slice(0, 10);
   const next = lessons.map((row) => {
@@ -1153,24 +1388,27 @@ export function decrementLessonReservedNumber(
   if (!found) {
     return { ok: false, error: "Lesson not found." };
   }
-  writeLessonsToJsonFile(p, next);
+  await persistLessons(clubId, next);
   const updated = next.find((r) => lessonIdsEqual(r.lessonId, id))!;
   return { ok: true, newReserved: updated.reservedNumber };
 }
 
-export function removeLessonRow(
+export async function removeLessonRow(
   clubId: string,
   lessonId: string,
-): { ok: true } | { ok: false; error: string } {
+): Promise<{ ok: true } | { ok: false; error: string }> {
   const id = lessonId.trim();
   if (!id) {
     return { ok: false, error: "LessonID is required." };
   }
-  const p = lessonListPath(clubId);
-  if (!p || !fs.existsSync(p)) {
-    return { ok: false, error: "Lesson list not found." };
+  await ensureLessonListFile(clubId);
+  if (!lessonListUsesMongo()) {
+    const p = lessonListPath(clubId);
+    if (!p || !fs.existsSync(p)) {
+      return { ok: false, error: "Lesson list not found." };
+    }
   }
-  const lessons = loadLessons(clubId);
+  const lessons = await loadLessons(clubId);
   const today = new Date().toISOString().slice(0, 10);
   let found = false;
   const next = lessons.map((row) => {
@@ -1187,6 +1425,6 @@ export function removeLessonRow(
   if (!found) {
     return { ok: false, error: "Lesson not found." };
   }
-  writeLessonsToJsonFile(p, next);
+  await persistLessons(clubId, next);
   return { ok: true };
 }

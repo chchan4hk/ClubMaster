@@ -75,7 +75,7 @@
             <a href="/student.html" target="_top" class="text-sm text-amber-700 hover:text-amber-900 underline-offset-2 hover:underline font-medium">← Go Back</a>
           </p>
           <h1 class="text-2xl font-bold text-amber-900 mt-2 tracking-tight">My payments</h1>
-          <p class="text-xs text-amber-800/70 mt-1">After you pay, your coach manager will confirm receipt in <code class="text-amber-900/80 bg-white/60 px-1 rounded">LessonReserveList</code> before <strong>Payment confirm</strong> is set.</p>
+          <p class="text-xs text-amber-800/70 mt-1">After you pay, your coach manager will confirm receipt in Mongo <code class="text-amber-900/80 bg-white/60 px-1 rounded">LessonReserveList</code> (or the JSON file mirror) before <strong>Payment confirm</strong> is set.</p>
         </div>
         <button type="button" id="logoutBtn"
           class="rounded-lg bg-white/80 border border-amber-300/60 text-amber-900 px-4 py-2 text-sm hover:bg-white shadow-sm">
@@ -245,7 +245,7 @@
               class="w-full rounded-lg bg-white border border-amber-200/80 px-3 py-2 text-amber-950 text-sm" />
           </div>
           <div class="flex flex-wrap gap-2">
-            <button type="submit" class="rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium px-4 py-2 shadow-sm">Confirm &amp; pay</button>
+            <button type="submit" class="btn-confirm-black rounded-lg text-sm px-4 py-2 shadow-sm">Confirm &amp; pay</button>
             <button type="button" id="btnPayCancel" class="btn-cancel-metallic-brown rounded-lg text-sm px-4 py-2">Cancel</button>
           </div>
           <p id="payErr" class="hidden text-sm text-red-700 font-medium"></p>
@@ -439,7 +439,12 @@
 
           var sp = data.studentProfile || {};
           document.getElementById("hdrName").textContent = sp.fullName || "—";
-          document.getElementById("hdrId").textContent = sp.studentId || "—";
+          document.getElementById("hdrId").textContent =
+            window.api && typeof window.api.displayStudentIdForUi === "function"
+              ? window.api.displayStudentIdForUi(sp.studentId || "") ||
+                  sp.studentId ||
+                  "—"
+              : sp.studentId || "—";
           document.getElementById("hdrLevel").textContent = sp.level || "—";
           document.getElementById("hdrCoach").textContent = sp.coach || "—";
           document.getElementById("hdrClub").textContent = data.clubName ? "Club: " + data.clubName : "";
@@ -578,10 +583,16 @@
           var links = data.links || {};
           document.getElementById("linkBookings").href = links.myBookings || "#";
           document.getElementById("linkBrowse").href = links.lessonBrowse || "#";
+          var sidForSubject =
+            window.api && typeof window.api.displayStudentIdForUi === "function"
+              ? window.api.displayStudentIdForUi(sp.studentId || "") ||
+                  sp.studentId ||
+                  ""
+              : sp.studentId || "";
           document.getElementById("linkContact").href =
             "mailto:?subject=" +
             encodeURIComponent(
-              "Payment — " + (data.clubName || "club") + " (" + (sp.studentId || "") + ")"
+              "Payment — " + (data.clubName || "club") + " (" + sidForSubject + ")"
             );
 
           storeQrUrls(data.paymentInstructions || {});
@@ -694,6 +705,12 @@
           return;
         }
         var sp = payload.studentProfile || {};
+        var sidStmt =
+          window.api && typeof window.api.displayStudentIdForUi === "function"
+            ? window.api.displayStudentIdForUi(sp.studentId || "") ||
+                sp.studentId ||
+                ""
+            : sp.studentId || "";
         var rows = (payload.lessons || [])
           .map(function (L) {
             return (
@@ -716,7 +733,7 @@
             "<h2>Payment statement</h2><p>" +
             escapeHtml(sp.fullName || "") +
             " · " +
-            escapeHtml(sp.studentId || "") +
+            escapeHtml(sidStmt) +
             " · " +
             escapeHtml(payload.clubName || "") +
             "</p>" +

@@ -6,15 +6,12 @@ import {
   findMainUserByUidMongo,
   userLoginCsvReadFallbackEnabled,
 } from "./userListMongo";
-import {
-  clubDataDir,
-  findClubUidForCoachId,
-  isValidClubFolderId,
-  loadCoaches,
-} from "./coachListCsv";
+import { clubDataDir, isValidClubFolderId } from "./coachListCsv";
+import { findClubUidForCoachIdPreferred } from "./coachListMongo";
 import {
   loadStudents,
   resolveStudentClubSession,
+  studentIdsEqual,
   type StudentClubSessionResult,
 } from "./studentListCsv";
 import { clubInfoFirstRowObject } from "./clubInfoJson";
@@ -23,44 +20,38 @@ import { clubInfoFirstRowObject } from "./clubInfoJson";
  * Coach scoped APIs: prefer JWT `club_folder_uid` from sign-in over `findClubUidForCoachId`,
  * which uses the first `data_club/*` folder that lists this CoachID (wrong when the ID is reused across clubs).
  */
-export function resolveClubFolderUidForCoachRequest(req: Request): string | null {
+export async function resolveClubFolderUidForCoachRequest(
+  req: Request,
+): Promise<string | null> {
   const coachId = String(req.user?.sub ?? "").trim();
   if (!coachId) {
     return null;
   }
   const fromJwt = String(req.user?.club_folder_uid ?? "").trim();
   if (fromJwt && isValidClubFolderId(fromJwt)) {
-    const inClub = loadCoaches(fromJwt).some(
-      (c) =>
-        c.coachId.replace(/^\uFEFF/, "").trim().toUpperCase() ===
-        coachId.toUpperCase(),
-    );
-    if (inClub) {
-      return fromJwt;
-    }
+    // Coach Mongo login sets `club_folder_uid` from userLogin `club_id` / folder; JWT is
+    // server-signed — use it for PrizeList / LessonList APIs even when roster `coach_id`
+    // differs from login `uid` (`sub`).
+    return fromJwt;
   }
-  return findClubUidForCoachId(coachId);
+  return findClubUidForCoachIdPreferred(coachId);
 }
 
 /**
  * Student scoped APIs: prefer JWT `club_folder_uid` when it matches an ACTIVE roster row,
  * else `resolveStudentClubSession` (role-login folder / first index hit).
  */
-export function resolveStudentClubSessionFromRequest(
+export async function resolveStudentClubSessionFromRequest(
   req: Request,
-): StudentClubSessionResult {
+): Promise<StudentClubSessionResult> {
   const studentId = String(req.user?.sub ?? "").trim();
   if (!studentId) {
     return { ok: false, error: "Invalid session." };
   }
   const fromJwt = String(req.user?.club_folder_uid ?? "").trim();
   if (fromJwt && isValidClubFolderId(fromJwt)) {
-    const roster = loadStudents(fromJwt);
-    const stu = roster.find(
-      (s) =>
-        s.studentId.replace(/^\uFEFF/, "").trim().toUpperCase() ===
-        studentId.toUpperCase(),
-    );
+    const roster = await loadStudents(fromJwt);
+    const stu = roster.find((s) => studentIdsEqual(s.studentId, studentId));
     if (stu && stu.status.toUpperCase() === "ACTIVE") {
       return { ok: true, clubId: fromJwt, rosterRow: stu };
     }

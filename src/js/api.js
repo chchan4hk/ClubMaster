@@ -378,6 +378,25 @@ function formatStoredDateToDdMmYyyy(raw) {
   return t;
 }
 
+/**
+ * Student IDs may be stored as `{clubFolderUid}-S0000001` when using Mongo club-scoped allocation.
+ * For on-screen lists, show only the segment after the last hyphen so the value is not redundant
+ * with the Club ID column. Legacy IDs without `-` are returned unchanged.
+ * @param {unknown} raw
+ * @returns {string}
+ */
+function displayStudentIdForUi(raw) {
+  const s = raw == null ? "" : String(raw).trim();
+  if (!s) {
+    return "";
+  }
+  const i = s.lastIndexOf("-");
+  if (i > 0 && i < s.length - 1) {
+    return s.slice(i + 1);
+  }
+  return s;
+}
+
 function fillSelectFromBasicList(sel, values, opts) {
   if (!sel) {
     return;
@@ -426,4 +445,5 @@ window.api = {
   parseDdMmYyyyToYmd,
   parseAnyDisplayDateToYmd,
   formatStoredDateToDdMmYyyy,
+  displayStudentIdForUi,
 };

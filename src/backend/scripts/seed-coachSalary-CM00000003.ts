@@ -1,6 +1,6 @@
 /**
  * Upserts rows from `data_club/CM00000003/CoachSalary.json` into MongoDB database
- * `ClubMaster_DB` (or `MONGO_COACH_SALARY_TARGET_DB` / `MONGO_DATABASE`) collection `CoachSalary`.
+ * `ClubMaster_DB` (or `MONGO_COACH_SALARY_TARGET_DB` / `MONGO_DATABASE`) collection `CoachManager`.
  */
 import path from "path";
 import { loadLocalEnvFile } from "../src/config/env";
@@ -79,7 +79,7 @@ async function main(): Promise<void> {
     }
   }
   console.log(
-    `CoachSalary: processed ${upserted} row(s) for club folder ${CLUB_FOLDER} (replaceOne upsert by CoachSalaryID).`,
+    `CoachManager: processed ${upserted} row(s) for club folder ${CLUB_FOLDER} (replaceOne upsert by CoachSalaryID).`,
   );
 }
 

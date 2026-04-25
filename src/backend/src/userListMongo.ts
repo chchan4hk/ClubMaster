@@ -67,7 +67,14 @@ function docToCoachStudentRow(doc: UserLoginDocument): CoachStudentLoginRow {
     lastUpdateDate: formatDateOnly(doc.lastUpdate_date as Date),
     expiryDate: formatDateOnly(doc.Expiry_date as Date | null),
   };
-  const cfu = String(doc.club_folder_uid ?? doc.club_id ?? "").trim();
+  const dLogin = doc as unknown as Record<string, unknown>;
+  const cfu = String(
+    doc.club_folder_uid ??
+      doc.club_id ??
+      dLogin["Club_ID"] ??
+      dLogin["club_ID"] ??
+      "",
+  ).trim();
   if (cfu) {
     base.clubFolderUid = cfu;
   }
@@ -413,6 +420,19 @@ export async function findStudentRoleLoginByUsernameMongo(
     { usertype: "Student", username: q },
     { collation: LOGIN_STRING_COLLATION },
   );
+  return doc ? docToCoachStudentRow(doc as UserLoginDocument) : null;
+}
+
+/** Mongo `userLogin` student row by login `uid` or roster `student_id` (JWT `sub` may be either). */
+export async function findStudentRoleLoginByUidMongo(
+  uid: string,
+): Promise<CoachStudentLoginRow | null> {
+  const q = String(uid ?? "").trim();
+  if (!q) {
+    return null;
+  }
+  const coll = await collWithIndexes();
+  const doc = await coll.findOne(coachStudentUidMatchFilter("student", q));
   return doc ? docToCoachStudentRow(doc as UserLoginDocument) : null;
 }
 

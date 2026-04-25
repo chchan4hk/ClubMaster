@@ -32,7 +32,61 @@ function coachIdSequenceNumber(coachId: string): number | null {
 
 const COACH_NEW_ID_PAD = 6;
 
-function normalizeCoachIdInput(raw: string): string | null {
+/** Digits after `C` for `{clubFolderUid}-C00001` style IDs (Mongo coach-manager clubs). */
+export const COACH_CLUB_PREFIX_ID_PAD = 5;
+
+function escapeRegExpLiteral(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Normalizes `CM00000008-C1` → `CM00000008-C00001` when the prefix matches `clubFolderUid`.
+ * Returns null if the string is not a valid prefixed coach id for that club.
+ */
+export function normalizePrefixedCoachIdForClub(
+  raw: string,
+  clubFolderUid: string,
+): string | null {
+  const club = clubFolderUid.replace(/^\uFEFF/, "").trim();
+  const s = raw.replace(/^\uFEFF/, "").trim();
+  if (!club || !s) {
+    return null;
+  }
+  const m = s.match(
+    new RegExp(`^${escapeRegExpLiteral(club)}-C(\\d+)$`, "i"),
+  );
+  if (!m) {
+    return null;
+  }
+  const n = Number.parseInt(m[1]!, 10);
+  if (Number.isNaN(n) || n < 0) {
+    return null;
+  }
+  return `${club}-C${String(n).padStart(COACH_CLUB_PREFIX_ID_PAD, "0")}`;
+}
+
+/** Increments `{club}-C00001` → `{club}-C00002`; falls back to {@link bumpNumericCoachLoginStyleId}. */
+export function bumpPrefixedCoachIdForClub(
+  clubFolderUid: string,
+  current: string,
+): string {
+  const norm = normalizePrefixedCoachIdForClub(current, clubFolderUid);
+  if (!norm) {
+    return bumpNumericCoachLoginStyleId(current);
+  }
+  const club = clubFolderUid.replace(/^\uFEFF/, "").trim();
+  const m = norm.match(new RegExp(`^${escapeRegExpLiteral(club)}-C(\\d+)$`, "i"));
+  if (!m) {
+    return bumpNumericCoachLoginStyleId(current);
+  }
+  const n = Number.parseInt(m[1]!, 10);
+  if (Number.isNaN(n) || n < 0) {
+    return bumpNumericCoachLoginStyleId(current);
+  }
+  return `${club}-C${String(n + 1).padStart(COACH_CLUB_PREFIX_ID_PAD, "0")}`;
+}
+
+export function normalizeCoachIdInput(raw: string): string | null {
   const s = raw.replace(/^\uFEFF/, "").trim();
   const ch = s.match(/^CH(\d+)$/i);
   if (ch) {
@@ -246,7 +300,7 @@ function joinCsvRow(cells: string[]): string {
   return cells.map(escapeCsvField).join(",");
 }
 
-function coachRowToRecord(c: CoachCsvRow): Record<string, string> {
+export function coachRowToRecord(c: CoachCsvRow): Record<string, string> {
   const rec: Record<string, string> = {};
   for (const col of COACH_LIST_COLUMNS) {
     rec[col] = "";
@@ -909,6 +963,49 @@ export function coachIdsEqual(a: string, b: string): boolean {
   return x.length > 0 && x.toUpperCase() === y.toUpperCase();
 }
 
+/**
+ * Numeric coach sequence for this club: `CH…`, bare `C…`, or `{club}-C…` roster ids vs
+ * coach role-login `uid` (typically `C######`). Used so sign-in matches roster when formats differ.
+ */
+function rosterCoachNumericTailForClub(
+  clubFolderUid: string,
+  coachId: string,
+): number | null {
+  const club = clubFolderUid.replace(/^\uFEFF/, "").trim();
+  const s = String(coachId ?? "").replace(/^\uFEFF/, "").trim();
+  if (!club || !s) {
+    return null;
+  }
+  const plainSeq = coachIdSequenceNumber(s);
+  if (plainSeq != null) {
+    return plainSeq;
+  }
+  const norm = normalizePrefixedCoachIdForClub(s, club);
+  if (!norm) {
+    return null;
+  }
+  const m = norm.match(/-C(\d+)$/i);
+  if (!m) {
+    return null;
+  }
+  const n = Number.parseInt(m[1]!, 10);
+  return Number.isNaN(n) ? null : n;
+}
+
+/** True when roster `CoachID` and coach login `uid` refer to the same coach within `clubFolderUid`. */
+export function coachLoginUidMatchesRosterCoachId(
+  clubFolderUid: string,
+  rosterCoachId: string,
+  loginUid: string,
+): boolean {
+  if (coachIdsEqual(rosterCoachId, loginUid)) {
+    return true;
+  }
+  const a = rosterCoachNumericTailForClub(clubFolderUid, rosterCoachId);
+  const b = rosterCoachNumericTailForClub(clubFolderUid, loginUid);
+  return a != null && b != null && a === b;
+}
+
 export function appendCoachRow(
   clubId: string,
   clubName: string,
@@ -941,17 +1038,20 @@ export function appendCoachRow(
   const requested = input.coachId?.trim();
   let coachId: string;
   if (requested) {
+    const prefixed = normalizePrefixedCoachIdForClub(requested, clubId);
     const normalized = normalizeCoachIdInput(requested);
-    if (!normalized) {
+    const chosen = prefixed ?? normalized;
+    if (!chosen) {
       return {
         ok: false,
-        error: "Invalid CoachID format (expected CH#### or C######).",
+        error:
+          "Invalid CoachID format (expected CH####, C######, or {Club_ID}-C#####).",
       };
     }
-    if (coaches.some((r) => coachIdsEqual(r.coachId, normalized))) {
+    if (coaches.some((r) => coachIdsEqual(r.coachId, chosen))) {
       return { ok: false, error: "CoachID already exists in coach list." };
     }
-    coachId = normalized;
+    coachId = chosen;
   } else {
     coachId = nextCoachId(coaches);
   }

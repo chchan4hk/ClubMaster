@@ -15,7 +15,13 @@ import {
 } from "./routes/userAccountRoutes";
 import {
   ensureClubInfoCollection,
+  ensureCoachSalaryCollection,
+  ensureLessonListCollection,
+  ensurePaymentListCollection,
   ensureLessonSeriesInfoCollection,
+  ensureLessonReserveListCollection,
+  ensureLessonPaymentLedgerCollection,
+  ensurePrizeListRowCollection,
   ensureUserLoginCollection,
   isMongoConfigured,
 } from "./db/DBConnection";
@@ -40,8 +46,20 @@ import { Lesson_payment_status } from "./payment_modules/Lesson_payment_status";
 import { createUserLoginPaymentStatusRouter } from "./payment_modules/UserLogin_payment_status";
 import { Student_payment } from "./payment_modules/Student_payment";
 import { createBasicInfoRouter } from "./routes/basicInfoRoutes";
-import { findClubUidForCoachId, isValidClubFolderId } from "./coachListCsv";
-import { resolveStudentClubSession } from "./studentListCsv";
+import {
+  coachLoginUidMatchesRosterCoachId,
+  isValidClubFolderId,
+} from "./coachListCsv";
+import {
+  findClubUidForCoachIdPreferred,
+  loadCoachesPreferred,
+} from "./coachListMongo";
+import {
+  rebuildStudentIdClubIndex,
+  resolveStudentClubSession,
+  type StudentClubSessionResult,
+} from "./studentListCsv";
+import { ensureUserListStudentIndexes } from "./studentListMongo";
 import { getDataFileCacheStats } from "./dataFileCache";
 import { getRdsPoolStats } from "./db/rdsPostgres";
 import {
@@ -193,6 +211,10 @@ app.get("/api/me", requireAuth, async (req, res) => {
       const mongoMe = await loadMeProfileFromUserLoginMongo(
         String(uid),
         req.user?.role,
+        {
+          username: String(req.user?.username ?? "").trim(),
+          clubFolderUid: String(req.user?.club_folder_uid ?? "").trim(),
+        },
       );
       if (mongoMe) {
         if (mongoMe.fromCsv) {
@@ -263,7 +285,9 @@ app.get("/api/me", requireAuth, async (req, res) => {
       }
     }
     if (!club_folder_uid) {
-      const fromRoster = findClubUidForCoachId(String(uid).trim());
+      const fromRoster = await findClubUidForCoachIdPreferred(
+        String(uid).trim(),
+      );
       if (fromRoster && isValidClubFolderId(fromRoster)) {
         club_folder_uid = fromRoster;
       }
@@ -279,7 +303,7 @@ app.get("/api/me", requireAuth, async (req, res) => {
       } else if (clubNameTrimmed) {
         club_folder_uid = findCoachManagerClubUidByClubName(clubNameTrimmed);
       } else {
-        const sess = resolveStudentClubSession(String(uid).trim());
+        const sess = await resolveStudentClubSession(String(uid).trim());
         club_folder_uid = sess.ok ? sess.clubId : null;
       }
     }
@@ -321,12 +345,54 @@ app.get("/api/me", requireAuth, async (req, res) => {
   })();
 
   let studentCoachFromRoster = "";
+  let studentClubSession: StudentClubSessionResult | null = null;
   if (req.user?.role === "Student" && uid != null) {
     const sid = String(uid).trim();
-    const stuSession = resolveStudentClubSession(sid);
-    if (stuSession.ok && stuSession.rosterRow?.studentCoach?.trim()) {
-      studentCoachFromRoster = stuSession.rosterRow.studentCoach.trim();
+    studentClubSession = await resolveStudentClubSession(sid);
+    if (
+      studentClubSession.ok &&
+      studentClubSession.rosterRow?.studentCoach?.trim()
+    ) {
+      studentCoachFromRoster = studentClubSession.rosterRow.studentCoach.trim();
     }
+  }
+
+  let profileContactNumber = "—";
+  let profileEmailAddress = "—";
+  if (
+    req.user?.role === "Coach" &&
+    uid != null &&
+    club_folder_uid &&
+    isValidClubFolderId(club_folder_uid)
+  ) {
+    try {
+      const coaches = await loadCoachesPreferred(club_folder_uid);
+      const crow = coaches.find((c) =>
+        coachLoginUidMatchesRosterCoachId(
+          club_folder_uid,
+          c.coachId,
+          String(uid),
+        ),
+      );
+      if (crow) {
+        const em = String(crow.email ?? "").trim();
+        const ph = String(crow.phone ?? "").trim();
+        profileEmailAddress = em || "—";
+        profileContactNumber = ph || "—";
+      }
+    } catch {
+      /* ignore roster read errors for profile extras */
+    }
+  }
+  if (
+    req.user?.role === "Student" &&
+    studentClubSession?.ok &&
+    studentClubSession.rosterRow
+  ) {
+    const em = String(studentClubSession.rosterRow.email ?? "").trim();
+    const ph = String(studentClubSession.rosterRow.phone ?? "").trim();
+    profileEmailAddress = em || "—";
+    profileContactNumber = ph || "—";
   }
 
   res.json({
@@ -356,6 +422,8 @@ app.get("/api/me", requireAuth, async (req, res) => {
               })(),
       status: fromCsv?.status ?? "ACTIVE",
       club_name: clubNameForFolder,
+      contact_number: profileContactNumber,
+      email_address: profileEmailAddress,
       club_photo: fromCsv?.club_photo ?? "",
       club_photo_url: fromCsv?.club_photo_url ?? null,
       creation_date:
@@ -437,17 +505,25 @@ const server = app.listen(PORT, "0.0.0.0", () => {
     void Promise.all([
       ensureUserLoginCollection(),
       ensureClubInfoCollection(),
+      ensureLessonListCollection(),
+      ensurePaymentListCollection(),
       ensureLessonSeriesInfoCollection(),
+      ensureLessonReserveListCollection(),
+      ensureLessonPaymentLedgerCollection(),
+      ensurePrizeListRowCollection(),
+      ensureCoachSalaryCollection(),
+      ensureUserListStudentIndexes(),
+      rebuildStudentIdClubIndex(),
     ])
       .then(() => {
         console.log(
-          "MongoDB: `userLogin`, `clubInfo`, and `LessonSeriesInfo` collections validated (see src/backend/src/db/DBConnection.ts).",
+          "MongoDB: `userLogin`, `clubInfo`, `LessonList`, `PaymentList`, `LessonSeriesInfo`, `LessonReserveList`, `LessonPaymentLedger`, `PrizeList`, `CoachManager`, and `UserList_Student` indexes/roster index warmed (see src/backend/src/db/DBConnection.ts).",
         );
       })
       .catch((e) => {
         const msg = e instanceof Error ? e.message : String(e);
         console.warn(
-          "MongoDB collection init (userLogin / clubInfo / LessonSeriesInfo):",
+          "MongoDB collection init (userLogin / clubInfo / LessonList / PaymentList / LessonSeriesInfo / LessonReserveList / LessonPaymentLedger / PrizeList / CoachManager / UserList_Student):",
           msg,
         );
       });

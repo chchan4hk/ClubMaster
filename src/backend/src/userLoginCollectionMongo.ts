@@ -3,6 +3,7 @@ import {
   isMongoConfigured,
   type UserLoginDocument,
 } from "./db/DBConnection";
+import { isValidClubFolderId } from "./coachListCsv";
 import {
   findCoachManagerClubUidByClubName,
   mapUserTypeToRole,
@@ -67,9 +68,11 @@ function userLoginDocToCoachStudentRow(doc: UserLoginDocument): CoachStudentLogi
     expiryDate: formatDateOnly(doc.Expiry_date),
   };
   if (doc.usertype === "Coach") {
-    base.coachId = String(doc.uid ?? "").trim();
+    base.coachId =
+      String(doc.coach_id ?? doc.uid ?? "").trim() || base.uid;
   } else if (doc.usertype === "Student") {
-    base.studentId = String(doc.uid ?? "").trim();
+    base.studentId =
+      String(doc.student_id ?? doc.uid ?? "").trim() || base.uid;
   }
   const fromDoc = String(doc.club_folder_uid ?? doc.club_id ?? "").trim();
   if (fromDoc) {
@@ -122,7 +125,88 @@ export async function findUserLoginDocumentByUid(
       uid: new RegExp(`^${escapeRegex(key)}$`, "i"),
     });
   }
+  if (!doc) {
+    const sidRe = new RegExp(`^${escapeRegex(key)}$`, "i");
+    doc = await coll.findOne({
+      usertype: "Student",
+      student_id: sidRe,
+    });
+  }
+  if (!doc) {
+    const cidRe = new RegExp(`^${escapeRegex(key)}$`, "i");
+    doc = await coll.findOne({
+      usertype: "Coach",
+      coach_id: cidRe,
+    });
+  }
   return doc as UserLoginDocument | null;
+}
+
+const LOGIN_COLlation = { locale: "en", strength: 2 } as const;
+
+/**
+ * Coach role-login row in Mongo `userLogin` for GET /api/me when JWT `sub` is login uid,
+ * roster CoachID, or when {@link findUserLoginDocumentByUid} misses (e.g. legacy tokens).
+ * Prefers match on `club_folder_uid` / `club_id` + `username` when JWT carries the club folder.
+ */
+async function findCoachUserLoginForProfileMongo(
+  uid: string,
+  opts?: { username?: string; clubFolderUid?: string },
+): Promise<UserLoginDocument | null> {
+  const coll = await getAuthUserLoginCollection();
+  const uname = String(opts?.username ?? "").trim();
+  const club = String(opts?.clubFolderUid ?? "").trim();
+  const idKey = String(uid ?? "").trim();
+  const hasClub = club.length > 0 && isValidClubFolderId(club);
+  const folderRe = hasClub ? new RegExp(`^${escapeRegex(club)}$`, "i") : null;
+
+  if (uname && folderRe) {
+    const byClubUser = await coll.findOne(
+      {
+        usertype: "Coach",
+        username: uname,
+        $or: [{ club_folder_uid: folderRe }, { club_id: folderRe }],
+      },
+      { collation: LOGIN_COLlation },
+    );
+    if (byClubUser) {
+      return byClubUser as UserLoginDocument;
+    }
+  }
+
+  if (idKey) {
+    const idRe = new RegExp(`^${escapeRegex(idKey)}$`, "i");
+    const identityOr: object[] = [{ uid: idRe }, { coach_id: idRe }];
+    if (folderRe) {
+      const byClubId = await coll.findOne({
+        usertype: "Coach",
+        $and: [
+          { $or: identityOr },
+          { $or: [{ club_folder_uid: folderRe }, { club_id: folderRe }] },
+        ],
+      });
+      if (byClubId) {
+        return byClubId as UserLoginDocument;
+      }
+    }
+    const byId = await coll.findOne({
+      usertype: "Coach",
+      $or: identityOr,
+    });
+    if (byId) {
+      return byId as UserLoginDocument;
+    }
+  }
+
+  if (uname) {
+    const byName = await coll.findOne(
+      { usertype: "Coach", username: uname },
+      { collation: LOGIN_COLlation },
+    );
+    return (byName as UserLoginDocument) ?? null;
+  }
+
+  return null;
 }
 
 export type MeProfileFromUserLogin = {
@@ -132,16 +216,22 @@ export type MeProfileFromUserLogin = {
 };
 
 /**
- * Profile slices for GET /api/me from MongoDB `userLogin` when a document exists for JWT `sub`.
+ * Profile slices for GET /api/me from MongoDB `ClubMaster_DB` / `userLogin`.
+ * Uses JWT `sub` first; for Coach, also resolves by `club_folder_uid`/`club_id` + username
+ * or roster `coach_id` when the login row is not keyed by `uid` alone.
  */
 export async function loadMeProfileFromUserLoginMongo(
   uid: string,
   jwtRole: string | undefined,
+  opts?: { username?: string; clubFolderUid?: string },
 ): Promise<MeProfileFromUserLogin | null> {
   if (!isMongoConfigured()) {
     return null;
   }
-  const doc = await findUserLoginDocumentByUid(uid);
+  let doc = await findUserLoginDocumentByUid(uid);
+  if (!doc && jwtRole === "Coach") {
+    doc = await findCoachUserLoginForProfileMongo(uid, opts);
+  }
   if (!doc) {
     return null;
   }

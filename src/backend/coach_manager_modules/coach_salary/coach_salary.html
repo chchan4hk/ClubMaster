@@ -9,6 +9,109 @@
   <link rel="stylesheet" href="/css/style.css" />
   <link rel="stylesheet" href="/css/profile-password-panels.css" />
   <link rel="stylesheet" href="/css/coach-manager-module-shell.css" />
+  <link rel="stylesheet" href="/css/btn-cancel-metallic-brown.css" />
+  <link rel="stylesheet" href="/css/btn-create-dark-brown.css" />
+  <style>
+    /* Centered toast: Lesson Fee Allocation → Update */
+    .cm-alloc-toast-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 280;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      pointer-events: none;
+      opacity: 1;
+      transition: opacity 0.28s ease;
+    }
+    .cm-alloc-toast-backdrop.cm-alloc-toast-fadeout {
+      opacity: 0;
+    }
+    .cm-alloc-toast-panel {
+      pointer-events: auto;
+      max-width: min(440px, 92vw);
+      padding: 1.1rem 1.35rem;
+      color: #fff;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      line-height: 1.45;
+      text-align: center;
+      letter-spacing: 0.01em;
+      border-radius: 14px;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+      background: linear-gradient(
+        155deg,
+        #0a2214 0%,
+        #123d22 28%,
+        #164428 55%,
+        #0f301a 100%
+      );
+      border: 1px solid rgba(201, 162, 39, 0.55);
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.35),
+        0 0 22px rgba(201, 162, 39, 0.18),
+        inset 0 1px 0 rgba(255, 235, 180, 0.14),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.25),
+        0 18px 40px rgba(0, 0, 0, 0.45);
+    }
+    .cm-alloc-toast-panel--err {
+      background: linear-gradient(
+        155deg,
+        #1a0f0f 0%,
+        #2a1518 40%,
+        #1f1214 100%
+      );
+      border-color: rgba(220, 140, 100, 0.55);
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.4),
+        0 0 20px rgba(180, 90, 70, 0.15),
+        inset 0 1px 0 rgba(255, 200, 160, 0.08),
+        0 18px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Top-right toast: dark green / gold metallic, white type */
+    .cm-toast-panel {
+      pointer-events: auto;
+      max-width: min(420px, 92vw);
+      padding: 0.7rem 0.95rem;
+      color: #fff;
+      font-size: 0.875rem;
+      font-weight: 700;
+      line-height: 1.4;
+      border-radius: 12px;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+      background: linear-gradient(
+        155deg,
+        #0a2214 0%,
+        #123d22 28%,
+        #164428 55%,
+        #0f301a 100%
+      );
+      border: 1px solid rgba(201, 162, 39, 0.55);
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.35),
+        0 0 18px rgba(201, 162, 39, 0.16),
+        inset 0 1px 0 rgba(255, 235, 180, 0.12),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.22),
+        0 10px 22px rgba(0, 0, 0, 0.35);
+    }
+
+    .cm-toast-panel--err {
+      background: linear-gradient(
+        155deg,
+        #1a0f0f 0%,
+        #2a1518 40%,
+        #1f1214 100%
+      );
+      border-color: rgba(220, 140, 100, 0.55);
+      box-shadow:
+        0 0 0 1px rgba(0, 0, 0, 0.4),
+        0 0 16px rgba(180, 90, 70, 0.14),
+        inset 0 1px 0 rgba(255, 200, 160, 0.08),
+        0 10px 22px rgba(0, 0, 0, 0.4);
+    }
+  </style>
 </head>
 <body class="coach-salary-page profile-password-page cm-module-shell min-h-full p-4 sm:p-6 pb-16">
   <div id="toastHost" class="fixed top-4 right-4 z-[200] flex flex-col gap-2 pointer-events-none max-w-sm"></div>
@@ -48,7 +151,7 @@
           Reload data
         </button>
         <button type="button" id="btnSaveAll"
-          class="rounded-lg bg-amber-800 hover:bg-amber-700 border border-amber-600/30 text-amber-50 text-sm px-4 py-2">
+          class="btn-create-dark-brown rounded-lg text-sm px-4 py-2">
           Save All
         </button>
         <p id="coachSalaryMonthHint" class="text-xs text-amber-100/70 flex-1 min-w-[200px] pb-1"></p>
@@ -60,8 +163,8 @@
       <h2 class="text-lg font-semibold text-amber-200 mb-1">Lesson Fee Allocation for Coach</h2>
       <p class="text-xs text-amber-100/75 mb-3">
         Lesson fee (total) = max enrolment × class fee. Received = number of reservations with payment confirmed × class fee per student.
-        <strong>Update</strong> writes or creates a <code class="text-amber-300/80">CoachSalary.json</code> row (ids <code class="text-amber-300/80">CS000001</code>, …) for that lesson.
-        The <strong>Month</strong> control above filters this table and salary records to lessons whose schedule overlaps that month.
+        <strong>Update</strong> writes or creates a row in MongoDB <code class="text-amber-300/80">ClubMaster_DB.CoachManager</code> (new ids look like <code class="text-amber-300/80">CM00000008-CS000001</code>, i.e. club folder id + <code class="text-amber-300/80">-CS000001</code>, …) for that lesson.
+        The <strong>Month</strong> control above filters this table and salary records to lessons whose schedule overlaps that month (lessons with no start/end dates still appear so you can edit allocation).
       </p>
       <table class="w-full text-sm text-left border-collapse min-w-[720px]">
         <thead>
@@ -81,7 +184,7 @@
     </section>
 
     <section class="glass rounded-xl border border-amber-600/25 p-4 overflow-x-auto">
-      <h2 class="text-lg font-semibold text-amber-200 mb-2">Salary records</h2>
+      <h2 class="text-lg font-semibold text-amber-200 mb-2">Salary Records</h2>
       <table class="w-full text-sm text-left border-collapse min-w-[960px]">
         <thead>
           <tr class="border-b border-amber-600/20 text-amber-200/70">
@@ -355,11 +458,7 @@
           return;
         }
         var t = document.createElement("div");
-        t.className =
-          "pointer-events-auto rounded-lg border px-4 py-3 text-sm shadow-lg " +
-          (ok
-            ? "border-amber-500/40 bg-amber-950/90 text-amber-100"
-            : "border-red-500/40 bg-red-950/90 text-red-100");
+        t.className = "cm-toast-panel" + (ok ? "" : " cm-toast-panel--err");
         t.textContent = msg;
         host.appendChild(t);
         setTimeout(function () {
@@ -367,6 +466,25 @@
           setTimeout(function () {
             t.remove();
           }, 320);
+        }, 3200);
+      }
+
+      /** Lesson Fee Allocation → Update: centered dark green / gold metallic, white type. */
+      function toastAllocationCenter(msg, ok) {
+        var backdrop = document.createElement("div");
+        backdrop.className = "cm-alloc-toast-backdrop";
+        backdrop.setAttribute("role", "status");
+        var panel = document.createElement("div");
+        panel.className =
+          "cm-alloc-toast-panel" + (ok ? "" : " cm-alloc-toast-panel--err");
+        panel.textContent = msg;
+        backdrop.appendChild(panel);
+        document.body.appendChild(backdrop);
+        setTimeout(function () {
+          backdrop.classList.add("cm-alloc-toast-fadeout");
+          setTimeout(function () {
+            backdrop.remove();
+          }, 300);
         }, 3200);
       }
 
@@ -407,10 +525,11 @@
         if (!r.first) {
           return true;
         }
-        var s = (row.lessonStartDate || "").slice(0, 10);
-        var e = (row.lessonEndDate || "").slice(0, 10);
+        var s = (row.lessonStartDate || row.lesson_start_date || "").slice(0, 10);
+        var e = (row.lessonEndDate || row.lesson_end_date || "").slice(0, 10);
+        // No schedule dates: still show the row so fee allocation is not hidden (fix dates in Lesson List if needed).
         if (!s && !e) {
-          return false;
+          return true;
         }
         if (!s) {
           s = e;
@@ -773,7 +892,7 @@
             escapeHtml(val) +
             '" class="w-full max-w-[140px] rounded-lg bg-amber-950/50 border border-amber-600/25 px-2 py-1.5 text-amber-50 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/45" /></td>';
           html +=
-            '<td class="py-2 pr-2 align-middle"><button type="button" data-action="alloc-update" class="rounded-md bg-amber-600/90 hover:bg-amber-500 text-white text-xs font-medium px-3 py-1.5">Update</button></td>';
+            '<td class="py-2 pr-2 align-middle"><button type="button" data-action="alloc-update" class="btn-update-orange-gold rounded-md text-xs px-3 py-1.5">Update</button></td>';
           html += "</tr>";
         });
         tb.innerHTML = html;
@@ -833,7 +952,7 @@
             ) +
             "</td>";
           html +=
-            '<td class="py-2 pr-2 align-middle"><button type="button" data-action="update-row" class="rounded-md bg-amber-600/90 hover:bg-amber-500 text-white text-xs font-medium px-3 py-1.5">Update</button></td>';
+            '<td class="py-2 pr-2 align-middle"><button type="button" data-action="update-row" class="btn-update-orange-gold rounded-md text-xs px-3 py-1.5">Update</button></td>';
           html += "</tr>";
         });
         tb.innerHTML = html;
@@ -955,7 +1074,7 @@
         var raw = inp ? String(inp.value || "").trim() : "";
         var fee = Number(raw);
         if (!lid || !isFinite(fee)) {
-          toast("Enter a valid fee allocation amount.", false);
+          toastAllocationCenter("Enter a valid fee allocation amount.", false);
           return;
         }
         btn.disabled = true;
@@ -967,15 +1086,15 @@
           if (!data || !data.ok) {
             throw new Error((data && data.error) || "Save failed.");
           }
-          toast(
-            "Fee allocation saved to CoachSalary (" +
+          toastAllocationCenter(
+            "Fee allocation saved to MongoDB CoachManager (" +
               (data.created > 0 ? "new CS row" : "row updated") +
               ").",
             true,
           );
           await loadData();
         } catch (e) {
-          toast(userFacingCoachSalaryError(e), false);
+          toastAllocationCenter(userFacingCoachSalaryError(e), false);
         } finally {
           btn.disabled = false;
         }

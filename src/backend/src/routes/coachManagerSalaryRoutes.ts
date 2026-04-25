@@ -1,21 +1,27 @@
-import { Router, type Request } from "express";
+import { Router } from "express";
 import { requireAuth, requireRole } from "../middleware/requireAuth";
 import { coachManagerClubContextAsync } from "../coachManagerSession";
+import { loadCoachesPreferred } from "../coachListMongo";
 import { resolveLessonFileClubId } from "../lessonListCsv";
 import { clubInfoFirstRowObject } from "../clubInfoJson";
 import { clubCurrencyFromCountry } from "../countryCurrency";
 import {
-  applyLessonFeeAllocations,
+  applyLessonFeeAllocationsMongo,
+  isCoachSalaryMongoAvailable,
+  loadCoachSalaryDocumentFromMongo,
+  saveCoachSalaryDocumentMongo,
+} from "../coachSalaryMongo";
+import {
   buildCoachSalaryTableRows,
   buildLessonFeeAllocationRows,
-  loadCoachSalaryDocument,
   normalizeCoachSalaryPaymentMethod,
   normalizeCoachSalaryPaymentStatus,
-  saveCoachSalaryDocument,
 } from "../coachSalaryJson";
 
 /**
- * Coach Manager: read/update CoachSalary.json under data_club.
+ * Coach Manager: read/update coach salary rows in MongoDB `ClubMaster_DB.CoachManager`.
+ * Loads rows whose club scope matches the signed-in Coach Manager’s UID (`req.user.sub`):
+ * `ClubID`, `club_id`, or `coach_manager_uid`.
  * Mounted at `/api/coach-manager/lessons/coach-salary-data` (see coachManagerLessonRoutes).
  */
 export function createCoachManagerSalaryRouter(): Router {
@@ -36,15 +42,32 @@ export function createCoachManagerSalaryRouter(): Router {
       });
       return;
     }
+    if (!isCoachSalaryMongoAvailable()) {
+      res.status(503).json({
+        ok: false,
+        error:
+          "Coach salary requires MongoDB (collection ClubMaster_DB.CoachManager). Configure MONGODB_URI / MONGO_URI.",
+      });
+      return;
+    }
     const fileClub = resolveLessonFileClubId(ctx.clubId);
+    const rosterCoaches = await loadCoachesPreferred(fileClub);
     try {
-      let rows: ReturnType<typeof buildCoachSalaryTableRows> = [];
+      const salaryDoc = await loadCoachSalaryDocumentFromMongo(ctx.clubId);
+      let rows: Awaited<ReturnType<typeof buildCoachSalaryTableRows>> = [];
       try {
-        rows = buildCoachSalaryTableRows(fileClub);
+        rows = await buildCoachSalaryTableRows(fileClub, {
+          rosterCoaches,
+          salaryDoc,
+        });
       } catch {
         rows = [];
       }
-      const allocationRows = buildLessonFeeAllocationRows(fileClub);
+      const allocationRows = await buildLessonFeeAllocationRows(
+        fileClub,
+        rosterCoaches,
+        salaryDoc,
+      );
       let clubCountry = "";
       try {
         const fields = clubInfoFirstRowObject(fileClub);
@@ -63,6 +86,7 @@ export function createCoachManagerSalaryRouter(): Router {
         clubCountry,
         currencyCode,
         currencySymbol,
+        salaryStorage: "mongodb",
         rows,
         allocationRows,
         integration: {
@@ -81,6 +105,14 @@ export function createCoachManagerSalaryRouter(): Router {
     const ctx = await coachManagerClubContextAsync(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
+      return;
+    }
+    if (!isCoachSalaryMongoAvailable()) {
+      res.status(503).json({
+        ok: false,
+        error:
+          "Coach salary requires MongoDB (collection ClubMaster_DB.CoachManager). Configure MONGODB_URI / MONGO_URI.",
+      });
       return;
     }
     const fileClub = resolveLessonFileClubId(ctx.clubId);
@@ -108,19 +140,30 @@ export function createCoachManagerSalaryRouter(): Router {
     if (!items.length) {
       res.status(400).json({
         ok: false,
-        error: "Missing lessonId or feeAllocation (send { lessonId, feeAllocation } or { lessons: [...] }).",
+        error:
+          "Missing lessonId or feeAllocation (send { lessonId, feeAllocation } or { lessons: [...] }).",
       });
       return;
     }
     try {
-      const summary = applyLessonFeeAllocations(
+      const rosterCoaches = await loadCoachesPreferred(fileClub);
+      const summary = await applyLessonFeeAllocationsMongo(
         fileClub,
         ctx.clubId,
         ctx.clubName,
         items,
+        rosterCoaches,
       );
-      const allocationRows = buildLessonFeeAllocationRows(fileClub);
-      const rows = buildCoachSalaryTableRows(fileClub);
+      const salaryDoc = await loadCoachSalaryDocumentFromMongo(ctx.clubId);
+      const allocationRows = await buildLessonFeeAllocationRows(
+        fileClub,
+        rosterCoaches,
+        salaryDoc,
+      );
+      const rows = await buildCoachSalaryTableRows(fileClub, {
+        rosterCoaches,
+        salaryDoc,
+      });
       res.json({
         ok: true,
         ...summary,
@@ -139,7 +182,14 @@ export function createCoachManagerSalaryRouter(): Router {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
     }
-    const fileClub = resolveLessonFileClubId(ctx.clubId);
+    if (!isCoachSalaryMongoAvailable()) {
+      res.status(503).json({
+        ok: false,
+        error:
+          "Coach salary requires MongoDB (collection ClubMaster_DB.CoachManager). Configure MONGODB_URI / MONGO_URI.",
+      });
+      return;
+    }
     const body = req.body as Record<string, unknown> | null;
     const updatesRaw = body?.updates;
     const patches: Record<string, unknown>[] = [];
@@ -161,7 +211,8 @@ export function createCoachManagerSalaryRouter(): Router {
     const now = new Date().toISOString();
 
     try {
-      const doc = loadCoachSalaryDocument(fileClub);
+      const salaryDoc = await loadCoachSalaryDocumentFromMongo(ctx.clubId);
+      const doc = salaryDoc;
       const results: {
         success: boolean;
         CoachSalaryID: string;
@@ -217,6 +268,9 @@ export function createCoachManagerSalaryRouter(): Router {
           row.Payment_Method = method;
           row.Payment_Status = status;
           row.Payment_Confirm = confirm;
+          if (String(status).trim().toLowerCase() === "paid") {
+            row.Payment_date = new Date().toISOString().slice(0, 10);
+          }
           row.lastUpdatedDate = now;
           doc.coachSalaries[i] = row;
           break;
@@ -246,7 +300,7 @@ export function createCoachManagerSalaryRouter(): Router {
         return;
       }
 
-      saveCoachSalaryDocument(fileClub, doc);
+      await saveCoachSalaryDocumentMongo(ctx.clubId, doc);
 
       if (results.length === 1 && !Array.isArray(updatesRaw)) {
         const one = results[0]!;

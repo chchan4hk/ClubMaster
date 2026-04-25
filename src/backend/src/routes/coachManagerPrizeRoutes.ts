@@ -7,21 +7,28 @@ import {
 } from "../coachManagerSession";
 import {
   csvCoachFieldMatchesLoggedCoach,
-  filterRawRowsByIdColumn,
   findCoachRosterRow,
 } from "../coachSelfFilter";
-import { loadCoaches } from "../coachListCsv";
+import { isValidClubFolderId, type CoachCsvRow } from "../coachListCsv";
 import {
-  appendPrizeRow,
-  ensurePrizeListFile,
-  loadPrizeListRaw,
-  loadPrizes,
+  PRIZE_LIST_ROW_COLLECTION,
+  isMongoConfigured,
+  resolvePrizeListRowDatabaseName,
+} from "../db/DBConnection";
+import {
+  appendPrizeRowPreferred,
+  deletePrizeRowPreferred,
+  loadPrizesPreferred,
+  updatePrizeRowPreferred,
+} from "../prizeListMongo";
+import {
   PRIZE_LIST_FILENAME,
   prizeCsvRowToApiFields,
+  prizeCsvRowsToPrizeListRaw,
   prizeListResolvedPath,
   prizeListStorageClubId,
-  updatePrizeRow,
 } from "../prizeListJson";
+import { enrichPrizeStudentNamesFromStudentRoster } from "../prizeStudentNameEnrich";
 
 function readPrizeWriteBody(body: unknown): {
   sportType: string;
@@ -58,7 +65,60 @@ function readPrizeWriteBody(body: unknown): {
   };
 }
 
-/** Coach Manager: JWT sub is club folder id. Coach: JWT sub is CoachID → resolve club via roster. */
+function coachJwtClubFolderMatches(
+  req: Request,
+  clubId: string,
+): boolean {
+  const jwtCfu = String(req.user?.club_folder_uid ?? "").trim();
+  return (
+    Boolean(jwtCfu) &&
+    isValidClubFolderId(jwtCfu) &&
+    jwtCfu.toUpperCase() === clubId.trim().toUpperCase()
+  );
+}
+
+/**
+ * Coach roster row, or a synthetic row when the signed-in coach JWT is bound to this
+ * `clubId` (`club_folder_uid` from userLogin `club_id`) but roster `coach_id` ≠ login `uid`.
+ * `VerifiedBy` filtering then uses login `username` + `sub` like {@link csvCoachFieldMatchesLoggedCoach}.
+ */
+async function coachRosterOrJwtSynthetic(
+  req: Request,
+  clubId: string,
+  clubName: string,
+): Promise<CoachCsvRow | null> {
+  const sub = String(req.user?.sub ?? "").trim();
+  if (!sub) {
+    return null;
+  }
+  const fromRoster = await findCoachRosterRow(clubId, sub);
+  if (fromRoster) {
+    return fromRoster;
+  }
+  if (coachJwtClubFolderMatches(req, clubId)) {
+    const uname = String(req.user?.username ?? "").trim();
+    return {
+      coachId: sub,
+      coachName: uname || sub,
+      clubName: clubName || "",
+      sex: "",
+      dateOfBirth: "",
+      joinedDate: "",
+      homeAddress: "",
+      country: "",
+      email: "",
+      phone: "",
+      remark: "",
+      hourlyRate: "",
+      status: "ACTIVE",
+      createdDate: "",
+      lastUpdateDate: "",
+    };
+  }
+  return null;
+}
+
+/** Coach Manager: JWT sub is club folder id. Coach: club from `club_folder_uid` / roster; Mongo `PrizeList` by `ClubID`. */
 async function resolvePrizeClubContextAsync(
   req: Request,
 ):
@@ -77,19 +137,13 @@ async function resolvePrizeClubContextAsync(
   if (!coachId) {
     return { ok: false, status: 403, error: "Invalid session." };
   }
-  const clubId = resolveClubFolderUidForCoachRequest(req);
+  const clubId = await resolveClubFolderUidForCoachRequest(req);
   if (!clubId) {
     return {
       ok: false,
       status: 403,
       error: "No club roster found for this coach account.",
     };
-  }
-  const inRoster = loadCoaches(clubId).some(
-    (c) => c.coachId.trim().toUpperCase() === coachId.toUpperCase()
-  );
-  if (!inRoster) {
-    return { ok: false, status: 403, error: "Coach not in club roster." };
   }
   const folderCtx = await resolveClubFolderRoleContextAsync(clubId, "prize");
   if (!folderCtx.ok) {
@@ -102,6 +156,10 @@ async function resolvePrizeClubContextAsync(
       status: 400,
       error: "Your club has no name configured; contact an administrator.",
     };
+  }
+  const coachAccess = await coachRosterOrJwtSynthetic(req, clubId, clubName);
+  if (!coachAccess) {
+    return { ok: false, status: 403, error: "Coach not in club roster." };
   }
   return { ok: true, clubId, clubName };
 }
@@ -142,19 +200,28 @@ export function createCoachManagerPrizeRouter(): Router {
       return;
     }
     try {
-      ensurePrizeListFile(ctx.clubId);
-      const prizeListRaw = loadPrizeListRaw(ctx.clubId);
-      let prizes: ReturnType<typeof loadPrizes> = [];
+      let prizes: Awaited<ReturnType<typeof loadPrizesPreferred>> = [];
       let prizesParseWarning: string | null = null;
       try {
-        prizes = loadPrizes(ctx.clubId);
+        prizes = await loadPrizesPreferred(ctx.clubId);
       } catch (parseErr) {
         prizesParseWarning =
           parseErr instanceof Error ? parseErr.message : String(parseErr);
       }
-      let prizeListRawFiltered = prizeListRaw;
+      try {
+        prizes = await enrichPrizeStudentNamesFromStudentRoster(
+          ctx.clubId,
+          prizes,
+        );
+      } catch {
+        /* keep prize-store names if roster load fails */
+      }
       if (_req.user?.role === "Coach") {
-        const crow = findCoachRosterRow(ctx.clubId, String(_req.user.sub));
+        const crow = await coachRosterOrJwtSynthetic(
+          _req,
+          ctx.clubId,
+          ctx.clubName,
+        );
         const uname = String(_req.user.username ?? "");
         if (crow) {
           prizes = prizes.filter((p) =>
@@ -163,22 +230,21 @@ export function createCoachManagerPrizeRouter(): Router {
         } else {
           prizes = [];
         }
-        const keep = new Set(
-          prizes.map((p) => p.prizeId.trim().toUpperCase()),
-        );
+      }
+      let prizeListRawFiltered = prizeCsvRowsToPrizeListRaw(ctx.clubId, prizes);
+      if (isMongoConfigured()) {
+        const dbName = resolvePrizeListRowDatabaseName();
         prizeListRawFiltered = {
-          ...prizeListRaw,
-          rows: filterRawRowsByIdColumn(
-            prizeListRaw,
-            ["PrizeID", "prizeid", "PRIZEID"],
-            keep,
-          ).rows,
+          ...prizeListRawFiltered,
+          relativePath: `mongodb/${dbName}/${PRIZE_LIST_ROW_COLLECTION}/${ctx.clubId.trim()}`,
         };
       }
       const fileEnc = encodeURIComponent(PRIZE_LIST_FILENAME);
       const storageId = prizeListStorageClubId(ctx.clubId);
       const storageEnc = encodeURIComponent(storageId);
-      const listFileUrl = `/backend/data_club/${storageEnc}/${fileEnc}`;
+      const listFileUrl = isMongoConfigured()
+        ? null
+        : `/backend/data_club/${storageEnc}/${fileEnc}`;
       const listQ = parsePrizeListQuery(_req);
       const totalPrizes = prizes.length;
       let pagePrizes = prizes;
@@ -199,11 +265,14 @@ export function createCoachManagerPrizeRouter(): Router {
         ok: true,
         clubId: ctx.clubId,
         clubName: ctx.clubName,
+        prizeListStorage: isMongoConfigured() ? "mongodb" : "json_file",
         prizeListStorageClubId: storageId,
         prizeListFileUrl: listFileUrl,
-        prizeListResolvedPath: prizeListResolvedPath(ctx.clubId),
+        prizeListResolvedPath: isMongoConfigured()
+          ? `mongodb:${resolvePrizeListRowDatabaseName()}/${PRIZE_LIST_ROW_COLLECTION}`
+          : prizeListResolvedPath(ctx.clubId),
         prizes: pagePrizes.map((p) => prizeCsvRowToApiFields(p)),
-        /** Tabular view derived from PrizeList.json (not CSV). */
+        /** Tabular view: Mongo `PrizeList` collection or `PrizeList.json`. */
         prizeListRaw: prizeListRawOut,
         ...(prizesParseWarning ? { prizesParseWarning } : {}),
       };
@@ -227,7 +296,11 @@ export function createCoachManagerPrizeRouter(): Router {
     }
     let w = readPrizeWriteBody(req.body);
     if (req.user?.role === "Coach") {
-      const crow = findCoachRosterRow(ctx.clubId, String(req.user.sub));
+      const crow = await coachRosterOrJwtSynthetic(
+        req,
+        ctx.clubId,
+        ctx.clubName,
+      );
       if (!crow) {
         res.status(403).json({ ok: false, error: "Coach roster row not found." });
         return;
@@ -235,8 +308,10 @@ export function createCoachManagerPrizeRouter(): Router {
       const vn = (crow.coachName && crow.coachName.trim()) || w.verifiedBy;
       w = { ...w, verifiedBy: vn };
     }
-    /** Appends to backend/data_club/{UID}/PrizeList.json with ClubID and Club_name from session. */
-    const result = appendPrizeRow(ctx.clubId, { ...w, clubName: ctx.clubName });
+    const result = await appendPrizeRowPreferred(ctx.clubId, {
+      ...w,
+      clubName: ctx.clubName,
+    });
     if (!result.ok) {
       res.status(400).json({ ok: false, error: result.error });
       return;
@@ -253,12 +328,16 @@ export function createCoachManagerPrizeRouter(): Router {
     const pid = String(req.body?.PrizeID ?? req.body?.prizeId ?? "").trim();
     const w = readPrizeWriteBody(req.body);
     if (req.user?.role === "Coach") {
-      const crow = findCoachRosterRow(ctx.clubId, String(req.user.sub));
+      const crow = await coachRosterOrJwtSynthetic(
+        req,
+        ctx.clubId,
+        ctx.clubName,
+      );
       if (!crow) {
         res.status(403).json({ ok: false, error: "Coach roster row not found." });
         return;
       }
-      const existing = loadPrizes(ctx.clubId).find(
+      const existing = (await loadPrizesPreferred(ctx.clubId)).find(
         (p) => p.prizeId.trim().toUpperCase() === pid.toUpperCase(),
       );
       if (
@@ -276,7 +355,7 @@ export function createCoachManagerPrizeRouter(): Router {
         return;
       }
     }
-    const result = updatePrizeRow(ctx.clubId, pid, {
+    const result = await updatePrizeRowPreferred(ctx.clubId, pid, {
       ...w,
       clubName: ctx.clubName,
     });
@@ -285,6 +364,53 @@ export function createCoachManagerPrizeRouter(): Router {
       return;
     }
     res.json({ ok: true, message: "Prize updated." });
+  });
+
+  r.delete("/", async (req, res) => {
+    const ctx = await resolvePrizeClubContextAsync(req);
+    if (!ctx.ok) {
+      res.status(ctx.status).json({ ok: false, error: ctx.error });
+      return;
+    }
+    const pid = String(req.body?.PrizeID ?? req.body?.prizeId ?? "").trim();
+    if (!pid) {
+      res.status(400).json({ ok: false, error: "PrizeID is required." });
+      return;
+    }
+    if (req.user?.role === "Coach") {
+      const crow = await coachRosterOrJwtSynthetic(
+        req,
+        ctx.clubId,
+        ctx.clubName,
+      );
+      if (!crow) {
+        res.status(403).json({ ok: false, error: "Coach roster row not found." });
+        return;
+      }
+      const existing = (await loadPrizesPreferred(ctx.clubId)).find(
+        (p) => p.prizeId.trim().toUpperCase() === pid.toUpperCase(),
+      );
+      if (
+        !existing ||
+        !csvCoachFieldMatchesLoggedCoach(
+          existing.verifiedBy,
+          crow,
+          String(req.user.username ?? ""),
+        )
+      ) {
+        res.status(403).json({
+          ok: false,
+          error: "You can only remove prizes you verified (VerifiedBy).",
+        });
+        return;
+      }
+    }
+    const result = await deletePrizeRowPreferred(ctx.clubId, pid);
+    if (!result.ok) {
+      res.status(400).json({ ok: false, error: result.error });
+      return;
+    }
+    res.json({ ok: true, message: "Prize removed." });
   });
 
   return r;

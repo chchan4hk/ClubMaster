@@ -7,17 +7,9 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/btn-cancel-metallic-brown.css" />
+  <link rel="stylesheet" href="/css/btn-create-dark-brown.css" />
   <style>
-    .btn-metal-gold {
-      background: linear-gradient(145deg, #e8c547 0%, #a67c1a 42%, #2a1f08 100%);
-      color: #0c0a06;
-      border: 1px solid rgba(255, 224, 130, 0.45);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 2px 10px rgba(0, 0, 0, 0.45);
-      font-weight: 600;
-    }
-    .btn-metal-gold:hover {
-      filter: brightness(1.09);
-    }
     .userlogin-pay-actions {
       display: flex;
       flex-wrap: wrap;
@@ -161,7 +153,7 @@
         <button type="button" id="btnReload"
           class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium px-4 py-2">Reload data</button>
         <button type="button" id="btnExportCsv"
-          class="rounded-lg bg-amber-800 hover:bg-amber-700 border border-amber-600/30 text-amber-50 text-sm px-4 py-2">Export CSV</button>
+          class="btn-create-dark-brown rounded-lg text-sm px-4 py-2">Export CSV</button>
       </div>
     </section>
 
@@ -479,7 +471,7 @@
           html += "<div class=\"userlogin-pay-actions\">";
           if (sk === "PENDING") {
             html +=
-              "<button type=\"button\" class=\"btn-metal-gold rounded-md btn-action-compact btn-confirm-sub\" data-id=\"" +
+              "<button type=\"button\" class=\"btn-confirm-black rounded-md btn-action-compact btn-confirm-sub\" data-id=\"" +
               escapeHtml(r.paymentId) +
               "\">Confirm Payment</button>";
           }

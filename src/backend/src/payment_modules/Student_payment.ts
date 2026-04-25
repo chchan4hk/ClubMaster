@@ -12,23 +12,24 @@ import {
   buildLessonPaymentSnapshot,
   syncLessonReservationPaymentStatuses,
 } from "./Lesson_payment_status";
-import { addPaymentsToLedger } from "./lessonPaymentLedger";
+import { addPaymentsToLedgerPreferred } from "./lessonPaymentLedgerMongo";
 import {
   appendPaymentListRecords,
   ensurePaymentListFile,
   listPaymentsForStudent,
   type PaymentListRecord,
 } from "../paymentListJson";
-import { loadLessonReservations } from "../lessonReserveList";
+import { loadLessonReservationsPreferred } from "../lessonReserveListMongo";
 
-function resolveStudentPaymentClub(req: Request):
+async function resolveStudentPaymentClub(req: Request): Promise<
   | { ok: true; studentId: string; clubId: string; fileClub: string }
-  | { ok: false; status: number; error: string } {
+  | { ok: false; status: number; error: string }
+> {
   const studentId = String(req.user?.sub ?? "").trim();
   if (!studentId) {
     return { ok: false, status: 403, error: "Invalid session." };
   }
-  const session = resolveStudentClubSessionFromRequest(req);
+  const session = await resolveStudentClubSessionFromRequest(req);
   if (!session.ok) {
     return { ok: false, status: 403, error: session.error };
   }
@@ -184,15 +185,15 @@ export function Student_payment(): Router {
   const r = Router();
   r.use(requireAuth, requireRole("Student"));
 
-  r.get("/", (_req, res) => {
-    const ctx = resolveStudentPaymentClub(_req);
+  r.get("/", async (_req, res) => {
+    const ctx = await resolveStudentPaymentClub(_req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
     }
     try {
-      ensurePaymentListFile(ctx.clubId);
-      const snapshot = buildLessonPaymentSnapshot(ctx.fileClub, undefined);
+      await ensurePaymentListFile(ctx.clubId);
+      const snapshot = await buildLessonPaymentSnapshot(ctx.fileClub, undefined);
       const sid = ctx.studentId.trim().toUpperCase();
       const rows = snapshot.rows.filter(
         (x) => x.student_id.trim().toUpperCase() === sid,
@@ -229,11 +230,11 @@ export function Student_payment(): Router {
       }
       totalPaidMonth = Math.round(totalPaidMonth * 100) / 100;
 
-      const listRows = listPaymentsForStudent(ctx.clubId, ctx.studentId).filter(
+      const listRows = (await listPaymentsForStudent(ctx.clubId, ctx.studentId)).filter(
         (x) => x.status.toUpperCase() === "COMPLETED",
       );
 
-      const roster = loadStudents(ctx.clubId);
+      const roster = await loadStudents(ctx.clubId);
       const me = roster.find(
         (s) => s.studentId.trim().toUpperCase() === sid,
       );
@@ -308,8 +309,8 @@ export function Student_payment(): Router {
     }
   });
 
-  r.post("/confirm", (req, res) => {
-    const ctx = resolveStudentPaymentClub(req);
+  r.post("/confirm", async (req, res) => {
+    const ctx = await resolveStudentPaymentClub(req);
     if (!ctx.ok) {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
@@ -342,9 +343,9 @@ export function Student_payment(): Router {
       return;
     }
 
-    const reservations = loadLessonReservations(ctx.fileClub);
+    const reservations = await loadLessonReservationsPreferred(ctx.fileClub);
     const sid = ctx.studentId.trim().toUpperCase();
-    const snap = buildLessonPaymentSnapshot(ctx.fileClub, undefined);
+    const snap = await buildLessonPaymentSnapshot(ctx.fileClub, undefined);
     const rowByRid = new Map(
       snap.rows
         .filter((x) => x.student_id.trim().toUpperCase() === sid)
@@ -395,7 +396,7 @@ export function Student_payment(): Router {
       splits.push({ lessonReserveId: rid, amount: Math.round(amt * 100) / 100 });
     }
 
-    const ledgerResult = addPaymentsToLedger(
+    const ledgerResult = await addPaymentsToLedgerPreferred(
       ctx.fileClub,
       {
         splits,
@@ -431,13 +432,13 @@ export function Student_payment(): Router {
       recordedBy: username ? `Student:${username}` : `Student:${ctx.studentId}`,
     }));
 
-    const listApp = appendPaymentListRecords(ctx.clubId, listItems);
+    const listApp = await appendPaymentListRecords(ctx.clubId, listItems);
     if (!listApp.ok) {
       res.status(500).json({ ok: false, error: listApp.error });
       return;
     }
 
-    syncLessonReservationPaymentStatuses(
+    await syncLessonReservationPaymentStatuses(
       ctx.fileClub,
       splits.map((s) => s.lessonReserveId),
       { preservePaymentConfirm: true },

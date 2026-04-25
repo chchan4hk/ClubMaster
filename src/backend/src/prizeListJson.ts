@@ -554,6 +554,13 @@ function upsertPrizeIdInIndex(prizeId: string, clubUid: string): void {
   prizeIdToClubId.set(u, c);
 }
 
+function removePrizeIdFromIndex(prizeId: string): void {
+  const u = prizeId.replace(/^\uFEFF/, "").trim().toUpperCase();
+  if (u) {
+    prizeIdToClubId.delete(u);
+  }
+}
+
 /** Club folder UID for this PrizeID (from row ClubID / first roster match), or null. */
 export function findClubUidForPrizeId(prizeId: string): string | null {
   const id = prizeId.trim();
@@ -569,6 +576,27 @@ export type PrizeListRaw = {
   headers: string[];
   rows: string[][];
 };
+
+/** Tabular raw view from in-memory rows (e.g. after student-roster name enrichment). */
+export function prizeCsvRowsToPrizeListRaw(
+  clubId: string,
+  prizes: PrizeCsvRow[],
+): PrizeListRaw {
+  const id = clubId.trim();
+  const storageId = isValidClubFolderId(id)
+    ? resolvePrizeStorageClubId(id)
+    : id;
+  const relativePath = `data_club/${storageId}/${PRIZE_LIST_FILENAME}`;
+  if (!isValidClubFolderId(id)) {
+    return { relativePath, headers: [], rows: [] };
+  }
+  const headers = PRIZE_LIST_COLUMNS;
+  const rows = prizes.map((p) => {
+    const api = prizeCsvRowToApiFields(p);
+    return headers.map((h) => api[h] ?? "");
+  });
+  return { relativePath, headers, rows };
+}
 
 /** Tabular shape for UI fallback (same as former CSV raw view). */
 export function loadPrizeListRaw(clubId: string): PrizeListRaw {
@@ -775,5 +803,27 @@ export function updatePrizeRow(
       (updated.clubId && updated.clubId.trim()) || clubId.trim();
     upsertPrizeIdInIndex(updated.prizeId, uid);
   }
+  return { ok: true };
+}
+
+export function deletePrizeRow(
+  clubId: string,
+  prizeId: string,
+): { ok: true } | { ok: false; error: string } {
+  const id = prizeId.trim();
+  if (!id) {
+    return { ok: false, error: "PrizeID is required." };
+  }
+  if (!isValidClubFolderId(clubId.trim())) {
+    return { ok: false, error: "Invalid club ID." };
+  }
+  ensurePrizeListFile(clubId);
+  const rows = readPrizeListDocument(clubId);
+  const next = rows.filter((r) => !prizeIdsEqual(r.prizeId, id));
+  if (next.length === rows.length) {
+    return { ok: false, error: "Prize not found." };
+  }
+  writePrizeListDocument(clubId, next);
+  removePrizeIdFromIndex(id);
   return { ok: true };
 }

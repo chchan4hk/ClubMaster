@@ -19,7 +19,11 @@
     "mongo:seed-userlist-student": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-userList-student-CM00000003.ts",
     "mongo:migrate-userlist-student-field": "node ./node_modules/tsx/dist/cli.mjs ./scripts/migrate-userlist-student-mongo-studentid-to-student_id.ts",
     "mongo:seed-lesson-reserve-list-cm3": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-lessonReserveList-CM00000003.ts",
+    "mongo:seed-lesson-reserve-ledger-cm8": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-lessonReserveList-lessonPaymentLedger-CM00000008.ts",
+    "mongo:cleanup-lesson-reserve-list": "node ./node_modules/tsx/dist/cli.mjs ./scripts/cleanup-lessonReserveList-mongo.ts",
+    "mongo:clear-lesson-collections": "node ./node_modules/tsx/dist/cli.mjs ./scripts/clear-lesson-mongo-collections.ts",
     "mongo:seed-coach-salary-cm3": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-coachSalary-CM00000003.ts",
+    "mongo:clear-coach-salary": "node ./node_modules/tsx/dist/cli.mjs ./scripts/clear-coachSalary-mongo.ts",
     "mongo:seed-prize-list-cm3": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-prizeList-CM00000003.ts",
     "mongo:seed-userlist-coach": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-userlist-coach-json-to-mongo.ts"
   },

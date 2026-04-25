@@ -7,7 +7,11 @@ import {
   setCoachPasswordByUid,
   setLoginUsernameByUid,
 } from "../userlistCsv";
-import { isMongoConfigured } from "../db/DBConnection";
+import {
+  isMongoConfigured,
+  resolveUserListRosterDatabaseName,
+  USER_LIST_COACH_COLLECTION,
+} from "../db/DBConnection";
 import {
   findUserByUidPreferred,
   findUsersByUidsPreferred,
@@ -19,6 +23,17 @@ import {
   resolveClubFolderUidForCoachRequest,
   resolveStudentClubSessionFromRequest,
 } from "../coachManagerSession";
+import {
+  allocateNextCoachIdPreferred,
+  appendCoachRowMongo,
+  bumpCoachUidForCollisionPreferred,
+  loadCoachListRawPreferred,
+  loadCoachesPreferred,
+  purgeCoachRowFromAllPreferred,
+  removeCoachRowMongo,
+  searchCoachesInClubPreferred,
+  updateCoachRowMongo,
+} from "../coachListMongo";
 import {
   appendCoachRoleLoginRow,
   coachRoleLoginExistsForCoachIdAndClub,
@@ -39,11 +54,8 @@ import {
   ensureCoachListFile,
   getDataClubRootPath,
   isValidClubFolderId,
-  loadCoachListRaw,
-  loadCoaches,
   purgeCoachRowFromAllClubFolders,
   removeCoachRow,
-  searchCoachesInClub,
   updateCoachRow,
   type CoachListRaw,
 } from "../coachListCsv";
@@ -171,7 +183,7 @@ async function resolveCoachListReadContextAsync(
     if (!coachId) {
       return { ok: false, status: 403, error: "Invalid session." };
     }
-    const clubId = resolveClubFolderUidForCoachRequest(req);
+    const clubId = await resolveClubFolderUidForCoachRequest(req);
     if (!clubId) {
       return {
         ok: false,
@@ -179,7 +191,7 @@ async function resolveCoachListReadContextAsync(
         error: "No club roster found for this coach account.",
       };
     }
-    const inRoster = loadCoaches(clubId).some(
+    const inRoster = (await loadCoachesPreferred(clubId)).some(
       (c) => c.coachId.trim().toUpperCase() === coachId.toUpperCase(),
     );
     if (!inRoster) {
@@ -204,7 +216,7 @@ async function resolveCoachListReadContextAsync(
     if (!studentId) {
       return { ok: false, status: 403, error: "Invalid session." };
     }
-    const session = resolveStudentClubSessionFromRequest(req);
+    const session = await resolveStudentClubSessionFromRequest(req);
     if (!session.ok) {
       return { ok: false, status: 403, error: session.error };
     }
@@ -263,14 +275,23 @@ export function createCoachManagerCoachRouter(): Router {
       res.status(ctx.status).json(body);
       return;
     }
+    const qClub = String(
+      _req.query?.club_id ?? _req.query?.clubId ?? "",
+    ).trim();
+    if (qClub && qClub !== ctx.clubId) {
+      res.status(403).json({
+        ok: false,
+        error: "club_id does not match your session club.",
+      });
+      return;
+    }
     try {
-      ensureCoachListFile(ctx.clubId);
       /** Raw table always returned; structured coaches may be empty if headers don’t match expected columns. */
-      const coachCsv = loadCoachListRaw(ctx.clubId);
-      let coaches: ReturnType<typeof loadCoaches> = [];
+      const coachCsv = await loadCoachListRawPreferred(ctx.clubId);
+      let coaches: Awaited<ReturnType<typeof loadCoachesPreferred>> = [];
       let coachesParseWarning: string | null = null;
       try {
-        coaches = loadCoaches(ctx.clubId);
+        coaches = await loadCoachesPreferred(ctx.clubId);
       } catch (parseErr) {
         coachesParseWarning =
           parseErr instanceof Error ? parseErr.message : String(parseErr);
@@ -290,6 +311,7 @@ export function createCoachManagerCoachRouter(): Router {
             coach_id: fields.coach_id ?? fields.CoachID ?? c.coachId,
             full_name: fields.full_name ?? "",
             username: ul?.username ?? "",
+            status: fields.status ?? c.status ?? "ACTIVE",
           };
         });
         res.json({
@@ -297,6 +319,7 @@ export function createCoachManagerCoachRouter(): Router {
           compact: true,
           clubId: ctx.clubId,
           clubName: ctx.clubName,
+          rosterStorage: isMongoConfigured() ? "mongodb" : "json_file",
           coachTotal: coaches.length,
           coaches: slim,
           ...(coachesParseWarning ? { coachesParseWarning } : {}),
@@ -328,8 +351,13 @@ export function createCoachManagerCoachRouter(): Router {
         ok: true,
         clubId: ctx.clubId,
         clubName: ctx.clubName,
-        coachCsvFileUrl: `/backend/data_club/${idEnc}/${fileEnc}`,
-        coachCsvResolvedPath: coachListResolvedPath(ctx.clubId),
+        rosterStorage: isMongoConfigured() ? "mongodb" : "json_file",
+        coachCsvFileUrl: isMongoConfigured()
+          ? null
+          : `/backend/data_club/${idEnc}/${fileEnc}`,
+        coachCsvResolvedPath: isMongoConfigured()
+          ? `mongodb:${resolveUserListRosterDatabaseName()}/${USER_LIST_COACH_COLLECTION}`
+          : coachListResolvedPath(ctx.clubId),
         coaches: pageCoaches.map((c) => {
           const fields = coachCsvRowToApiFields(c);
           const ul = loginByCoachId.get(c.coachId.trim().toUpperCase());
@@ -378,16 +406,20 @@ export function createCoachManagerCoachRouter(): Router {
       return;
     }
     const w = readCoachWriteBody(req.body);
-    const rosterSnapshot = loadCoaches(ctx.clubId);
+    const rosterSnapshot = await loadCoachesPreferred(ctx.clubId);
     const rosterHasCoachId = (id: string) =>
       rosterSnapshot.some((r) => coachIdsEqual(r.coachId, id));
-    let coachId = allocateNextCoachId(ctx.clubId);
+    let coachId = isMongoConfigured()
+      ? await allocateNextCoachIdPreferred(ctx.clubId)
+      : allocateNextCoachId(ctx.clubId);
     const maxUidAttempts = 10_000;
     for (let attempt = 0; attempt < maxUidAttempts; attempt++) {
       if (!rosterHasCoachId(coachId) && !(await findUserByUidPreferred(coachId))) {
         break;
       }
-      const nextId = bumpNumericCoachLoginStyleId(coachId);
+      const nextId = isMongoConfigured()
+        ? bumpCoachUidForCollisionPreferred(ctx.clubId, coachId)
+        : bumpNumericCoachLoginStyleId(coachId);
       if (nextId === coachId) {
         res.status(500).json({
           ok: false,
@@ -406,20 +438,35 @@ export function createCoachManagerCoachRouter(): Router {
       });
       return;
     }
-    const result = appendCoachRow(ctx.clubId, ctx.clubName, {
-      coachName: w.coachName,
-      email: w.email,
-      phone: w.phone,
-      sex: w.sex || "N/A",
-      dateOfBirth: w.dateOfBirth,
-      joinedDate: w.joinedDate,
-      homeAddress: w.homeAddress,
-      country: w.country,
-      remark: w.remark,
-      hourlyRate: w.hourlyRate,
-      status: w.status,
-      coachId,
-    });
+    const result = isMongoConfigured()
+      ? await appendCoachRowMongo(ctx.clubId, ctx.clubName, {
+          coachName: w.coachName,
+          email: w.email,
+          phone: w.phone,
+          sex: w.sex || "N/A",
+          dateOfBirth: w.dateOfBirth,
+          joinedDate: w.joinedDate,
+          homeAddress: w.homeAddress,
+          country: w.country,
+          remark: w.remark,
+          hourlyRate: w.hourlyRate,
+          status: w.status,
+          coachId,
+        })
+      : appendCoachRow(ctx.clubId, ctx.clubName, {
+          coachName: w.coachName,
+          email: w.email,
+          phone: w.phone,
+          sex: w.sex || "N/A",
+          dateOfBirth: w.dateOfBirth,
+          joinedDate: w.joinedDate,
+          homeAddress: w.homeAddress,
+          country: w.country,
+          remark: w.remark,
+          hourlyRate: w.hourlyRate,
+          status: w.status,
+          coachId,
+        });
     if (!result.ok) {
       res.status(400).json({ ok: false, error: result.error });
       return;
@@ -486,7 +533,7 @@ export function createCoachManagerCoachRouter(): Router {
     const nameKey = normPersonName(fullName);
     const rosterCoachIds: string[] = [];
     if (nameKey) {
-      for (const c of loadCoaches(ctx.clubId)) {
+      for (const c of await loadCoachesPreferred(ctx.clubId)) {
         if (normPersonName(c.coachName) === nameKey) {
           rosterCoachIds.push(String(c.coachId ?? "").trim());
         }
@@ -558,19 +605,33 @@ export function createCoachManagerCoachRouter(): Router {
       req.body?.coach_id ?? req.body?.CoachID ?? req.body?.coachId ?? "",
     ).trim();
     const w = readCoachWriteBody(req.body);
-    const result = updateCoachRow(ctx.clubId, ctx.clubName, coachId, {
-      coachName: w.coachName,
-      email: w.email,
-      phone: w.phone,
-      sex: w.sex,
-      dateOfBirth: w.dateOfBirth,
-      joinedDate: w.joinedDate,
-      homeAddress: w.homeAddress,
-      country: w.country,
-      remark: w.remark,
-      hourlyRate: w.hourlyRate,
-      status: w.status,
-    });
+    const result = isMongoConfigured()
+      ? await updateCoachRowMongo(ctx.clubId, ctx.clubName, coachId, {
+          coachName: w.coachName,
+          email: w.email,
+          phone: w.phone,
+          sex: w.sex,
+          dateOfBirth: w.dateOfBirth,
+          joinedDate: w.joinedDate,
+          homeAddress: w.homeAddress,
+          country: w.country,
+          remark: w.remark,
+          hourlyRate: w.hourlyRate,
+          status: w.status,
+        })
+      : updateCoachRow(ctx.clubId, ctx.clubName, coachId, {
+          coachName: w.coachName,
+          email: w.email,
+          phone: w.phone,
+          sex: w.sex,
+          dateOfBirth: w.dateOfBirth,
+          joinedDate: w.joinedDate,
+          homeAddress: w.homeAddress,
+          country: w.country,
+          remark: w.remark,
+          hourlyRate: w.hourlyRate,
+          status: w.status,
+        });
     if (!result.ok) {
       res.status(400).json({ ok: false, error: result.error });
       return;
@@ -582,7 +643,9 @@ export function createCoachManagerCoachRouter(): Router {
           ok: false,
           error:
             ur.error +
-            " Coach details in UserList_Coach.json were saved; login username was not changed.",
+            (isMongoConfigured()
+              ? " Coach details in MongoDB UserList_Coach were saved; login username was not changed."
+              : " Coach details in UserList_Coach.json were saved; login username was not changed."),
         });
         return;
       }
@@ -600,7 +663,9 @@ export function createCoachManagerCoachRouter(): Router {
           ok: false,
           error:
             pr.error +
-            " Coach details in UserList_Coach.json were saved; password was not changed.",
+            (isMongoConfigured()
+              ? " Coach details in MongoDB UserList_Coach were saved; password was not changed."
+              : " Coach details in UserList_Coach.json were saved; password was not changed."),
         });
         return;
       }
@@ -623,7 +688,9 @@ export function createCoachManagerCoachRouter(): Router {
     }
     const loginBefore = !!findCoachRoleLoginByUid(coachId);
     const mainBefore = Boolean(await findUserByUidPreferred(coachId));
-    const purge = purgeCoachRowFromAllClubFolders(coachId);
+    const purge = isMongoConfigured()
+      ? await purgeCoachRowFromAllPreferred(coachId)
+      : purgeCoachRowFromAllClubFolders(coachId);
     if (!purge.ok) {
       res.status(400).json({ ok: false, error: purge.error });
       return;
@@ -638,8 +705,14 @@ export function createCoachManagerCoachRouter(): Router {
       res.status(400).json({ ok: false, error: delMain.error });
       return;
     }
+    const mongoRowsRemoved =
+      isMongoConfigured() &&
+      purge.ok &&
+      "mongoDeleted" in purge &&
+      (purge as { mongoDeleted: number }).mongoDeleted > 0;
     if (
       purge.updatedClubIds.length === 0 &&
+      !mongoRowsRemoved &&
       !loginBefore &&
       !mainBefore
     ) {
@@ -652,9 +725,13 @@ export function createCoachManagerCoachRouter(): Router {
     }
     res.json({
       ok: true,
-      message:
-        "Coach removed from UserList_Coach.json under all data_club folders (where present), userLogin_Coach, and main userLogin when present.",
+      message: isMongoConfigured()
+        ? "Coach removed from MongoDB UserList_Coach (and club JSON files where present), userLogin_Coach, and main userLogin when present."
+        : "Coach removed from UserList_Coach.json under all data_club folders (where present), userLogin_Coach, and main userLogin when present.",
       purgedFromClubFolders: purge.updatedClubIds,
+      ...(isMongoConfigured() && "mongoDeleted" in purge
+        ? { mongoCoachRowsDeleted: (purge as { mongoDeleted: number }).mongoDeleted }
+        : {}),
     });
   });
 
@@ -670,13 +747,15 @@ export function createCoachManagerCoachRouter(): Router {
       res.status(400).json({
         ok: false,
         error:
-          "Enter at least one: coach name and/or email (UserList_Coach.json for your club).",
+          "Enter at least one: coach name and/or email (coach roster for your club).",
       });
       return;
     }
     try {
-      ensureCoachListFile(ctx.clubId);
-      const list = searchCoachesInClub(
+      if (!isMongoConfigured()) {
+        ensureCoachListFile(ctx.clubId);
+      }
+      const list = await searchCoachesInClubPreferred(
         ctx.clubId,
         coachName || undefined,
         email || undefined,
@@ -704,8 +783,10 @@ export function createCoachManagerCoachRouter(): Router {
       res.status(400).json({ ok: false, error: "coach_id is required." });
       return;
     }
-    ensureCoachListFile(ctx.clubId);
-    const coaches = loadCoaches(ctx.clubId);
+    if (!isMongoConfigured()) {
+      ensureCoachListFile(ctx.clubId);
+    }
+    const coaches = await loadCoachesPreferred(ctx.clubId);
     const c = coaches.find(
       (x) => x.coachId.trim().toUpperCase() === coachId.trim().toUpperCase(),
     );
@@ -717,26 +798,42 @@ export function createCoachManagerCoachRouter(): Router {
       res.status(400).json({ ok: false, error: "Coach is already ACTIVE." });
       return;
     }
-    const result = updateCoachRow(ctx.clubId, ctx.clubName, c.coachId, {
-      coachName: c.coachName,
-      email: c.email,
-      phone: c.phone,
-      sex: c.sex,
-      dateOfBirth: c.dateOfBirth,
-      joinedDate: c.joinedDate,
-      homeAddress: c.homeAddress,
-      country: c.country,
-      remark: c.remark,
-      hourlyRate: c.hourlyRate,
-      status: "ACTIVE",
-    });
+    const result = isMongoConfigured()
+      ? await updateCoachRowMongo(ctx.clubId, ctx.clubName, c.coachId, {
+          coachName: c.coachName,
+          email: c.email,
+          phone: c.phone,
+          sex: c.sex,
+          dateOfBirth: c.dateOfBirth,
+          joinedDate: c.joinedDate,
+          homeAddress: c.homeAddress,
+          country: c.country,
+          remark: c.remark,
+          hourlyRate: c.hourlyRate,
+          status: "ACTIVE",
+        })
+      : updateCoachRow(ctx.clubId, ctx.clubName, c.coachId, {
+          coachName: c.coachName,
+          email: c.email,
+          phone: c.phone,
+          sex: c.sex,
+          dateOfBirth: c.dateOfBirth,
+          joinedDate: c.joinedDate,
+          homeAddress: c.homeAddress,
+          country: c.country,
+          remark: c.remark,
+          hourlyRate: c.hourlyRate,
+          status: "ACTIVE",
+        });
     if (!result.ok) {
       res.status(400).json({ ok: false, error: result.error });
       return;
     }
     res.json({
       ok: true,
-      message: "Marked ACTIVE in UserList_Coach.json.",
+      message: isMongoConfigured()
+        ? "Marked ACTIVE in MongoDB UserList_Coach."
+        : "Marked ACTIVE in UserList_Coach.json.",
       lastUpdate_date: new Date().toISOString().slice(0, 10),
     });
   });
@@ -756,8 +853,10 @@ export function createCoachManagerCoachRouter(): Router {
       });
       return;
     }
-    ensureCoachListFile(ctx.clubId);
-    const list = searchCoachesInClub(
+    if (!isMongoConfigured()) {
+      ensureCoachListFile(ctx.clubId);
+    }
+    const list = await searchCoachesInClubPreferred(
       ctx.clubId,
       coachName || undefined,
       email || undefined,
@@ -765,10 +864,11 @@ export function createCoachManagerCoachRouter(): Router {
     if (list.length === 0) {
       res.status(404).json({
         ok: false,
-        error:
-          "No coach found in backend/data_club/" +
-          ctx.clubId +
-          "/UserList_Coach.json for that name and/or email.",
+        error: isMongoConfigured()
+          ? "No coach found in MongoDB UserList_Coach for that name and/or email."
+          : "No coach found in backend/data_club/" +
+            ctx.clubId +
+            "/UserList_Coach.json for that name and/or email.",
       });
       return;
     }
@@ -787,7 +887,9 @@ export function createCoachManagerCoachRouter(): Router {
       });
       return;
     }
-    const result = removeCoachRow(ctx.clubId, target.coachId);
+    const result = isMongoConfigured()
+      ? await removeCoachRowMongo(ctx.clubId, target.coachId)
+      : removeCoachRow(ctx.clubId, target.coachId);
     if (!result.ok) {
       res.status(400).json({ ok: false, error: result.error });
       return;

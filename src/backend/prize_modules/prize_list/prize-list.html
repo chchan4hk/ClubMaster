@@ -11,6 +11,8 @@
   <link rel="stylesheet" href="/css/profile-password-panels.css" />
   <link rel="stylesheet" href="/css/coach-manager-module-shell.css" />
   <link rel="stylesheet" href="/css/btn-cancel-metallic-brown.css" />
+  <link rel="stylesheet" href="/css/btn-remove-black-red-gold.css" />
+  <link rel="stylesheet" href="/css/btn-create-dark-brown.css" />
 </head>
 <body class="profile-password-page cm-module-shell min-h-full p-4 sm:p-6">
   <div class="max-w-6xl mx-auto">
@@ -65,13 +67,13 @@
 
       <div class="mt-4 flex flex-wrap gap-2">
         <button type="button" id="btnCreateNewPrize"
-          class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm">
+          class="btn-create-dark-brown rounded-lg px-4 py-2 text-sm">
           Create New Prize
         </button>
       </div>
 
       <div id="createPrizePanel" class="hidden mt-6 pt-6 border-t border-white/10 rounded-lg bg-slate-900/50 p-4">
-        <h3 class="text-base font-semibold text-amber-200 mb-4">New prize</h3>
+        <h3 class="text-base font-semibold text-amber-200 mb-4">New Prize</h3>
         <form id="createPrizeForm" class="space-y-3 max-w-2xl">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -117,7 +119,7 @@
             </div>
           </div>
           <div>
-            <label for="newPrizeStudentName" class="block text-xs text-slate-400 mb-1">Student Name</label>
+            <label for="newPrizeStudentName" class="block text-xs text-slate-400 mb-1">Full Name</label>
             <input id="newPrizeStudentName" type="text" required autocomplete="name"
               class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
           </div>
@@ -150,82 +152,87 @@
           <p id="createPrizeOk" class="hidden text-sm text-amber-300"></p>
           <div class="flex flex-wrap gap-2 pt-2">
             <button type="submit" id="createPrizeSubmitBtn"
-              class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
+              class="btn-confirm-black rounded-lg px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
               Confirm
             </button>
             <button type="button" id="createPrizeCancelBtn"
-              class="btn-cancel-metallic-brown rounded-lg font-medium px-4 py-2 text-sm">
+              class="btn-cancel-metallic-brown rounded-lg px-4 py-2 text-sm">
               Cancel
             </button>
           </div>
         </form>
       </div>
 
-      <div id="tableEditPanel" class="hidden mt-6 pt-6 border-t border-white/10 rounded-lg bg-slate-900/40 p-4">
-        <h3 class="text-base font-semibold text-amber-200 mb-4">Edit prize</h3>
-        <form id="tableEditForm" class="space-y-3 max-w-2xl">
-          <p class="text-[11px] uppercase tracking-wide text-slate-500 font-medium">Read-only</p>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div id="tableEditPanel" class="hidden mt-6 pt-6 border-t border-[#8d6e63]/35 rounded-lg bg-[#faf5eb]/90 p-4 text-[#3d2914]">
+        <h3 class="text-base font-semibold text-[#3d2914] mb-4">Edit Prize</h3>
+        <form id="tableEditForm" class="space-y-3 max-w-3xl text-[#3d2914]">
+          <p class="text-[11px] uppercase tracking-wide text-[#3d2914] font-medium">Read-only</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <div>
-              <label for="tableEditPrizeId" class="block text-xs text-slate-400 mb-1">Prize ID</label>
+              <label for="tableEditPrizeId" class="block text-xs text-[#3d2914] mb-1">Prize ID</label>
+              <input type="hidden" id="tableEditPrizeIdFull" value="" />
               <input id="tableEditPrizeId" type="text" readonly
-                class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed" />
+                class="w-full rounded-lg bg-[#efe5d8] border border-[#8d6e63]/40 px-3 py-2 text-sm text-[#3d2914] cursor-not-allowed" />
             </div>
             <div>
-              <label for="tableEditClubId" class="block text-xs text-slate-400 mb-1">Club ID</label>
+              <label for="tableEditClubId" class="block text-xs text-[#3d2914] mb-1">Club ID</label>
               <input id="tableEditClubId" type="text" readonly
-                class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed" />
+                class="w-full rounded-lg bg-[#efe5d8] border border-[#8d6e63]/40 px-3 py-2 text-sm text-[#3d2914] cursor-not-allowed" />
             </div>
-            <div>
-              <label for="tableEditClubName" class="block text-xs text-slate-400 mb-1">Club name</label>
+            <div class="sm:col-span-2 lg:col-span-1">
+              <label for="tableEditClubName" class="block text-xs text-[#3d2914] mb-1">Club name</label>
               <input id="tableEditClubName" type="text" readonly
-                class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed" />
+                class="w-full rounded-lg bg-[#efe5d8] border border-[#8d6e63]/40 px-3 py-2 text-sm text-[#3d2914] cursor-not-allowed" />
             </div>
           </div>
-          <div>
-            <label for="tableEditCreatedAt" class="block text-xs text-slate-400 mb-1">Created At</label>
-            <input id="tableEditCreatedAt" type="text" readonly
-              class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed" />
-          </div>
-          <div>
-            <label for="tableEditLastUpdated" class="block text-xs text-slate-400 mb-1">Last Updated Date (current file value)</label>
-            <input id="tableEditLastUpdated" type="text" readonly
-              class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed" />
-          </div>
-          <p class="text-[11px] uppercase tracking-wide text-slate-500 font-medium pt-2">You can edit</p>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label for="tableEditSportType" class="block text-xs text-slate-400 mb-1">Sport Type</label>
+              <label for="tableEditCreatedAt" class="block text-xs text-[#3d2914] mb-1">Created At</label>
+              <input id="tableEditCreatedAt" type="text" readonly
+                class="w-full rounded-lg bg-[#efe5d8] border border-[#8d6e63]/40 px-3 py-2 text-sm text-[#3d2914] cursor-not-allowed" />
+            </div>
+            <div>
+              <label for="tableEditLastUpdated" class="block text-xs text-[#3d2914] mb-1">Last Updated Date (current file value)</label>
+              <input id="tableEditLastUpdated" type="text" readonly
+                class="w-full rounded-lg bg-[#efe5d8] border border-[#8d6e63]/40 px-3 py-2 text-sm text-[#3d2914] cursor-not-allowed" />
+            </div>
+          </div>
+          <p class="text-[11px] uppercase tracking-wide text-[#3d2914] font-medium pt-2">You can edit</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="tableEditSportType" class="block text-xs text-[#3d2914] mb-1">Sport Type</label>
               <select id="tableEditSportType"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
+                class="w-full rounded-lg bg-[#fdf6e9] border border-[#8d6e63]/45 px-3 py-2 text-sm text-[#3d2914] focus:outline-none focus:ring-2 focus:ring-[#6d4c41]/40">
               </select>
             </div>
             <div>
-              <label for="tableEditYear" class="block text-xs text-slate-400 mb-1">Year</label>
+              <label for="tableEditYear" class="block text-xs text-[#3d2914] mb-1">Year</label>
               <input id="tableEditYear" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+                class="w-full rounded-lg bg-[#fdf6e9] border border-[#8d6e63]/45 px-3 py-2 text-sm text-[#3d2914] focus:outline-none focus:ring-2 focus:ring-[#6d4c41]/40" />
             </div>
-          </div>
-          <div>
-            <label for="tableEditAssociation" class="block text-xs text-slate-400 mb-1">Association</label>
-            <input id="tableEditAssociation" type="text"
-              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
-          </div>
-          <div>
-            <label for="tableEditCompetition" class="block text-xs text-slate-400 mb-1">Competition</label>
-            <input id="tableEditCompetition" type="text" required
-              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label for="tableEditAgeGroup" class="block text-xs text-slate-400 mb-1">Age group</label>
-              <input id="tableEditAgeGroup" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+              <label for="tableEditAssociation" class="block text-xs text-[#3d2914] mb-1">Association</label>
+              <input id="tableEditAssociation" type="text"
+                class="w-full rounded-lg bg-[#fdf6e9] border border-[#8d6e63]/45 px-3 py-2 text-sm text-[#3d2914] focus:outline-none focus:ring-2 focus:ring-[#6d4c41]/40" />
             </div>
             <div>
-              <label for="tableEditPrizeType" class="block text-xs text-slate-400 mb-1">Prize type</label>
+              <label for="tableEditCompetition" class="block text-xs text-[#3d2914] mb-1">Competition</label>
+              <input id="tableEditCompetition" type="text" required
+                class="w-full rounded-lg bg-[#fdf6e9] border border-[#8d6e63]/45 px-3 py-2 text-sm text-[#3d2914] focus:outline-none focus:ring-2 focus:ring-[#6d4c41]/40" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="tableEditAgeGroup" class="block text-xs text-[#3d2914] mb-1">Age group</label>
+              <input id="tableEditAgeGroup" type="text"
+                class="w-full rounded-lg bg-[#fdf6e9] border border-[#8d6e63]/45 px-3 py-2 text-sm text-[#3d2914] focus:outline-none focus:ring-2 focus:ring-[#6d4c41]/40" />
+            </div>
+            <div>
+              <label for="tableEditPrizeType" class="block text-xs text-[#3d2914] mb-1">Prize type</label>
               <select id="tableEditPrizeType"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
+                class="w-full rounded-lg bg-[#fdf6e9] border border-[#8d6e63]/45 px-3 py-2 text-sm text-[#3d2914] focus:outline-none focus:ring-2 focus:ring-[#6d4c41]/40">
                 <option value="Men's Single">Men's Single</option>
                 <option value="Men's Double">Men's Double</option>
                 <option value="Women's Single">Women's Single</option>
@@ -236,45 +243,47 @@
               </select>
             </div>
           </div>
-          <div>
-            <label for="tableEditStudentName" class="block text-xs text-slate-400 mb-1">Student Name</label>
-            <input id="tableEditStudentName" type="text" required autocomplete="name"
-              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <div>
-              <label for="tableEditRanking" class="block text-xs text-slate-400 mb-1">Ranking</label>
-              <input id="tableEditRanking" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+              <label for="tableEditStudentName" class="block text-xs text-[#3d2914] mb-1">Student Name</label>
+              <input id="tableEditStudentName" type="text" required autocomplete="name"
+                class="w-full rounded-lg bg-[#fdf6e9] border border-[#8d6e63]/45 px-3 py-2 text-sm text-[#3d2914] focus:outline-none focus:ring-2 focus:ring-[#6d4c41]/40" />
             </div>
             <div>
-              <label for="tableEditStatus" class="block text-xs text-slate-400 mb-1">Status</label>
+              <label for="tableEditRanking" class="block text-xs text-[#3d2914] mb-1">Ranking</label>
+              <input id="tableEditRanking" type="text"
+                class="w-full rounded-lg bg-[#fdf6e9] border border-[#8d6e63]/45 px-3 py-2 text-sm text-[#3d2914] focus:outline-none focus:ring-2 focus:ring-[#6d4c41]/40" />
+            </div>
+            <div class="sm:col-span-2 lg:col-span-1">
+              <label for="tableEditStatus" class="block text-xs text-[#3d2914] mb-1">Status</label>
               <select id="tableEditStatus"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
+                class="w-full rounded-lg bg-[#fdf6e9] border border-[#8d6e63]/45 px-3 py-2 text-sm text-[#3d2914] focus:outline-none focus:ring-2 focus:ring-[#6d4c41]/40">
                 <option value="ACTIVE">ACTIVE</option>
                 <option value="INACTIVE">INACTIVE</option>
               </select>
             </div>
           </div>
-          <div>
-            <label for="tableEditVerifiedBy" class="block text-xs text-slate-400 mb-1">Verified By</label>
-            <input id="tableEditVerifiedBy" type="text"
-              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="tableEditVerifiedBy" class="block text-xs text-[#3d2914] mb-1">Verified By</label>
+              <input id="tableEditVerifiedBy" type="text"
+                class="w-full rounded-lg bg-[#fdf6e9] border border-[#8d6e63]/45 px-3 py-2 text-sm text-[#3d2914] focus:outline-none focus:ring-2 focus:ring-[#6d4c41]/40" />
+            </div>
+            <div>
+              <label for="tableEditRemarks" class="block text-xs text-[#3d2914] mb-1">Remarks</label>
+              <input id="tableEditRemarks" type="text"
+                class="w-full rounded-lg bg-[#fdf6e9] border border-[#8d6e63]/45 px-3 py-2 text-sm text-[#3d2914] focus:outline-none focus:ring-2 focus:ring-[#6d4c41]/40" />
+            </div>
           </div>
-          <div>
-            <label for="tableEditRemarks" class="block text-xs text-slate-400 mb-1">Remarks</label>
-            <input id="tableEditRemarks" type="text"
-              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
-          </div>
-          <p id="tableEditErr" class="hidden text-sm text-red-300"></p>
-          <p id="tableEditOk" class="hidden text-sm text-amber-300"></p>
+          <p id="tableEditErr" class="hidden text-sm text-red-700"></p>
+          <p id="tableEditOk" class="hidden text-sm text-[#3d2914] font-medium"></p>
           <div class="flex flex-wrap gap-2 pt-2">
             <button type="button" id="tableEditConfirmBtn"
-              class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
+              class="btn-confirm-black rounded-lg px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
               Confirm
             </button>
             <button type="button" id="tableEditCancelBtn"
-              class="btn-cancel-metallic-brown rounded-lg font-medium px-4 py-2 text-sm">
+              class="btn-cancel-metallic-brown rounded-lg px-4 py-2 text-sm">
               Cancel
             </button>
           </div>
@@ -300,6 +309,8 @@
         typeof window.auth.getToken === "function" &&
         window.auth.getToken();
       var role = localStorage.getItem("userRole");
+      /** Coach Manager display name for default "Verified By" (from GET /api/me). */
+      var defaultVerifiedByForManager = "";
       var sessionOk =
         Boolean(token) &&
         (role === "CoachManager" || role === "Coach");
@@ -377,6 +388,16 @@
           .replace(/</g, "&lt;")
           .replace(/>/g, "&gt;")
           .replace(/"/g, "&quot;");
+      }
+
+      /**
+       * Table display: show only the part after the first "-" (e.g. CM00000008-P0000001 → P0000001).
+       * If there is no hyphen, show the full id (e.g. legacy PR000001).
+       */
+      function displayPrizeIdForTable(prizeId) {
+        var s = prizeId == null ? "" : String(prizeId).trim();
+        var i = s.indexOf("-");
+        return i >= 0 ? s.slice(i + 1) : s;
       }
 
       var cachedPrizes = [];
@@ -565,6 +586,20 @@
         el.selectedIndex = 0;
       }
 
+      function coachManagerNameForVerifiedBy(u) {
+        if (!u || u.role !== "CoachManager") {
+          return "";
+        }
+        var fn =
+          u.full_name != null && String(u.full_name).trim() !== "" && String(u.full_name).trim() !== "—"
+            ? String(u.full_name).trim()
+            : "";
+        if (fn) {
+          return fn;
+        }
+        return u.username != null ? String(u.username).trim() : "";
+      }
+
       function applyNewPrizeFormDefaults() {
         setNewPrizeSportTypeToFirst();
         var pt = document.getElementById("newPrizePrizeType");
@@ -575,11 +610,23 @@
         if (st) {
           st.value = "ACTIVE";
         }
+        var vb = document.getElementById("newPrizeVerifiedBy");
+        if (vb && role === "CoachManager" && defaultVerifiedByForManager) {
+          vb.value = defaultVerifiedByForManager;
+        } else if (vb && role === "CoachManager") {
+          vb.value = "";
+        }
       }
 
       function openTableEditPanelFromPrize(pz) {
         hideCreatePrizePanel();
-        document.getElementById("tableEditPrizeId").value = pz.PrizeID || "";
+        var fullPid = pz.PrizeID != null ? String(pz.PrizeID).trim() : "";
+        var fullEl = document.getElementById("tableEditPrizeIdFull");
+        if (fullEl) {
+          fullEl.value = fullPid;
+        }
+        document.getElementById("tableEditPrizeId").value =
+          displayPrizeIdForTable(fullPid);
         document.getElementById("tableEditClubId").value = pz.ClubID || "";
         document.getElementById("tableEditClubName").value = pz.Club_name || "";
         bindSelectWithOrphan(
@@ -599,7 +646,12 @@
         var st = (pz.Status || "ACTIVE").toString().trim().toUpperCase();
         document.getElementById("tableEditStatus").value =
           st === "INACTIVE" ? "INACTIVE" : "ACTIVE";
-        document.getElementById("tableEditVerifiedBy").value = pz.VerifiedBy || "";
+        var existingVb = (pz.VerifiedBy != null ? String(pz.VerifiedBy) : "").trim();
+        document.getElementById("tableEditVerifiedBy").value =
+          existingVb ||
+          (role === "CoachManager" && defaultVerifiedByForManager
+            ? defaultVerifiedByForManager
+            : "");
         document.getElementById("tableEditRemarks").value = pz.Remarks || "";
         document.getElementById("tableEditCreatedAt").value = pz.Created_at || "";
         document.getElementById("tableEditLastUpdated").value =
@@ -633,7 +685,7 @@
           return;
         }
         headRow.innerHTML =
-          '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap w-24">Actions</th>' +
+          '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap w-40">Actions</th>' +
           PRIZE_TABLE_COLS.map(function (col) {
             return (
               '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap max-w-[14rem]">' +
@@ -645,10 +697,15 @@
           .map(function (pz, idx) {
             var tds = PRIZE_TABLE_COLS.map(function (col) {
               var v = pz[col.key] != null ? String(pz[col.key]) : "";
-              var disp =
-                window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
-                  ? window.api.formatDateDisplayDdMmYyyy(v)
-                  : v;
+              var disp = v;
+              if (col.key === "PrizeID") {
+                disp = displayPrizeIdForTable(v);
+              } else if (
+                window.api &&
+                typeof window.api.formatDateDisplayDdMmYyyy === "function"
+              ) {
+                disp = window.api.formatDateDisplayDdMmYyyy(v);
+              }
               return (
                 '<td class="py-2 pr-3 text-xs align-top whitespace-pre-wrap break-words max-w-[16rem]">' +
                 escapeHtml(disp) +
@@ -658,9 +715,14 @@
             return (
               '<tr class="border-b border-white/5">' +
               '<td class="py-2 pr-3 align-top whitespace-nowrap">' +
-              '<button type="button" class="cm-row-update rounded-md bg-amber-700/90 hover:bg-amber-600 text-white text-xs font-medium px-2.5 py-1.5" data-idx="' +
+              '<div class="flex flex-wrap gap-1.5">' +
+              '<button type="button" class="cm-row-update btn-update-orange-gold rounded-md text-xs px-2.5 py-1.5" data-idx="' +
               idx +
-              '">Update</button></td>' +
+              '">Update</button>' +
+              '<button type="button" class="cm-row-remove btn-remove-black-red-gold rounded-md text-xs px-2.5 py-1.5" data-idx="' +
+              idx +
+              '">Remove</button>' +
+              "</div></td>" +
               tds +
               "</tr>"
             );
@@ -676,7 +738,7 @@
           .replace(/\s+/g, "_");
       }
 
-      /** Hide Club ID / club name columns in raw fallback (same as main prize table). */
+      /** Hide Club ID / club name columns in raw fallback (same as main prize table; source is Mongo or JSON). */
       function filterPrizeListRawForDisplay(raw) {
         if (!raw || !raw.headers || !raw.headers.length) {
           return raw;
@@ -701,7 +763,7 @@
         return { headers: headers, rows: rows };
       }
 
-      /** Renders headers/rows from API `prizeListRaw` (derived from PrizeList.json). */
+      /** Renders headers/rows from API `prizeListRaw` (Mongo `PrizeList` or PrizeList.json). */
       function renderPrizeListRawFallback(raw) {
         var headRow = document.getElementById("prizeTableHeadRow");
         var tb = document.getElementById("prizeTableBody");
@@ -717,6 +779,12 @@
           return;
         }
         var colCount = filtered.headers.length;
+        var prizeIdRawColIx = -1;
+        filtered.headers.forEach(function (h, ix) {
+          if (prizeIdRawColIx < 0 && normPrizeRawHeaderKey(h) === "prizeid") {
+            prizeIdRawColIx = ix;
+          }
+        });
         headRow.innerHTML = filtered.headers
           .map(function (h) {
             return (
@@ -740,13 +808,15 @@
               return (
                 '<tr class="border-b border-white/5">' +
                 cells
-                  .map(function (cell) {
+                  .map(function (cell, ci) {
                     var cStr = cell != null ? String(cell) : "";
                     var disp =
-                      window.api &&
-                      typeof window.api.formatDateDisplayDdMmYyyy === "function"
-                        ? window.api.formatDateDisplayDdMmYyyy(cStr)
-                        : cStr;
+                      ci === prizeIdRawColIx
+                        ? displayPrizeIdForTable(cStr)
+                        : window.api &&
+                            typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                          ? window.api.formatDateDisplayDdMmYyyy(cStr)
+                          : cStr;
                     return (
                       '<td class="py-2 pr-3 text-xs align-top whitespace-pre-wrap break-words max-w-[16rem]">' +
                       escapeHtml(disp) +
@@ -943,7 +1013,11 @@
         }
         tb.dataset.cmRowBound = "1";
         tb.addEventListener("click", function (ev) {
-          var btn = ev.target && ev.target.closest && ev.target.closest("button.cm-row-update");
+          var upd =
+            ev.target && ev.target.closest && ev.target.closest("button.cm-row-update");
+          var rem =
+            ev.target && ev.target.closest && ev.target.closest("button.cm-row-remove");
+          var btn = upd || rem;
           if (!btn) {
             return;
           }
@@ -951,7 +1025,41 @@
           if (isNaN(idx) || idx < 0 || idx >= cachedPrizes.length) {
             return;
           }
-          openTableEditPanelFromPrize(cachedPrizes[idx]);
+          if (upd) {
+            openTableEditPanelFromPrize(cachedPrizes[idx]);
+            return;
+          }
+          var pz = cachedPrizes[idx];
+          var fullId = pz && pz.PrizeID != null ? String(pz.PrizeID).trim() : "";
+          if (!fullId) {
+            return;
+          }
+          var errEl = document.getElementById("prizeListErr");
+          if (errEl) {
+            errEl.classList.add("hidden");
+            errEl.textContent = "";
+          }
+          btn.disabled = true;
+          window.api
+            .api("/coach-manager/prizes", {
+              method: "DELETE",
+              body: JSON.stringify({ PrizeID: fullId }),
+            })
+            .then(function () {
+              invalidatePrizeListCache();
+              hideTableEditPanel();
+              loadPrizeList();
+            })
+            .catch(function (e) {
+              var msg = (e && e.message) || "Could not remove prize.";
+              if (errEl) {
+                errEl.textContent = msg;
+                errEl.classList.remove("hidden");
+              }
+            })
+            .finally(function () {
+              btn.disabled = false;
+            });
         });
       })();
 
@@ -965,7 +1073,10 @@
         var okBox = document.getElementById("tableEditOk");
         errBox.classList.add("hidden");
         okBox.classList.add("hidden");
-        var id = document.getElementById("tableEditPrizeId").value.trim();
+        var fullEl = document.getElementById("tableEditPrizeIdFull");
+        var id =
+          (fullEl && fullEl.value && String(fullEl.value).trim()) ||
+          document.getElementById("tableEditPrizeId").value.trim();
         if (!id) {
           errBox.textContent = "Missing PrizeID.";
           errBox.classList.remove("hidden");
@@ -1046,6 +1157,21 @@
                 ? String(u.club_folder_uid).trim()
                 : "";
             setUidLabels(cfu || u.uid);
+            var mgrName = coachManagerNameForVerifiedBy(u);
+            if (mgrName) {
+              defaultVerifiedByForManager = mgrName;
+            }
+            var createPanel = document.getElementById("createPrizePanel");
+            var vbNew = document.getElementById("newPrizeVerifiedBy");
+            if (
+              role === "CoachManager" &&
+              mgrName &&
+              vbNew &&
+              createPanel &&
+              !createPanel.classList.contains("hidden")
+            ) {
+              vbNew.value = mgrName;
+            }
           })
           .catch(function () {
             /* keep UID from API response or postMessage */

@@ -254,20 +254,25 @@
       outline: 2px solid rgba(212, 175, 55, 0.65);
       outline-offset: 2px;
     }
-    /* 5px nudge: Club Master, Lesson Reservation, Coach Salary. */
-    .cm-hotspot-layer--3x3 > a.cm-hotspot:nth-child(1),
-    .cm-hotspot-layer--3x3 > a.cm-hotspot:nth-child(4),
-    .cm-hotspot-layer--3x3 > a.cm-hotspot:nth-child(7) {
+    /* Row 1: 5px / 10px horizontal nudge only. */
+    .cm-hotspot-layer--3x3 > a.cm-hotspot:nth-child(1) {
       transform: translateX(5px);
     }
-    /* 10px nudge: Coach Information, Student Information, Lesson Payment Status, Prize List, Revenue, Upcoming Events. */
     .cm-hotspot-layer--3x3 > a.cm-hotspot:nth-child(2),
-    .cm-hotspot-layer--3x3 > a.cm-hotspot:nth-child(3),
+    .cm-hotspot-layer--3x3 > a.cm-hotspot:nth-child(3) {
+      transform: translateX(10px);
+    }
+    /* Rows 2–3: prior horizontal nudge + 15px right, 8px down.
+       Lesson Reservation (4) & Coach Salary (7): −10px further left vs other col-1 row-2/3 tiles. */
+    .cm-hotspot-layer--3x3 > a.cm-hotspot:nth-child(4),
+    .cm-hotspot-layer--3x3 > a.cm-hotspot:nth-child(7) {
+      transform: translate(10px, 8px);
+    }
     .cm-hotspot-layer--3x3 > a.cm-hotspot:nth-child(5),
     .cm-hotspot-layer--3x3 > a.cm-hotspot:nth-child(6),
     .cm-hotspot-layer--3x3 > a.cm-hotspot:nth-child(8),
     .cm-hotspot-layer--3x3 > a.cm-hotspot:nth-child(9) {
-      transform: translateX(10px);
+      transform: translate(25px, 8px);
     }
 
     .cm-iframe-panel {

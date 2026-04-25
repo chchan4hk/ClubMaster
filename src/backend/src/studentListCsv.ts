@@ -7,11 +7,25 @@ import {
   getDataClubRootPath,
 } from "./coachListCsv";
 import { findStudentRoleLoginByUid } from "./coachStudentLoginCsv";
+import { findStudentRoleLoginByUidMongo } from "./userListMongo";
 import { readFileCached } from "./dataFileCache";
+import { isMongoConfigured, USER_LIST_STUDENT_COLLECTION } from "./db/DBConnection";
+import {
+  deleteStudentMongo,
+  deleteStudentMongoAllClubs,
+  findClubUidForStudentIdMongo,
+  insertStudentMongo,
+  listAllStudentIdClubPairsFromMongo,
+  loadStudentsFromMongo,
+  updateStudentMongo,
+} from "./studentListMongo";
 
 const STUDENT_ID_RE = /^S(\d+)$/i;
 /** New StudentID allocations: S + 9 digits (e.g. S000000001), aligned with student login UID. */
 const STUDENT_NEW_ID_PAD = 9;
+/** Club-scoped IDs in Mongo: `CM00000008-S0000001` (S + 7-digit sequence). */
+const CLUB_SCOPED_STUDENT_ID_RE = /^(CM\d+)-S(\d+)$/i;
+const CLUB_SCOPED_SUFFIX_PAD = 7;
 
 /** Legacy filename; migrated to JSON on first access. */
 const LEGACY_STUDENT_LIST_CSV = "UserList_Student.csv";
@@ -26,8 +40,18 @@ function studentIdSequenceNumber(studentId: string): number | null {
   return Number.isNaN(n) ? null : n;
 }
 
-function normalizeStudentIdInput(raw: string): string | null {
+/** Normalize `S…` / `CM…-S…` input for roster and prize lookups. */
+export function normalizeStudentIdInput(raw: string): string | null {
   const s = raw.replace(/^\uFEFF/, "").trim();
+  const scoped = s.match(CLUB_SCOPED_STUDENT_ID_RE);
+  if (scoped) {
+    const club = scoped[1]!.toUpperCase();
+    const n = Number.parseInt(scoped[2]!, 10);
+    if (Number.isNaN(n) || n < 0 || !isValidClubFolderId(club)) {
+      return null;
+    }
+    return `${club}-S${String(n).padStart(CLUB_SCOPED_SUFFIX_PAD, "0")}`;
+  }
   const m = s.match(STUDENT_ID_RE);
   if (!m) {
     return null;
@@ -564,6 +588,9 @@ export function ensureStudentListFile(clubId: string): void {
   if (!isValidClubFolderId(clubId)) {
     throw new Error("Invalid club ID.");
   }
+  if (isMongoConfigured()) {
+    return;
+  }
   const clubDir = path.join(dataClubRoot(), clubId.trim());
   if (!fs.existsSync(clubDir)) {
     fs.mkdirSync(clubDir, { recursive: true });
@@ -577,39 +604,54 @@ export function ensureStudentListFile(clubId: string): void {
   }
 }
 
-export function loadStudents(clubId: string): StudentCsvRow[] {
+export async function loadStudents(clubId: string): Promise<StudentCsvRow[]> {
   if (!isValidClubFolderId(clubId)) {
     return [];
+  }
+  if (isMongoConfigured()) {
+    try {
+      return await loadStudentsFromMongo(clubId.trim());
+    } catch (e) {
+      console.warn("[studentList] Mongo UserList_Student load failed; disk fallback", e);
+      return readStudentRowsFromDisk(clubId);
+    }
   }
   return readStudentRowsFromDisk(clubId);
 }
 
 /**
- * Uppercase trimmed StudentID → club folder id. First occurrence in `data_club` readdir order
- * wins (same semantics as the legacy linear scan).
+ * Uppercase trimmed StudentID → club folder id. With Mongo: from `UserList_Student`;
+ * otherwise first `data_club` folder (readdir order) whose JSON lists this StudentID.
  */
 const studentIdToClubId = new Map<string, string>();
 let studentIdClubIndexReady = false;
 
 /**
- * Rebuilds the StudentID → club folder index from disk (all `UserList_Student.json` files).
- * Call on startup; also after purges that may change which club “owns” a StudentID.
+ * Rebuilds the StudentID → club folder index. With Mongo: from `UserList_Student`;
+ * otherwise scans all `UserList_Student.json` files on disk.
  */
-export function rebuildStudentIdClubIndex(): void {
+export async function rebuildStudentIdClubIndex(): Promise<void> {
   const next = new Map<string, string>();
-  const root = dataClubRoot();
-  if (fs.existsSync(root)) {
-    for (const name of fs.readdirSync(root)) {
-      if (!isValidClubFolderId(name)) {
-        continue;
-      }
-      const students = loadStudents(name);
-      for (const s of students) {
-        const u = s.studentId.replace(/^\uFEFF/, "").trim().toUpperCase();
-        if (!u || next.has(u)) {
+  if (isMongoConfigured()) {
+    const fromMongo = await listAllStudentIdClubPairsFromMongo();
+    for (const [k, v] of fromMongo) {
+      next.set(k, v);
+    }
+  } else {
+    const root = dataClubRoot();
+    if (fs.existsSync(root)) {
+      for (const name of fs.readdirSync(root)) {
+        if (!isValidClubFolderId(name)) {
           continue;
         }
-        next.set(u, name);
+        const students = readStudentRowsFromDisk(name);
+        for (const s of students) {
+          const u = s.studentId.replace(/^\uFEFF/, "").trim().toUpperCase();
+          if (!u || next.has(u)) {
+            continue;
+          }
+          next.set(u, name);
+        }
       }
     }
   }
@@ -620,9 +662,9 @@ export function rebuildStudentIdClubIndex(): void {
   studentIdClubIndexReady = true;
 }
 
-function ensureStudentIdClubIndex(): void {
+async function ensureStudentIdClubIndexAsync(): Promise<void> {
   if (!studentIdClubIndexReady) {
-    rebuildStudentIdClubIndex();
+    await rebuildStudentIdClubIndex();
   }
 }
 
@@ -637,49 +679,66 @@ function registerStudentIdInIndex(studentId: string, clubId: string): void {
   }
 }
 
-/** First club folder id whose UserList_Student.json lists this StudentID, or null. */
-export function findClubUidForStudentId(studentId: string): string | null {
+/** First club folder id whose roster lists this StudentID, or null. */
+export async function findClubUidForStudentId(
+  studentId: string,
+): Promise<string | null> {
   const uid = studentId.trim();
   if (!uid) {
     return null;
   }
-  ensureStudentIdClubIndex();
+  if (isMongoConfigured()) {
+    const direct = await findClubUidForStudentIdMongo(uid);
+    if (direct) {
+      return direct;
+    }
+  }
+  await ensureStudentIdClubIndexAsync();
   return studentIdToClubId.get(uid.toUpperCase()) ?? null;
 }
 
 export type StudentClubSessionOk = {
   ok: true;
   clubId: string;
-  /** Set when this StudentID exists in that club’s `UserList_Student.json`. */
+  /** Set when this StudentID exists in that club’s student roster (Mongo or JSON). */
   rosterRow: StudentCsvRow | null;
 };
 
 export type StudentClubSessionResult = StudentClubSessionOk | { ok: false; error: string };
 
 /**
- * Resolves `backend/data_club/{clubId}/` for a student JWT (`sub` = StudentID).
- * Prefers `club_folder_uid` / `club_id` on `userLogin_Student` so logins work before a roster row exists.
- * Otherwise uses the first club folder whose roster lists this StudentID.
+ * Resolves club folder for a student JWT (`sub` = StudentID).
+ * Prefers `club_folder_uid` on student login; else roster in Mongo `UserList_Student` or disk JSON.
  */
-export function resolveStudentClubSession(
+export async function resolveStudentClubSession(
   studentId: string,
-): StudentClubSessionResult {
+): Promise<StudentClubSessionResult> {
   const sid = String(studentId ?? "").trim();
   if (!sid) {
     return { ok: false, error: "Invalid session." };
   }
-  let login;
+  let login: ReturnType<typeof findStudentRoleLoginByUid> | undefined;
   try {
     login = findStudentRoleLoginByUid(sid);
   } catch {
     login = undefined;
+  }
+  if (!login && isMongoConfigured()) {
+    try {
+      const mongoLogin = await findStudentRoleLoginByUidMongo(sid);
+      if (mongoLogin) {
+        login = mongoLogin;
+      }
+    } catch {
+      /* ignore */
+    }
   }
   const fromLogin = (login?.clubFolderUid ?? "").trim();
   let clubId: string | null = null;
   if (fromLogin && isValidClubFolderId(fromLogin)) {
     clubId = fromLogin;
   } else {
-    clubId = findClubUidForStudentId(sid);
+    clubId = await findClubUidForStudentId(sid);
   }
   if (!clubId) {
     return {
@@ -687,10 +746,8 @@ export function resolveStudentClubSession(
       error: "No club folder found for this student account.",
     };
   }
-  const roster = loadStudents(clubId);
-  const stu = roster.find(
-    (s) => s.studentId.trim().toUpperCase() === sid.toUpperCase(),
-  );
+  const roster = await loadStudents(clubId);
+  const stu = roster.find((s) => studentIdsEqual(s.studentId, sid));
   const loginAnchorsThisFolder =
     Boolean(fromLogin) &&
     isValidClubFolderId(fromLogin) &&
@@ -713,15 +770,17 @@ export type StudentListRaw = {
   rows: string[][];
 };
 
-export function loadStudentListRaw(clubId: string): StudentListRaw {
+export async function loadStudentListRaw(clubId: string): Promise<StudentListRaw> {
   const id = clubId.trim();
-  const relativePath = `data_club/${id}/${STUDENT_LIST_FILENAME}`;
+  const relativePath = isMongoConfigured()
+    ? `MongoDB/${USER_LIST_STUDENT_COLLECTION}/${id}`
+    : `data_club/${id}/${STUDENT_LIST_FILENAME}`;
   if (!isValidClubFolderId(id)) {
     return { relativePath, headers: [], rows: [] };
   }
   ensureStudentListFile(id);
   const headers = [...STUDENT_LIST_COLUMNS];
-  const students = readStudentRowsFromDisk(id);
+  const students = await loadStudents(id);
   const rows = students.map((r) => {
     const rec = studentRowToRecord(r);
     return STUDENT_LIST_COLUMNS.map((h) => rec[h] ?? "");
@@ -729,7 +788,7 @@ export function loadStudentListRaw(clubId: string): StudentListRaw {
   return { relativePath, headers, rows };
 }
 
-function nextStudentId(rows: StudentCsvRow[]): string {
+function nextLegacyNumericStudentId(rows: StudentCsvRow[]): string {
   let max = 0;
   for (const r of rows) {
     const n = studentIdSequenceNumber(r.studentId);
@@ -738,6 +797,23 @@ function nextStudentId(rows: StudentCsvRow[]): string {
     }
   }
   return `S${String(max + 1).padStart(STUDENT_NEW_ID_PAD, "0")}`;
+}
+
+function nextClubScopedStudentId(clubId: string, rows: StudentCsvRow[]): string {
+  const club = clubId.trim();
+  const esc = club.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  let max = 0;
+  for (const r of rows) {
+    const id = r.studentId.replace(/^\uFEFF/, "").trim();
+    const m = id.match(new RegExp(`^${esc}-S(\\d+)$`, "i"));
+    if (m) {
+      const n = Number.parseInt(m[1]!, 10);
+      if (!Number.isNaN(n) && n > max) {
+        max = n;
+      }
+    }
+  }
+  return `${club.toUpperCase()}-S${String(max + 1).padStart(CLUB_SCOPED_SUFFIX_PAD, "0")}`;
 }
 
 /** Bump `S#########` by one (Mongo `userLogin.uid` is global across clubs). */
@@ -754,9 +830,31 @@ export function bumpNumericStudentLoginStyleId(current: string): string {
   return `S${String(n + 1).padStart(STUDENT_NEW_ID_PAD, "0")}`;
 }
 
-export function allocateNextStudentId(clubId: string): string {
+/** Next ID after allocation collisions (`CM…-S0000001` style, or legacy `S#########`). */
+export function bumpClubScopedStudentId(current: string): string {
+  const s = String(current ?? "").replace(/^\uFEFF/, "").trim();
+  const m = s.match(CLUB_SCOPED_STUDENT_ID_RE);
+  if (!m) {
+    return bumpNumericStudentLoginStyleId(s);
+  }
+  const club = m[1]!.toUpperCase();
+  const n = Number.parseInt(m[2]!, 10);
+  if (Number.isNaN(n) || n < 0) {
+    return s;
+  }
+  return `${club}-S${String(n + 1).padStart(CLUB_SCOPED_SUFFIX_PAD, "0")}`;
+}
+
+export async function allocateNextStudentId(clubId: string): Promise<string> {
+  if (!isValidClubFolderId(clubId)) {
+    throw new Error("Invalid club ID.");
+  }
+  if (isMongoConfigured()) {
+    const rows = await loadStudentsFromMongo(clubId.trim());
+    return nextClubScopedStudentId(clubId, rows);
+  }
   ensureStudentListFile(clubId);
-  return nextStudentId(readStudentRowsFromDisk(clubId));
+  return nextLegacyNumericStudentId(readStudentRowsFromDisk(clubId));
 }
 
 function sanitizeCell(s: string): string {
@@ -773,7 +871,7 @@ export function studentIdsEqual(a: string, b: string): boolean {
   return x.length > 0 && x.toUpperCase() === y.toUpperCase();
 }
 
-export function appendStudentRow(
+export async function appendStudentRow(
   clubId: string,
   clubName: string,
   input: {
@@ -793,7 +891,7 @@ export function appendStudentRow(
     status?: string;
     studentId?: string;
   },
-): { ok: true; studentId: string } | { ok: false; error: string } {
+): Promise<{ ok: true; studentId: string } | { ok: false; error: string }> {
   const name = sanitizeCell(input.studentName);
   if (!name) {
     return { ok: false, error: "full_name is required." };
@@ -803,7 +901,9 @@ export function appendStudentRow(
     return { ok: false, error: "email is required." };
   }
   ensureStudentListFile(clubId);
-  const rows = readStudentRowsFromDisk(clubId);
+  const rows = isMongoConfigured()
+    ? await loadStudentsFromMongo(clubId.trim())
+    : readStudentRowsFromDisk(clubId);
   const requested = input.studentId?.trim();
   let studentId: string;
   if (requested) {
@@ -811,7 +911,8 @@ export function appendStudentRow(
     if (!normalized) {
       return {
         ok: false,
-        error: "Invalid StudentID format (expected S######).",
+        error:
+          "Invalid StudentID format (expected S######### or CM…-S#######).",
       };
     }
     if (rows.some((r) => studentIdsEqual(r.studentId, normalized))) {
@@ -819,7 +920,9 @@ export function appendStudentRow(
     }
     studentId = normalized;
   } else {
-    studentId = nextStudentId(rows);
+    studentId = isMongoConfigured()
+      ? nextClubScopedStudentId(clubId, rows)
+      : nextLegacyNumericStudentId(rows);
   }
   const today = new Date().toISOString().slice(0, 10);
   const status = sanitizeCell(input.status || "ACTIVE") || "ACTIVE";
@@ -844,13 +947,17 @@ export function appendStudentRow(
     homeAddress: sanitizeCell(input.homeAddress ?? ""),
     country: sanitizeCell(input.country ?? ""),
   };
-  rows.push(newRow);
-  writeStudentsArray(clubId, rows);
+  if (isMongoConfigured()) {
+    await insertStudentMongo(newRow, clubId.trim());
+  } else {
+    rows.push(newRow);
+    writeStudentsArray(clubId, rows);
+  }
   registerStudentIdInIndex(studentId, clubId);
   return { ok: true, studentId };
 }
 
-export function updateStudentRow(
+export async function updateStudentRow(
   clubId: string,
   clubName: string,
   studentId: string,
@@ -870,7 +977,7 @@ export function updateStudentRow(
     remark?: string;
     status?: string;
   },
-): { ok: true } | { ok: false; error: string } {
+): Promise<{ ok: true } | { ok: false; error: string }> {
   const id = studentId.trim();
   if (!id) {
     return { ok: false, error: "StudentID is required." };
@@ -884,7 +991,9 @@ export function updateStudentRow(
     return { ok: false, error: "email is required." };
   }
   ensureStudentListFile(clubId);
-  const rows = readStudentRowsFromDisk(clubId);
+  const rows = isMongoConfigured()
+    ? await loadStudentsFromMongo(clubId.trim())
+    : readStudentRowsFromDisk(clubId);
   const idx = rows.findIndex((r) => studentIdsEqual(r.studentId, id));
   if (idx < 0) {
     return { ok: false, error: "Student not found." };
@@ -892,7 +1001,7 @@ export function updateStudentRow(
   const today = new Date().toISOString().slice(0, 10);
   const status = sanitizeCell(input.status || "ACTIVE") || "ACTIVE";
   const cur = rows[idx]!;
-  rows[idx] = {
+  const updated: StudentCsvRow = {
     ...cur,
     clubId: sanitizeCell(clubId),
     studentName: name,
@@ -911,7 +1020,15 @@ export function updateStudentRow(
     homeAddress: sanitizeCell(input.homeAddress ?? ""),
     country: sanitizeCell(input.country ?? ""),
   };
-  writeStudentsArray(clubId, rows);
+  if (isMongoConfigured()) {
+    const { matched } = await updateStudentMongo(clubId.trim(), id, updated);
+    if (matched < 1) {
+      return { ok: false, error: "Student not found." };
+    }
+  } else {
+    rows[idx] = updated;
+    writeStudentsArray(clubId, rows);
+  }
   return { ok: true };
 }
 
@@ -938,14 +1055,22 @@ function purgeStudentRowOnDisk(
   return { ok: true };
 }
 
-/** Deletes the student record from UserList_Student.json. */
-export function purgeStudentRow(
+/** Deletes the student roster row (Mongo `UserList_Student` or disk JSON). */
+export async function purgeStudentRow(
   clubId: string,
   studentId: string,
-): { ok: true } | { ok: false; error: string } {
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (isMongoConfigured()) {
+    const ok = await deleteStudentMongo(clubId.trim(), studentId);
+    if (!ok) {
+      return { ok: false, error: "Student not found." };
+    }
+    await rebuildStudentIdClubIndex();
+    return { ok: true };
+  }
   const r = purgeStudentRowOnDisk(clubId, studentId);
   if (r.ok) {
-    rebuildStudentIdClubIndex();
+    await rebuildStudentIdClubIndex();
   }
   return r;
 }
@@ -974,17 +1099,24 @@ function purgeStudentRowSafe(
 }
 
 /**
- * Removes the student record from every `data_club/{clubFolderId}/UserList_Student.json` that contains this StudentID.
- * Returns `{ ok: true, updatedClubIds: [] }` when no roster file contained this StudentID (not an error — login/main cleanup may still be needed).
+ * Removes the student from every roster (Mongo `UserList_Student` or each club JSON) that lists this StudentID.
+ * Returns `{ ok: true, updatedClubIds: [] }` when none matched (not an error for login-only cleanup).
  */
-export function purgeStudentRowFromAllClubFolders(
+export async function purgeStudentRowFromAllClubFolders(
   studentId: string,
-):
-  | { ok: true; updatedClubIds: string[] }
-  | { ok: false; error: string } {
+): Promise<
+  { ok: true; updatedClubIds: string[] } | { ok: false; error: string }
+> {
   const id = studentId.trim();
   if (!id) {
     return { ok: false, error: "StudentID is required." };
+  }
+  if (isMongoConfigured()) {
+    const updatedClubIds = await deleteStudentMongoAllClubs(id);
+    if (updatedClubIds.length > 0) {
+      await rebuildStudentIdClubIndex();
+    }
+    return { ok: true, updatedClubIds };
   }
   const root = dataClubRoot();
   if (!fs.existsSync(root)) {
@@ -1017,7 +1149,7 @@ export function purgeStudentRowFromAllClubFolders(
     return r;
   }
   if (updatedClubIds.length > 0) {
-    rebuildStudentIdClubIndex();
+    await rebuildStudentIdClubIndex();
   }
   return { ok: true, updatedClubIds };
 }

@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/css/profile-password-panels.css" />
   <link rel="stylesheet" href="/css/coach-manager-module-shell.css" />
   <link rel="stylesheet" href="/css/btn-cancel-metallic-brown.css" />
+  <link rel="stylesheet" href="/css/btn-dark-blue-green.css" />
 </head>
 <body class="profile-password-page cm-module-shell min-h-full p-4 sm:p-6">
   <div class="max-w-4xl mx-auto">
@@ -23,7 +24,7 @@
       <h1 class="profile-password-heading text-2xl font-semibold mt-3">Club Master</h1>
       <div class="mt-4">
         <button type="button" id="btnOpenSportCenters"
-          class="rounded-lg bg-yellow-100 hover:bg-yellow-200 border border-yellow-300/80 text-black font-medium px-4 py-2 text-sm shadow-sm">
+          class="btn-dark-blue-green rounded-lg px-4 py-2 text-sm">
           Select Sport Center
         </button>
       </div>
@@ -36,22 +37,22 @@
 
       <div id="btnRowView" class="flex flex-wrap gap-2 mb-5">
         <button type="button" id="btnUpdate"
-          class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm">
+          class="btn-update-orange-gold rounded-lg px-4 py-2 text-sm">
           Update
         </button>
         <button type="button" id="btnCancelView"
-          class="btn-cancel-metallic-brown rounded-lg font-medium px-4 py-2 text-sm">
+          class="btn-cancel-metallic-brown rounded-lg px-4 py-2 text-sm">
           Cancel
         </button>
       </div>
 
       <div id="btnRowEdit" class="hidden flex flex-wrap gap-2 mb-5">
         <button type="button" id="btnConfirm"
-          class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
+          class="btn-confirm-black rounded-lg px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
           Confirm
         </button>
         <button type="button" id="btnCancelEdit"
-          class="btn-cancel-metallic-brown rounded-lg font-medium px-4 py-2 text-sm">
+          class="btn-cancel-metallic-brown rounded-lg px-4 py-2 text-sm">
           Cancel
         </button>
       </div>
@@ -105,7 +106,7 @@
         </div>
 
         <div>
-          <label for="fClubDesc" class="block text-xs text-slate-400 mb-1">Club description</label>
+          <label for="fClubDesc" class="block text-xs text-slate-400 mb-1">Club Description</label>
           <textarea id="fClubDesc" rows="3" readonly
             class="club-field w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-100 text-sm cursor-not-allowed resize-y min-h-[4rem]"></textarea>
         </div>
@@ -217,15 +218,15 @@
         </div>
         <div class="flex flex-wrap gap-2 justify-end px-4 py-3 border-t border-white/10 shrink-0">
           <button type="button" id="sportCenterBtnCreateVenue"
-            class="rounded-lg bg-amber-300 hover:bg-amber-200 border border-amber-400/70 text-slate-900 font-medium px-4 py-2 text-sm shadow-sm">
+            class="btn-create-metallic-dark-brown rounded-lg px-4 py-2 text-sm">
             Create New Venue
           </button>
           <button type="button" id="sportCenterBtnClose"
-            class="btn-cancel-metallic-brown rounded-lg px-4 py-2 text-sm font-medium">Close</button>
+            class="btn-cancel-metallic-brown rounded-lg px-4 py-2 text-sm">Close</button>
           <button type="button" id="sportCenterBtnCancelEdit"
             class="btn-cancel-metallic-brown hidden rounded-lg px-4 py-2 text-sm">Cancel</button>
           <button type="button" id="sportCenterBtnUpdate"
-            class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50">Update</button>
+            class="btn-update-orange-gold rounded-lg px-4 py-2 text-sm disabled:opacity-50">Update</button>
         </div>
       </div>
     </div>
@@ -285,7 +286,7 @@
           <button type="button" id="createVenueBtnCancel"
             class="btn-cancel-metallic-brown rounded-lg px-4 py-2 text-sm">Cancel</button>
           <button type="button" id="createVenueBtnConfirm"
-            class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50">Confirm</button>
+            class="btn-confirm-black rounded-lg px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">Confirm</button>
         </div>
       </div>
     </div>

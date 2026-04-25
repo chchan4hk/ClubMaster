@@ -4,26 +4,40 @@ import {
   resolveClubFolderRoleContextAsync,
   resolveClubFolderUidForCoachRequest,
 } from "../coachManagerSession";
-import { isValidClubFolderId, loadCoaches } from "../coachListCsv";
+import {
+  coachIdsEqual,
+  coachLoginUidMatchesRosterCoachId,
+  isValidClubFolderId,
+} from "../coachListCsv";
+import { findCoachRosterRow } from "../coachSelfFilter";
+import { loadCoachesPreferred } from "../coachListMongo";
 import { resolveLessonFileClubId } from "../lessonListCsv";
 import { clubInfoFirstRowObject } from "../clubInfoJson";
 import { clubCurrencyFromCountry } from "../countryCurrency";
+import { buildCoachSalaryTableRows } from "../coachSalaryJson";
 import {
-  buildCoachSalaryTableRows,
-  loadCoachSalaryDocument,
-  saveCoachSalaryDocument,
-} from "../coachSalaryJson";
+  isCoachSalaryMongoAvailable,
+  loadCoachSalaryDocumentFromMongo,
+  loadCoachSalaryRowsForClubAndCoachKeysFromMongo,
+  saveCoachSalaryDocumentMongo,
+} from "../coachSalaryMongo";
 
 /**
- * Coach login (JWT sub = CoachID): read-only salary rows from CoachSalary.json for that coach only.
+ * Coach login: salary rows from MongoDB `ClubMaster_DB.CoachManager` scoped by club folder id
+ * (`ClubID`) and coach id (JWT `sub` and/or roster `coach_id`).
  */
 async function coachSalaryPaymentContextAsync(
   req: Request,
-):
-  Promise<
-    | { ok: true; coachId: string; clubId: string; clubName: string }
-    | { ok: false; status: number; error: string }
-  > {
+): Promise<
+  | {
+      ok: true;
+      coachId: string;
+      rosterCoachId: string;
+      clubId: string;
+      clubName: string;
+    }
+  | { ok: false; status: number; error: string }
+> {
   if (String(req.user?.role ?? "") !== "Coach") {
     return { ok: false, status: 403, error: "Coach access only." };
   }
@@ -31,7 +45,7 @@ async function coachSalaryPaymentContextAsync(
   if (!coachId) {
     return { ok: false, status: 403, error: "Invalid session." };
   }
-  const clubId = resolveClubFolderUidForCoachRequest(req);
+  const clubId = await resolveClubFolderUidForCoachRequest(req);
   if (!clubId || !isValidClubFolderId(clubId)) {
     return {
       ok: false,
@@ -39,20 +53,53 @@ async function coachSalaryPaymentContextAsync(
       error: "No club roster found for this coach account.",
     };
   }
-  const inRoster = loadCoaches(clubId).some(
-    (c) =>
-      c.coachId.replace(/^\uFEFF/, "").trim().toUpperCase() ===
-      coachId.toUpperCase(),
-  );
-  if (!inRoster) {
+  const crow = await findCoachRosterRow(clubId, coachId);
+  if (!crow) {
     return { ok: false, status: 403, error: "Coach not in club roster." };
   }
+  const rosterCoachId = crow.coachId.replace(/^\uFEFF/, "").trim();
   const folderCtx = await resolveClubFolderRoleContextAsync(clubId, "coach");
   if (!folderCtx.ok) {
     return { ok: false, status: folderCtx.status, error: folderCtx.error };
   }
   const clubName = folderCtx.clubName;
-  return { ok: true, coachId, clubId, clubName };
+  return { ok: true, coachId, rosterCoachId, clubId, clubName };
+}
+
+function coachSalaryCoachKeys(ctx: {
+  coachId: string;
+  rosterCoachId: string;
+}): string[] {
+  return [
+    ...new Set(
+      [ctx.coachId, ctx.rosterCoachId]
+        .map((s) => String(s ?? "").trim())
+        .filter((s) => s.length > 0),
+    ),
+  ];
+}
+
+function salaryRowBelongsToCoachKeys(
+  coachIdOnRow: string,
+  clubId: string,
+  keys: string[],
+): boolean {
+  const rid = String(coachIdOnRow ?? "").trim();
+  if (!rid) {
+    return false;
+  }
+  for (const k of keys) {
+    if (coachIdsEqual(rid, k)) {
+      return true;
+    }
+    if (coachLoginUidMatchesRosterCoachId(clubId, rid, k)) {
+      return true;
+    }
+    if (coachLoginUidMatchesRosterCoachId(clubId, k, rid)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 export function createCoachSalaryPaymentRouter(): Router {
@@ -65,11 +112,26 @@ export function createCoachSalaryPaymentRouter(): Router {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
     }
+    if (!isCoachSalaryMongoAvailable()) {
+      res.status(503).json({
+        ok: false,
+        error:
+          "Coach salary requires MongoDB (collection ClubMaster_DB.CoachManager). Configure MONGODB_URI / MONGO_URI.",
+      });
+      return;
+    }
     const fileClub = resolveLessonFileClubId(ctx.clubId);
-    let rows: ReturnType<typeof buildCoachSalaryTableRows> = [];
+    const rosterCoaches = await loadCoachesPreferred(fileClub);
+    const keys = coachSalaryCoachKeys(ctx);
+    const salaryDoc = await loadCoachSalaryRowsForClubAndCoachKeysFromMongo(
+      ctx.clubId,
+      keys,
+    );
+    let rows: Awaited<ReturnType<typeof buildCoachSalaryTableRows>> = [];
     try {
-      rows = buildCoachSalaryTableRows(fileClub, {
-        onlyCoachId: ctx.coachId,
+      rows = await buildCoachSalaryTableRows(fileClub, {
+        rosterCoaches,
+        salaryDoc,
       });
     } catch {
       rows = [];
@@ -92,6 +154,7 @@ export function createCoachSalaryPaymentRouter(): Router {
       clubCountry,
       currencyCode,
       currencySymbol,
+      salaryStorage: "mongodb",
       rows,
     });
   });
@@ -105,16 +168,24 @@ export function createCoachSalaryPaymentRouter(): Router {
       res.status(ctx.status).json({ ok: false, error: ctx.error });
       return;
     }
+    if (!isCoachSalaryMongoAvailable()) {
+      res.status(503).json({
+        ok: false,
+        error:
+          "Coach salary requires MongoDB (collection ClubMaster_DB.CoachManager). Configure MONGODB_URI / MONGO_URI.",
+      });
+      return;
+    }
     const body = req.body as Record<string, unknown> | null;
     const sid = String(body?.CoachSalaryID ?? body?.coachSalaryId ?? "").trim();
     if (!sid) {
       res.status(400).json({ ok: false, error: "CoachSalaryID is required." });
       return;
     }
-    const fileClub = resolveLessonFileClubId(ctx.clubId);
     const now = new Date().toISOString();
+    const keys = coachSalaryCoachKeys(ctx);
     try {
-      const doc = loadCoachSalaryDocument(fileClub);
+      const doc = await loadCoachSalaryDocumentFromMongo(ctx.clubId);
       let found = false;
       for (let i = 0; i < doc.coachSalaries.length; i++) {
         const row = doc.coachSalaries[i]!;
@@ -122,7 +193,7 @@ export function createCoachSalaryPaymentRouter(): Router {
           continue;
         }
         if (
-          row.coach_id.trim().toUpperCase() !== ctx.coachId.toUpperCase()
+          !salaryRowBelongsToCoachKeys(row.coach_id, ctx.clubId, keys)
         ) {
           res.status(403).json({
             ok: false,
@@ -140,7 +211,7 @@ export function createCoachSalaryPaymentRouter(): Router {
         res.status(404).json({ ok: false, error: "Salary record not found." });
         return;
       }
-      saveCoachSalaryDocument(fileClub, doc);
+      await saveCoachSalaryDocumentMongo(ctx.clubId, doc);
       res.json({ ok: true, CoachSalaryID: sid, lastUpdatedDate: now });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);

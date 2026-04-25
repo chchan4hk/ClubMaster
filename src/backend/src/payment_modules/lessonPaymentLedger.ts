@@ -18,7 +18,7 @@ export type LedgerReservationEntry = {
   payments: LedgerPaymentLine[];
 };
 
-type LedgerFileV1 = {
+export type LedgerFileV1 = {
   version: 1;
   entries: Record<string, LedgerReservationEntry>;
 };
@@ -171,16 +171,17 @@ export type AddLedgerPaymentsInput = {
   paidAt: string;
 };
 
-export function addPaymentsToLedger(
-  clubId: string,
+/**
+ * Applies payment splits to an in-memory ledger (used by JSON and Mongo paths).
+ */
+export function applyAddPaymentsToLedgerState(
+  ledger: LedgerFileV1,
   input: AddLedgerPaymentsInput,
   defaultDueDates: Record<string, string>,
 ): { ok: true; paymentIds: string[] } | { ok: false; error: string } {
   if (!input.splits.length) {
     return { ok: false, error: "No payment splits." };
   }
-  ensureLessonPaymentLedgerFile(clubId);
-  const ledger = loadLessonPaymentLedger(clubId);
   const paidAt = (input.paidAt && input.paidAt.trim()) || new Date().toISOString().slice(0, 10);
   const method = (input.method && input.method.trim()) || "Cash";
   const reference = (input.reference && input.reference.trim()) || "—";
@@ -206,8 +207,37 @@ export function addPaymentsToLedger(
       paidAt,
     });
   }
-  saveLessonPaymentLedger(clubId, ledger);
   return { ok: true, paymentIds };
+}
+
+export function addPaymentsToLedger(
+  clubId: string,
+  input: AddLedgerPaymentsInput,
+  defaultDueDates: Record<string, string>,
+): { ok: true; paymentIds: string[] } | { ok: false; error: string } {
+  ensureLessonPaymentLedgerFile(clubId);
+  const ledger = loadLessonPaymentLedger(clubId);
+  const r = applyAddPaymentsToLedgerState(ledger, input, defaultDueDates);
+  if (r.ok) {
+    saveLessonPaymentLedger(clubId, ledger);
+  }
+  return r;
+}
+
+export function applyClearLedgerPaymentsForReservation(
+  ledger: LedgerFileV1,
+  lessonReserveId: string,
+): { ok: true } | { ok: false; error: string } {
+  const rid = lessonReserveId.trim();
+  if (!rid) {
+    return { ok: false, error: "Missing reservation id." };
+  }
+  const k = rid.toUpperCase();
+  const e = ledger.entries[k];
+  if (e) {
+    e.payments = [];
+  }
+  return { ok: true };
 }
 
 /** Clear all ledger payment lines for one reservation (coach void). */
@@ -224,12 +254,26 @@ export function clearLedgerPaymentsForLessonReserve(
   }
   ensureLessonPaymentLedgerFile(clubId);
   const ledger = loadLessonPaymentLedger(clubId);
-  const k = rid.toUpperCase();
-  const e = ledger.entries[k];
-  if (e) {
-    e.payments = [];
+  const r = applyClearLedgerPaymentsForReservation(ledger, rid);
+  if (!r.ok) {
+    return r;
   }
   saveLessonPaymentLedger(clubId, ledger);
+  return { ok: true };
+}
+
+export function applyDeleteLedgerEntryForReservation(
+  ledger: LedgerFileV1,
+  lessonReserveId: string,
+): { ok: true } | { ok: false; error: string } {
+  const rid = lessonReserveId.trim();
+  if (!rid) {
+    return { ok: false, error: "Missing reservation id." };
+  }
+  const k = rid.toUpperCase();
+  if (ledger.entries[k]) {
+    delete ledger.entries[k];
+  }
   return { ok: true };
 }
 
@@ -249,7 +293,10 @@ export function deleteLedgerEntryForLessonReserve(
   const ledger = loadLessonPaymentLedger(clubId);
   const k = rid.toUpperCase();
   if (ledger.entries[k]) {
-    delete ledger.entries[k];
+    const r = applyDeleteLedgerEntryForReservation(ledger, rid);
+    if (!r.ok) {
+      return r;
+    }
     saveLessonPaymentLedger(clubId, ledger);
   }
   return { ok: true };

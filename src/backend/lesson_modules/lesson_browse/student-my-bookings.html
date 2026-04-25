@@ -31,7 +31,7 @@
     <section class="glass rounded-xl border border-white/15 p-4 mb-6 overflow-x-auto">
       <h2 class="text-lg font-semibold text-amber-200 mb-1">Your lessons</h2>
       <p class="text-xs text-slate-500 mb-3">
-        Showing lessons associated with your bookings (same read-only list style as Coach My Bookings). Data: ACTIVE rows in <code class="text-slate-400">LessonReserveList.json</code> for your Student ID, merged with <code class="text-slate-400">LessonList.json</code>.
+        Showing lessons associated with your bookings (same read-only list style as Coach My Bookings). Data: ACTIVE rows in Mongo <code class="text-slate-400">LessonReserveList</code> (or <code class="text-slate-400">LessonReserveList.json</code> when Mongo is off) for your Student ID, merged with the club lesson list (<code class="text-slate-400">LessonList</code> in Mongo or <code class="text-slate-400">LessonList.json</code>).
       </p>
       <p id="fullLessonListError" class="hidden text-sm text-red-300 mb-2"></p>
       <p id="fullLessonListWarn" class="hidden text-sm text-amber-200/90 mb-2"></p>

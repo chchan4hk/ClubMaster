@@ -1,6 +1,6 @@
 /**
  * Keep MongoDB `LessonSeriesInfo.studentList` in sync when students reserve or cancel
- * (file-backed `LessonReserveList` is the source of truth for bookings).
+ * (Mongo `LessonReserveList` or `LessonReserveList.json` is the source of truth for bookings).
  */
 import {
   getLessonSeriesInfoCollection,
@@ -76,7 +76,7 @@ export async function resolveStudentLessonSeriesMatchTokens(
   }
   try {
     const fileClub = resolveLessonFileClubId(clubId);
-    for (const s of loadStudents(fileClub)) {
+    for (const s of await loadStudents(fileClub)) {
       if (s.studentId.trim().toUpperCase() === id.toUpperCase()) {
         const n = String(s.studentName ?? "").trim();
         if (n) {

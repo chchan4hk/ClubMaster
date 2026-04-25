@@ -60,7 +60,7 @@
       <p class="text-xs text-slate-500 mt-1">
         Club: <span id="hdrUid" class="text-slate-400">…</span>
         <span class="text-slate-600"> · </span>
-        <span class="text-slate-500">Schedule data: <code class="text-slate-400">LessonList.json</code> (Coach Manager) or API (Coach).</span>
+        <span class="text-slate-500">Schedule data: <code class="text-slate-400">GET /api/coach-manager/lessons</code> (Mongo <code class="text-slate-400">LessonList</code> or file fallback).</span>
       </p>
     </header>
 
@@ -627,7 +627,7 @@
         buildGrid();
       }
 
-      /** Coach Manager: read `backend/data_club/{clubId}/LessonList.json` directly. */
+      /** Fallback: read `backend/data_club/{clubId}/LessonList.json` from static hosting (no auth). Coach Manager uses `loadLessonsFromApi`. */
       function loadLessonListFromJsonFile() {
         showError("");
         if (!state.clubId) {
@@ -822,7 +822,11 @@
 
       function loadLessonsData() {
         var userRole = localStorage.getItem("userRole");
-        if (userRole === "Coach" || userRole === "Student") {
+        if (
+          userRole === "Coach" ||
+          userRole === "Student" ||
+          userRole === "CoachManager"
+        ) {
           loadLessonsFromApi();
         } else {
           loadLessonListFromJsonFile();

@@ -4,8 +4,8 @@ import { clubDataDir, isValidClubFolderId, getDataClubRootPath } from "./coachLi
 
 export const LESSON_RESERVE_LIST_FILENAME = "LessonReserveList.json";
 
-const LR_ID_RE = /^LR(\d+)$/i;
-const LR_PAD = 6;
+/** Legacy ids: `LR000001` (no club prefix). */
+const LEGACY_LR_ONLY = /^LR(\d+)$/i;
 
 export type LessonReserveRecord = {
   lessonReserveId: string;
@@ -60,7 +60,9 @@ function boolFromUnknown(x: unknown): boolean {
   return false;
 }
 
-function rowFromUnknown(o: Record<string, unknown>): LessonReserveRecord | null {
+export function parseLessonReserveObject(
+  o: Record<string, unknown>,
+): LessonReserveRecord | null {
   const s = (x: unknown) => (x == null ? "" : String(x).trim());
   const id = s(o.lessonReserveId ?? o.lesson_reserve_id);
   const lid = s(o.lessonId ?? o.LessonID);
@@ -82,18 +84,43 @@ function rowFromUnknown(o: Record<string, unknown>): LessonReserveRecord | null 
   };
 }
 
-function nextLessonReserveId(existing: LessonReserveRecord[]): string {
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Next reservation id: `{ClubFolderUid}-LR0000001`, `{ClubFolderUid}-LR0000002`, …
+ * (`LR` + 7-digit sequence). Legacy bare `LR000001` ids in the same list are folded into the max sequence.
+ */
+export function computeNextLessonReserveId(
+  clubFolderUid: string,
+  existing: LessonReserveRecord[],
+): string {
+  const club = clubFolderUid.replace(/^\uFEFF/, "").trim();
+  if (!isValidClubFolderId(club)) {
+    return `LR${String(1).padStart(6, "0")}`;
+  }
+  const scoped = new RegExp(`^${escapeRegex(club)}-LR(\\d+)$`, "i");
   let max = 0;
   for (const r of existing) {
-    const m = r.lessonReserveId.match(LR_ID_RE);
-    if (m) {
-      const n = Number.parseInt(m[1]!, 10);
+    const id = (r.lessonReserveId || "").replace(/^\uFEFF/, "").trim();
+    const m1 = id.match(scoped);
+    if (m1) {
+      const n = Number.parseInt(m1[1]!, 10);
+      if (!Number.isNaN(n) && n > max) {
+        max = n;
+      }
+      continue;
+    }
+    const m2 = id.match(LEGACY_LR_ONLY);
+    if (m2) {
+      const n = Number.parseInt(m2[1]!, 10);
       if (!Number.isNaN(n) && n > max) {
         max = n;
       }
     }
   }
-  return `LR${String(max + 1).padStart(LR_PAD, "0")}`;
+  return `${club}-LR${String(max + 1).padStart(7, "0")}`;
 }
 
 function migrateLessonReserveJsonKeysInPlace(clubId: string): void {
@@ -156,7 +183,7 @@ export function loadLessonReservations(clubId: string): LessonReserveRecord[] {
     const file = parseReserveFile(raw);
     const out: LessonReserveRecord[] = [];
     for (const o of file.reservations) {
-      const r = rowFromUnknown(o);
+      const r = parseLessonReserveObject(o);
       if (r) {
         out.push(r);
       }
@@ -207,8 +234,12 @@ export function appendLessonReservation(
   const p = lessonReserveListPath(clubId);
   const existing = loadLessonReservations(clubId);
   const today = new Date().toISOString().slice(0, 10);
+  const folderForIds = isValidClubFolderId(clubId.trim())
+    ? clubId.trim()
+    : rec.ClubID.trim();
   const lessonReserveId =
-    rec.lessonReserveId?.trim() || nextLessonReserveId(existing);
+    rec.lessonReserveId?.trim() ||
+    computeNextLessonReserveId(folderForIds, existing);
   const sid = String(rec.student_id ?? rec.StudentID ?? "").trim();
   if (!sid) {
     return { ok: false, error: "student_id is required." };
@@ -277,7 +308,7 @@ export function removeActiveReservationForStudentLesson(
   let removedId = "";
   const next: Record<string, unknown>[] = [];
   for (const o of file.reservations) {
-    const r = rowFromUnknown(o);
+    const r = parseLessonReserveObject(o);
     if (
       r &&
       r.lessonId.trim().toUpperCase() === lid &&

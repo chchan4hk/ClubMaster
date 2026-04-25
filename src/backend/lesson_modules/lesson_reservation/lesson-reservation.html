@@ -9,6 +9,9 @@
   <link rel="stylesheet" href="/css/profile-password-panels.css" />
   <link rel="stylesheet" href="/css/coach-manager-module-shell.css" />
   <link rel="stylesheet" href="/css/btn-cancel-metallic-brown.css" />
+  <link rel="stylesheet" href="/css/btn-remove-black-red-gold.css" />
+  <link rel="stylesheet" href="/css/btn-dark-blue-green.css" />
+  <link rel="stylesheet" href="/css/btn-create-dark-brown.css" />
   <style>
     /* Assign Student: light “table” surfaces — dark type */
     #assignStudentBackdrop .assign-student-surface {
@@ -72,20 +75,33 @@
       color: #292524;
     }
 
-    /* Lesson Series — green / gold metallic */
+    /* Lesson Series — gold / pale yellow metallic */
     .btn-lesson-series-metallic {
-      background: linear-gradient(165deg, #ecfccb 0%, #a3e635 22%, #65a30d 55%, #3f6212 100%);
-      border: 1px solid rgba(250, 250, 210, 0.65);
-      color: #1a2e05;
-      text-shadow: 0 1px 0 rgba(255, 255, 240, 0.45);
+      background: linear-gradient(
+        165deg,
+        #fffef7 0%,
+        #fefce8 14%,
+        #fef9c3 32%,
+        #fef08a 55%,
+        #fde047 72%,
+        #eab308 100%
+      );
+      border: 1px solid rgba(254, 249, 195, 0.95);
+      color: #713f12;
+      font-weight: 700;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.88);
       box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.55),
-        inset 0 -1px 0 rgba(54, 83, 20, 0.35),
-        0 2px 8px rgba(22, 40, 5, 0.35);
+        inset 0 1px 0 rgba(255, 255, 255, 0.92),
+        inset 0 -1px 0 rgba(202, 138, 4, 0.28),
+        0 2px 10px rgba(113, 63, 18, 0.28);
     }
     .btn-lesson-series-metallic:hover {
-      filter: brightness(1.06);
+      filter: brightness(1.05) saturate(1.04);
     }
+    .btn-lesson-series-metallic:active {
+      filter: brightness(0.97);
+    }
+
   </style>
 </head>
 <body class="profile-password-page cm-module-shell min-h-full p-4 sm:p-6">
@@ -141,11 +157,11 @@
 
       <div class="mt-4 flex flex-wrap gap-2">
         <button type="button" id="btnCreateNewLesson"
-          class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm">
+          class="btn-create-dark-brown rounded-lg px-4 py-2 text-sm">
           Create New Lesson
         </button>
         <button type="button" id="btnLessonTimetable"
-          class="rounded-lg bg-yellow-100 hover:bg-yellow-200/90 border border-yellow-200 text-slate-800 font-medium px-4 py-2 text-sm shadow-sm">
+          class="btn-dark-blue-green rounded-lg px-4 py-2 text-sm">
           Lesson TimeTable
         </button>
       </div>
@@ -308,11 +324,11 @@
           <p id="createLessonOk" class="hidden text-sm text-amber-300"></p>
           <div class="flex flex-wrap gap-2 pt-2">
             <button type="submit" id="createLessonSubmitBtn"
-              class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
+              class="btn-confirm-black rounded-lg px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
               Confirm
             </button>
             <button type="button" id="createLessonCancelBtn"
-              class="btn-cancel-metallic-brown rounded-lg font-medium px-4 py-2 text-sm">
+              class="btn-cancel-metallic-brown rounded-lg px-4 py-2 text-sm">
               Cancel
             </button>
           </div>
@@ -499,11 +515,11 @@
               Assign Student
             </button>
             <button type="button" id="tableEditConfirmBtn"
-              class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
+              class="btn-confirm-black rounded-lg px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
               Confirm
             </button>
             <button type="button" id="tableEditCancelBtn"
-              class="btn-cancel-metallic-brown rounded-lg font-medium px-4 py-2 text-sm">
+              class="btn-cancel-metallic-brown rounded-lg px-4 py-2 text-sm">
               Cancel
             </button>
           </div>
@@ -527,7 +543,7 @@
         </p>
         <div id="reservedStatusGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm"></div>
         <button type="button" id="reservedStatusClose"
-          class="btn-cancel-metallic-brown mt-5 rounded-lg px-4 py-2 text-sm font-medium">
+          class="btn-cancel-metallic-brown mt-5 rounded-lg px-4 py-2 text-sm">
           Close
         </button>
       </div>
@@ -553,11 +569,11 @@
         <p id="lessonSeriesSaveOk" class="hidden text-sm text-emerald-800 mb-2"></p>
         <div class="flex flex-wrap justify-end gap-2 pt-2 border-t border-amber-200/45 shrink-0">
           <button type="button" id="lessonSeriesCancel"
-            class="btn-cancel-metallic-brown rounded-lg px-4 py-2 text-sm font-medium">
+            class="btn-cancel-metallic-brown rounded-lg px-4 py-2 text-sm">
             Cancel
           </button>
           <button type="button" id="lessonSeriesConfirm"
-            class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
+            class="btn-confirm-black rounded-lg px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
             Confirm
           </button>
         </div>
@@ -578,7 +594,7 @@
         <div id="assignStudentLessonInfo" class="assign-student-surface rounded-lg border border-stone-200 bg-stone-50 p-3 text-sm text-stone-900 space-y-1">
         </div>
         <div>
-          <p class="text-[11px] uppercase tracking-wide text-stone-700 font-medium mb-2">Students (UserList_Student)</p>
+          <p class="text-[11px] uppercase tracking-wide text-stone-700 font-medium mb-2">Students (Mongo ClubMaster_DB / UserList_Student)</p>
           <div id="assignStudentList" class="assign-student-surface rounded-lg border border-stone-200 bg-stone-50 max-h-[min(40vh,280px)] overflow-y-auto p-2 space-y-1 text-sm text-stone-900">
             <p class="text-stone-600 text-xs px-2 py-3">Loading…</p>
           </div>
@@ -588,11 +604,11 @@
       </div>
       <div class="flex flex-wrap justify-end gap-2 px-5 py-3 border-t border-white/10 shrink-0">
         <button type="button" id="assignStudentModalCancel"
-          class="btn-cancel-metallic-brown rounded-lg font-medium px-4 py-2 text-sm">
+          class="btn-cancel-metallic-brown rounded-lg px-4 py-2 text-sm">
           Cancel
         </button>
         <button type="button" id="assignStudentModalConfirm"
-          class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
+          class="btn-confirm-black rounded-lg px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
           Confirm
         </button>
       </div>
@@ -707,7 +723,7 @@
         var secIntro = document.querySelector("section.glass > p.text-xs");
         if (secIntro) {
           secIntro.textContent =
-            "Showing lessons associated with your coach profile.";
+            "Your club's lesson list (MongoDB LessonList when configured). Rows are filtered to lessons whose Coach Name matches your user profile full name from Mongo userLogin when present; otherwise the roster / username rules apply.";
         }
         var bCreate = document.getElementById("btnCreateNewLesson");
         if (bCreate) {
@@ -1075,12 +1091,12 @@
           '<div class="flex flex-wrap items-start justify-between gap-2">' +
           summary +
           '<span class="inline-flex flex-nowrap gap-1.5 shrink-0">' +
-          '<button type="button" class="lesson-series-btn-update rounded-md bg-amber-700/90 hover:bg-amber-600 text-white text-xs font-medium px-2.5 py-1.5" data-series-idx="' +
+          '<button type="button" class="lesson-series-btn-update btn-update-orange-gold rounded-md text-xs px-2.5 py-1.5" data-series-idx="' +
           idx +
           '">' +
           (exp ? "Collapse" : "Update") +
           "</button>" +
-          '<button type="button" class="lesson-series-btn-remove rounded-md bg-stone-700 hover:bg-stone-600 text-white text-xs font-medium px-2.5 py-1.5" data-series-idx="' +
+          '<button type="button" class="lesson-series-btn-remove btn-remove-black-red-gold rounded-md text-xs px-2.5 py-1.5" data-series-idx="' +
           idx +
           '">Remove</button>' +
           "</span>" +
@@ -1438,12 +1454,16 @@
               var txt = document.createElement("span");
               txt.className =
                 "assign-student-student-entry text-sm leading-snug flex-1 min-w-0";
+              var sidDisp =
+                window.api && typeof window.api.displayStudentIdForUi === "function"
+                  ? window.api.displayStudentIdForUi(sid) || sid
+                  : sid;
               var line =
                 '<span class="assign-student-student-name">' +
                 escapeHtml(name || "—") +
                 "</span> " +
                 '<span class="assign-student-student-id">(' +
-                escapeHtml(sid || "—") +
+                escapeHtml(sidDisp || "—") +
                 ")</span>";
               if (inactive) {
                 line +=
@@ -1787,6 +1807,29 @@
         );
       }
 
+      /** Coach My Bookings: one-line summary (class + date span). */
+      function formatLessonSeriesForMyBookings(L) {
+        var info = (L.class_info != null ? String(L.class_info) : "").trim();
+        var sd = (L.lesson_start_date != null ? String(L.lesson_start_date) : "").trim();
+        var ed = (L.lesson_end_date != null ? String(L.lesson_end_date) : "").trim();
+        var dsd =
+          window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+            ? window.api.formatDateDisplayDdMmYyyy(sd)
+            : sd;
+        var ded =
+          window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+            ? window.api.formatDateDisplayDdMmYyyy(ed)
+            : ed;
+        var parts = [];
+        if (info) {
+          parts.push(info);
+        }
+        if (sd || ed) {
+          parts.push((dsd || "—") + " → " + (ded || "—"));
+        }
+        return parts.length ? parts.join(" · ") : "—";
+      }
+
       function renderLessonTableFromApi(lessons) {
         var headRow = document.getElementById("fullLessonListHeadRow");
         var tb = document.getElementById("fullLessonListBody");
@@ -1803,6 +1846,7 @@
         if (coachLessonsReadOnly) {
           headRow.innerHTML =
             '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap min-w-[11rem]">Actions</th>' +
+            '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap max-w-[18rem]">Lesson series</th>' +
             LESSON_TABLE_COLS.map(function (col) {
               return (
                 '<th class="' + lessonTableThClass(col) + '">' +
@@ -1812,6 +1856,7 @@
             }).join("");
           tb.innerHTML = lessons
             .map(function (L, idx) {
+              var seriesText = formatLessonSeriesForMyBookings(L);
               var tds = LESSON_TABLE_COLS.map(function (col) {
                 var v = L[col.key] != null ? String(L[col.key]) : "";
                 var disp =
@@ -1833,6 +1878,9 @@
                 '">Status</button>' +
                 lessonSeriesButtonHtml(idx) +
                 "</span></td>" +
+                '<td class="py-2 pr-3 text-xs align-top text-slate-300 whitespace-pre-wrap break-words max-w-[18rem]">' +
+                escapeHtml(seriesText) +
+                "</td>" +
                 tds +
                 "</tr>"
               );
@@ -1867,7 +1915,7 @@
               '<tr class="border-b border-white/5">' +
               '<td class="py-2 pr-3 align-middle whitespace-nowrap">' +
               '<span class="inline-flex flex-nowrap items-center gap-1.5">' +
-              '<button type="button" class="cm-row-update rounded-md bg-amber-700/90 hover:bg-amber-600 text-white text-xs font-medium px-2.5 py-1.5" data-idx="' +
+              '<button type="button" class="cm-row-update btn-update-orange-gold rounded-md text-xs px-2.5 py-1.5" data-idx="' +
               idx +
               '">Update</button>' +
               '<button type="button" class="cm-row-reserved rounded-md bg-black hover:bg-neutral-900 text-white text-xs font-medium px-2.5 py-1.5 border border-white/10" data-idx="' +
@@ -1890,7 +1938,7 @@
         return t === "clubid" || t === "club_id";
       }
 
-      /** Fallback table when lessons[] is empty: header/row grid from LessonList.json (API). */
+      /** Fallback table when lessons[] is empty: header/row grid from `lessonListRaw` (API; Mongo `LessonList` or file). */
       function renderLessonListRawFallback(raw) {
         var headRow = document.getElementById("fullLessonListHeadRow");
         var tb = document.getElementById("fullLessonListBody");
@@ -2048,7 +2096,7 @@
         populateCoachNameSelects(cachedCoachNames);
       }
 
-      /** Loads lessons from GET /coach-manager/lessons (backed by LessonList.json). */
+      /** Loads lessons from GET /coach-manager/lessons (Mongo `LessonList` when configured, else `LessonList.json`). */
       function loadLessonListFromApi(targetPage) {
         if (typeof targetPage === "number" && !isNaN(targetPage)) {
           lessonListPage = Math.max(1, Math.floor(targetPage));
@@ -2103,7 +2151,8 @@
           encodeURIComponent(String(LESSON_LIST_PAGE_SIZE));
         if (role === "Coach") {
           var cidLessons = getLessonModuleClubId();
-          if (cidLessons) {
+          /** My Bookings: omit clubId so the API keeps “my lessons” filter (Coach Name = your full name), not browse-all. */
+          if (cidLessons && !(coachLessonsReadOnly && myBookingsMode)) {
             lessonsPath += "&clubId=" + encodeURIComponent(cidLessons);
           }
         }
@@ -2512,7 +2561,15 @@
                     ": " +
                     data.reserved
                       .map(function (r) {
-                        return r.Student_Name || r.studentId;
+                        var nm = r.Student_Name || "";
+                        if (nm) {
+                          return nm;
+                        }
+                        var raw = r.studentId || "";
+                        return window.api &&
+                          typeof window.api.displayStudentIdForUi === "function"
+                          ? window.api.displayStudentIdForUi(raw) || raw
+                          : raw;
                       })
                       .join(", ") +
                     "."
@@ -2525,7 +2582,13 @@
                     " (" +
                     data.skipped
                       .map(function (s) {
-                        return s.studentId + " — " + s.reason;
+                        var raw = s.studentId || "";
+                        var disp =
+                          window.api &&
+                          typeof window.api.displayStudentIdForUi === "function"
+                            ? window.api.displayStudentIdForUi(raw) || raw
+                            : raw;
+                        return disp + " — " + s.reason;
                       })
                       .join("; ") +
                     ")."

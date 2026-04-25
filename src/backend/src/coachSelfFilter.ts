@@ -1,5 +1,8 @@
 import type { CoachCsvRow } from "./coachListCsv";
-import { loadCoaches } from "./coachListCsv";
+import { coachIdsEqual, coachLoginUidMatchesRosterCoachId } from "./coachListCsv";
+import { isMongoConfigured } from "./db/DBConnection";
+import { findUserLoginDocumentByUid } from "./userLoginCollectionMongo";
+import { loadCoachesPreferred } from "./coachListMongo";
 
 export function normCoachLabel(s: string): string {
   return String(s ?? "")
@@ -8,19 +11,58 @@ export function normCoachLabel(s: string): string {
     .replace(/\s+/g, " ");
 }
 
-export function findCoachRosterRow(
+/**
+ * Roster row for the signed-in coach within `clubId`.
+ * JWT `sub` is usually the coach **login uid** (`userLogin.uid`), while `UserList_Coach` uses roster
+ * `coach_id` (e.g. `C000004` or `{club}-C00001`). Also resolves via Mongo `userLogin.coach_id` /
+ * `full_name` when ids differ.
+ */
+export async function findCoachRosterRow(
   clubId: string,
   coachJwtSub: string,
-): CoachCsvRow | null {
+): Promise<CoachCsvRow | null> {
   const id = coachJwtSub.trim();
   if (!id) {
     return null;
   }
-  return (
-    loadCoaches(clubId).find(
-      (c) => c.coachId.trim().toUpperCase() === id.toUpperCase(),
-    ) ?? null
+  const roster = await loadCoachesPreferred(clubId);
+  const byJwt = roster.find((c) =>
+    coachLoginUidMatchesRosterCoachId(clubId, c.coachId, id),
   );
+  if (byJwt) {
+    return byJwt;
+  }
+  const byPlainId = roster.find((c) => coachIdsEqual(c.coachId, id));
+  if (byPlainId) {
+    return byPlainId;
+  }
+  if (isMongoConfigured()) {
+    const doc = await findUserLoginDocumentByUid(id);
+    const ut = String(doc?.usertype ?? "").trim();
+    if (doc && ut.toLowerCase() === "coach") {
+      const rosterKey = String(doc.coach_id ?? "").trim();
+      if (rosterKey) {
+        const byCoachId = roster.find(
+          (c) =>
+            coachIdsEqual(c.coachId, rosterKey) ||
+            coachLoginUidMatchesRosterCoachId(clubId, c.coachId, rosterKey),
+        );
+        if (byCoachId) {
+          return byCoachId;
+        }
+      }
+      const fn = String(doc.full_name ?? "").trim();
+      if (fn) {
+        const byName = roster.find(
+          (c) => normCoachLabel(c.coachName) === normCoachLabel(fn),
+        );
+        if (byName) {
+          return byName;
+        }
+      }
+    }
+  }
+  return null;
 }
 
 /**

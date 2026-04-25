@@ -6,10 +6,13 @@ import {
   verifyRoleLoginPassword,
 } from "../coachStudentLoginCsv";
 import {
-  findClubUidForCoachId,
+  coachLoginUidMatchesRosterCoachId,
   isValidClubFolderId,
-  loadCoaches,
 } from "../coachListCsv";
+import {
+  findClubUidForCoachIdPreferred,
+  loadCoachesPreferred,
+} from "../coachListMongo";
 import { findClubUidForStudentId } from "../studentListCsv";
 import {
   distinctClubNamesFromUserlist,
@@ -122,7 +125,8 @@ export function createAuthRouter(): Router {
    * Login with explicit role + optional club name (sign-in page).
    * When MongoDB is configured (`MONGODB_URI` / `MONGO_PASSWORD`), credentials are checked against
    * `userLogin` via `getAuthUserLoginCollection()` (see `resolveAuthLoginDatabaseName()` / `MONGO_AUTH_USERLOGIN_DB`).
-   * Without Mongo, sign-in uses `userLogin.csv` / JSON plus club roster files.
+   * Coach and student role logins in Mongo do not require a matching `UserList_*` roster row to sign in.
+   * Without Mongo, sign-in uses `userLogin.csv` / JSON plus club roster files for Coach/Student.
    */
   r.post("/login-with-context", async (req, res) => {
     const username = String(req.body?.username ?? "").trim();
@@ -283,11 +287,50 @@ export function createAuthRouter(): Router {
           if (fromRow) {
             clubUid = await resolveCoachManagerClubUid(fromRow);
           }
-          if (!clubUid) {
-            clubUid = findClubUidForCoachId(login.uid);
-          }
         }
       }
+      /** Mongo + CSV: resolve club folder from `UserList_Coach` when login row has no `club_id` / folder. */
+      if (!clubUid) {
+        const coachRosterKey = String(login.coachId ?? login.uid ?? "").trim();
+        if (coachRosterKey) {
+          clubUid = await findClubUidForCoachIdPreferred(coachRosterKey);
+        }
+      }
+
+      if (isMongoConfigured()) {
+        if (!login.isActivated || login.status.toUpperCase() !== "ACTIVE") {
+          res.status(403).json({
+            ok: false,
+            error: "Coach account is inactive in userLogin (MongoDB).",
+          });
+          return;
+        }
+        if (isLoginExpiryDatePast(login.expiryDate)) {
+          sendExpiredLogin(res, {
+            username: login.username,
+            role: "Coach",
+            usertype: "Coach",
+            uid: login.uid.trim(),
+            expiry_date: String(login.expiryDate ?? "").trim() || "—",
+          });
+          return;
+        }
+        const clubCtx =
+          clubUid && isValidClubFolderId(clubUid)
+            ? { club_folder_uid: clubUid, club_name: login.clubName }
+            : undefined;
+        signAndSend(
+          {
+            sub: login.uid.trim(),
+            username: login.username,
+            role: "Coach",
+            usertype: "Coach",
+          },
+          clubCtx,
+        );
+        return;
+      }
+
       if (!clubUid) {
         res.status(404).json({
           ok: false,
@@ -296,22 +339,22 @@ export function createAuthRouter(): Router {
         });
         return;
       }
-      const coaches = loadCoaches(clubUid);
-      const coach = coaches.find(
-        (c) => c.coachId.trim().toUpperCase() === login.uid.trim().toUpperCase(),
+      const coaches = await loadCoachesPreferred(clubUid);
+      const coach = coaches.find((c) =>
+        coachLoginUidMatchesRosterCoachId(clubUid, c.coachId, login.uid),
       );
       if (!coach) {
         res.status(403).json({
           ok: false,
           error:
-            "Coach login exists in userLogin_Coach but there is no matching CoachID row in UserList_Coach.json for this club.",
+            "Coach login exists in userLogin_Coach but there is no matching CoachID row in the club coach roster (UserList_Coach) for this club.",
         });
         return;
       }
       if (coach.status.toUpperCase() !== "ACTIVE") {
         res.status(403).json({
           ok: false,
-          error: "Coach status is not ACTIVE in UserList_Coach.json.",
+          error: "Coach status is not ACTIVE in the club coach roster (UserList_Coach).",
         });
         return;
       }
@@ -390,7 +433,7 @@ export function createAuthRouter(): Router {
             clubUid = await resolveCoachManagerClubUid(fromRow);
           }
           if (!clubUid) {
-            clubUid = findClubUidForStudentId(rosterStudentId);
+            clubUid = await findClubUidForStudentId(rosterStudentId);
           }
         }
       }

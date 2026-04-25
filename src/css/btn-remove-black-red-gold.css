@@ -1,0 +1,56 @@
+/**
+ * ClubMaster — shared **Remove** row action:
+ * Black / deep red base with gold metallic rim and highlight; **white bold** label.
+ * Use with `cm-row-remove`, `lesson-series-btn-remove`, or `row-remove` for JS hooks.
+ */
+
+.btn-remove-black-red-gold {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  cursor: pointer;
+  border: 1px solid rgba(251, 191, 36, 0.6);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 230, 200, 0.2) 0%,
+      rgba(255, 255, 255, 0) 38%,
+      rgba(40, 0, 0, 0.55) 100%
+    ),
+    linear-gradient(
+      165deg,
+      #0a0a0a 0%,
+      #1c0a0a 22%,
+      #7f1d1d 48%,
+      #991b1b 68%,
+      #b45309 88%,
+      #451a03 100%
+    );
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  box-shadow:
+    inset 0 1px 0 rgba(253, 224, 171, 0.35),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.5),
+    0 2px 6px rgba(0, 0, 0, 0.45);
+}
+
+.btn-remove-black-red-gold:hover:not(:disabled) {
+  filter: brightness(1.1) saturate(1.05);
+}
+
+.btn-remove-black-red-gold:active:not(:disabled) {
+  filter: brightness(0.94);
+}
+
+.btn-remove-black-red-gold:focus-visible {
+  outline: 2px solid rgba(251, 191, 36, 0.85);
+  outline-offset: 2px;
+}
+
+.btn-remove-black-red-gold:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(0.25);
+}

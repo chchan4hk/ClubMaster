@@ -30,6 +30,14 @@
         <dd id="fieldClubName" class="font-medium"></dd>
       </div>
       <div class="flex flex-col sm:flex-row sm:gap-4">
+        <dt class="profile-dt-black-bold shrink-0 w-40">Contact Number</dt>
+        <dd id="fieldContactNumber" class="font-medium"></dd>
+      </div>
+      <div class="flex flex-col sm:flex-row sm:gap-4">
+        <dt class="profile-dt-black-bold shrink-0 w-40">Email Address</dt>
+        <dd id="fieldEmailAddress" class="font-medium"></dd>
+      </div>
+      <div class="flex flex-col sm:flex-row sm:gap-4">
         <dt class="profile-dt-black-bold shrink-0 w-40">Status</dt>
         <dd id="fieldStatus" class="font-medium"></dd>
       </div>
@@ -78,6 +86,14 @@
           document.getElementById("fieldClubName").textContent =
             u.club_name != null && String(u.club_name).trim() !== ""
               ? String(u.club_name)
+              : "—";
+          document.getElementById("fieldContactNumber").textContent =
+            u.contact_number != null && String(u.contact_number).trim() !== "" && String(u.contact_number).trim() !== "—"
+              ? String(u.contact_number).trim()
+              : "—";
+          document.getElementById("fieldEmailAddress").textContent =
+            u.email_address != null && String(u.email_address).trim() !== "" && String(u.email_address).trim() !== "—"
+              ? String(u.email_address).trim()
               : "—";
           document.getElementById("fieldStatus").textContent =
             u.status != null && String(u.status).trim() !== ""

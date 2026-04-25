@@ -100,26 +100,6 @@
     .salary-metallic-dl dd {
       color: #1f1a0f;
     }
-    .btn-salary-confirm-open {
-      background: linear-gradient(145deg, #f0e6c8 0%, #c9a962 42%, #7a6224 100%);
-      color: #1a1408;
-      border: 1px solid rgba(255, 224, 130, 0.55);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 2px 8px rgba(0, 0, 0, 0.25);
-      font-weight: 600;
-    }
-    .btn-salary-confirm-open:hover {
-      filter: brightness(1.06);
-    }
-    .btn-salary-metallic-primary {
-      background: linear-gradient(145deg, #f5e6a8 0%, #d4af37 38%, #8a7020 100%);
-      color: #120d04;
-      border: 1px solid rgba(255, 224, 130, 0.6);
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 14px rgba(0, 0, 0, 0.3);
-      font-weight: 700;
-    }
-    .btn-salary-metallic-primary:hover {
-      filter: brightness(1.05);
-    }
   </style>
 </head>
 <body
@@ -163,7 +143,7 @@
     </section>
 
     <section class="glass rounded-xl border border-amber-600/25 p-4 overflow-x-auto">
-      <h2 class="text-lg font-semibold text-amber-200 mb-2">Salary records</h2>
+      <h2 class="text-lg font-semibold text-amber-200 mb-2">Salary Record</h2>
       <p class="text-xs text-amber-100/75 mb-3">
         Rows are limited to your coach account. Choose a month to show lessons whose schedule overlaps that calendar month.
       </p>
@@ -188,7 +168,7 @@
     </section>
 
     <section class="glass rounded-xl border border-amber-600/25 p-4 overflow-x-auto mt-4 mb-4">
-      <h2 class="text-lg font-semibold text-amber-200 mb-2">Salary trend (last 6 months)</h2>
+      <h2 class="text-lg font-semibold text-amber-200 mb-2">Salary Trend (Last 6 Months)</h2>
       <p class="text-xs text-amber-100/75 mb-3">
         For each calendar month, totals sum your salary amounts for lessons whose schedule overlaps that month (same rule as the month filter above).
       </p>
@@ -232,7 +212,7 @@
           Cancel
         </button>
         <button type="button" id="salaryConfirmPayBtn"
-          class="btn-salary-metallic-primary rounded-lg px-5 py-2.5 text-sm">
+          class="btn-confirm-black rounded-lg px-5 py-2.5 text-sm">
           Confirm Payment
         </button>
       </div>
@@ -491,10 +471,10 @@
         if (!r.first) {
           return true;
         }
-        var s = (row.lessonStartDate || "").slice(0, 10);
-        var e = (row.lessonEndDate || "").slice(0, 10);
+        var s = (row.lessonStartDate || row.lesson_start_date || "").slice(0, 10);
+        var e = (row.lessonEndDate || row.lesson_end_date || "").slice(0, 10);
         if (!s && !e) {
-          return false;
+          return true;
         }
         if (!s) {
           s = e;
@@ -537,9 +517,19 @@
       }
 
       /** Six calendar months ending with the current month: oldest → newest. */
-      function lastSixMonthsYmInclusive() {
+      function lastSixMonthsYmInclusive(baseYm) {
         var out = [];
         var d = new Date();
+        if (baseYm && typeof baseYm === "string") {
+          var m = /^(\d{4})-(\d{2})$/.exec(baseYm.trim());
+          if (m) {
+            var y = parseInt(m[1], 10);
+            var mo = parseInt(m[2], 10);
+            if (y && mo >= 1 && mo <= 12) {
+              d = new Date(y, mo - 1, 1);
+            }
+          }
+        }
         for (var i = 5; i >= 0; i--) {
           var t = new Date(d.getFullYear(), d.getMonth() - i, 1);
           out.push(t.getFullYear() + "-" + pad2(t.getMonth() + 1));
@@ -570,16 +560,70 @@
         return names[mo - 1] + " " + y;
       }
 
-      /** One row per calendar month (last 6 including current), same overlap rule as the filter. */
+      function normalizePaymentDateKey(raw) {
+        var s = raw == null ? "" : String(raw).trim();
+        if (!s) {
+          return "";
+        }
+        var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+        if (m) {
+          return m[1] + "-" + m[2] + "-" + m[3];
+        }
+        var d = new Date(s);
+        if (!isNaN(d.getTime())) {
+          return d.toISOString().slice(0, 10);
+        }
+        return s;
+      }
+
+      function paymentDateToYm(raw) {
+        var key = normalizePaymentDateKey(raw);
+        if (/^\d{4}-\d{2}-\d{2}$/.test(key)) {
+          return key.slice(0, 7);
+        }
+        return "";
+      }
+
+      function isPaidStatus(s) {
+        return String(s || "").trim().toLowerCase() === "paid";
+      }
+
+      /**
+       * Salary Trend: bucket by Payment_date (Paid only), not createdAt.
+       * Fallback when Payment_date is missing: lastUpdatedDate (Paid only).
+       */
       function computeSixMonthSalaryTrend() {
-        var months = lastSixMonthsYmInclusive();
+        var sel = document.getElementById("filterCoachSalaryMonth");
+        var baseYm = sel && sel.value ? String(sel.value).trim() : "";
+        if (!baseYm) {
+          baseYm = defaultMonthYm();
+        }
+        var months = lastSixMonthsYmInclusive(baseYm);
         return months.map(function (ym) {
           var total = 0;
           var count = 0;
+          var seen = {};
           cachedRows.forEach(function (row) {
-            if (!lessonOverlapsMonth(row, ym)) {
+            if (!isPaidStatus(row.Payment_Status)) {
               return;
             }
+            var payRaw =
+              row.Payment_date ||
+              row.payment_date ||
+              row.PaymentDate ||
+              row.lastUpdatedDate;
+            if (paymentDateToYm(payRaw) !== ym) {
+              return;
+            }
+            var k = normalizePaymentDateKey(payRaw);
+            if (!k) {
+              return;
+            }
+            var uniq = String(row.CoachSalaryID || "").trim() || k;
+            if (seen[uniq]) {
+              return;
+            }
+            seen[uniq] = true;
             total += parseSalaryAmountVal(row.salary_amount);
             count += 1;
           });
@@ -747,7 +791,7 @@
             html +=
               '<button type="button" data-action="open-salary-confirm" data-salary-id="' +
               escapeHtml(sid) +
-              '" class="btn-salary-confirm-open rounded-md px-3 py-1.5 text-xs">Confirm</button>';
+              '" class="btn-confirm-black rounded-md text-xs px-3 py-1.5">Confirm</button>';
           } else {
             html += '<span class="text-amber-200/45 text-xs">—</span>';
           }

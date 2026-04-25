@@ -7,7 +7,8 @@ import {
   type CoachCsvRow,
 } from "./coachListCsv";
 import { loadLessons, type LessonCsvRow } from "./lessonListCsv";
-import { loadLessonReservations, type LessonReserveRecord } from "./lessonReserveList";
+import { loadLessonReservationsPreferred } from "./lessonReserveListMongo";
+import type { LessonReserveRecord } from "./lessonReserveList";
 
 export const COACH_SALARY_FILENAME = "CoachSalary.json";
 
@@ -36,6 +37,7 @@ export type CoachSalaryRecord = {
   Payment_Method: string;
   Payment_Status: string;
   Payment_Confirm: boolean;
+  Payment_date?: string;
   createdAt: string;
   lastUpdatedDate: string;
 };
@@ -55,11 +57,12 @@ export type CoachSalaryTableRow = {
   Payment_Method: string;
   Payment_Status: string;
   Payment_Confirm: boolean;
+  Payment_date?: string;
   lastUpdatedDate: string;
   createdAt: string;
 };
 
-type CoachSalaryFileV1 = {
+export type CoachSalaryFileV1 = {
   version: 1;
   coachSalaries: CoachSalaryRecord[];
 };
@@ -112,6 +115,7 @@ function parseFile(raw: string): CoachSalaryFileV1 {
         Payment_Method: String(o.Payment_Method ?? "").trim(),
         Payment_Status: String(o.Payment_Status ?? "").trim(),
         Payment_Confirm: boolFromUnknown(o.Payment_Confirm),
+        Payment_date: String(o.Payment_date ?? o.payment_date ?? "").trim() || undefined,
         createdAt: String(o.createdAt ?? "").trim(),
         lastUpdatedDate: String(o.lastUpdatedDate ?? "").trim(),
       });
@@ -297,10 +301,24 @@ function resolveCoachIdFromLessonCoachName(
   return "";
 }
 
-function nextCoachSalarySequenceNumber(existing: CoachSalaryRecord[]): number {
+/**
+ * Next numeric suffix for new salary ids: `{clubId}-CS000001` (and legacy `CS000001` rows
+ * in the same club list still advance the counter so we never collide).
+ */
+export function nextCoachSalarySequenceNumber(
+  existing: CoachSalaryRecord[],
+  clubFolderId: string,
+): number {
+  const esc = clubFolderId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const prefixed = new RegExp("^" + esc + "-CS(\\d+)$", "i");
+  const legacy = /^CS(\d+)$/i;
   let max = 0;
   for (const r of existing) {
-    const m = r.CoachSalaryID.trim().match(/^CS(\d+)$/i);
+    const id = r.CoachSalaryID.trim();
+    let m = id.match(prefixed);
+    if (!m) {
+      m = id.match(legacy);
+    }
     if (m) {
       const n = Number.parseInt(m[1]!, 10);
       if (!Number.isNaN(n) && n > max) {
@@ -327,8 +345,13 @@ function coachSalaryByLessonId(
 /**
  * Active lessons with fee totals and received totals (confirmed reservations × class fee).
  */
-export function buildLessonFeeAllocationRows(fileClub: string): LessonFeeAllocationRow[] {
-  const lessons = loadLessons(fileClub).filter(
+export async function buildLessonFeeAllocationRows(
+  fileClub: string,
+  rosterCoaches: CoachCsvRow[] | undefined,
+  salaryDoc: CoachSalaryFileV1,
+): Promise<LessonFeeAllocationRow[]> {
+  const lessonRows = await loadLessons(fileClub);
+  const lessons = lessonRows.filter(
     (L) => (L.status || "").trim().toUpperCase() === "ACTIVE",
   );
   lessons.sort((a, b) =>
@@ -337,14 +360,9 @@ export function buildLessonFeeAllocationRows(fileClub: string): LessonFeeAllocat
       .toUpperCase()
       .localeCompare(b.lessonId.trim().toUpperCase()),
   );
-  const reservations = loadLessonReservations(fileClub);
-  const coaches = loadCoaches(fileClub);
-  let doc: CoachSalaryFileV1 = { version: 1, coachSalaries: [] };
-  try {
-    doc = loadCoachSalaryDocument(fileClub);
-  } catch {
-    /* CoachSalary.json may be missing on first deploy; allocation table still works. */
-  }
+  const reservations = await loadLessonReservationsPreferred(fileClub);
+  const coaches = rosterCoaches ?? loadCoaches(fileClub);
+  const doc = salaryDoc;
   const byLesson = coachSalaryByLessonId(doc);
 
   const rows: LessonFeeAllocationRow[] = [];
@@ -390,26 +408,29 @@ export type FeeAllocationApplyItem = {
 };
 
 /**
- * Upserts CoachSalary rows by lessonId. New rows use CS000001-style ids (next free sequence).
+ * Mutates `doc` in memory: upserts coach salary rows by lessonId.
+ * New rows use `{clubId}-CS000001` style ids (next free sequence; legacy `CS000001` ids
+ * in the same list still advance the counter).
  */
-export function applyLessonFeeAllocations(
+export async function applyLessonFeeAllocationsToDocument(
+  doc: CoachSalaryFileV1,
   fileClub: string,
   clubId: string,
   clubName: string,
   items: FeeAllocationApplyItem[],
-): { created: number; updated: number } {
+  rosterCoaches?: CoachCsvRow[],
+): Promise<{ created: number; updated: number }> {
   if (!items.length) {
     return { created: 0, updated: 0 };
   }
-  const doc = loadCoachSalaryDocument(fileClub);
-  const lessons = loadLessons(fileClub);
+  const lessons = await loadLessons(fileClub);
   const lessonById = new Map(
     lessons.map((l) => [l.lessonId.trim().toUpperCase(), l]),
   );
-  const coaches = loadCoaches(fileClub);
+  const coaches = rosterCoaches ?? loadCoaches(fileClub);
   const now = new Date().toISOString();
   const today = now.slice(0, 10);
-  let seq = nextCoachSalarySequenceNumber(doc.coachSalaries);
+  let seq = nextCoachSalarySequenceNumber(doc.coachSalaries, clubId);
   let created = 0;
   let updated = 0;
 
@@ -440,7 +461,7 @@ export function applyLessonFeeAllocations(
       doc.coachSalaries[idx] = row;
       updated++;
     } else {
-      const id = `CS${String(seq).padStart(6, "0")}`;
+      const id = `${clubId}-CS${String(seq).padStart(6, "0")}`;
       seq++;
       doc.coachSalaries.push({
         CoachSalaryID: id,
@@ -459,24 +480,51 @@ export function applyLessonFeeAllocations(
     }
   }
 
-  saveCoachSalaryDocument(fileClub, doc);
   return { created, updated };
+}
+
+/**
+ * Legacy file-based upsert (reads/writes `data_club/{club}/CoachSalary.json`).
+ * Live Coach Manager APIs use MongoDB via {@link coachSalaryMongo} instead.
+ */
+export async function applyLessonFeeAllocations(
+  fileClub: string,
+  clubId: string,
+  clubName: string,
+  items: FeeAllocationApplyItem[],
+  rosterCoaches?: CoachCsvRow[],
+): Promise<{ created: number; updated: number }> {
+  const doc = loadCoachSalaryDocument(fileClub);
+  const summary = await applyLessonFeeAllocationsToDocument(
+    doc,
+    fileClub,
+    clubId,
+    clubName,
+    items,
+    rosterCoaches,
+  );
+  saveCoachSalaryDocument(fileClub, doc);
+  return summary;
 }
 
 export type BuildCoachSalaryTableRowsOpts = {
   /** When set, only salary rows for this coach_id and only lesson/reservation rows needed for those salaries. */
   onlyCoachId?: string;
+  /** When set (e.g. Mongo roster), used instead of reading `UserList_Coach.json` from disk. */
+  rosterCoaches?: CoachCsvRow[];
+  /** Salary rows from MongoDB `ClubMaster_DB.CoachManager` (or legacy in-memory file shape). */
+  salaryDoc: CoachSalaryFileV1;
 };
 
 /**
  * Merged rows for Coach Salary UI (coach + lesson lookups).
  * Pass `{ onlyCoachId }` for the logged-in coach API to avoid building rows for every coach in the club.
  */
-export function buildCoachSalaryTableRows(
+export async function buildCoachSalaryTableRows(
   fileClub: string,
-  opts?: BuildCoachSalaryTableRowsOpts,
-): CoachSalaryTableRow[] {
-  const doc = loadCoachSalaryDocument(fileClub);
+  opts: BuildCoachSalaryTableRowsOpts,
+): Promise<CoachSalaryTableRow[]> {
+  const doc = opts.salaryDoc;
   const only = opts?.onlyCoachId?.trim();
   const rawRows = only
     ? doc.coachSalaries.filter(
@@ -493,9 +541,9 @@ export function buildCoachSalaryTableRows(
     }
   }
 
-  const coaches = loadCoaches(fileClub);
+  const coaches = opts.rosterCoaches ?? loadCoaches(fileClub);
   const coachMap = coachNameMap(coaches);
-  const allLessons = loadLessons(fileClub);
+  const allLessons = await loadLessons(fileClub);
   const lessons =
     only && lessonIdsNeeded.size > 0
       ? allLessons.filter((l) =>
@@ -503,7 +551,7 @@ export function buildCoachSalaryTableRows(
         )
       : allLessons;
   const lessonMap = lessonDetailMap(lessons);
-  let reservations = loadLessonReservations(fileClub);
+  let reservations = await loadLessonReservationsPreferred(fileClub);
   if (only && lessonIdsNeeded.size > 0) {
     reservations = reservations.filter((r) =>
       lessonIdsNeeded.has(r.lessonId.trim().toUpperCase()),
@@ -564,6 +612,7 @@ export function buildCoachSalaryTableRows(
       Payment_Method: raw.Payment_Method,
       Payment_Status: raw.Payment_Status,
       Payment_Confirm: raw.Payment_Confirm,
+      Payment_date: raw.Payment_date,
       lastUpdatedDate: raw.lastUpdatedDate,
       createdAt: raw.createdAt,
     });

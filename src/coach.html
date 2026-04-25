@@ -216,6 +216,41 @@
       outline-offset: 2px;
     }
 
+    /* Overview: shift shortcut hotspots on the coach art */
+    .cm-image-pin > a.cm-hotspot {
+      transform: translate(50px, 30px);
+    }
+    /* My Bookings (left column, not Student Information): +15px right vs prior 130px */
+    .cm-image-pin > a.cm-hotspot.cm-hotspot--coach-left-col:not(.cm-hotspot--coach-student-info) {
+      transform: translate(145px, 50px);
+    }
+    /* Student Information: +15px right & +30px up vs prior (130px, 80px) */
+    .cm-image-pin > a.cm-hotspot.cm-hotspot--coach-left-col.cm-hotspot--coach-student-info {
+      transform: translate(145px, 50px);
+    }
+    /* Middle column (Prize List, Coach Salary): 20px right, 30px down */
+    .cm-image-pin > a.cm-hotspot.cm-hotspot--coach-mid-col {
+      transform: translate(20px, 30px);
+    }
+    /* Right column (Browse Lessons, Upcoming Events): 120px left, 30px down */
+    .cm-image-pin > a.cm-hotspot.cm-hotspot--coach-right-col {
+      transform: translate(-120px, 30px);
+    }
+    /* Bottom row: Coach Salary & Upcoming Events — +20px down vs same-column top row */
+    .cm-image-pin > a.cm-hotspot.cm-hotspot--coach-mid-col.cm-hotspot--coach-row2-down-20 {
+      transform: translate(20px, 50px);
+    }
+    .cm-image-pin > a.cm-hotspot.cm-hotspot--coach-right-col.cm-hotspot--coach-row2-down-20 {
+      transform: translate(-105px, 50px);
+    }
+    /* Top row only: Prize List & Browse Lessons — +15px up vs column default, then +30px down */
+    .cm-image-pin > a.cm-hotspot.cm-hotspot--coach-mid-col.cm-hotspot--coach-row1-up-15 {
+      transform: translate(20px, 45px);
+    }
+    .cm-image-pin > a.cm-hotspot.cm-hotspot--coach-right-col.cm-hotspot--coach-row1-up-15 {
+      transform: translate(-120px, 45px);
+    }
+
     .cm-iframe-panel {
       flex: 1 1 auto;
       min-height: 0;
@@ -257,18 +292,18 @@
             role="img"
             aria-label="Coach overview"
             data-overview-bg="source/image/coach.webp"></div>
-          <a class="cm-hotspot" href="#" data-dashboard-iframe="backend/student_modules/student_information/student-information.html" title="Student Information"
-            style="left: 2.5%; top: 3.5%; width: 29.5%; height: 44%;" aria-label="Student Information"></a>
-          <a class="cm-hotspot" href="#" data-dashboard-iframe="backend/prize_modules/prize_list/prize-list.html" title="Prize List"
-            style="left: 34%; top: 3.5%; width: 29.5%; height: 44%;" aria-label="Prize List"></a>
-          <a class="cm-hotspot" href="#" data-dashboard-iframe="backend/lesson_modules/lesson_browse/lesson-browse.html" title="Browse Lessons"
-            style="left: 65.5%; top: 3.5%; width: 29.5%; height: 44%;" aria-label="Browse Lessons"></a>
-          <a class="cm-hotspot" href="#" data-dashboard-iframe="backend/lesson_modules/lesson_reservation/lesson-reservation.html?myBookings=1" title="My Bookings"
-            style="left: 2.5%; top: 49.5%; width: 29.5%; height: 44%;" aria-label="My Bookings"></a>
-          <a class="cm-hotspot" href="#" data-dashboard-iframe="backend/payment_modules/coach_salary_payment/coach-salary-payment.html" title="Coach Salary"
-            style="left: 34%; top: 49.5%; width: 29.5%; height: 44%;" aria-label="Coach Salary"></a>
-          <a class="cm-hotspot" href="coming_soon.html?m=coach-upcoming-events" title="Upcoming Events"
-            style="left: 65.5%; top: 49.5%; width: 29.5%; height: 44%;" aria-label="Upcoming Events"></a>
+          <a class="cm-hotspot cm-hotspot--coach-left-col cm-hotspot--coach-student-info" href="#" data-dashboard-iframe="backend/student_modules/student_information/student-information.html" title="Student Information"
+            style="left: 6.925%; top: 10.1%; width: 20.65%; height: 36.96%;" aria-label="Student Information"></a>
+          <a class="cm-hotspot cm-hotspot--coach-mid-col cm-hotspot--coach-row1-up-15" href="#" data-dashboard-iframe="backend/prize_modules/prize_list/prize-list.html" title="Prize List"
+            style="left: 38.425%; top: 10.1%; width: 20.65%; height: 36.96%;" aria-label="Prize List"></a>
+          <a class="cm-hotspot cm-hotspot--coach-right-col cm-hotspot--coach-row1-up-15" href="#" data-dashboard-iframe="backend/lesson_modules/lesson_browse/lesson-browse.html" title="Browse Lessons"
+            style="left: 69.925%; top: 10.1%; width: 20.65%; height: 36.96%;" aria-label="Browse Lessons"></a>
+          <a class="cm-hotspot cm-hotspot--coach-left-col" href="#" data-dashboard-iframe="backend/lesson_modules/lesson_reservation/lesson-reservation.html?myBookings=1" title="My Bookings"
+            style="left: 6.925%; top: 56.1%; width: 20.65%; height: 30.8%;" aria-label="My Bookings"></a>
+          <a class="cm-hotspot cm-hotspot--coach-mid-col cm-hotspot--coach-row2-down-20" href="#" data-dashboard-iframe="backend/payment_modules/coach_salary_payment/coach-salary-payment.html" title="Coach Salary"
+            style="left: 38.425%; top: 56.1%; width: 20.65%; height: 30.8%;" aria-label="Coach Salary"></a>
+          <a class="cm-hotspot cm-hotspot--coach-right-col cm-hotspot--coach-row2-down-20" href="coming_soon.html?m=coach-upcoming-events" title="Upcoming Events"
+            style="left: 69.925%; top: 56.1%; width: 20.65%; height: 30.8%;" aria-label="Upcoming Events"></a>
         </div>
       </div>
     </div>

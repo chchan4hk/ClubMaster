@@ -6,7 +6,7 @@ import {
   resolveClubFolderUidForCoachRequest,
   resolveStudentClubSessionFromRequest,
 } from "../coachManagerSession";
-import { loadCoaches } from "../coachListCsv";
+import { loadCoachesPreferred } from "../coachListMongo";
 import { loadStudents } from "../studentListCsv";
 import {
   decrementLessonReservedNumber,
@@ -17,21 +17,23 @@ import {
   type LessonCsvRow,
 } from "../lessonListCsv";
 import {
-  ensureLessonReserveListFile,
-  loadLessonReservations,
-  removeLessonReservationByReserveId,
-  updateLessonReservationPaymentFields,
-} from "../lessonReserveList";
+  ensureLessonReserveListPreferred,
+  loadLessonReservationsPreferred,
+  removeLessonReservationByReserveIdPreferred,
+  updateLessonReservationPaymentFieldsPreferred,
+} from "../lessonReserveListMongo";
 import {
-  addPaymentsToLedger,
-  clearLedgerPaymentsForLessonReserve,
-  deleteLedgerEntryForLessonReserve,
-  ensureLessonPaymentLedgerFile,
-  loadLessonPaymentLedger,
   sumPayments,
   getLedgerEntry,
   type LedgerReservationEntry,
 } from "./lessonPaymentLedger";
+import {
+  addPaymentsToLedgerPreferred,
+  clearLedgerPaymentsForLessonReservePreferred,
+  deleteLedgerEntryForLessonReservePreferred,
+  ensureLessonPaymentLedgerPreferred,
+  loadLessonPaymentLedgerPreferred,
+} from "./lessonPaymentLedgerMongo";
 import { removePaymentListRecordsForLessonReserve } from "../paymentListJson";
 import {
   csvCoachFieldMatchesLoggedCoach,
@@ -56,7 +58,7 @@ async function resolvePaymentClubContextAsync(
     if (!coachId) {
       return { ok: false, status: 403, error: "Invalid session." };
     }
-    const clubId = resolveClubFolderUidForCoachRequest(req);
+    const clubId = await resolveClubFolderUidForCoachRequest(req);
     if (!clubId) {
       return {
         ok: false,
@@ -64,7 +66,7 @@ async function resolvePaymentClubContextAsync(
         error: "No club roster found for this coach account.",
       };
     }
-    const inRoster = loadCoaches(clubId).some(
+    const inRoster = (await loadCoachesPreferred(clubId)).some(
       (c) => c.coachId.trim().toUpperCase() === coachId.toUpperCase(),
     );
     if (!inRoster) {
@@ -89,7 +91,7 @@ async function resolvePaymentClubContextAsync(
     if (!studentId) {
       return { ok: false, status: 403, error: "Invalid session." };
     }
-    const session = resolveStudentClubSessionFromRequest(req);
+    const session = await resolveStudentClubSessionFromRequest(req);
     if (!session.ok) {
       return { ok: false, status: 403, error: session.error };
     }
@@ -101,6 +103,14 @@ async function resolvePaymentClubContextAsync(
     return { ok: true, clubId, clubName: folderCtx.clubName };
   }
   return { ok: false, status: 403, error: "Forbidden" };
+}
+
+function lessonReserveMongoUnavailableMessage(e: unknown): string {
+  const msg = e instanceof Error ? e.message : String(e);
+  return (
+    "Lesson reservations are stored in MongoDB (ClubMaster_DB.LessonReserveList). " +
+    msg
+  );
 }
 
 function parseClassFeeToNumber(fee: string): number {
@@ -238,7 +248,7 @@ export type LessonPaymentStatusRow = {
   outstanding: number;
   dueDate: string;
   displayStatus: "PAID" | "PARTIALLY_PAID" | "UNPAID" | "OVERDUE";
-  /** Coach manager verified in LessonReserveList (Payment_Confirm). */
+  /** Coach manager verified in Mongo `LessonReserveList` (`Payment_Confirm`; JSON only when Mongo is off). */
   paymentConfirmedByCoach: boolean;
   paymentHistory: {
     paymentId: string;
@@ -251,13 +261,13 @@ export type LessonPaymentStatusRow = {
   lastUpdatedDate: string;
 };
 
-function filterLessonPaymentRowsForCoach(
+async function filterLessonPaymentRowsForCoach(
   clubId: string,
   coachJwtSub: string,
   coachUsername: string,
   rows: LessonPaymentStatusRow[],
-): LessonPaymentStatusRow[] {
-  const crow = findCoachRosterRow(clubId, coachJwtSub);
+): Promise<LessonPaymentStatusRow[]> {
+  const crow = await findCoachRosterRow(clubId, coachJwtSub);
   if (!crow) {
     return [];
   }
@@ -322,21 +332,21 @@ function recomputeKpisAndPieFromRows(
   };
 }
 
-export function buildLessonPaymentSnapshot(
+export async function buildLessonPaymentSnapshot(
   fileClub: string,
   periodMonth: string | undefined,
 ) {
-  ensureLessonListFile(fileClub);
-  ensureLessonReserveListFile(fileClub);
-  ensureLessonPaymentLedgerFile(fileClub);
+  await ensureLessonListFile(fileClub);
+  await ensureLessonReserveListPreferred(fileClub);
+  await ensureLessonPaymentLedgerPreferred(fileClub);
 
-  const lessons = loadLessons(fileClub);
+  const lessons = await loadLessons(fileClub);
   const lessonById = new Map(
     lessons.map((l) => [l.lessonId.trim().toUpperCase(), l]),
   );
-  const reservations = loadLessonReservations(fileClub);
-  const ledger = loadLessonPaymentLedger(fileClub);
-  const students = loadStudents(fileClub);
+  const reservations = await loadLessonReservationsPreferred(fileClub);
+  const ledger = await loadLessonPaymentLedgerPreferred(fileClub);
+  const students = await loadStudents(fileClub);
   const studentById = new Map(
     students.map((s) => [s.studentId.trim().toUpperCase(), s]),
   );
@@ -486,19 +496,20 @@ export function buildLessonPaymentSnapshot(
   };
 }
 
-export function syncLessonReservationPaymentStatuses(
+export async function syncLessonReservationPaymentStatuses(
   fileClub: string,
   lessonReserveIds: string[],
   opts?: { preservePaymentConfirm?: boolean },
-): void {
-  ensureLessonReserveListFile(fileClub);
-  ensureLessonPaymentLedgerFile(fileClub);
-  const lessons = loadLessons(fileClub);
+): Promise<void> {
+  await ensureLessonListFile(fileClub);
+  await ensureLessonReserveListPreferred(fileClub);
+  await ensureLessonPaymentLedgerPreferred(fileClub);
+  const lessons = await loadLessons(fileClub);
   const lessonById = new Map(
     lessons.map((l) => [l.lessonId.trim().toUpperCase(), l]),
   );
-  const reservations = loadLessonReservations(fileClub);
-  const ledger = loadLessonPaymentLedger(fileClub);
+  const reservations = await loadLessonReservationsPreferred(fileClub);
+  const ledger = await loadLessonPaymentLedgerPreferred(fileClub);
   const today = new Date().toISOString().slice(0, 10);
   const seen = new Set(lessonReserveIds.map((id) => id.trim().toUpperCase()));
 
@@ -514,9 +525,14 @@ export function syncLessonReservationPaymentStatuses(
     const outstanding = Math.max(0, Math.round((totalFee - amountPaid) * 100) / 100);
     const display = deriveDisplayStatus(outstanding, amountPaid, dueDate, today);
     const f = statusForReservationFile(display);
-    updateLessonReservationPaymentFields(fileClub, r.lessonReserveId, f, {
-      preservePaymentConfirm: opts?.preservePaymentConfirm === true,
-    });
+    await updateLessonReservationPaymentFieldsPreferred(
+      fileClub,
+      r.lessonReserveId,
+      f,
+      {
+        preservePaymentConfirm: opts?.preservePaymentConfirm === true,
+      },
+    );
   }
 }
 
@@ -552,7 +568,7 @@ export function Lesson_payment_status(): Router {
       const fileClub = resolveLessonFileClubId(ctx.clubId);
       const periodMonth = String(req.query?.periodMonth ?? "").trim() || undefined;
       try {
-        const snapshot = buildLessonPaymentSnapshot(fileClub, periodMonth);
+        const snapshot = await buildLessonPaymentSnapshot(fileClub, periodMonth);
         let rows = snapshot.rows;
         let kpis = snapshot.kpis;
         let chartPie = snapshot.chartPie;
@@ -595,7 +611,7 @@ export function Lesson_payment_status(): Router {
           chartPie = pie;
         }
         if (req.user?.role === "Coach") {
-          rows = filterLessonPaymentRowsForCoach(
+          rows = await filterLessonPaymentRowsForCoach(
             ctx.clubId,
             String(req.user?.sub ?? ""),
             String(req.user?.username ?? ""),
@@ -670,65 +686,81 @@ export function Lesson_payment_status(): Router {
       }
 
       const fileClub = resolveLessonFileClubId(ctx.clubId);
-      ensureLessonReserveListFile(fileClub);
-      const reservations = loadLessonReservations(fileClub);
-      const lessons = loadLessons(fileClub);
-      const lessonById = new Map(
-        lessons.map((l) => [l.lessonId.trim().toUpperCase(), l]),
-      );
-      const ledger = loadLessonPaymentLedger(fileClub);
-      const defaultDueDates: Record<string, string> = {};
-
-      for (const sp of splits) {
-        const resv = reservations.find(
-          (x) =>
-            x.lessonReserveId.trim().toUpperCase() ===
-            sp.lessonReserveId.trim().toUpperCase(),
+      try {
+        await ensureLessonListFile(fileClub);
+        await ensureLessonReserveListPreferred(fileClub);
+        await ensureLessonPaymentLedgerPreferred(fileClub);
+        const reservations = await loadLessonReservationsPreferred(fileClub);
+        const lessons = await loadLessons(fileClub);
+        const lessonById = new Map(
+          lessons.map((l) => [l.lessonId.trim().toUpperCase(), l]),
         );
-        if (!resv || resv.status.toUpperCase() !== "ACTIVE") {
-          res.status(400).json({
-            ok: false,
-            error: `Invalid or inactive reservation: ${sp.lessonReserveId}`,
-          });
-          return;
-        }
-        const lesson = lessonById.get(resv.lessonId.trim().toUpperCase());
-        if (req.user?.role === "Coach") {
-          const crow = findCoachRosterRow(ctx.clubId, String(req.user.sub ?? ""));
-          const uname = String(req.user?.username ?? "");
-          if (
-            !lesson ||
-            !crow ||
-            !csvCoachFieldMatchesLoggedCoach(lesson.coachName, crow, uname)
-          ) {
-            res.status(403).json({
+        const ledger = await loadLessonPaymentLedgerPreferred(fileClub);
+        const defaultDueDates: Record<string, string> = {};
+
+        for (const sp of splits) {
+          const resv = reservations.find(
+            (x) =>
+              x.lessonReserveId.trim().toUpperCase() ===
+              sp.lessonReserveId.trim().toUpperCase(),
+          );
+          if (!resv || resv.status.toUpperCase() !== "ACTIVE") {
+            res.status(400).json({
               ok: false,
-              error: "You can only record payments for your own lessons.",
+              error: `Invalid or inactive reservation: ${sp.lessonReserveId}`,
             });
             return;
           }
+          const lesson = lessonById.get(resv.lessonId.trim().toUpperCase());
+          if (req.user?.role === "Coach") {
+            const crow = await findCoachRosterRow(
+              ctx.clubId,
+              String(req.user.sub ?? ""),
+            );
+            const uname = String(req.user?.username ?? "");
+            if (
+              !lesson ||
+              !crow ||
+              !csvCoachFieldMatchesLoggedCoach(lesson.coachName, crow, uname)
+            ) {
+              res.status(403).json({
+                ok: false,
+                error: "You can only record payments for your own lessons.",
+              });
+              return;
+            }
+          }
+          const entry = getLedgerEntry(ledger, resv.lessonReserveId);
+          const due = defaultDueDate(entry, lesson, resv.createdAt);
+          defaultDueDates[sp.lessonReserveId.trim().toUpperCase()] = due;
         }
-        const entry = getLedgerEntry(ledger, resv.lessonReserveId);
-        const due = defaultDueDate(entry, lesson, resv.createdAt);
-        defaultDueDates[sp.lessonReserveId.trim().toUpperCase()] = due;
+
+        const added = await addPaymentsToLedgerPreferred(
+          fileClub,
+          { splits, method, reference, paidAt },
+          defaultDueDates,
+        );
+        if (!added.ok) {
+          res.status(400).json({ ok: false, error: added.error });
+          return;
+        }
+
+        await syncLessonReservationPaymentStatuses(
+          fileClub,
+          splits.map((s) => s.lessonReserveId),
+        );
+
+        res.json({
+          ok: true,
+          paymentIds: added.paymentIds,
+          message: "Payment recorded.",
+        });
+      } catch (e) {
+        res.status(503).json({
+          ok: false,
+          error: lessonReserveMongoUnavailableMessage(e),
+        });
       }
-
-      const added = addPaymentsToLedger(fileClub, { splits, method, reference, paidAt }, defaultDueDates);
-      if (!added.ok) {
-        res.status(400).json({ ok: false, error: added.error });
-        return;
-      }
-
-      syncLessonReservationPaymentStatuses(
-        fileClub,
-        splits.map((s) => s.lessonReserveId),
-      );
-
-      res.json({
-        ok: true,
-        paymentIds: added.paymentIds,
-        message: "Payment recorded.",
-      });
     },
   );
 
@@ -749,51 +781,58 @@ export function Lesson_payment_status(): Router {
         return;
       }
       const fileClub = resolveLessonFileClubId(ctx.clubId);
-      const reservations = loadLessonReservations(fileClub);
-      const resv = reservations.find(
-        (x) =>
-          x.lessonReserveId.trim().toUpperCase() ===
-          lessonReserveId.toUpperCase(),
-      );
-      if (!resv || resv.status.toUpperCase() !== "ACTIVE") {
-        res.status(400).json({
-          ok: false,
-          error: "Invalid or inactive reservation.",
-        });
-        return;
-      }
-      const snapshot = buildLessonPaymentSnapshot(fileClub, undefined);
-      let searchRows = snapshot.rows;
-      if (req.user?.role === "Coach") {
-        searchRows = filterLessonPaymentRowsForCoach(
-          ctx.clubId,
-          String(req.user?.sub ?? ""),
-          String(req.user?.username ?? ""),
-          snapshot.rows,
+      try {
+        const reservations = await loadLessonReservationsPreferred(fileClub);
+        const resv = reservations.find(
+          (x) =>
+            x.lessonReserveId.trim().toUpperCase() ===
+            lessonReserveId.toUpperCase(),
         );
-      }
-      const row = searchRows.find(
-        (x) =>
-          x.lessonReserveId.trim().toUpperCase() ===
-          lessonReserveId.toUpperCase(),
-      );
-      if (!row || row.displayStatus !== "PAID") {
-        res.status(400).json({
+        if (!resv || resv.status.toUpperCase() !== "ACTIVE") {
+          res.status(400).json({
+            ok: false,
+            error: "Invalid or inactive reservation.",
+          });
+          return;
+        }
+        const snapshot = await buildLessonPaymentSnapshot(fileClub, undefined);
+        let searchRows = snapshot.rows;
+        if (req.user?.role === "Coach") {
+          searchRows = await filterLessonPaymentRowsForCoach(
+            ctx.clubId,
+            String(req.user?.sub ?? ""),
+            String(req.user?.username ?? ""),
+            snapshot.rows,
+          );
+        }
+        const row = searchRows.find(
+          (x) =>
+            x.lessonReserveId.trim().toUpperCase() ===
+            lessonReserveId.toUpperCase(),
+        );
+        if (!row || row.displayStatus !== "PAID") {
+          res.status(400).json({
+            ok: false,
+            error: "Reservation is not fully paid (status must be PAID).",
+          });
+          return;
+        }
+        const upd = await updateLessonReservationPaymentFieldsPreferred(
+          fileClub,
+          lessonReserveId,
+          { Payment_Status: "PAID", Payment_Confirm: true },
+        );
+        if (!upd.ok) {
+          res.status(400).json({ ok: false, error: upd.error });
+          return;
+        }
+        res.json({ ok: true, message: "Payment confirmed." });
+      } catch (e) {
+        res.status(503).json({
           ok: false,
-          error: "Reservation is not fully paid (status must be PAID).",
+          error: lessonReserveMongoUnavailableMessage(e),
         });
-        return;
       }
-      const upd = updateLessonReservationPaymentFields(
-        fileClub,
-        lessonReserveId,
-        { Payment_Status: "PAID", Payment_Confirm: true },
-      );
-      if (!upd.ok) {
-        res.status(400).json({ ok: false, error: upd.error });
-        return;
-      }
-      res.json({ ok: true, message: "Payment confirmed." });
     },
   );
 
@@ -814,7 +853,7 @@ export function Lesson_payment_status(): Router {
         return;
       }
       const fileClub = resolveLessonFileClubId(ctx.clubId);
-      const reservations = loadLessonReservations(fileClub);
+      const reservations = await loadLessonReservationsPreferred(fileClub);
       const resv = reservations.find(
         (x) =>
           x.lessonReserveId.trim().toUpperCase() ===
@@ -827,10 +866,10 @@ export function Lesson_payment_status(): Router {
         });
         return;
       }
-      const snapshot = buildLessonPaymentSnapshot(fileClub, undefined);
+      const snapshot = await buildLessonPaymentSnapshot(fileClub, undefined);
       let searchRowsVoid = snapshot.rows;
       if (req.user?.role === "Coach") {
-        searchRowsVoid = filterLessonPaymentRowsForCoach(
+        searchRowsVoid = await filterLessonPaymentRowsForCoach(
           ctx.clubId,
           String(req.user?.sub ?? ""),
           String(req.user?.username ?? ""),
@@ -849,7 +888,7 @@ export function Lesson_payment_status(): Router {
         });
         return;
       }
-      const rmList = removePaymentListRecordsForLessonReserve(
+      const rmList = await removePaymentListRecordsForLessonReserve(
         ctx.clubId,
         lessonReserveId,
       );
@@ -857,7 +896,7 @@ export function Lesson_payment_status(): Router {
         res.status(400).json({ ok: false, error: rmList.error });
         return;
       }
-      const clr = clearLedgerPaymentsForLessonReserve(
+      const clr = await clearLedgerPaymentsForLessonReservePreferred(
         fileClub,
         lessonReserveId,
       );
@@ -865,7 +904,7 @@ export function Lesson_payment_status(): Router {
         res.status(400).json({ ok: false, error: clr.error });
         return;
       }
-      const upd = updateLessonReservationPaymentFields(
+      const upd = await updateLessonReservationPaymentFieldsPreferred(
         fileClub,
         lessonReserveId,
         { Payment_Status: "UNPAID", Payment_Confirm: false },
@@ -899,7 +938,7 @@ export function Lesson_payment_status(): Router {
         return;
       }
       const fileClub = resolveLessonFileClubId(ctx.clubId);
-      const reservations = loadLessonReservations(fileClub);
+      const reservations = await loadLessonReservationsPreferred(fileClub);
       const resv = reservations.find(
         (x) =>
           x.lessonReserveId.trim().toUpperCase() ===
@@ -919,15 +958,16 @@ export function Lesson_payment_status(): Router {
         });
         return;
       }
-      const lessons = loadLessons(fileClub);
+      await ensureLessonListFile(fileClub);
+      const lessons = await loadLessons(fileClub);
       if (!lessons.some((l) => lessonIdsEqual(l.lessonId, resv.lessonId))) {
         res.status(400).json({
           ok: false,
-          error: "Lesson not found in LessonList.",
+          error: "Lesson not found in the club lesson list.",
         });
         return;
       }
-      const rmRes = removeLessonReservationByReserveId(
+      const rmRes = await removeLessonReservationByReserveIdPreferred(
         fileClub,
         lessonReserveId,
       );
@@ -935,12 +975,12 @@ export function Lesson_payment_status(): Router {
         res.status(400).json({ ok: false, error: rmRes.error });
         return;
       }
-      const dec = decrementLessonReservedNumber(fileClub, resv.lessonId);
+      const dec = await decrementLessonReservedNumber(fileClub, resv.lessonId);
       if (!dec.ok) {
         res.status(500).json({ ok: false, error: dec.error });
         return;
       }
-      const delLed = deleteLedgerEntryForLessonReserve(
+      const delLed = await deleteLedgerEntryForLessonReservePreferred(
         fileClub,
         lessonReserveId,
       );
@@ -948,7 +988,7 @@ export function Lesson_payment_status(): Router {
         res.status(500).json({ ok: false, error: delLed.error });
         return;
       }
-      const rmPay = removePaymentListRecordsForLessonReserve(
+      const rmPay = await removePaymentListRecordsForLessonReserve(
         ctx.clubId,
         lessonReserveId,
       );
@@ -1000,10 +1040,10 @@ export function Lesson_payment_status(): Router {
       const body = req.body as Record<string, unknown> | null;
       const onlyOverdue = body?.onlyOverdue === true;
       const fileClub = resolveLessonFileClubId(ctx.clubId);
-      const snapshot = buildLessonPaymentSnapshot(fileClub, undefined);
+      const snapshot = await buildLessonPaymentSnapshot(fileClub, undefined);
       let bulkRows = snapshot.rows;
       if (req.user?.role === "Coach") {
-        bulkRows = filterLessonPaymentRowsForCoach(
+        bulkRows = await filterLessonPaymentRowsForCoach(
           ctx.clubId,
           String(req.user?.sub ?? ""),
           String(req.user?.username ?? ""),
@@ -1041,10 +1081,10 @@ export function Lesson_payment_status(): Router {
       }
       const fileClub = resolveLessonFileClubId(ctx.clubId);
       const periodMonth = String(req.query?.periodMonth ?? "").trim() || undefined;
-      const snapshot = buildLessonPaymentSnapshot(fileClub, periodMonth);
+      const snapshot = await buildLessonPaymentSnapshot(fileClub, periodMonth);
       let exportRows = snapshot.rows;
       if (req.user?.role === "Coach") {
-        exportRows = filterLessonPaymentRowsForCoach(
+        exportRows = await filterLessonPaymentRowsForCoach(
           ctx.clubId,
           String(req.user?.sub ?? ""),
           String(req.user?.username ?? ""),

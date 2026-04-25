@@ -11,6 +11,8 @@
   <link rel="stylesheet" href="/css/profile-password-panels.css" />
   <link rel="stylesheet" href="/css/coach-manager-module-shell.css" />
   <link rel="stylesheet" href="/css/btn-cancel-metallic-brown.css" />
+  <link rel="stylesheet" href="/css/btn-remove-black-red-gold.css" />
+  <link rel="stylesheet" href="/css/btn-dark-blue-green.css" />
 </head>
 <body class="profile-password-page cm-module-shell min-h-full p-4 sm:p-6">
   <div class="max-w-6xl mx-auto">
@@ -26,47 +28,50 @@
     </header>
 
     <section class="glass rounded-xl border border-white/15 p-4 mb-6 overflow-x-auto">
-      <h2 class="text-lg font-semibold text-amber-200 mb-3">Student roster</h2>
-      <p id="fullCsvError" class="hidden text-sm text-red-300 mb-2"></p>
-      <p id="fullCsvWarn" class="hidden text-sm text-amber-200/90 mb-2"></p>
-      <table class="w-full text-sm text-left border-collapse min-w-max">
-        <thead>
-          <tr id="fullCsvHeadRow" class="border-b border-white/10 text-slate-400">
-            <th class="py-2 pr-3 font-medium">…</th>
-          </tr>
-        </thead>
-        <tbody id="fullCsvBody">
-          <tr><td class="py-4 text-slate-500">Loading…</td></tr>
-        </tbody>
-      </table>
-
       <div
-        id="studentPager"
-        class="hidden mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400 border-t border-white/10 pt-3">
-        <span id="studentPagerStatus"></span>
-        <div class="flex flex-wrap gap-2">
-          <button
-            type="button"
-            id="studentPagerPrev"
-            class="rounded-md border border-white/15 bg-slate-900/80 px-3 py-1.5 text-slate-200 hover:bg-slate-800 disabled:opacity-40 disabled:pointer-events-none">
-            Previous
-          </button>
-          <button
-            type="button"
-            id="studentPagerNext"
-            class="rounded-md border border-white/15 bg-slate-900/80 px-3 py-1.5 text-slate-200 hover:bg-slate-800 disabled:opacity-40 disabled:pointer-events-none">
-            Next
-          </button>
+        class="student-roster-panel rounded-lg border border-amber-900/20 bg-gradient-to-br from-amber-50 via-orange-50/95 to-amber-100/85 p-4 text-[#3d2817] shadow-inner overflow-x-auto">
+        <h2 class="text-lg font-semibold text-[#2c1810] mb-3">Student Roster</h2>
+        <p id="fullCsvError" class="hidden text-sm text-red-800 mb-2"></p>
+        <p id="fullCsvWarn" class="hidden text-sm text-[#5c4033] mb-2"></p>
+        <table class="w-full text-sm text-left border-collapse min-w-max text-[#3d2817]">
+          <thead>
+            <tr id="fullCsvHeadRow" class="border-b border-amber-900/20 text-[#4a3410]">
+              <th class="py-2 pr-3 font-medium">…</th>
+            </tr>
+          </thead>
+          <tbody id="fullCsvBody">
+            <tr><td class="py-4 text-[#5c4033]">Loading…</td></tr>
+          </tbody>
+        </table>
+
+        <div
+          id="studentPager"
+          class="hidden mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-[#4a3410] border-t border-amber-900/20 pt-3">
+          <span id="studentPagerStatus"></span>
+          <div class="flex flex-wrap gap-2">
+            <button
+              type="button"
+              id="studentPagerPrev"
+              class="rounded-md border border-amber-900/25 bg-white/90 px-3 py-1.5 text-[#3d2817] hover:bg-amber-100 disabled:opacity-40 disabled:pointer-events-none">
+              Previous
+            </button>
+            <button
+              type="button"
+              id="studentPagerNext"
+              class="rounded-md border border-amber-900/25 bg-white/90 px-3 py-1.5 text-[#3d2817] hover:bg-amber-100 disabled:opacity-40 disabled:pointer-events-none">
+              Next
+            </button>
+          </div>
         </div>
       </div>
 
       <div class="mt-4 flex flex-wrap gap-2">
         <button type="button" id="btnCreateNewStudent"
-          class="rounded-lg border border-orange-600/45 bg-gradient-to-b from-orange-800 via-orange-900 to-orange-950 px-4 py-2 text-sm font-semibold text-orange-50 shadow-[0_4px_16px_-4px_rgba(0,0,0,0.5),0_0_24px_-8px_rgba(234,88,12,0.22),inset_0_1px_0_rgba(255,237,213,0.2)] hover:from-orange-700 hover:via-orange-800 hover:to-orange-900">
+          class="btn-create-metallic-dark-brown rounded-lg px-4 py-2 text-sm">
           Create New Student
         </button>
         <button type="button" id="btnNewStudentRoleAccount"
-          class="rounded-lg border border-amber-400/35 bg-gradient-to-b from-amber-500 to-amber-700 px-4 py-2 text-sm font-semibold text-black shadow-[0_4px_14px_-4px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.25)] hover:from-amber-400 hover:to-amber-600">
+          class="btn-dark-blue-green rounded-lg px-4 py-2 text-sm">
           New Login Account
         </button>
       </div>
@@ -167,80 +172,56 @@
           <p id="createStudentOk" class="hidden text-sm text-amber-300"></p>
           <div class="flex flex-wrap gap-2 pt-2">
             <button type="submit" id="createStudentSubmitBtn"
-              class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
+              class="btn-confirm-black rounded-lg px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
               Confirm
             </button>
             <button type="button" id="createStudentCancelBtn"
-              class="btn-cancel-metallic-brown rounded-lg font-medium px-4 py-2 text-sm">
+              class="btn-cancel-metallic-brown rounded-lg px-4 py-2 text-sm">
               Cancel
             </button>
           </div>
         </form>
       </div>
 
-      <div id="tableEditPanel" class="hidden mt-6 pt-6 border-t border-white/10 rounded-lg bg-slate-900/40 p-4">
-        <h3 class="text-base font-semibold text-amber-200 mb-3">Edit student</h3>
-        <p class="text-xs text-slate-500 mb-4">
-          You can change <strong>Full Name</strong>, <strong>Sex</strong>, <strong>Date of Birth</strong>, <strong>Joined Date</strong>,
-          <strong>Home Address</strong>, <strong>Country</strong>, <strong>Email Address</strong>,
-          <strong>Contact Number</strong>, <strong>Guardian</strong>, <strong>Guardian Contact</strong>, <strong>School</strong>,
-          <strong>Student coach</strong>, <strong>Status</strong>, and <strong>Remark</strong>
-          in the student roster (<code class="text-slate-400">UserList_Student.json</code>). Click <strong>Confirm</strong> to save; <strong>Last Update Date</strong> is set to today for this student.
-        </p>
-        <form id="tableEditForm" class="space-y-3 max-w-2xl">
-          <p class="text-[11px] uppercase tracking-wide text-slate-500 font-medium">Read-only</p>
+      <div id="tableEditPanel" class="hidden mt-6 pt-6 border-t border-amber-900/25 rounded-lg bg-gradient-to-br from-amber-50 via-orange-50/90 to-amber-100/80 p-4 text-[#3d2817] shadow-inner">
+        <h3 class="text-base font-semibold text-[#2c1810] mb-3">Edit student</h3>
+        <form id="tableEditForm" class="space-y-3 max-w-5xl text-[#3d2817]">
+          <p class="text-[11px] uppercase tracking-wide text-[#4a3410] font-medium">Read-only</p>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label for="tableEditStudentId" class="block text-xs text-slate-400 mb-1">Student ID</label>
+              <label for="tableEditStudentId" class="block text-xs text-[#4a3410] mb-1">Student ID</label>
               <input id="tableEditStudentId" type="text" readonly
-                class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed" />
+                class="w-full rounded-lg bg-white/90 border border-amber-900/20 px-3 py-2 text-[#3d2817] text-sm cursor-not-allowed" />
             </div>
             <div>
-              <label for="tableEditClubName" class="block text-xs text-slate-400 mb-1">Club ID</label>
+              <label for="tableEditClubName" class="block text-xs text-[#4a3410] mb-1">Club ID</label>
               <input id="tableEditClubName" type="text" readonly
-                class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed" />
+                class="w-full rounded-lg bg-white/90 border border-amber-900/20 px-3 py-2 text-[#3d2817] text-sm cursor-not-allowed" />
             </div>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label for="tableEditCreated" class="block text-xs text-slate-400 mb-1">Created At</label>
+              <label for="tableEditCreated" class="block text-xs text-[#4a3410] mb-1">Created At</label>
               <input id="tableEditCreated" type="text" readonly
-                class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed" />
+                class="w-full rounded-lg bg-white/90 border border-amber-900/20 px-3 py-2 text-[#3d2817] text-sm cursor-not-allowed" />
             </div>
             <div>
-              <label for="tableEditLastUpdate" class="block text-xs text-slate-400 mb-1">Last Update Date (current file value)</label>
+              <label for="tableEditLastUpdate" class="block text-xs text-[#4a3410] mb-1">Last Update Date (current file value)</label>
               <input id="tableEditLastUpdate" type="text" readonly
-                class="w-full rounded-lg bg-slate-950/80 border border-white/10 px-3 py-2 text-slate-400 text-sm cursor-not-allowed" />
+                class="w-full rounded-lg bg-white/90 border border-amber-900/20 px-3 py-2 text-[#3d2817] text-sm cursor-not-allowed" />
             </div>
           </div>
-          <p class="text-[11px] uppercase tracking-wide text-slate-500 font-medium pt-2">You can edit</p>
-          <div>
-            <label for="tableEditFullName" class="block text-xs text-slate-400 mb-1">Full Name</label>
-            <input id="tableEditFullName" type="text" required autocomplete="name"
-              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label for="tableEditDateOfBirth" class="block text-xs text-slate-400 mb-1">Date of Birth</label>
-              <input id="tableEditDateOfBirth" type="text" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="DD/MM/YYYY"
-                class="date-field-ddmm w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
-            </div>
-            <div>
-              <label for="tableEditJoinedDate" class="block text-xs text-slate-400 mb-1">Joined Date</label>
-              <input id="tableEditJoinedDate" type="text" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="DD/MM/YYYY"
-                class="date-field-ddmm w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
-            </div>
-          </div>
-          <div>
-            <label for="tableEditHomeAddress" class="block text-xs text-slate-400 mb-1">Home Address</label>
-            <input id="tableEditHomeAddress" type="text" autocomplete="street-address"
-              class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
-          </div>
+          <p class="text-[11px] uppercase tracking-wide text-[#4a3410] font-medium pt-2 border-t border-amber-900/15">You can edit</p>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="sm:col-span-1 min-w-0">
+              <label for="tableEditFullName" class="block text-xs text-[#4a3410] mb-1">Full Name</label>
+              <input id="tableEditFullName" type="text" required autocomplete="name"
+                class="w-full rounded-lg bg-white border border-amber-900/25 px-3 py-2 text-[#3d2817] text-sm placeholder:text-[#6b5344]/60 focus:outline-none focus:ring-2 focus:ring-amber-700/35" />
+            </div>
             <div>
-              <label for="tableEditSex" class="block text-xs text-slate-400 mb-1">Sex</label>
+              <label for="tableEditSex" class="block text-xs text-[#4a3410] mb-1">Sex</label>
               <select id="tableEditSex"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
+                class="w-full rounded-lg bg-white border border-amber-900/25 px-3 py-2 text-[#3d2817] text-sm [color-scheme:light] focus:outline-none focus:ring-2 focus:ring-amber-700/35">
                 <option value="">—</option>
                 <option value="M">M</option>
                 <option value="F">F</option>
@@ -248,9 +229,9 @@
               </select>
             </div>
             <div>
-              <label for="tableEditCountry" class="block text-xs text-slate-400 mb-1">Country</label>
+              <label for="tableEditCountry" class="block text-xs text-[#4a3410] mb-1">Country</label>
               <select id="tableEditCountry"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
+                class="w-full rounded-lg bg-white border border-amber-900/25 px-3 py-2 text-[#3d2817] text-sm [color-scheme:light] focus:outline-none focus:ring-2 focus:ring-amber-700/35">
                 <option value="">—</option>
                 <option value="Hong Kong">Hong Kong</option>
                 <option value="China">China</option>
@@ -259,67 +240,86 @@
                 <option value="Korea">Korea</option>
               </select>
             </div>
-            <div>
-              <label for="tableEditContactNumber" class="block text-xs text-slate-400 mb-1">Contact Number</label>
-              <input id="tableEditContactNumber" type="text" autocomplete="tel"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
-            </div>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label for="tableEditSchool" class="block text-xs text-slate-400 mb-1">School</label>
+              <label for="tableEditSchool" class="block text-xs text-[#4a3410] mb-1">School</label>
               <input id="tableEditSchool" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+                class="w-full rounded-lg bg-white border border-amber-900/25 px-3 py-2 text-[#3d2817] text-sm placeholder:text-[#6b5344]/60 focus:outline-none focus:ring-2 focus:ring-amber-700/35" />
             </div>
             <div>
-              <label for="tableEditEmail" class="block text-xs text-slate-400 mb-1">Email Address</label>
+              <label for="tableEditHomeAddress" class="block text-xs text-[#4a3410] mb-1">Home Address</label>
+              <input id="tableEditHomeAddress" type="text" autocomplete="street-address"
+                class="w-full rounded-lg bg-white border border-amber-900/25 px-3 py-2 text-[#3d2817] text-sm placeholder:text-[#6b5344]/60 focus:outline-none focus:ring-2 focus:ring-amber-700/35" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="tableEditDateOfBirth" class="block text-xs text-[#4a3410] mb-1">Date of Birth</label>
+              <input id="tableEditDateOfBirth" type="text" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="DD/MM/YYYY"
+                class="date-field-ddmm w-full rounded-lg bg-white border border-amber-900/25 px-3 py-2 text-[#3d2817] text-sm placeholder:text-[#6b5344]/60 focus:outline-none focus:ring-2 focus:ring-amber-700/35" />
+            </div>
+            <div>
+              <label for="tableEditJoinedDate" class="block text-xs text-[#4a3410] mb-1">Joined Date</label>
+              <input id="tableEditJoinedDate" type="text" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="DD/MM/YYYY"
+                class="date-field-ddmm w-full rounded-lg bg-white border border-amber-900/25 px-3 py-2 text-[#3d2817] text-sm placeholder:text-[#6b5344]/60 focus:outline-none focus:ring-2 focus:ring-amber-700/35" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="tableEditContactNumber" class="block text-xs text-[#4a3410] mb-1">Contact Number</label>
+              <input id="tableEditContactNumber" type="text" autocomplete="tel"
+                class="w-full rounded-lg bg-white border border-amber-900/25 px-3 py-2 text-[#3d2817] text-sm placeholder:text-[#6b5344]/60 focus:outline-none focus:ring-2 focus:ring-amber-700/35" />
+            </div>
+            <div>
+              <label for="tableEditEmail" class="block text-xs text-[#4a3410] mb-1">Email Address</label>
               <input id="tableEditEmail" type="email" required autocomplete="email"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+                class="w-full rounded-lg bg-white border border-amber-900/25 px-3 py-2 text-[#3d2817] text-sm placeholder:text-[#6b5344]/60 focus:outline-none focus:ring-2 focus:ring-amber-700/35" />
             </div>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label for="tableEditGuardian" class="block text-xs text-slate-400 mb-1">Guardian</label>
+              <label for="tableEditGuardian" class="block text-xs text-[#4a3410] mb-1">Guardian</label>
               <input id="tableEditGuardian" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+                class="w-full rounded-lg bg-white border border-amber-900/25 px-3 py-2 text-[#3d2817] text-sm placeholder:text-[#6b5344]/60 focus:outline-none focus:ring-2 focus:ring-amber-700/35" />
             </div>
             <div>
-              <label for="tableEditGuardianContact" class="block text-xs text-slate-400 mb-1">Guardian Contact</label>
+              <label for="tableEditGuardianContact" class="block text-xs text-[#4a3410] mb-1">Guardian Contact</label>
               <input id="tableEditGuardianContact" type="text" autocomplete="tel"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+                class="w-full rounded-lg bg-white border border-amber-900/25 px-3 py-2 text-[#3d2817] text-sm placeholder:text-[#6b5344]/60 focus:outline-none focus:ring-2 focus:ring-amber-700/35" />
             </div>
           </div>
-          <div>
-            <label for="tableEditStatus" class="block text-xs text-slate-400 mb-1">Status</label>
-            <select id="tableEditStatus"
-              class="w-full max-w-md rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
-              <option value="ACTIVE">ACTIVE</option>
-              <option value="INACTIVE">INACTIVE</option>
-            </select>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label for="tableEditStudentCoach" class="block text-xs text-slate-400 mb-1">Student coach</label>
+              <label for="tableEditStudentCoach" class="block text-xs text-[#4a3410] mb-1">Student coach</label>
               <select id="tableEditStudentCoach"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50">
+                class="w-full rounded-lg bg-white border border-amber-900/25 px-3 py-2 text-[#3d2817] text-sm [color-scheme:light] focus:outline-none focus:ring-2 focus:ring-amber-700/35">
                 <option value="N/A">N/A</option>
               </select>
             </div>
             <div>
-              <label for="tableEditRemark" class="block text-xs text-slate-400 mb-1">Remark</label>
+              <label for="tableEditStatus" class="block text-xs text-[#4a3410] mb-1">Status</label>
+              <select id="tableEditStatus"
+                class="w-full rounded-lg bg-white border border-amber-900/25 px-3 py-2 text-[#3d2817] text-sm [color-scheme:light] focus:outline-none focus:ring-2 focus:ring-amber-700/35">
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="INACTIVE">INACTIVE</option>
+              </select>
+            </div>
+            <div class="sm:col-span-1 min-w-0">
+              <label for="tableEditRemark" class="block text-xs text-[#4a3410] mb-1">Remark</label>
               <input id="tableEditRemark" type="text"
-                class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
+                class="w-full rounded-lg bg-white border border-amber-900/25 px-3 py-2 text-[#3d2817] text-sm placeholder:text-[#6b5344]/60 focus:outline-none focus:ring-2 focus:ring-amber-700/35" />
             </div>
           </div>
-          <p id="tableEditErr" class="hidden text-sm text-red-300"></p>
-          <p id="tableEditOk" class="hidden text-sm text-amber-300"></p>
+          <p id="tableEditErr" class="hidden text-sm text-red-800"></p>
+          <p id="tableEditOk" class="hidden text-sm text-[#5c4033] font-medium"></p>
           <div class="flex flex-wrap gap-2 pt-2">
             <button type="button" id="tableEditConfirmBtn"
-              class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
+              class="btn-confirm-black rounded-lg px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
               Confirm
             </button>
             <button type="button" id="tableEditCancelBtn"
-              class="btn-cancel-metallic-brown rounded-lg font-medium px-4 py-2 text-sm">
+              class="btn-cancel-metallic-brown rounded-lg px-4 py-2 text-sm">
               Cancel
             </button>
           </div>
@@ -383,7 +383,7 @@
         <p id="newStudentRoleAccountErr" class="mt-3 text-sm text-red-300 hidden"></p>
         <div class="flex flex-wrap gap-2 justify-end mt-5">
           <button type="button" id="newStudentRoleAccountCancel"
-            class="btn-cancel-metallic-brown rounded-lg px-4 py-2 text-sm font-medium">
+            class="btn-cancel-metallic-brown rounded-lg px-4 py-2 text-sm">
             Cancel
           </button>
           <button type="button" id="newStudentRoleAccountOk"
@@ -455,6 +455,8 @@
 
       var cachedManagerClubName = "";
       var cachedManagerClubFolderId = "";
+      /** Avoid refetching coach dropdown on every student list page when club_id unchanged. */
+      var lastCoachOptionsClubId = "";
 
       (function primeClubIdFromUrlOrCache() {
         var q = new URLSearchParams(window.location.search || "");
@@ -539,7 +541,7 @@
         var siIntro = document.querySelector("section.glass > p.text-xs");
         if (siIntro) {
           siIntro.textContent =
-            "Showing students whose Student coach matches your roster name, login, or Coach ID (UserList_Student.json).";
+            "Showing students whose Student coach matches your roster name, login, or Coach ID (MongoDB UserList_Student; legacy JSON roster when Mongo is off).";
         }
       }
 
@@ -669,7 +671,11 @@
           opt.value = row.fullName;
           var label = row.fullName;
           if (nameCount[k] > 1 && row.studentId) {
-            label = row.fullName + " (" + row.studentId + ")";
+            var sidDisp =
+              window.api && typeof window.api.displayStudentIdForUi === "function"
+                ? window.api.displayStudentIdForUi(row.studentId)
+                : row.studentId;
+            label = row.fullName + " (" + sidDisp + ")";
           }
           opt.textContent = label;
           sel.appendChild(opt);
@@ -677,24 +683,24 @@
       }
 
       var STUDENT_TABLE_COLS = [
+        { key: "club_name", label: "Club Name" },
         { key: "student_id", label: "Student ID" },
-        { key: "club_id", label: "Club ID" },
         { key: "full_name", label: "Full Name" },
         { key: "sex", label: "Sex" },
-        { key: "email", label: "Email Address" },
+        { key: "date_of_birth", label: "Date of Birth" },
+        { key: "school", label: "School" },
+        { key: "student_coach", label: "Student Coach" },
         { key: "contact_number", label: "Contact Number" },
+        { key: "email", label: "Email Address" },
         { key: "guardian", label: "Guardian" },
         { key: "guardian_contact", label: "Guardian Contact" },
-        { key: "school", label: "School" },
-        { key: "student_coach", label: "Student coach" },
         { key: "status", label: "Status" },
-        { key: "creation_date", label: "Created At" },
-        { key: "remark", label: "Remark" },
-        { key: "lastUpdate_date", label: "Last Update Date" },
-        { key: "date_of_birth", label: "Date of Birth" },
-        { key: "joined_date", label: "Joined Date" },
         { key: "home_address", label: "Home Address" },
         { key: "country", label: "Country" },
+        { key: "joined_date", label: "Joined Date" },
+        { key: "remark", label: "Remark" },
+        { key: "creation_date", label: "Created At" },
+        { key: "lastUpdate_date", label: "Last Update Date" },
       ];
 
       function hideCreateStudentPanel() {
@@ -718,6 +724,10 @@
         var p = document.getElementById("tableEditPanel");
         if (p) {
           p.classList.add("hidden");
+        }
+        var sidEl = document.getElementById("tableEditStudentId");
+        if (sidEl && sidEl.dataset) {
+          delete sidEl.dataset.fullStudentId;
         }
         var err = document.getElementById("tableEditErr");
         var ok = document.getElementById("tableEditOk");
@@ -849,13 +859,24 @@
         });
       }
 
-      /** Fills Create + Edit Student coach selects from GET /coach-manager/coaches (UserList_Coach.json full_name). */
+      /**
+       * Fills Create + Edit Student coach selects from GET /coach-manager/coaches?compact=1
+       * (MongoDB UserList_Coach in ClubMaster_DB, scoped by session club_id / club_folder_uid).
+       */
       function loadStudentCoachSelectOptions() {
         if (!window.api || typeof window.api.api !== "function") {
           return Promise.resolve();
         }
+        var cid =
+          typeof cachedManagerClubFolderId === "string"
+            ? cachedManagerClubFolderId.trim()
+            : "";
+        var path = "/coach-manager/coaches?compact=1";
+        if (cid) {
+          path += "&club_id=" + encodeURIComponent(cid);
+        }
         return window.api
-          .api("/coach-manager/coaches?compact=1", { cacheTtlMs: 120000 })
+          .api(path, { cacheTtlMs: 120000 })
           .then(function (data) {
           if (!data || data.ok === false) {
             return;
@@ -863,6 +884,13 @@
           var names = [];
           var seen = Object.create(null);
           (Array.isArray(data.coaches) ? data.coaches : []).forEach(function (c) {
+            var st =
+              c.status != null && String(c.status).trim() !== ""
+                ? String(c.status).trim().toUpperCase()
+                : "ACTIVE";
+            if (st !== "ACTIVE") {
+              return;
+            }
             var fn = c.full_name != null ? String(c.full_name).trim() : "";
             if (fn && !seen[fn]) {
               seen[fn] = true;
@@ -880,6 +908,9 @@
             document.getElementById("newStudentStudentCoach"),
             names
           );
+            if (cid) {
+              lastCoachOptionsClubId = cid;
+            }
         });
       }
 
@@ -910,10 +941,19 @@
 
       function openTableEditPanelFromStudent(s) {
         hideCreateStudentPanel();
-        document.getElementById("tableEditStudentId").value =
+        var fullSid =
           (s.student_id != null && String(s.student_id).trim()
             ? String(s.student_id).trim()
             : s.StudentID) || "";
+        var sidInput = document.getElementById("tableEditStudentId");
+        sidInput.value =
+          window.api && typeof window.api.displayStudentIdForUi === "function"
+            ? window.api.displayStudentIdForUi(fullSid)
+            : fullSid;
+        sidInput.setAttribute("title", fullSid);
+        if (sidInput.dataset) {
+          sidInput.dataset.fullStudentId = fullSid;
+        }
         document.getElementById("tableEditClubName").value =
           s.club_id || s.club_name || "";
         document.getElementById("tableEditFullName").value = s.full_name || "";
@@ -973,16 +1013,16 @@
         }
         if (!students || !students.length) {
           headRow.innerHTML =
-            '<th class="py-2 pr-3 font-medium text-slate-400">—</th>';
+            '<th class="py-2 pr-3 font-medium text-[#4a3410]">—</th>';
           tb.innerHTML =
-            '<tr><td class="py-4 text-slate-500">No students in list yet.</td></tr>';
+            '<tr><td class="py-4 text-[#5c4033]">No students in list yet.</td></tr>';
           return;
         }
         headRow.innerHTML =
-          '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap min-w-[9.5rem]">Actions</th>' +
+          '<th class="py-2 pr-3 font-medium text-[#4a3410] whitespace-nowrap min-w-[9.5rem]">Actions</th>' +
           STUDENT_TABLE_COLS.map(function (col) {
             return (
-              '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap max-w-[14rem]">' +
+              '<th class="py-2 pr-3 font-medium text-[#4a3410] whitespace-nowrap max-w-[14rem]">' +
               escapeHtml(col.label) +
               "</th>"
             );
@@ -990,28 +1030,55 @@
         tb.innerHTML = students
           .map(function (s, idx) {
             var tds = STUDENT_TABLE_COLS.map(function (col) {
-              var v = s[col.key] != null ? String(s[col.key]) : "";
-              var disp =
-                window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
-                  ? window.api.formatDateDisplayDdMmYyyy(v)
-                  : v;
+              var v = "";
+              if (col.key === "club_name") {
+                v =
+                  (s.club_name != null && String(s.club_name).trim() !== ""
+                    ? String(s.club_name).trim()
+                    : "") ||
+                  (typeof cachedManagerClubName === "string" &&
+                  cachedManagerClubName.trim() !== ""
+                    ? String(cachedManagerClubName).trim()
+                    : "");
+              } else if (s[col.key] != null) {
+                v = String(s[col.key]);
+              }
+              var disp;
+              if (col.key === "student_id") {
+                disp =
+                  window.api && typeof window.api.displayStudentIdForUi === "function"
+                    ? window.api.displayStudentIdForUi(v)
+                    : v;
+              } else if (
+                col.key === "date_of_birth" ||
+                col.key === "joined_date" ||
+                col.key === "creation_date" ||
+                col.key === "lastUpdate_date"
+              ) {
+                disp =
+                  window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                    ? window.api.formatDateDisplayDdMmYyyy(v)
+                    : v;
+              } else {
+                disp = v;
+              }
               return (
-                '<td class="py-2 pr-3 text-xs align-top whitespace-pre-wrap break-words max-w-[16rem]">' +
+                '<td class="py-2 pr-3 text-xs align-top whitespace-pre-wrap break-words max-w-[16rem] text-[#3d2817]">' +
                 escapeHtml(disp) +
                 "</td>"
               );
             }).join("");
             var removeBtn =
               role === "CoachManager"
-                ? '<button type="button" class="cm-row-remove rounded-md bg-red-200/90 hover:bg-red-300 border border-red-300/70 text-slate-900 text-xs font-medium px-2.5 py-1.5 shadow-sm" data-idx="' +
+                ? '<button type="button" class="cm-row-remove btn-remove-black-red-gold rounded-md text-xs px-2.5 py-1.5" data-idx="' +
                   idx +
                   '">Remove</button>'
                 : "";
             return (
-              '<tr class="border-b border-white/5">' +
+              '<tr class="border-b border-amber-900/10">' +
               '<td class="py-2 pr-3 align-top whitespace-nowrap">' +
               '<div class="flex flex-wrap gap-1.5">' +
-              '<button type="button" class="cm-row-update rounded-md bg-amber-100/95 hover:bg-amber-200 border border-amber-300/80 text-slate-900 text-xs font-medium px-2.5 py-1.5 shadow-sm" data-idx="' +
+              '<button type="button" class="cm-row-update btn-update-orange-gold rounded-md text-xs px-2.5 py-1.5" data-idx="' +
               idx +
               '">Update</button>' +
               removeBtn +
@@ -1031,16 +1098,16 @@
         }
         if (!csv || !csv.headers || !csv.headers.length) {
           headRow.innerHTML =
-            '<th class="py-2 pr-3 font-medium text-slate-400">—</th>';
+            '<th class="py-2 pr-3 font-medium text-[#4a3410]">—</th>';
           tb.innerHTML =
-            '<tr><td class="py-4 text-slate-500">No roster rows (empty or missing file).</td></tr>';
+            '<tr><td class="py-4 text-[#5c4033]">No roster rows (empty or missing file).</td></tr>';
           return;
         }
         var colCount = csv.headers.length;
         headRow.innerHTML = csv.headers
           .map(function (h) {
             return (
-              '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap max-w-[14rem]">' +
+              '<th class="py-2 pr-3 font-medium text-[#4a3410] whitespace-nowrap max-w-[14rem]">' +
               escapeHtml(h) +
               "</th>"
             );
@@ -1050,7 +1117,7 @@
           tb.innerHTML =
             '<tr><td colspan="' +
             colCount +
-            '" class="py-4 text-slate-500">Header only — no data rows yet.</td></tr>';
+            '" class="py-4 text-[#5c4033]">Header only — no data rows yet.</td></tr>';
           return;
         }
         try {
@@ -1058,17 +1125,34 @@
             .map(function (row) {
               var cells = Array.isArray(row) ? row : [];
               return (
-                '<tr class="border-b border-white/5">' +
+                '<tr class="border-b border-amber-900/10">' +
                 cells
-                  .map(function (cell) {
+                  .map(function (cell, ci) {
                     var cStr = cell != null ? String(cell) : "";
-                    var disp =
-                      window.api &&
-                      typeof window.api.formatDateDisplayDdMmYyyy === "function"
-                        ? window.api.formatDateDisplayDdMmYyyy(cStr)
-                        : cStr;
+                    var hdr =
+                      csv.headers && csv.headers[ci] != null
+                        ? String(csv.headers[ci]).trim().toLowerCase()
+                        : "";
+                    var isStudentIdCol =
+                      hdr === "student_id" ||
+                      hdr === "studentid" ||
+                      hdr === "student id";
+                    var disp;
+                    if (isStudentIdCol) {
+                      disp =
+                        window.api &&
+                        typeof window.api.displayStudentIdForUi === "function"
+                          ? window.api.displayStudentIdForUi(cStr)
+                          : cStr;
+                    } else {
+                      disp =
+                        window.api &&
+                        typeof window.api.formatDateDisplayDdMmYyyy === "function"
+                          ? window.api.formatDateDisplayDdMmYyyy(cStr)
+                          : cStr;
+                    }
                     return (
-                      '<td class="py-2 pr-3 text-xs align-top whitespace-pre-wrap break-words max-w-[16rem]">' +
+                      '<td class="py-2 pr-3 text-xs align-top whitespace-pre-wrap break-words max-w-[16rem] text-[#3d2817]">' +
                       escapeHtml(disp) +
                       "</td>"
                     );
@@ -1082,7 +1166,7 @@
           tb.innerHTML =
             '<tr><td colspan="' +
             colCount +
-            '" class="py-4 text-red-300">Could not render table: ' +
+            '" class="py-4 text-red-800">Could not render table: ' +
             escapeHtml(
               renderErr && renderErr.message ? renderErr.message : String(renderErr)
             ) +
@@ -1162,8 +1246,13 @@
               return;
             }
             if (data.clubId) {
-              setUidLabels(data.clubId);
-              cachedManagerClubFolderId = String(data.clubId).trim();
+              var prevCoachClub = lastCoachOptionsClubId;
+              var newCid = String(data.clubId).trim();
+              setUidLabels(newCid);
+              cachedManagerClubFolderId = newCid;
+              if (newCid !== prevCoachClub) {
+                loadStudentCoachSelectOptions().catch(function () {});
+              }
             }
             if (data.clubName && String(data.clubName).trim() !== "") {
               cachedManagerClubName = String(data.clubName).trim();
@@ -1341,7 +1430,17 @@
         var okBox = document.getElementById("tableEditOk");
         errBox.classList.add("hidden");
         okBox.classList.add("hidden");
-        var id = document.getElementById("tableEditStudentId").value.trim();
+        var idEl = document.getElementById("tableEditStudentId");
+        var id = (
+          idEl &&
+          idEl.dataset &&
+          idEl.dataset.fullStudentId &&
+          String(idEl.dataset.fullStudentId).trim()
+            ? String(idEl.dataset.fullStudentId).trim()
+            : idEl
+              ? idEl.value.trim()
+              : ""
+        ).trim();
         if (!id) {
           errBox.textContent = "Missing student_id.";
           errBox.classList.remove("hidden");
@@ -1583,10 +1682,13 @@
             body: JSON.stringify(body),
           })
           .then(function (data) {
+            var createdSid = data.studentId || "—";
+            var createdDisp =
+              window.api && typeof window.api.displayStudentIdForUi === "function"
+                ? window.api.displayStudentIdForUi(createdSid) || createdSid
+                : createdSid;
             okBox.textContent =
-              (data.message || "Created.") +
-              " Student ID: " +
-              (data.studentId || "—");
+              (data.message || "Created.") + " Student ID: " + createdDisp;
             okBox.classList.remove("hidden");
             document.getElementById("createStudentForm").reset();
             refillStudentCountryDropdownsFromCache();

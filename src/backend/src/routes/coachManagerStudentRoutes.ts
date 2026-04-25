@@ -5,7 +5,7 @@ import {
   getCoachManagerExpiryDateForClubFolderUid,
   removeMainUserlistCoachOrStudentByUid,
 } from "../userlistCsv";
-import { isMongoConfigured } from "../db/DBConnection";
+import { isMongoConfigured, USER_LIST_STUDENT_COLLECTION } from "../db/DBConnection";
 import {
   findUserByUidPreferred,
   findUsersByUidsPreferred,
@@ -29,11 +29,11 @@ import {
   filterRawRowsByIdColumn,
   findCoachRosterRow,
 } from "../coachSelfFilter";
-import { getDataClubRootPath, isValidClubFolderId, loadCoaches } from "../coachListCsv";
+import { getDataClubRootPath, isValidClubFolderId } from "../coachListCsv";
 import {
   allocateNextStudentId,
   appendStudentRow,
-  bumpNumericStudentLoginStyleId,
+  bumpClubScopedStudentId,
   ensureStudentListFile,
   loadStudentListRaw,
   loadStudents,
@@ -169,7 +169,7 @@ async function resolveStudentClubContextAsync(
   if (!coachId) {
     return { ok: false, status: 403, error: "Invalid session." };
   }
-  const clubId = resolveClubFolderUidForCoachRequest(req);
+  const clubId = await resolveClubFolderUidForCoachRequest(req);
   if (!clubId) {
     return {
       ok: false,
@@ -177,10 +177,7 @@ async function resolveStudentClubContextAsync(
       error: "No club roster found for this coach account.",
     };
   }
-  const inRoster = loadCoaches(clubId).some(
-    (c) => c.coachId.trim().toUpperCase() === coachId.toUpperCase()
-  );
-  if (!inRoster) {
+  if ((await findCoachRosterRow(clubId, coachId)) == null) {
     return { ok: false, status: 403, error: "Coach not in club roster." };
   }
   const folderCtx = await resolveClubFolderRoleContextAsync(clubId, "student");
@@ -244,17 +241,20 @@ export function createCoachManagerStudentRouter(): Router {
     }
     try {
       ensureStudentListFile(ctx.clubId);
-      let studentCsv = loadStudentListRaw(ctx.clubId);
-      let students: ReturnType<typeof loadStudents> = [];
+      let studentCsv = await loadStudentListRaw(ctx.clubId);
+      let students: Awaited<ReturnType<typeof loadStudents>> = [];
       let studentsParseWarning: string | null = null;
       try {
-        students = loadStudents(ctx.clubId);
+        students = await loadStudents(ctx.clubId);
       } catch (parseErr) {
         studentsParseWarning =
           parseErr instanceof Error ? parseErr.message : String(parseErr);
       }
       if (_req.user?.role === "Coach") {
-        const crow = findCoachRosterRow(ctx.clubId, String(_req.user.sub));
+        const crow = await findCoachRosterRow(
+          ctx.clubId,
+          String(_req.user.sub),
+        );
         const uname = String(_req.user.username ?? "");
         if (crow) {
           students = students.filter((s) =>
@@ -277,6 +277,7 @@ export function createCoachManagerStudentRouter(): Router {
       }
       const idEnc = encodeURIComponent(ctx.clubId);
       const fileEnc = encodeURIComponent(STUDENT_LIST_FILENAME);
+      const rosterMongo = isMongoConfigured();
       const listQ = parseCoachManagerStudentListQuery(_req);
 
       if (listQ.compact) {
@@ -328,12 +329,22 @@ export function createCoachManagerStudentRouter(): Router {
         ok: true,
         clubId: ctx.clubId,
         clubName: ctx.clubName,
-        studentCsvFileUrl: `/backend/data_club/${idEnc}/${fileEnc}`,
-        studentCsvResolvedPath: studentListResolvedPath(ctx.clubId),
+        studentRosterSource: rosterMongo ? "mongo" : "disk",
+        studentCsvFileUrl: rosterMongo
+          ? null
+          : `/backend/data_club/${idEnc}/${fileEnc}`,
+        mongoStudentCollection: rosterMongo ? USER_LIST_STUDENT_COLLECTION : null,
+        studentCsvResolvedPath: rosterMongo
+          ? `MongoDB/${USER_LIST_STUDENT_COLLECTION}/${ctx.clubId}`
+          : studentListResolvedPath(ctx.clubId),
         students: pageStudents.map((s) => {
           const fields = studentCsvRowToApiFields(s);
           const ul = loginByStudentId.get(s.studentId.trim().toUpperCase());
-          return { ...fields, username: ul?.username ?? "" };
+          return {
+            ...fields,
+            club_name: ctx.clubName,
+            username: ul?.username ?? "",
+          };
         }),
         studentCsv: studentCsvOut,
         ...(studentsParseWarning ? { studentsParseWarning } : {}),
@@ -380,23 +391,23 @@ export function createCoachManagerStudentRouter(): Router {
     const w = readStudentWriteBody(req.body);
     let studentCoach = w.studentCoach;
     if (req.user?.role === "Coach") {
-      const crow = findCoachRosterRow(ctx.clubId, String(req.user.sub));
+      const crow = await findCoachRosterRow(ctx.clubId, String(req.user.sub));
       if (!crow) {
         res.status(403).json({ ok: false, error: "Coach roster row not found." });
         return;
       }
       studentCoach = (crow.coachName && crow.coachName.trim()) || studentCoach;
     }
-    const rosterStudents = loadStudents(ctx.clubId);
+    const rosterStudents = await loadStudents(ctx.clubId);
     const rosterHasStudentId = (id: string) =>
       rosterStudents.some((r) => studentIdsEqual(r.studentId, id));
-    let studentId = allocateNextStudentId(ctx.clubId);
+    let studentId = await allocateNextStudentId(ctx.clubId);
     const maxUidAttempts = 10_000;
     for (let attempt = 0; attempt < maxUidAttempts; attempt++) {
       if (!rosterHasStudentId(studentId) && !(await findUserByUidPreferred(studentId))) {
         break;
       }
-      const nextId = bumpNumericStudentLoginStyleId(studentId);
+      const nextId = bumpClubScopedStudentId(studentId);
       if (nextId === studentId) {
         res.status(500).json({
           ok: false,
@@ -415,7 +426,7 @@ export function createCoachManagerStudentRouter(): Router {
       });
       return;
     }
-    const result = appendStudentRow(ctx.clubId, ctx.clubName, {
+    const result = await appendStudentRow(ctx.clubId, ctx.clubName, {
       studentName: w.studentName,
       email: w.email,
       phone: w.phone,
@@ -505,7 +516,7 @@ export function createCoachManagerStudentRouter(): Router {
     const nameKey = normPersonName(fullName);
     const rosterIds: string[] = [];
     if (nameKey) {
-      for (const s of loadStudents(ctx.clubId)) {
+      for (const s of await loadStudents(ctx.clubId)) {
         if (normPersonName(s.studentName) === nameKey) {
           rosterIds.push(String(s.studentId ?? "").trim());
         }
@@ -583,12 +594,12 @@ export function createCoachManagerStudentRouter(): Router {
     ).trim();
     const w = readStudentWriteBody(req.body);
     if (req.user?.role === "Coach") {
-      const crow = findCoachRosterRow(ctx.clubId, String(req.user.sub));
+      const crow = await findCoachRosterRow(ctx.clubId, String(req.user.sub));
       if (!crow) {
         res.status(403).json({ ok: false, error: "Coach roster row not found." });
         return;
       }
-      const list = loadStudents(ctx.clubId);
+      const list = await loadStudents(ctx.clubId);
       const existing = list.find(
         (s) => s.studentId.trim().toUpperCase() === studentId.toUpperCase(),
       );
@@ -607,7 +618,7 @@ export function createCoachManagerStudentRouter(): Router {
         return;
       }
     }
-    const result = updateStudentRow(ctx.clubId, ctx.clubName, studentId, {
+    const result = await updateStudentRow(ctx.clubId, ctx.clubName, studentId, {
       studentName: w.studentName,
       email: w.email,
       phone: w.phone,
@@ -655,7 +666,7 @@ export function createCoachManagerStudentRouter(): Router {
     }
     const loginBefore = !!findStudentRoleLoginByUid(studentId);
     const mainBefore = Boolean(await findUserByUidPreferred(studentId));
-    const purge = purgeStudentRowFromAllClubFolders(studentId);
+    const purge = await purgeStudentRowFromAllClubFolders(studentId);
     if (!purge.ok) {
       res.status(400).json({ ok: false, error: purge.error });
       return;
@@ -685,7 +696,7 @@ export function createCoachManagerStudentRouter(): Router {
     res.json({
       ok: true,
       message:
-        "Student removed from UserList_Student.json under all data_club folders (where present), userLogin_Student, and main userLogin when present.",
+        "Student removed from MongoDB UserList_Student (or disk roster where used), userLogin_Student, and main userLogin when present.",
       purgedFromClubFolders: purge.updatedClubIds,
     });
   });
