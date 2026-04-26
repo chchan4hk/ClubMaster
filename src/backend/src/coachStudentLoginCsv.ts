@@ -21,6 +21,7 @@ import {
   findUserByUsernameAnyStoreMongo,
   insertCoachRoleMongo,
   insertStudentRoleMongo,
+  studentRoleLoginExistsForStudentIdAndClubMongo,
   userLoginUidExistsMongo,
 } from "./userListMongo";
 
@@ -1616,6 +1617,26 @@ export function studentRoleLoginExistsForStudentIdAndClub(
   });
 }
 
+/** File-backed or Mongo `userLogin`: duplicate student login for roster id + club. */
+export async function studentRoleLoginExistsForStudentIdAndClubPreferred(
+  studentId: string,
+  clubFolderUid: string,
+  clubName: string,
+): Promise<boolean> {
+  if (isMongoConfigured()) {
+    try {
+      return await studentRoleLoginExistsForStudentIdAndClubMongo(
+        studentId,
+        clubFolderUid,
+        clubName,
+      );
+    } catch {
+      return studentRoleLoginExistsForStudentIdAndClub(studentId, clubName);
+    }
+  }
+  return studentRoleLoginExistsForStudentIdAndClub(studentId, clubName);
+}
+
 /**
  * True if `userLogin_Coach` already has a row with this roster CoachID and club name
  * (matches `CoachID` / `uid` and `club_name`).
@@ -1746,6 +1767,8 @@ export async function appendStudentRoleLoginRow(input: {
   fullName: string;
   clubName: string;
   clubFolderUid?: string;
+  /** Roster StudentID when known — Mongo `uid` becomes `{clubFolderUid}-{studentId}`. */
+  rosterStudentId?: string;
   /** YYYY-MM-DD or empty */
   expiryDate?: string;
 }): Promise<{ ok: true; uid: string } | { ok: false; error: string }> {
@@ -1775,10 +1798,28 @@ export async function appendStudentRoleLoginRow(input: {
   const safeExpiry = String(input.expiryDate ?? "")
     .trim()
     .replace(/,/g, "");
+  const rawRoster = String(input.rosterStudentId ?? "").trim();
+  let rosterSid = rawRoster.replace(/,/g, " ").trim();
+  if (rosterSid && safeFolderUid) {
+    const p = `${safeFolderUid}-`;
+    if (rosterSid.toUpperCase().startsWith(p.toUpperCase())) {
+      rosterSid = rosterSid.slice(p.length).trim();
+    }
+  }
+  const useScopedUid = Boolean(rosterSid && safeFolderUid);
+  const uidScoped = useScopedUid ? `${safeFolderUid}-${rosterSid}` : "";
+
   if (isMongoConfigured()) {
-    const uid = await allocateNextStudentLoginUidMongo();
+    const uid = useScopedUid
+      ? uidScoped
+      : await allocateNextStudentLoginUidMongo();
     if (await userLoginUidCollisionPreferred(uid)) {
-      return { ok: false, error: "Could not allocate a new Student ID; try again." };
+      return {
+        ok: false,
+        error: useScopedUid
+          ? "A student login already exists for that roster id / uid in userLogin."
+          : "Could not allocate a new Student ID; try again.",
+      };
     }
     const ins = await insertStudentRoleMongo({
       uid,
@@ -1787,6 +1828,7 @@ export async function appendStudentRoleLoginRow(input: {
       fullName: safeFull,
       clubName: safeClub,
       clubFolderUid: safeFolderUid || undefined,
+      ...(useScopedUid ? { student_id: rosterSid } : {}),
       expiryDate: safeExpiry || undefined,
     });
     if (!ins.ok) {
@@ -1796,9 +1838,14 @@ export async function appendStudentRoleLoginRow(input: {
   }
 
   ensureCoachStudentLoginFilesExist();
-  const uid = allocateNextStudentLoginUid();
+  const uid = useScopedUid ? uidScoped : allocateNextStudentLoginUid();
   if (await userLoginUidCollisionPreferred(uid)) {
-    return { ok: false, error: "Could not allocate a new Student ID; try again." };
+    return {
+      ok: false,
+      error: useScopedUid
+        ? "A student login already exists for that roster id / uid."
+        : "Could not allocate a new Student ID; try again.",
+    };
   }
   const today = new Date().toISOString().slice(0, 10);
   const storePath = studentLoginPath();
@@ -1807,7 +1854,7 @@ export async function appendStudentRoleLoginRow(input: {
     const rows = loadStudentRoleLogins();
     rows.push({
       uid,
-      studentId: uid,
+      studentId: useScopedUid ? rosterSid : uid,
       username: username.replace(/,/g, " "),
       password: "",
       passwordHash: hashPassword(safePass),

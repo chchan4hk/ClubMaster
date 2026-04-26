@@ -19,7 +19,7 @@ import {
   appendStudentRoleLoginRow,
   deleteRoleLoginByUidOrMissing,
   findStudentRoleLoginByUid,
-  studentRoleLoginExistsForStudentIdAndClub,
+  studentRoleLoginExistsForStudentIdAndClubPreferred,
   usernameTakenForNewLoginPreferred,
 } from "../coachStudentLoginCsv";
 import { sportCoachDebugOn } from "../sportCoachDebug";
@@ -478,7 +478,11 @@ export function createCoachManagerStudentRouter(): Router {
     if (uniqueRosterIds.length === 1) {
       const rosterSid = uniqueRosterIds[0]!;
       if (
-        studentRoleLoginExistsForStudentIdAndClub(rosterSid, ctx.clubName)
+        await studentRoleLoginExistsForStudentIdAndClubPreferred(
+          rosterSid,
+          ctx.clubId,
+          ctx.clubName,
+        )
       ) {
         res.status(400).json({
           ok: false,
@@ -507,6 +511,9 @@ export function createCoachManagerStudentRouter(): Router {
       fullName,
       clubName: ctx.clubName,
       clubFolderUid: ctx.clubId,
+      ...(uniqueRosterIds.length === 1
+        ? { rosterStudentId: uniqueRosterIds[0]! }
+        : {}),
       expiryDate,
     });
     if (!out.ok) {
@@ -519,6 +526,8 @@ export function createCoachManagerStudentRouter(): Router {
         ? "Student login account created in MongoDB (userLogin)."
         : "Student login account created in userLogin_Student.",
       uid: out.uid,
+      student_id:
+        uniqueRosterIds.length === 1 ? uniqueRosterIds[0]! : undefined,
       clubId: ctx.clubId,
       clubName: ctx.clubName,
     });
