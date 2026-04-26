@@ -6,6 +6,7 @@
   <title>ClubMaster - Sign in</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/btn-dark-blue-green.css" />
   <link rel="stylesheet" href="css/btn-cancel-metallic-brown.css" />
   <style>
     html {
@@ -502,17 +503,20 @@
                 <option value="Admin">Admin</option>
               </select>
             </div>
-            <button type="submit"
-              class="login-signin-btn shrink-0 min-h-10 w-full overflow-hidden rounded-lg px-5 py-2 text-sm font-bold uppercase tracking-wide sm:min-h-9 sm:w-auto">
-              <span class="login-signin-label">Sign in</span>
-            </button>
-            <a
-              href="https://forms.gle/qcYDKww8vZFfq94L9"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="btn-new-registration-metallic-brown-gold shrink-0 min-h-10 w-full rounded-lg px-4 py-2 text-sm sm:min-h-9 sm:w-auto">
-              New Registration
-            </a>
+            <div
+              class="flex w-full min-w-0 shrink-0 flex-row items-stretch gap-2 sm:w-auto sm:items-end">
+              <button type="submit"
+                class="login-signin-btn min-h-10 min-w-0 flex-1 overflow-hidden rounded-lg px-4 py-2 text-sm font-bold uppercase tracking-wide sm:min-h-9 sm:w-auto sm:flex-initial sm:px-5">
+                <span class="login-signin-label">Sign in</span>
+              </button>
+              <a
+                href="https://forms.gle/qcYDKww8vZFfq94L9"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn-dark-blue-green no-underline min-h-10 min-w-0 flex-1 rounded-lg px-3 py-2 text-center text-sm sm:min-h-9 sm:w-auto sm:flex-initial sm:px-4">
+                New Registration
+              </a>
+            </div>
           </form>
         </div>
       </div>
