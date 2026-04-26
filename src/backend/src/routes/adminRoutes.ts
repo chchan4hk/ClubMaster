@@ -89,7 +89,7 @@ function dataClubRoot(): string {
   return path.join(__dirname, "..", "..", "data_club");
 }
 
-const CLUB_ID_NUM_PAD = 7;
+const CLUB_ID_NUM_PAD = 5;
 
 function resolveClubTemplateDir(root: string): string {
   // Preferred: repo-root Backup template (requested)
@@ -155,7 +155,7 @@ async function nextClubIdForCountryCode(
   let max = 0;
   try {
     const entries = fs.readdirSync(root, { withFileTypes: true });
-    const re = new RegExp(`^${cc}(\\d{${CLUB_ID_NUM_PAD}})$`, "i");
+    const re = new RegExp(`^${cc}(\\d{5,12})$`, "i");
     for (const e of entries) {
       if (!e.isDirectory()) continue;
       const m = re.exec(e.name);

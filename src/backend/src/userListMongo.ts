@@ -21,9 +21,9 @@ const LOGIN_STRING_COLLATION = { locale: "en", strength: 2 } as const;
 
 const COACH_LOGIN_UID_NUM_RE = /^(?:CH|C)(\d+)$/i;
 const STUDENT_ID_NUM_RE = /^S(\d+)$/i;
-const COACH_LOGIN_UID_PAD = 6;
-const STUDENT_LOGIN_UID_PAD = 9;
-const COUNTRY_CLUB_UID_NUM_RE = /^([A-Z]{2,3})(\d{7})$/i;
+const COACH_LOGIN_UID_PAD = 4;
+const STUDENT_LOGIN_UID_PAD = 7;
+const COUNTRY_CLUB_UID_NUM_RE = /^([A-Z]{2,3})(\d{5,12})$/i;
 
 function formatDateOnly(d: Date | undefined | null): string {
   if (!d || !(d instanceof Date) || Number.isNaN(d.getTime())) {
@@ -548,7 +548,7 @@ export async function maxCountryClubNumericFromMongo(
     return 0;
   }
   const coll = await collWithIndexes();
-  const re = new RegExp(`^${cc}(\\\\d{7})$`, "i");
+  const re = new RegExp(`^${cc}(\\d{5,12})$`, "i");
   const rows = await coll
     .find({ uid: { $regex: re }, usertype: "Coach Manager" })
     .project({ uid: 1 })

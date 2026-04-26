@@ -18,6 +18,7 @@ import {
   findClubUidForPrizeId,
   loadPrizeListRaw,
   loadPrizes,
+  PRIZE_ID_NUM_WIDTH,
   PRIZE_LIST_COLUMNS,
   prizeCsvRowToApiFields,
   type PrizeCsvRow,
@@ -25,8 +26,8 @@ import {
   updatePrizeRow,
 } from "./prizeListJson";
 
-/** Numeric suffix width after `-P` (e.g. `CM00000008-P0000001`). */
-export const PRIZE_CLUB_PREFIX_SUFFIX_PAD = 7;
+/** Numeric suffix width after `-P` (e.g. `CM000001-P00001`). */
+export const PRIZE_CLUB_PREFIX_SUFFIX_PAD = 5;
 
 const LEGACY_PRIZE_ID_RE = /^PR(\d+)$/i;
 
@@ -195,7 +196,7 @@ export async function loadPrizeListRawPreferred(clubId: string): Promise<PrizeLi
 
 /**
  * Next `{Club_ID}-P0000001` style id for this club (Mongo path only).
- * Counts existing rows whose `PrizeID` matches `ClubID-P` + digits (any width), then pads to 7.
+ * Counts existing rows whose `PrizeID` matches `ClubID-P` + digits (any width), then pads to {@link PRIZE_CLUB_PREFIX_SUFFIX_PAD}.
  */
 export async function allocateNextPrizeIdMongo(clubFolderUid: string): Promise<string> {
   const club = clubFolderUid.replace(/^\uFEFF/, "").trim();
@@ -231,7 +232,7 @@ function normalizeLegacyPrPrizeId(requested: string): string | null {
   if (Number.isNaN(num)) {
     return null;
   }
-  return `PR${String(num).padStart(6, "0")}`;
+  return `PR${String(num).padStart(PRIZE_ID_NUM_WIDTH, "0")}`;
 }
 
 function normalizeClubPrefixedPrizeId(
@@ -297,7 +298,7 @@ export async function appendPrizeRowMongo(
     } else {
       return {
         ok: false,
-        error: `Invalid PrizeID format (expected ${sessionUid}-P + ${PRIZE_CLUB_PREFIX_SUFFIX_PAD} digits, or legacy PR + 6 digits).`,
+        error: `Invalid PrizeID format (expected ${sessionUid}-P + ${PRIZE_CLUB_PREFIX_SUFFIX_PAD} digits, or legacy PR + ${PRIZE_ID_NUM_WIDTH} digits).`,
       };
     }
     if (rows.some((r) => prizeIdsEqual(r.prizeId, prizeId))) {

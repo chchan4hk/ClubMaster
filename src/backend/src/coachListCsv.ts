@@ -3,10 +3,10 @@ import path from "path";
 import { readFileCachedStrict } from "./dataFileCache";
 import { loadUsersFromCsv, mapUserTypeToRole } from "./userlistCsv";
 
-/** New coach-manager club folders: CM + 8 digits (e.g. CM00000001). */
+/** New coach-manager club folders: CM + 6-digit tail (e.g. CM000001). */
 const COACH_MANAGER_FOLDER_RE = /^CM(\d+)$/i;
-/** New country-scoped club folders: 2–3 letters + 7 digits (e.g. HK0000001, USA0000001). */
-const COUNTRY_CLUB_FOLDER_RE = /^[A-Z]{2,3}(\d{7})$/i;
+/** Country-scoped club folders: 2–3 letters + 5–12 digit tail (new shorter pads + legacy). */
+const COUNTRY_CLUB_FOLDER_RE = /^[A-Z]{2,3}(\d{5,12})$/i;
 /**
  * Legacy club folder ids: C + 1–5 digits (e.g. C0001, C99999).
  * Coach login UIDs use C + 6 digits (C000001); those must not match as folder ids.
@@ -32,10 +32,10 @@ function coachIdSequenceNumber(coachId: string): number | null {
   return null;
 }
 
-const COACH_NEW_ID_PAD = 6;
+const COACH_NEW_ID_PAD = 4;
 
 /** Digits after `C` for `{clubFolderUid}-C00001` style IDs (Mongo coach-manager clubs). */
-export const COACH_CLUB_PREFIX_ID_PAD = 5;
+export const COACH_CLUB_PREFIX_ID_PAD = 3;
 
 function escapeRegExpLiteral(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -225,11 +225,11 @@ export function isValidClubFolderId(clubId: string): boolean {
   return LEGACY_CLUB_FOLDER_C_RE.test(s);
 }
 
-const COACH_MANAGER_UID_PAD = 8;
+const COACH_MANAGER_UID_PAD = 6;
 
 /**
- * Next coach-manager UID / data_club folder id (CM00000001, …).
- * Uses only CM######## rows and folders so the first new club is CM00000001 even if legacy C#### exists.
+ * Next coach-manager UID / data_club folder id (CM000001, …).
+ * Uses only CM######## rows and folders so the first new club is CM000001 even if legacy C#### exists.
  */
 export function allocateNextClubUid(): string {
   let max = 0;

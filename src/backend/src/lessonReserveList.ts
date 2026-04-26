@@ -5,8 +5,13 @@ import { lessonReservationStudentIdsEqual } from "./studentListCsv";
 
 export const LESSON_RESERVE_LIST_FILENAME = "LessonReserveList.json";
 
-/** Legacy ids: `LR000001` (no club prefix). */
+/** Legacy ids: `LR00001` (no club prefix). */
 const LEGACY_LR_ONLY = /^LR(\d+)$/i;
+
+/** Zero-pad width for legacy `LR…` ids (no club prefix). */
+const LESSON_RESERVE_LEGACY_LR_PAD = 5;
+/** Zero-pad width after `-LR` for `{Club}-LR…` ids. */
+const LESSON_RESERVE_SCOPED_LR_PAD = 6;
 
 export type LessonReserveRecord = {
   lessonReserveId: string;
@@ -90,8 +95,8 @@ function escapeRegex(s: string): string {
 }
 
 /**
- * Next reservation id: `{ClubFolderUid}-LR0000001`, `{ClubFolderUid}-LR0000002`, …
- * (`LR` + 7-digit sequence). Legacy bare `LR000001` ids in the same list are folded into the max sequence.
+ * Next reservation id: `{ClubFolderUid}-LR000001`, … (`LR` + 6-digit sequence).
+ * Legacy bare `LR00001` ids in the same list are folded into the max sequence.
  */
 export function computeNextLessonReserveId(
   clubFolderUid: string,
@@ -99,7 +104,7 @@ export function computeNextLessonReserveId(
 ): string {
   const club = clubFolderUid.replace(/^\uFEFF/, "").trim();
   if (!isValidClubFolderId(club)) {
-    return `LR${String(1).padStart(6, "0")}`;
+    return `LR${String(1).padStart(LESSON_RESERVE_LEGACY_LR_PAD, "0")}`;
   }
   const scoped = new RegExp(`^${escapeRegex(club)}-LR(\\d+)$`, "i");
   let max = 0;
@@ -121,7 +126,7 @@ export function computeNextLessonReserveId(
       }
     }
   }
-  return `${club}-LR${String(max + 1).padStart(7, "0")}`;
+  return `${club}-LR${String(max + 1).padStart(LESSON_RESERVE_SCOPED_LR_PAD, "0")}`;
 }
 
 function migrateLessonReserveJsonKeysInPlace(clubId: string): void {
