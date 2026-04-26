@@ -80,6 +80,10 @@ import {
   updateMainProfileMongo,
   updateRoleProfileMongo,
 } from "../userListMongo";
+import {
+  purgeClubScopedMongoDataForFolderUid,
+  totalClubPurgeDeletedCounts,
+} from "../clubFolderMongoPurge";
 
 function dataClubRoot(): string {
   return path.join(__dirname, "..", "..", "data_club");
@@ -675,13 +679,26 @@ export function createAdminRouter(): Router {
         if (permanent) {
           deleteCoachManagerFolder = true;
           const purge = await deleteCoachStudentForClubFolderMongo(uid);
+          const mongoClub = await purgeClubScopedMongoDataForFolderUid(uid);
           result = await deleteMainLoginMongo(uid);
           if (!result.ok) {
             res.status(400).json({ ok: false, error: result.error });
             return;
           }
+          const mongoN = totalClubPurgeDeletedCounts(mongoClub.deleted);
           message =
-            `Coach Manager removed from userLogin; removed ${purge.removedCoach} coach and ${purge.removedStudent} student role login(s) for this club ID; club data folder deleted when present.`;
+            `Coach Manager removed from userLogin; removed ${purge.removedCoach} coach and ${purge.removedStudent} student role login(s) for this club ID; ` +
+            (mongoN > 0
+              ? `removed ${mongoN} club-scoped MongoDB document(s) for this club ID; `
+              : "") +
+            `club data folder deleted when present.`;
+          if (mongoClub.errors.length > 0) {
+            console.error(
+              "[admin/login-accounts/remove] club Mongo purge errors:",
+              mongoClub.errors,
+            );
+            message += ` Warning: ${mongoClub.errors.length} Mongo collection cleanup error(s) (see server log).`;
+          }
         } else {
           result = await setMainActivationMongo(uid, false);
           message = "Account marked inactive in userLogin.";
