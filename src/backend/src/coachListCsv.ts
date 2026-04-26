@@ -32,10 +32,10 @@ function coachIdSequenceNumber(coachId: string): number | null {
   return null;
 }
 
-const COACH_NEW_ID_PAD = 4;
+const COACH_NEW_ID_PAD = 5;
 
 /** Digits after `C` for `{clubFolderUid}-C00001` style IDs (Mongo coach-manager clubs). */
-export const COACH_CLUB_PREFIX_ID_PAD = 3;
+export const COACH_CLUB_PREFIX_ID_PAD = 4;
 
 function escapeRegExpLiteral(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

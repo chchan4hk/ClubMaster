@@ -11,7 +11,7 @@ import { userLoginCsvReadFallbackEnabled } from "./userListMongo";
 
 const PRIZE_ID_RE = /^PR(\d+)$/i;
 /** Legacy global `PR…` prize ids: numeric width for new allocations. */
-export const PRIZE_ID_NUM_WIDTH = 4;
+export const PRIZE_ID_NUM_WIDTH = 5;
 const LEGACY_CSV_NAME = "PrizeList.csv";
 
 /**

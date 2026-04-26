@@ -29,9 +29,9 @@ import {
 const COACH_LOGIN_UID_NUM_RE = /^(?:CH|C)(\d+)$/i;
 const STUDENT_ID_NUM_RE = /^S(\d+)$/i;
 /** New coach logins use C + 6 digits (e.g. C000001). */
-const COACH_LOGIN_UID_PAD = 4;
-/** New student logins use S + 7 digits (e.g. S0000001). */
-const STUDENT_LOGIN_UID_PAD = 7;
+const COACH_LOGIN_UID_PAD = 5;
+/** New student logins use S + 8 digits (e.g. S00000001). */
+const STUDENT_LOGIN_UID_PAD = 8;
 
 export type CoachStudentLoginRow = {
   uid: string;

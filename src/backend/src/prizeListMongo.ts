@@ -26,8 +26,8 @@ import {
   updatePrizeRow,
 } from "./prizeListJson";
 
-/** Numeric suffix width after `-P` (e.g. `CM000001-P00001`). */
-export const PRIZE_CLUB_PREFIX_SUFFIX_PAD = 5;
+/** Numeric suffix width after `-P` (e.g. `CM000001-P000001`). */
+export const PRIZE_CLUB_PREFIX_SUFFIX_PAD = 6;
 
 const LEGACY_PRIZE_ID_RE = /^PR(\d+)$/i;
 

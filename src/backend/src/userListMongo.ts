@@ -21,8 +21,8 @@ const LOGIN_STRING_COLLATION = { locale: "en", strength: 2 } as const;
 
 const COACH_LOGIN_UID_NUM_RE = /^(?:CH|C)(\d+)$/i;
 const STUDENT_ID_NUM_RE = /^S(\d+)$/i;
-const COACH_LOGIN_UID_PAD = 4;
-const STUDENT_LOGIN_UID_PAD = 7;
+const COACH_LOGIN_UID_PAD = 5;
+const STUDENT_LOGIN_UID_PAD = 8;
 const COUNTRY_CLUB_UID_NUM_RE = /^([A-Z]{2,3})(\d{5,12})$/i;
 
 function formatDateOnly(d: Date | undefined | null): string {

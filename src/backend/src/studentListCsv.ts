@@ -13,10 +13,10 @@ import {
 } from "./studentListMongo";
 
 const STUDENT_ID_RE = /^S(\d+)$/i;
-/** Club-scoped IDs in Mongo: `{ClubID}-S00001` (S + 5-digit sequence for new allocations). */
+/** Club-scoped IDs in Mongo: `{ClubID}-S000001` (S + 6-digit sequence for new allocations). */
 const CLUB_SCOPED_STUDENT_ID_RE = /^([A-Za-z0-9]+)-S(\d+)$/i;
-const STUDENT_NEW_ID_PAD = 7;
-const CLUB_SCOPED_SUFFIX_PAD = 5;
+const STUDENT_NEW_ID_PAD = 8;
+const CLUB_SCOPED_SUFFIX_PAD = 6;
 
 export type StudentCsvRow = {
   studentId: string;

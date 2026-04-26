@@ -19,7 +19,7 @@ function escapeRegExpLiteral(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-/** New catalog lesson IDs: `{ClubFolderUid}-LE0000001` (7-digit tail), for any valid `data_club` folder id. */
+/** Scoped lesson IDs: `{ClubFolderUid}-LE000001` (6-digit tail); legacy `LE00001` (5-digit). */
 function maxLessonSequenceNumber(rows: LessonCsvRow[]): number {
   let max = 0;
   for (const r of rows) {
@@ -48,9 +48,9 @@ function nextAllocatedLessonId(clubUid: string, rows: LessonCsvRow[]): string {
   const club = clubUid.replace(/^\uFEFF/, "").trim();
   if (isValidClubFolderId(club)) {
     const c = club.toUpperCase();
-    return `${c}-LE${String(max + 1).padStart(7, "0")}`;
+    return `${c}-LE${String(max + 1).padStart(6, "0")}`;
   }
-  return `LE${String(max + 1).padStart(6, "0")}`;
+  return `LE${String(max + 1).padStart(5, "0")}`;
 }
 
 function normalizeRequestedLessonId(
@@ -75,7 +75,7 @@ function normalizeRequestedLessonId(
     }
     return {
       ok: true,
-      lessonId: `${club.toUpperCase()}-LE${String(n).padStart(7, "0")}`,
+      lessonId: `${club.toUpperCase()}-LE${String(n).padStart(6, "0")}`,
     };
   }
   const legacy = r.match(/^LE(\d+)$/i);
@@ -87,17 +87,17 @@ function normalizeRequestedLessonId(
     if (isFolder) {
       return {
         ok: true,
-        lessonId: `${club.toUpperCase()}-LE${String(n).padStart(7, "0")}`,
+        lessonId: `${club.toUpperCase()}-LE${String(n).padStart(6, "0")}`,
       };
     }
-    return { ok: true, lessonId: `LE${String(n).padStart(6, "0")}` };
+    return { ok: true, lessonId: `LE${String(n).padStart(5, "0")}` };
   }
   return {
     ok: false,
     error:
       isFolder
-        ? "Invalid LessonID format (expected {ClubFolderUid}-LE####### or legacy LE######)."
-        : "Invalid LessonID format (expected LE###### or {ClubFolderUid}-LE#######).",
+        ? "Invalid LessonID format (expected {ClubFolderUid}-LE###### or legacy LE#####)."
+        : "Invalid LessonID format (expected LE##### or {ClubFolderUid}-LE######).",
   };
 }
 
