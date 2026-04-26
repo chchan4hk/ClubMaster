@@ -140,9 +140,9 @@
 
     <!-- Filters -->
     <section class="glass rounded-xl border border-amber-600/20 p-4 mb-4">
-      <h2 class="text-sm font-semibold text-amber-200 mb-3">Filter &amp; search</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-        <div class="xl:col-span-2">
+      <h2 class="text-sm font-semibold text-amber-200 mb-3">Filter &amp; Search</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
           <label for="filterSearch" class="block text-xs text-amber-200/70 mb-1">Student name or ID</label>
           <input id="filterSearch" type="search" placeholder="Search…"
             class="w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
@@ -157,15 +157,20 @@
             <option value="OVERDUE">Overdue</option>
           </select>
         </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+        <p class="md:col-span-2 text-[10px] text-amber-100/70 -mb-1">
+          Due-date range: use the calendar on each field (filters table rows by due date).
+        </p>
         <div>
           <label for="filterDateFrom" class="block text-xs text-amber-200/70 mb-1">From</label>
-          <input id="filterDateFrom" type="text" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="DD/MM/YYYY"
-            class="date-field-ddmm w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
+          <input id="filterDateFrom" type="date" autocomplete="off" title="Open calendar to select start date"
+            class="w-full min-h-[2.5rem] rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
         </div>
         <div>
           <label for="filterDateTo" class="block text-xs text-amber-200/70 mb-1">To</label>
-          <input id="filterDateTo" type="text" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="DD/MM/YYYY"
-            class="date-field-ddmm w-full rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
+          <input id="filterDateTo" type="date" autocomplete="off" title="Open calendar to select end date"
+            class="w-full min-h-[2.5rem] rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
         </div>
       </div>
       <div class="flex flex-wrap gap-2 mt-4">
