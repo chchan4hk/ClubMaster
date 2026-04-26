@@ -19,9 +19,7 @@ function escapeRegExpLiteral(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-/** Coach-manager folder ids (`CM` + digits): new lesson IDs use `{club}-LE0000001`. */
-const CM_FOLDER_UID_RE = /^CM\d+$/i;
-
+/** New catalog lesson IDs: `{ClubFolderUid}-LE0000001` (7-digit tail), for any valid `data_club` folder id. */
 function maxLessonSequenceNumber(rows: LessonCsvRow[]): number {
   let max = 0;
   for (const r of rows) {
@@ -48,7 +46,7 @@ function maxLessonSequenceNumber(rows: LessonCsvRow[]): number {
 function nextAllocatedLessonId(clubUid: string, rows: LessonCsvRow[]): string {
   const max = maxLessonSequenceNumber(rows);
   const club = clubUid.replace(/^\uFEFF/, "").trim();
-  if (CM_FOLDER_UID_RE.test(club)) {
+  if (isValidClubFolderId(club)) {
     const c = club.toUpperCase();
     return `${c}-LE${String(max + 1).padStart(7, "0")}`;
   }
@@ -66,7 +64,7 @@ function normalizeRequestedLessonId(
     return { ok: false, error: "LessonID is empty." };
   }
   const club = clubFolderUid.replace(/^\uFEFF/, "").trim();
-  const isCm = CM_FOLDER_UID_RE.test(club);
+  const isFolder = isValidClubFolderId(club);
   const prefixed = r.match(
     new RegExp(`^${escapeRegExpLiteral(club)}-LE(\\d+)$`, "i"),
   );
@@ -86,7 +84,7 @@ function normalizeRequestedLessonId(
     if (Number.isNaN(n) || n < 0) {
       return { ok: false, error: "Invalid LessonID numeric part." };
     }
-    if (isCm) {
+    if (isFolder) {
       return {
         ok: true,
         lessonId: `${club.toUpperCase()}-LE${String(n).padStart(7, "0")}`,
@@ -97,8 +95,8 @@ function normalizeRequestedLessonId(
   return {
     ok: false,
     error:
-      isCm
-        ? "Invalid LessonID format (expected {ClubFolderUid}-LE#######)."
+      isFolder
+        ? "Invalid LessonID format (expected {ClubFolderUid}-LE####### or legacy LE######)."
         : "Invalid LessonID format (expected LE###### or {ClubFolderUid}-LE#######).",
   };
 }
