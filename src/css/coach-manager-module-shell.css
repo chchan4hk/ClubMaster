@@ -2,7 +2,6 @@
  * Coach Manager iframe modules: match useraccount.html (My Profile) warm metallic tone.
  * Use with: body.profile-password-page.cm-module-shell (+ link profile-password-panels.css).
  */
-
 .profile-password-page.cm-module-shell .glass {
   background: rgba(255, 255, 255, 0.42) !important;
   border-color: rgba(196, 165, 110, 0.45) !important;
@@ -19,9 +18,20 @@
 }
 
 .profile-password-page.cm-module-shell .cm-module-page-header {
-  margin-bottom: 1.25rem;
-  padding-bottom: 1rem;
+  /* Reduce header chrome so roster tables show more rows in the iframe panel. */
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.6rem;
   border-bottom: 1px solid rgba(180, 140, 80, 0.22);
+}
+
+.profile-password-page.cm-module-shell .profile-password-card {
+  /* Default Tailwind paddings on modules are a bit tall; tighten to reduce scrolling. */
+  padding: 1rem !important;
+}
+@media (min-width: 640px) {
+  .profile-password-page.cm-module-shell .profile-password-card {
+    padding: 1.25rem !important;
+  }
 }
 
 .profile-password-page.cm-module-shell .cm-module-backlink {

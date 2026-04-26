@@ -315,9 +315,6 @@ export async function appendCoachRowMongo(
     return { ok: false, error: "full_name is required." };
   }
   const email = String(input.email ?? "").replace(/,/g, " ").trim();
-  if (!email) {
-    return { ok: false, error: "email is required." };
-  }
   if (!isValidClubFolderId(clubId.trim())) {
     return { ok: false, error: "Invalid club folder id." };
   }
@@ -403,9 +400,6 @@ export async function updateCoachRowMongo(
     return { ok: false, error: "full_name is required." };
   }
   const email = String(input.email ?? "").replace(/,/g, " ").trim();
-  if (!email) {
-    return { ok: false, error: "email is required." };
-  }
   const clubFolder = clubId.trim();
   const list = await loadCoachesMongo(clubFolder);
   const prev = list.find((c) => coachIdsEqual(c.coachId, id));

@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { clubDataDir, isValidClubFolderId, getDataClubRootPath } from "./coachListCsv";
+import { lessonReservationStudentIdsEqual } from "./studentListCsv";
 
 export const LESSON_RESERVE_LIST_FILENAME = "LessonReserveList.json";
 
@@ -200,11 +201,10 @@ export function hasActiveReservationForStudentLesson(
   studentId: string,
 ): boolean {
   const lid = lessonId.trim().toUpperCase();
-  const sid = studentId.trim().toUpperCase();
   return loadLessonReservations(clubId).some(
     (r) =>
       r.lessonId.trim().toUpperCase() === lid &&
-      r.student_id.trim().toUpperCase() === sid &&
+      lessonReservationStudentIdsEqual(clubId, r.student_id, studentId) &&
       r.status.toUpperCase() === "ACTIVE",
   );
 }
@@ -291,7 +291,6 @@ export function removeActiveReservationForStudentLesson(
   ensureLessonReserveListFile(clubId);
   const p = lessonReserveListPath(clubId);
   const lid = lessonId.trim().toUpperCase();
-  const sid = studentId.trim().toUpperCase();
   let raw: string;
   try {
     raw = fs.readFileSync(p, "utf8");
@@ -312,7 +311,7 @@ export function removeActiveReservationForStudentLesson(
     if (
       r &&
       r.lessonId.trim().toUpperCase() === lid &&
-      r.student_id.trim().toUpperCase() === sid &&
+      lessonReservationStudentIdsEqual(clubId, r.student_id, studentId) &&
       r.status.toUpperCase() === "ACTIVE"
     ) {
       if (!removedId) {

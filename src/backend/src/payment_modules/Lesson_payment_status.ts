@@ -7,7 +7,10 @@ import {
   resolveStudentClubSessionFromRequest,
 } from "../coachManagerSession";
 import { loadCoachesPreferred } from "../coachListMongo";
-import { loadStudents } from "../studentListCsv";
+import {
+  lessonReservationStudentIdsEqual,
+  loadStudents,
+} from "../studentListCsv";
 import {
   decrementLessonReservedNumber,
   ensureLessonListFile,
@@ -40,7 +43,10 @@ import {
   findCoachRosterRow,
 } from "../coachSelfFilter";
 import { isMongoConfigured } from "../db/DBConnection";
-import { removeStudentFromLessonSeriesForLessonMongo } from "../lessonSeriesInfoStudentSync";
+import {
+  appendStudentToLessonSeriesForLessonMongo,
+  removeStudentFromLessonSeriesForLessonMongo,
+} from "../lessonSeriesInfoStudentSync";
 
 async function resolvePaymentClubContextAsync(
   req: Request,
@@ -544,6 +550,64 @@ export function Lesson_payment_status(): Router {
   const r = Router();
   r.use(requireAuth);
 
+  function totalCollectedForRowsInPeriod(
+    rows: LessonPaymentStatusRow[],
+    start: string,
+    end: string,
+  ): number {
+    let sum = 0;
+    for (const row of rows) {
+      for (const p of row.paymentHistory ?? []) {
+        if (paymentInPeriod(String(p.paidAt ?? ""), start, end)) {
+          sum += Number.isFinite(p.amount) ? p.amount : 0;
+        }
+      }
+    }
+    return Math.round(sum * 100) / 100;
+  }
+
+  function collectedLinesForRowsInPeriod(
+    rows: LessonPaymentStatusRow[],
+    start: string,
+    end: string,
+  ): Array<{
+    lessonReserveId: string;
+    student_id: string;
+    Student_Name: string;
+    paidAt: string;
+    amount: number;
+    method: string;
+    reference: string;
+  }> {
+    const out: Array<{
+      lessonReserveId: string;
+      student_id: string;
+      Student_Name: string;
+      paidAt: string;
+      amount: number;
+      method: string;
+      reference: string;
+    }> = [];
+    for (const row of rows) {
+      for (const p of row.paymentHistory ?? []) {
+        const paidAt = String(p.paidAt ?? "").trim().slice(0, 10);
+        if (!paidAt || !paymentInPeriod(paidAt, start, end)) {
+          continue;
+        }
+        out.push({
+          lessonReserveId: row.lessonReserveId,
+          student_id: row.student_id,
+          Student_Name: row.Student_Name,
+          paidAt,
+          amount: Number.isFinite(p.amount) ? p.amount : 0,
+          method: String(p.method ?? ""),
+          reference: String(p.reference ?? ""),
+        });
+      }
+    }
+    return out;
+  }
+
   r.get(
     "/",
     requireRole("CoachManager", "Coach", "Student"),
@@ -573,9 +637,18 @@ export function Lesson_payment_status(): Router {
         let kpis = snapshot.kpis;
         let chartPie = snapshot.chartPie;
         if (req.user?.role === "Student") {
-          const sid = String(req.user.sub ?? "").trim().toUpperCase();
-          rows = rows.filter(
-            (x) => x.student_id.trim().toUpperCase() === sid,
+          const sid = String(req.user.sub ?? "").trim();
+          rows = rows.filter((x) =>
+            lessonReservationStudentIdsEqual(
+              ctx.clubId,
+              x.student_id,
+              sid,
+            ),
+          );
+          const collectedForStudent = totalCollectedForRowsInPeriod(
+            rows,
+            snapshot.period.start,
+            snapshot.period.end,
           );
           let outstandingBalance = 0;
           let overdueAmount = 0;
@@ -603,7 +676,7 @@ export function Lesson_payment_status(): Router {
               ? Math.round((totalPaidAll / totalDue) * 1000) / 10
               : 0;
           kpis = {
-            totalCollectedPeriod: snapshot.kpis.totalCollectedPeriod,
+            totalCollectedPeriod: collectedForStudent,
             outstandingBalance,
             overdueAmount,
             collectionRate,
@@ -617,14 +690,22 @@ export function Lesson_payment_status(): Router {
             String(req.user?.username ?? ""),
             rows,
           );
+          const collectedForCoach = totalCollectedForRowsInPeriod(
+            rows,
+            snapshot.period.start,
+            snapshot.period.end,
+          );
           const next = recomputeKpisAndPieFromRows(
             rows,
-            snapshot.kpis.totalCollectedPeriod,
+            collectedForCoach,
           );
           kpis = next.kpis;
           chartPie = next.chartPie;
         }
         const base = "/backend";
+        const includeCollectedDebug =
+          String(req.query?.debugCollected ?? "").trim() === "1" ||
+          String(req.query?.debugCollected ?? "").trim().toLowerCase() === "true";
         res.json({
           ok: true,
           clubId: ctx.clubId,
@@ -634,6 +715,15 @@ export function Lesson_payment_status(): Router {
           rows,
           kpis,
           chartPie,
+          ...(includeCollectedDebug
+            ? {
+                collectedLines: collectedLinesForRowsInPeriod(
+                  rows,
+                  snapshot.period.start,
+                  snapshot.period.end,
+                ),
+              }
+            : {}),
           integration: {
             studentInformationUrl: `${base}/student_modules/student_information/student-information.html`,
             lessonReservationUrl: `${base}/lesson_modules/lesson_reservation/lesson-reservation.html`,
@@ -825,6 +915,20 @@ export function Lesson_payment_status(): Router {
         if (!upd.ok) {
           res.status(400).json({ ok: false, error: upd.error });
           return;
+        }
+
+        // When payment is confirmed, ensure the student is present in LessonSeriesInfo.studentList.
+        if (isMongoConfigured()) {
+          try {
+            await appendStudentToLessonSeriesForLessonMongo({
+              clubId: ctx.clubId,
+              lessonCanonicalId: row.lessonId,
+              studentId: row.student_id,
+              displayName: row.Student_Name,
+            });
+          } catch {
+            /* keep payment confirm successful even if LessonSeriesInfo update fails */
+          }
         }
         res.json({ ok: true, message: "Payment confirmed." });
       } catch (e) {

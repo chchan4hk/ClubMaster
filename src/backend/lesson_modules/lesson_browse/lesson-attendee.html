@@ -80,6 +80,14 @@
         background-position: 50% 50%;
       }
     }
+
+    .enrolled-brown-panel {
+      background: linear-gradient(135deg, #5b2d1a 0%, #3b1f14 55%, #6a3520 100%);
+      border: 2px solid rgba(255, 255, 255, 0.18);
+      box-shadow:
+        inset 0 2px 0 rgba(255, 255, 255, 0.14),
+        0 18px 44px rgba(0, 0, 0, 0.55);
+    }
   </style>
 </head>
 <body
@@ -194,6 +202,22 @@
             Yes
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="alreadyEnrolledBackdrop" class="hidden fixed inset-0 z-[65] flex items-center justify-center p-4 bg-black/55 backdrop-blur-sm"
+    role="presentation" aria-hidden="true">
+    <div id="alreadyEnrolledDialog" role="dialog" aria-modal="true" aria-labelledby="alreadyEnrolledMsg"
+      class="enrolled-brown-panel max-w-md w-full rounded-2xl px-8 py-8 text-center">
+      <p id="alreadyEnrolledMsg" class="text-white font-bold text-lg leading-snug">
+        You have already enrolled into that lesson!
+      </p>
+      <div class="mt-6">
+        <button type="button" id="alreadyEnrolledOk"
+          class="rounded-lg border border-white/25 bg-white/10 hover:bg-white/15 text-white px-8 py-2.5 text-sm font-semibold">
+          OK
+        </button>
       </div>
     </div>
   </div>
@@ -778,6 +802,12 @@
       var cancelBookingNo = document.getElementById("cancelBookingNo");
       var cancelBookingYes = document.getElementById("cancelBookingYes");
 
+      var alreadyEnrolledBackdrop = document.getElementById("alreadyEnrolledBackdrop");
+      var alreadyEnrolledDialog = document.getElementById("alreadyEnrolledDialog");
+      var alreadyEnrolledOk = document.getElementById("alreadyEnrolledOk");
+      var alreadyEnrolledMsg = document.getElementById("alreadyEnrolledMsg");
+      var alreadyEnrolledTimer = null;
+
       function closeCancelBookingModal() {
         pendingCancelLessonId = null;
         if (cancelBookingBackdrop) {
@@ -810,6 +840,35 @@
         if (cancelBookingNo) {
           cancelBookingNo.focus();
         }
+      }
+
+      function closeAlreadyEnrolledModal() {
+        if (alreadyEnrolledBackdrop) {
+          alreadyEnrolledBackdrop.classList.add("hidden");
+          alreadyEnrolledBackdrop.setAttribute("aria-hidden", "true");
+        }
+        if (alreadyEnrolledTimer) {
+          clearTimeout(alreadyEnrolledTimer);
+          alreadyEnrolledTimer = null;
+        }
+      }
+
+      function openAlreadyEnrolledModal(message) {
+        if (!alreadyEnrolledBackdrop) {
+          return;
+        }
+        if (alreadyEnrolledMsg) {
+          alreadyEnrolledMsg.textContent =
+            message && String(message).trim()
+              ? String(message).trim()
+              : "You have already enrolled into that lesson!";
+        }
+        alreadyEnrolledBackdrop.classList.remove("hidden");
+        alreadyEnrolledBackdrop.setAttribute("aria-hidden", "false");
+        if (alreadyEnrolledTimer) {
+          clearTimeout(alreadyEnrolledTimer);
+        }
+        alreadyEnrolledTimer = setTimeout(closeAlreadyEnrolledModal, 3200);
       }
 
       function submitCancelBooking() {
@@ -1013,6 +1072,12 @@
         if (reserveBackdrop && !reserveBackdrop.classList.contains("hidden")) {
           closeReserveModal();
         }
+        if (
+          alreadyEnrolledBackdrop &&
+          !alreadyEnrolledBackdrop.classList.contains("hidden")
+        ) {
+          closeAlreadyEnrolledModal();
+        }
       });
 
       if (cancelBookingBackdrop) {
@@ -1032,6 +1097,22 @@
       }
       if (cancelBookingYes && isStudentRole) {
         cancelBookingYes.addEventListener("click", submitCancelBooking);
+      }
+
+      if (alreadyEnrolledBackdrop) {
+        alreadyEnrolledBackdrop.addEventListener("click", function (ev) {
+          if (ev.target === alreadyEnrolledBackdrop) {
+            closeAlreadyEnrolledModal();
+          }
+        });
+      }
+      if (alreadyEnrolledDialog) {
+        alreadyEnrolledDialog.addEventListener("click", function (ev) {
+          ev.stopPropagation();
+        });
+      }
+      if (alreadyEnrolledOk) {
+        alreadyEnrolledOk.addEventListener("click", closeAlreadyEnrolledModal);
       }
 
       if (reserveBtnOk && isStudentRole) {
@@ -1072,6 +1153,11 @@
             })
             .catch(function (e) {
               var msg = e.message || "Could not reserve.";
+              if (msg === "You have already enrolled into that lesson!") {
+                closeReserveModal();
+                openAlreadyEnrolledModal(msg);
+                return;
+              }
               if (reserveModalErr) {
                 reserveModalErr.textContent = msg;
                 reserveModalErr.classList.remove("hidden");

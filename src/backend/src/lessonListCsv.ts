@@ -66,6 +66,7 @@ function normalizeRequestedLessonId(
     return { ok: false, error: "LessonID is empty." };
   }
   const club = clubFolderUid.replace(/^\uFEFF/, "").trim();
+  const isCm = CM_FOLDER_UID_RE.test(club);
   const prefixed = r.match(
     new RegExp(`^${escapeRegExpLiteral(club)}-LE(\\d+)$`, "i"),
   );
@@ -85,12 +86,20 @@ function normalizeRequestedLessonId(
     if (Number.isNaN(n) || n < 0) {
       return { ok: false, error: "Invalid LessonID numeric part." };
     }
+    if (isCm) {
+      return {
+        ok: true,
+        lessonId: `${club.toUpperCase()}-LE${String(n).padStart(7, "0")}`,
+      };
+    }
     return { ok: true, lessonId: `LE${String(n).padStart(6, "0")}` };
   }
   return {
     ok: false,
     error:
-      "Invalid LessonID format (expected LE###### or {ClubFolderUid}-LE#######).",
+      isCm
+        ? "Invalid LessonID format (expected {ClubFolderUid}-LE#######)."
+        : "Invalid LessonID format (expected LE###### or {ClubFolderUid}-LE#######).",
   };
 }
 

@@ -107,6 +107,64 @@ export async function insertStudentMongo(
   await coll.insertOne(csvRowToUserListStudentInsert(row, clubFolderUid));
 }
 
+/** Partial roster update for self-service profile (email + phone only). */
+export async function patchStudentSelfContactMongo(
+  clubFolderUid: string,
+  studentId: string,
+  email: string,
+  contactNumber: string,
+): Promise<{ matched: number }> {
+  const coll = await getUserListStudentCollection();
+  const today = new Date().toISOString().slice(0, 10);
+  const reClub = clubFolderRegex(clubFolderUid);
+  const res = await coll.updateOne(
+    {
+      $or: [{ club_id: reClub }, { club_folder_uid: reClub }, { ClubID: reClub }],
+      student_id: new RegExp(`^${escapeRegex(studentId.trim())}$`, "i"),
+    },
+    {
+      $set: {
+        email,
+        contact_number: contactNumber,
+        lastUpdate_date: today,
+      },
+    },
+  );
+  return { matched: res.matchedCount };
+}
+
+/** Partial roster update for student self-service profile fields. */
+export async function patchStudentSelfProfileMongo(
+  clubFolderUid: string,
+  studentId: string,
+  patch: {
+    email: string;
+    contact_number: string;
+    school: string;
+    home_address: string;
+  },
+): Promise<{ matched: number }> {
+  const coll = await getUserListStudentCollection();
+  const today = new Date().toISOString().slice(0, 10);
+  const reClub = clubFolderRegex(clubFolderUid);
+  const res = await coll.updateOne(
+    {
+      $or: [{ club_id: reClub }, { club_folder_uid: reClub }, { ClubID: reClub }],
+      student_id: new RegExp(`^${escapeRegex(studentId.trim())}$`, "i"),
+    },
+    {
+      $set: {
+        email: patch.email,
+        contact_number: patch.contact_number,
+        school: patch.school,
+        home_address: patch.home_address,
+        lastUpdate_date: today,
+      },
+    },
+  );
+  return { matched: res.matchedCount };
+}
+
 export async function updateStudentMongo(
   clubFolderUid: string,
   studentId: string,
@@ -117,9 +175,10 @@ export async function updateStudentMongo(
     { ...row, studentId: row.studentId.trim() },
     clubFolderUid,
   );
+  const reClub = clubFolderRegex(clubFolderUid);
   const res = await coll.updateOne(
     {
-      club_folder_uid: clubFolderRegex(clubFolderUid),
+      $or: [{ club_id: reClub }, { club_folder_uid: reClub }, { ClubID: reClub }],
       student_id: new RegExp(`^${escapeRegex(studentId.trim())}$`, "i"),
     },
     { $set: doc },
@@ -132,8 +191,9 @@ export async function deleteStudentMongo(
   studentId: string,
 ): Promise<boolean> {
   const coll = await getUserListStudentCollection();
+  const reClub = clubFolderRegex(clubFolderUid);
   const res = await coll.deleteOne({
-    club_folder_uid: clubFolderRegex(clubFolderUid),
+    $or: [{ club_id: reClub }, { club_folder_uid: reClub }, { ClubID: reClub }],
     student_id: new RegExp(`^${escapeRegex(studentId.trim())}$`, "i"),
   });
   return res.deletedCount > 0;

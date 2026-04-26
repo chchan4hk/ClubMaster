@@ -1035,9 +1035,6 @@ export function appendCoachRow(
     return { ok: false, error: "full_name is required." };
   }
   const email = sanitizeCell(input.email);
-  if (!email) {
-    return { ok: false, error: "email is required." };
-  }
   ensureCoachListFile(clubId);
   const coaches = loadCoaches(clubId);
   const requested = input.coachId?.trim();
@@ -1111,9 +1108,6 @@ export function updateCoachRow(
     return { ok: false, error: "full_name is required." };
   }
   const email = sanitizeCell(input.email);
-  if (!email) {
-    return { ok: false, error: "email is required." };
-  }
   ensureCoachListFile(clubId);
   const coaches = loadCoaches(clubId);
   const idx = coaches.findIndex((c) => coachIdsEqual(c.coachId, id));

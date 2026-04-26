@@ -44,7 +44,12 @@ import {
   removeActiveReservationForStudentLessonPreferred,
   removeLessonReservationByReserveIdPreferred,
 } from "../lessonReserveListMongo";
-import { loadStudents, studentIdsEqual } from "../studentListCsv";
+import { loadPaymentList } from "../paymentListJson";
+import {
+  lessonReservationStudentIdsEqual,
+  loadStudents,
+  studentIdsEqual,
+} from "../studentListCsv";
 import { findStudentRoleLoginByUidMongo } from "../userListMongo";
 import { findUserLoginDocumentByUid } from "../userLoginCollectionMongo";
 import { listActiveSportCenterNames } from "../sportCenterListCsv";
@@ -579,7 +584,7 @@ export function createCoachManagerLessonRouter(): Router {
     }
     const reservations = (await loadLessonReservationsPreferred(fileClub)).filter(
       (r) =>
-        r.student_id.trim().toUpperCase() === studentId.toUpperCase() &&
+        lessonReservationStudentIdsEqual(ctx.clubId, r.student_id, studentId) &&
         r.status.toUpperCase() === "ACTIVE",
     );
     let lessons: LessonCsvRow[] = [];
@@ -590,12 +595,39 @@ export function createCoachManagerLessonRouter(): Router {
       res.status(500).json({ ok: false, error: msg });
       return;
     }
-    const byId = new Map(
-      lessons.map((l) => [l.lessonId.trim().toUpperCase(), l]),
-    );
+    const normLessonId = (raw: string): string => {
+      const u = String(raw ?? "").replace(/^\uFEFF/, "").trim().toUpperCase();
+      if (!u) {
+        return "";
+      }
+      // Some older data stores lesson ids with a club prefix: `{ClubID}-LE000002`.
+      // For "my bookings", treat `{club}-LE...` and `LE...` as equivalent within one club.
+      const m = u.match(/(?:^|[^A-Z0-9])(LE\d+)$/);
+      if (m) {
+        return m[1]!;
+      }
+      const m2 = u.match(/^[A-Z0-9]+-(LE\d+)$/);
+      if (m2) {
+        return m2[1]!;
+      }
+      return u;
+    };
+    const byId = new Map<string, LessonCsvRow>();
+    for (const l of lessons) {
+      const k1 = String(l.lessonId ?? "").trim().toUpperCase();
+      if (k1) {
+        byId.set(k1, l);
+      }
+      const k2 = normLessonId(l.lessonId);
+      if (k2 && !byId.has(k2)) {
+        byId.set(k2, l);
+      }
+    }
     const merged: Record<string, unknown>[] = [];
     for (const resv of reservations) {
-      const row = byId.get(resv.lessonId.trim().toUpperCase());
+      const row =
+        byId.get(resv.lessonId.trim().toUpperCase()) ||
+        byId.get(normLessonId(resv.lessonId));
       if (!row) {
         continue;
       }
@@ -902,8 +934,11 @@ export function createCoachManagerLessonRouter(): Router {
           reservations
             .filter(
               (r) =>
-                r.student_id.trim().toUpperCase() === studentSub.toUpperCase() &&
-                r.status.toUpperCase() === "ACTIVE",
+                lessonReservationStudentIdsEqual(
+                  ctx.clubId,
+                  r.student_id,
+                  studentSub,
+                ) && r.status.toUpperCase() === "ACTIVE",
             )
             .map((r) => r.lessonId.trim().toUpperCase()),
         );
@@ -1032,7 +1067,8 @@ export function createCoachManagerLessonRouter(): Router {
     ) {
       res.status(409).json({
         ok: false,
-        error: "You already have an ACTIVE reservation for this lesson.",
+        error: "You have already enrolled into that lesson!",
+        code: "ALREADY_ENROLLED",
       });
       return;
     }
@@ -1277,6 +1313,52 @@ export function createCoachManagerLessonRouter(): Router {
       res.status(404).json({ ok: false, error: "Lesson not found." });
       return;
     }
+
+    // Block cancellation when payment is already PAID / COMPLETED for this reservation.
+    // PaymentList records are keyed by `lessonReserveId` (not lessonId), so resolve the active reservation first.
+    let activeReserveId: string | null = null;
+    try {
+      const all = await loadLessonReservationsPreferred(fileClub);
+      const lid = lessonId.trim().toUpperCase();
+      const match = all.find(
+        (r) =>
+          r.lessonId.trim().toUpperCase() === lid &&
+          lessonReservationStudentIdsEqual(fileClub, r.student_id, studentId) &&
+          String(r.status ?? "").trim().toUpperCase() === "ACTIVE",
+      );
+      activeReserveId = match ? String(match.lessonReserveId ?? "").trim() : null;
+    } catch {
+      // If reservation list cannot be read, fall through to existing cancel flow (it will error appropriately).
+      activeReserveId = null;
+    }
+    if (activeReserveId) {
+      try {
+        const payments = await loadPaymentList(ctx.clubId);
+        const paid = payments.find((p) => {
+          const rid = String(p.lessonReserveId ?? "").trim();
+          if (!rid || rid.toUpperCase() !== activeReserveId!.toUpperCase()) {
+            return false;
+          }
+          const pid = String(p.studentId ?? "").trim();
+          if (!lessonReservationStudentIdsEqual(ctx.clubId, pid, studentId)) {
+            return false;
+          }
+          const st = String(p.status ?? "").trim().toUpperCase();
+          return st === "PAID" || st === "COMPLETED";
+        });
+        if (paid) {
+          res.status(403).json({
+            ok: false,
+            error:
+              "This booking cannot be cancelled because payment is already PAID/COMPLETED.",
+          });
+          return;
+        }
+      } catch {
+        // If PaymentList is unavailable, do not block cancellation (keep current behaviour).
+      }
+    }
+
     const removed = await removeActiveReservationForStudentLessonPreferred(
       fileClub,
       lessonId,
@@ -1642,6 +1724,61 @@ export function createCoachManagerLessonRouter(): Router {
       return;
     }
     const clubIdForMongo = fileClub.trim();
+
+    /**
+     * On open "Lesson Series": ensure paid students are reflected in LessonSeriesInfo.studentList.
+     * Source of truth for "paid" here is club PaymentList rows linked by lessonReserveId.
+     */
+    if (isMongoConfigured()) {
+      try {
+        const payments = await loadPaymentList(ctx.clubId);
+        const paidReserveIds = new Set(
+          payments
+            .filter((p) => {
+              const st = String(p.status ?? "").trim().toUpperCase();
+              return st === "PAID" || st === "COMPLETED";
+            })
+            .map((p) => String(p.lessonReserveId ?? "").trim().toUpperCase())
+            .filter(Boolean),
+        );
+        if (paidReserveIds.size > 0) {
+          await ensureLessonReserveListPreferred(fileClub);
+          const reservations = await loadLessonReservationsPreferred(fileClub);
+          const paidStudents = new Map<string, string>();
+          for (const r0 of reservations) {
+            if (r0.status.trim().toUpperCase() !== "ACTIVE") {
+              continue;
+            }
+            if (!lessonIdsEqual(r0.lessonId, lessonRow.lessonId)) {
+              continue;
+            }
+            const rid = String(r0.lessonReserveId ?? "").trim().toUpperCase();
+            if (!rid || !paidReserveIds.has(rid)) {
+              continue;
+            }
+            const sid = String(r0.student_id ?? "").trim();
+            const name = String(r0.Student_Name ?? "").trim();
+            if (sid && name && !paidStudents.has(sid.toUpperCase())) {
+              paidStudents.set(sid.toUpperCase(), name);
+            }
+          }
+          for (const [sidUpper, name] of paidStudents.entries()) {
+            await appendStudentToLessonSeriesForLessonMongo({
+              clubId: ctx.clubId,
+              lessonCanonicalId: lessonRow.lessonId,
+              studentId: sidUpper,
+              displayName: name,
+            });
+          }
+        }
+      } catch (e) {
+        console.warn(
+          "[coach-manager/lessons/lesson-series] PaymentList → LessonSeriesInfo sync failed",
+          e instanceof Error ? e.message : String(e),
+        );
+      }
+    }
+
     const defaultStudents = await defaultStudentListForLessonAsync(
       fileClub,
       lessonRow.lessonId,

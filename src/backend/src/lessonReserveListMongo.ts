@@ -19,6 +19,7 @@ import {
   type LessonReserveAppendInput,
   type LessonReserveRecord,
 } from "./lessonReserveList";
+import { lessonReservationStudentIdsEqual } from "./studentListCsv";
 
 let lessonReserveCollectionEnsured = false;
 
@@ -194,12 +195,11 @@ export async function removeActiveReservationForStudentLessonPreferred(
     await ensureLessonReserveListCollectionOnce();
     const col = await getLessonReserveListCollection();
     const lid = lessonId.trim().toUpperCase();
-    const sid = studentId.trim().toUpperCase();
     const all = await loadLessonReservationsMongo(clubId);
     const match = all.find(
       (r) =>
         r.lessonId.trim().toUpperCase() === lid &&
-        r.student_id.trim().toUpperCase() === sid &&
+        lessonReservationStudentIdsEqual(clubId, r.student_id, studentId) &&
         r.status.toUpperCase() === "ACTIVE",
     );
     if (!match) {
@@ -310,11 +310,10 @@ export async function hasActiveReservationForStudentLessonPreferred(
 ): Promise<boolean> {
   const list = await loadLessonReservationsPreferred(clubId);
   const lid = lessonId.trim().toUpperCase();
-  const sid = studentId.trim().toUpperCase();
   return list.some(
     (r) =>
       r.lessonId.trim().toUpperCase() === lid &&
-      r.student_id.trim().toUpperCase() === sid &&
+      lessonReservationStudentIdsEqual(clubId, r.student_id, studentId) &&
       r.status.toUpperCase() === "ACTIVE",
   );
 }

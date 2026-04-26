@@ -28,7 +28,11 @@ import {
   isMongoConfigured,
 } from "./db/DBConnection";
 import { loadMeProfileFromUserLoginMongo } from "./userLoginCollectionMongo";
-import { userLoginCsvReadFallbackEnabled } from "./userListMongo";
+import {
+  readCoachManagerProfileContactMongo,
+  userLoginCsvReadFallbackEnabled,
+} from "./userListMongo";
+import { loadClubInfoContactFieldsMongo } from "./clubInfoMongo";
 import { requireAuth } from "./middleware/requireAuth";
 import { ensureCoachStudentLoginFilesExist } from "./coachStudentLoginCsv";
 import {
@@ -367,6 +371,11 @@ app.get("/api/me", requireAuth, async (req, res) => {
 
   let profileContactNumber = "—";
   let profileEmailAddress = "—";
+  let studentDateOfBirth = "—";
+  let studentSchool = "—";
+  let studentHomeAddress = "—";
+  let coachDateOfBirth = "—";
+  let coachHomeAddress = "—";
   if (
     req.user?.role === "Coach" &&
     uid != null &&
@@ -387,6 +396,10 @@ app.get("/api/me", requireAuth, async (req, res) => {
         const ph = String(crow.phone ?? "").trim();
         profileEmailAddress = em || "—";
         profileContactNumber = ph || "—";
+        const dob = String(crow.dateOfBirth ?? "").trim();
+        const home = String(crow.homeAddress ?? "").trim();
+        coachDateOfBirth = dob || "—";
+        coachHomeAddress = home || "—";
       }
     } catch {
       /* ignore roster read errors for profile extras */
@@ -401,6 +414,41 @@ app.get("/api/me", requireAuth, async (req, res) => {
     const ph = String(studentClubSession.rosterRow.phone ?? "").trim();
     profileEmailAddress = em || "—";
     profileContactNumber = ph || "—";
+    const dob = String(studentClubSession.rosterRow.dateOfBirth ?? "").trim();
+    const school = String(studentClubSession.rosterRow.school ?? "").trim();
+    const home = String(studentClubSession.rosterRow.homeAddress ?? "").trim();
+    studentDateOfBirth = dob || "—";
+    studentSchool = school || "—";
+    studentHomeAddress = home || "—";
+  }
+
+  if (req.user?.role === "CoachManager" && isMongoConfigured() && uid != null) {
+    try {
+      /**
+       * Coach Manager profile contact fields come from `clubInfo` (club settings),
+       * keyed by club_ID / club folder uid.
+       */
+      const clubId = String(club_folder_uid ?? "").trim();
+      const clubInfoContact = clubId
+        ? await loadClubInfoContactFieldsMongo(clubId)
+        : null;
+      if (clubInfoContact) {
+        profileEmailAddress = clubInfoContact.contact_email || "—";
+        profileContactNumber = clubInfoContact.contact_point || "—";
+      } else {
+        /** Fallback for older deployments: read from `userLogin` if present. */
+        const c = await readCoachManagerProfileContactMongo(
+          String(uid),
+          String(req.user?.username ?? "").trim(),
+        );
+        if (c) {
+          profileEmailAddress = c.email_address ? c.email_address : "—";
+          profileContactNumber = c.contact_number ? c.contact_number : "—";
+        }
+      }
+    } catch {
+      /* ignore Coach Manager profile extras read errors */
+    }
   }
 
   let club_theme: string | null = null;
@@ -458,7 +506,18 @@ app.get("/api/me", requireAuth, async (req, res) => {
         fromCsv?.expiry_date ??
         "—",
       ...(req.user?.role === "Student"
-        ? { student_coach: studentCoachFromRoster }
+        ? {
+            student_coach: studentCoachFromRoster,
+            date_of_birth: studentDateOfBirth,
+            school: studentSchool,
+            home_address: studentHomeAddress,
+          }
+        : {}),
+      ...(req.user?.role === "Coach"
+        ? {
+            date_of_birth: coachDateOfBirth,
+            home_address: coachHomeAddress,
+          }
         : {}),
     },
   });

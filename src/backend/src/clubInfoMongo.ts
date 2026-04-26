@@ -2,7 +2,11 @@ import type {
   ClubInfoDocument,
   ClubInfoInsert,
 } from "./db/DBConnection";
-import { ensureClubInfoCollection, getClubInfoCollection } from "./db/DBConnection";
+import {
+  ensureClubInfoCollection,
+  getClubInfoCollection,
+  isMongoConfigured,
+} from "./db/DBConnection";
 import {
   CLUB_INFO_FIELD_ORDER_LABEL,
   CLUB_PAYMENT_QR_JSON_KEYS,
@@ -23,6 +27,10 @@ function pickField(
     }
   }
   return fallback;
+}
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 const CLUB_INFO_PAYMENT_PATCH_KEYS = [
@@ -237,4 +245,40 @@ export async function patchClubInfoFields(
     throw new Error("clubInfo: document missing after patch.");
   }
   return next as ClubInfoDocument;
+}
+
+/**
+ * Read-only: `contact_email` / `contact_point` from Mongo `clubInfo` for this club folder id
+ * (matches `club_id` exactly or case-insensitively). Used when club profile lives in Mongo only.
+ */
+export async function loadClubInfoContactFieldsMongo(
+  clubFolderId: string,
+): Promise<{ contact_email: string; contact_point: string } | null> {
+  if (!isMongoConfigured()) {
+    return null;
+  }
+  const id = String(clubFolderId ?? "")
+    .replace(/^\uFEFF/, "")
+    .trim();
+  if (!id) {
+    return null;
+  }
+  try {
+    await ensureClubInfoCollection();
+    const col = await getClubInfoCollection();
+    const doc =
+      (await col.findOne({ club_id: id })) ??
+      (await col.findOne({
+        club_id: new RegExp(`^${escapeRegExp(id)}$`, "i"),
+      }));
+    if (!doc) {
+      return null;
+    }
+    return {
+      contact_email: String(doc.contact_email ?? "").trim(),
+      contact_point: String(doc.contact_point ?? "").trim(),
+    };
+  } catch {
+    return null;
+  }
 }

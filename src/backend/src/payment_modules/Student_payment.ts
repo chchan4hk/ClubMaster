@@ -6,7 +6,10 @@ import {
 } from "../clubInfoJson";
 import { requireAuth, requireRole } from "../middleware/requireAuth";
 import { resolveStudentClubSessionFromRequest } from "../coachManagerSession";
-import { loadStudents } from "../studentListCsv";
+import {
+  lessonReservationStudentIdsEqual,
+  loadStudents,
+} from "../studentListCsv";
 import { resolveLessonFileClubId } from "../lessonListCsv";
 import {
   buildLessonPaymentSnapshot,
@@ -20,6 +23,9 @@ import {
   type PaymentListRecord,
 } from "../paymentListJson";
 import { loadLessonReservationsPreferred } from "../lessonReserveListMongo";
+import { isMongoConfigured } from "../db/DBConnection";
+import { findUserLoginDocumentByUid } from "../userLoginCollectionMongo";
+import { loadClubInfoContactFieldsMongo } from "../clubInfoMongo";
 
 async function resolveStudentPaymentClub(req: Request): Promise<
   | { ok: true; studentId: string; clubId: string; fileClub: string }
@@ -92,6 +98,113 @@ function paymentQrAndRefs(clubId: string): {
     }
   }
   return { qrUrls, referenceLines };
+}
+
+function pickExtString(ext: Record<string, unknown>, keys: string[]): string {
+  for (const k of keys) {
+    if (!Object.prototype.hasOwnProperty.call(ext, k)) {
+      continue;
+    }
+    const s = String(ext[k] ?? "").trim();
+    if (s) {
+      return s;
+    }
+  }
+  return "";
+}
+
+function digitsOnly(s: string): string {
+  return String(s ?? "").replace(/\D/g, "");
+}
+
+/**
+ * Mongo `clubInfo` (when configured), then `ClubInfo.json` extras, then Coach Manager `userLogin`.
+ */
+async function coachManagerOutreachForClub(clubFolderId: string): Promise<{
+  email: string;
+  whatsappDigits: string;
+}> {
+  let email = "";
+  let phoneRaw = "";
+
+  if (isMongoConfigured()) {
+    try {
+      const mongoClub = await loadClubInfoContactFieldsMongo(clubFolderId);
+      if (mongoClub) {
+        const em = String(mongoClub.contact_email ?? "").trim();
+        const cp = String(mongoClub.contact_point ?? "").trim();
+        if (em) {
+          email = em;
+        }
+        if (cp && digitsOnly(cp).length >= 8) {
+          phoneRaw = cp;
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const ext = loadClubInfoExtended(clubFolderId) as Record<string, unknown>;
+  if (!email) {
+    email = pickExtString(ext, [
+      "contact_email",
+      "Contact_Email",
+      "contactEmail",
+      "contact_mail",
+    ]);
+  }
+  if (!phoneRaw) {
+    phoneRaw = pickExtString(ext, [
+      "whatsapp",
+      "WhatsApp",
+      "contact_whatsapp",
+      "whatsapp_number",
+      "contact_number",
+      "Contact_number",
+      "contact_phone",
+      "mobile",
+      "club_mobile",
+      "phone",
+    ]);
+  }
+  const contactPoint = pickExtString(ext, [
+    "contact_point",
+    "Contact_Point",
+    "contactPoint",
+  ]);
+  if (!phoneRaw && digitsOnly(contactPoint).length >= 8) {
+    phoneRaw = contactPoint.trim();
+  }
+
+  if (isMongoConfigured()) {
+    try {
+      const doc = await findUserLoginDocumentByUid(clubFolderId.trim());
+      const ut = String((doc as { usertype?: string } | null)?.usertype ?? "").trim();
+      if (doc && ut === "Coach Manager") {
+        const raw = doc as unknown as Record<string, unknown>;
+        const e = String(raw.email_address ?? raw.email ?? "").trim();
+        const p = String(
+          raw.contact_number ?? raw.whatsapp ?? raw.mobile ?? raw.phone ?? "",
+        ).trim();
+        if (!email && e) {
+          email = e;
+        }
+        if (!phoneRaw && p) {
+          phoneRaw = p;
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  let whatsappDigits = digitsOnly(phoneRaw);
+  if (whatsappDigits.startsWith("0") && whatsappDigits.length === 10) {
+    whatsappDigits = `852${whatsappDigits.slice(1)}`;
+  }
+
+  return { email: email.trim(), whatsappDigits };
 }
 
 function monthBoundsNow(): { start: string; end: string } {
@@ -194,9 +307,12 @@ export function Student_payment(): Router {
     try {
       await ensurePaymentListFile(ctx.clubId);
       const snapshot = await buildLessonPaymentSnapshot(ctx.fileClub, undefined);
-      const sid = ctx.studentId.trim().toUpperCase();
-      const rows = snapshot.rows.filter(
-        (x) => x.student_id.trim().toUpperCase() === sid,
+      const rows = snapshot.rows.filter((x) =>
+        lessonReservationStudentIdsEqual(
+          ctx.clubId,
+          x.student_id,
+          ctx.studentId,
+        ),
       );
 
       let outstandingBalance = 0;
@@ -235,8 +351,12 @@ export function Student_payment(): Router {
       );
 
       const roster = await loadStudents(ctx.clubId);
-      const me = roster.find(
-        (s) => s.studentId.trim().toUpperCase() === sid,
+      const me = roster.find((s) =>
+        lessonReservationStudentIdsEqual(
+          ctx.clubId,
+          s.studentId,
+          ctx.studentId,
+        ),
       );
       const studentProfile = me
         ? {
@@ -262,12 +382,14 @@ export function Student_payment(): Router {
       const clubName =
         String(ext.Club_name ?? ext.club_name ?? "").trim() || "—";
       const { qrUrls, referenceLines } = paymentQrAndRefs(ctx.clubId);
+      const coachManagerContact = await coachManagerOutreachForClub(ctx.clubId);
 
       res.json({
         ok: true,
         clubId: ctx.clubId,
         lessonStorageClubId: ctx.fileClub,
         clubName,
+        coachManagerContact,
         studentProfile,
         outstandingBalance,
         hasOverdue,
@@ -344,11 +466,16 @@ export function Student_payment(): Router {
     }
 
     const reservations = await loadLessonReservationsPreferred(ctx.fileClub);
-    const sid = ctx.studentId.trim().toUpperCase();
     const snap = await buildLessonPaymentSnapshot(ctx.fileClub, undefined);
     const rowByRid = new Map(
       snap.rows
-        .filter((x) => x.student_id.trim().toUpperCase() === sid)
+        .filter((x) =>
+          lessonReservationStudentIdsEqual(
+            ctx.clubId,
+            x.student_id,
+            ctx.studentId,
+          ),
+        )
         .map((x) => [x.lessonReserveId.trim().toUpperCase(), x]),
     );
 
@@ -367,7 +494,11 @@ export function Student_payment(): Router {
       if (
         !resv ||
         resv.status.toUpperCase() !== "ACTIVE" ||
-        resv.student_id.trim().toUpperCase() !== sid
+        !lessonReservationStudentIdsEqual(
+          ctx.clubId,
+          resv.student_id,
+          ctx.studentId,
+        )
       ) {
         res.status(400).json({
           ok: false,

@@ -1391,3 +1391,95 @@ export async function findUsersByUidsPreferred(
   }
   return out;
 }
+
+/** Coach Manager main `userLogin` row for the signed-in manager (`uid` and/or `username`). */
+export async function findCoachManagerUserLoginDocumentMongo(
+  uid: string,
+  loginUsername?: string,
+): Promise<UserLoginDocument | null> {
+  if (!isMongoConfigured()) {
+    return null;
+  }
+  const coll = await collWithIndexes();
+  const uidStr = String(uid ?? "").trim();
+  if (!uidStr) {
+    return null;
+  }
+  let doc = await coll.findOne({ uid: uidStr, usertype: "Coach Manager" });
+  const un = String(loginUsername ?? "").trim();
+  if (!doc && un) {
+    doc = await coll.findOne({
+      username: new RegExp(`^${escapeRegex(un)}$`, "i"),
+      usertype: "Coach Manager",
+    });
+  }
+  return doc;
+}
+
+export async function readCoachManagerProfileContactMongo(
+  uid: string,
+  loginUsername?: string,
+): Promise<{ email_address: string; contact_number: string } | null> {
+  const doc = await findCoachManagerUserLoginDocumentMongo(uid, loginUsername);
+  if (!doc) {
+    return null;
+  }
+  const o = doc as UserLoginDocument & {
+    email_address?: string;
+    contact_number?: string;
+  };
+  return {
+    email_address: String(o.email_address ?? "").trim(),
+    contact_number: String(o.contact_number ?? "").trim(),
+  };
+}
+
+/**
+ * Persist Coach Manager contact fields on `userLogin` (same DB as sign-in, default `ClubMaster_DB`).
+ */
+export async function updateCoachManagerContactMongo(
+  uid: string,
+  loginUsername: string | undefined,
+  patch: { email_address: string; contact_number: string },
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!isMongoConfigured()) {
+    return { ok: false, error: "MongoDB is not configured." };
+  }
+  const doc = await findCoachManagerUserLoginDocumentMongo(uid, loginUsername);
+  if (!doc) {
+    const dbName = resolveAuthLoginDatabaseName();
+    return {
+      ok: false,
+      error: `No Coach Manager account in MongoDB ${dbName}.userLogin for this session.`,
+    };
+  }
+  if (String(doc.usertype ?? "").trim() !== "Coach Manager") {
+    return { ok: false, error: "This account is not a Coach Manager login." };
+  }
+  const email = String(patch.email_address ?? "").trim();
+  const phone = String(patch.contact_number ?? "").trim();
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { ok: false, error: "Invalid email address." };
+  }
+  if (phone.length > 80) {
+    return { ok: false, error: "Contact number is too long." };
+  }
+  if (email.length > 200) {
+    return { ok: false, error: "Email address is too long." };
+  }
+  const coll = await collWithIndexes();
+  const r = await coll.updateOne(
+    { _id: doc._id },
+    {
+      $set: {
+        email_address: email,
+        contact_number: phone,
+        lastUpdate_date: new Date(),
+      },
+    },
+  );
+  if (r.matchedCount === 0) {
+    return { ok: false, error: "Could not update profile." };
+  }
+  return { ok: true };
+}

@@ -1,4 +1,3 @@
-import fs from "fs";
 import { Router, type Request } from "express";
 import { requireAuth, requireRole } from "../middleware/requireAuth";
 import {
@@ -34,17 +33,12 @@ import {
   allocateNextStudentId,
   appendStudentRow,
   bumpClubScopedStudentId,
-  ensureStudentListFile,
-  loadStudentListRaw,
   loadStudents,
   purgeStudentRowFromAllClubFolders,
-  STUDENT_LIST_FILENAME,
+  STUDENT_LIST_COLUMNS,
   studentCsvRowToApiFields,
   studentIdsEqual,
-  studentListPath,
-  studentListResolvedPath,
   updateStudentRow,
-  type StudentListRaw,
 } from "../studentListCsv";
 
 function readStudentWriteBody(body: unknown): {
@@ -105,49 +99,13 @@ function readStudentWriteBody(body: unknown): {
 function coachManagerStudentDebugSnapshot(req: Request): Record<string, unknown> {
   const jwtSub = String(req.user?.sub ?? "").trim();
   const root = getDataClubRootPath();
-  const idOk = jwtSub ? isValidClubFolderId(jwtSub) : false;
-  const resolved = idOk ? studentListResolvedPath(jwtSub) : "";
-  const pathForFile = idOk ? studentListPath(jwtSub) : "";
-  let fileExistsOnDisk = false;
-  let fileSizeBytes: number | null = null;
-  let fileHeadPreview = "";
-  let fileReadError: string | null = null;
-  if (pathForFile) {
-    try {
-      fileExistsOnDisk = fs.existsSync(pathForFile);
-      if (fileExistsOnDisk) {
-        fileSizeBytes = fs.statSync(pathForFile).size;
-        fileHeadPreview = fs.readFileSync(pathForFile, "utf8").slice(0, 500);
-      }
-    } catch (e) {
-      fileReadError = e instanceof Error ? e.message : String(e);
-    }
-  }
   return {
     route: "GET /api/coach-manager/students",
     cwd: process.cwd(),
     dataClubRoot: root,
     jwtSub,
     jwtRole: req.user?.role ?? null,
-    uidMatchesDataClubPattern: idOk,
-    studentCsvResolvedPath: resolved || null,
-    studentFileExistsOnDisk: fileExistsOnDisk,
-    fileSizeBytes,
-    fileHeadPreview,
-    fileReadError,
-  };
-}
-
-function studentLoadDebugExtra(
-  clubId: string,
-  studentCsv: StudentListRaw,
-  studentsLen: number,
-): Record<string, unknown> {
-  return {
-    studentCsvHeaderCount: studentCsv.headers.length,
-    studentCsvRowCount: studentCsv.rows.length,
-    studentsParsedCount: studentsLen,
-    firstHeadersSample: studentCsv.headers.slice(0, 20),
+    uidMatchesDataClubPattern: jwtSub ? isValidClubFolderId(jwtSub) : false,
   };
 }
 
@@ -240,8 +198,6 @@ export function createCoachManagerStudentRouter(): Router {
       return;
     }
     try {
-      ensureStudentListFile(ctx.clubId);
-      let studentCsv = await loadStudentListRaw(ctx.clubId);
       let students: Awaited<ReturnType<typeof loadStudents>> = [];
       let studentsParseWarning: string | null = null;
       try {
@@ -266,17 +222,7 @@ export function createCoachManagerStudentRouter(): Router {
         const keep = new Set(
           students.map((s) => s.studentId.trim().toUpperCase()),
         );
-        studentCsv = {
-          ...studentCsv,
-          rows: filterRawRowsByIdColumn(
-            studentCsv,
-            ["StudentID", "student_id", "studentid", "STUDENTID"],
-            keep,
-          ).rows,
-        };
       }
-      const idEnc = encodeURIComponent(ctx.clubId);
-      const fileEnc = encodeURIComponent(STUDENT_LIST_FILENAME);
       const rosterMongo = isMongoConfigured();
       const listQ = parseCoachManagerStudentListQuery(_req);
 
@@ -318,25 +264,22 @@ export function createCoachManagerStudentRouter(): Router {
         listQ.page == null ||
         listQ.limit == null ||
         listQ.page <= 1;
+      const studentCsvAllRows = students.map((s) =>
+        STUDENT_LIST_COLUMNS.map((h) => studentCsvRowToApiFields(s)[h] ?? ""),
+      );
       const studentCsvOut = includeFullCsv
-        ? studentCsv
-        : {
-            headers: studentCsv.headers,
-            rows: [] as typeof studentCsv.rows,
-            truncated: true,
-          };
+        ? { headers: STUDENT_LIST_COLUMNS, rows: studentCsvAllRows }
+        : { headers: STUDENT_LIST_COLUMNS, rows: [] as string[][], truncated: true };
       const payload: Record<string, unknown> = {
         ok: true,
         clubId: ctx.clubId,
         clubName: ctx.clubName,
-        studentRosterSource: rosterMongo ? "mongo" : "disk",
-        studentCsvFileUrl: rosterMongo
-          ? null
-          : `/backend/data_club/${idEnc}/${fileEnc}`,
+        studentRosterSource: "mongo",
+        studentCsvFileUrl: null,
         mongoStudentCollection: rosterMongo ? USER_LIST_STUDENT_COLLECTION : null,
         studentCsvResolvedPath: rosterMongo
           ? `MongoDB/${USER_LIST_STUDENT_COLLECTION}/${ctx.clubId}`
-          : studentListResolvedPath(ctx.clubId),
+          : null,
         students: pageStudents.map((s) => {
           const fields = studentCsvRowToApiFields(s);
           const ul = loginByStudentId.get(s.studentId.trim().toUpperCase());
@@ -355,17 +298,18 @@ export function createCoachManagerStudentRouter(): Router {
         payload.studentPageSize = listQ.limit;
       }
       if (sportCoachDebugOn()) {
-        const dbg = {
-          ...coachManagerStudentDebugSnapshot(_req),
-          ...studentLoadDebugExtra(ctx.clubId, studentCsv, students.length),
+        const dbg = coachManagerStudentDebugSnapshot(_req);
+        payload.debug = {
+          ...dbg,
+          studentCsvHeaderCount: STUDENT_LIST_COLUMNS.length,
+          studentCsvRowCount: studentCsvAllRows.length,
+          studentsParsedCount: students.length,
+          firstHeadersSample: STUDENT_LIST_COLUMNS.slice(0, 20),
         };
-        payload.debug = dbg;
         console.log("[SPORT_COACH_DEBUG] coach-manager students OK", {
           clubId: ctx.clubId,
-          studentCsvHeaderCount: studentCsv.headers.length,
-          studentCsvRowCount: studentCsv.rows.length,
-          path: dbg.studentCsvResolvedPath,
-          fileExists: dbg.studentFileExistsOnDisk,
+          studentCsvHeaderCount: STUDENT_LIST_COLUMNS.length,
+          studentCsvRowCount: studentCsvAllRows.length,
         });
       }
       res.json(payload);

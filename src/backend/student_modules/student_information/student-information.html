@@ -138,7 +138,7 @@
             </div>
             <div>
               <label for="newStudentEmail" class="block text-xs text-slate-400 mb-1">Email Address</label>
-              <input id="newStudentEmail" type="email" required autocomplete="email"
+              <input id="newStudentEmail" type="email" autocomplete="email"
                 class="w-full rounded-lg bg-slate-900/60 border border-white/15 px-3 py-2 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50" />
             </div>
           </div>
@@ -273,7 +273,7 @@
             </div>
             <div>
               <label for="tableEditEmail" class="block text-xs text-[#4a3410] mb-1">Email Address</label>
-              <input id="tableEditEmail" type="email" required autocomplete="email"
+              <input id="tableEditEmail" type="email" autocomplete="email"
                 class="w-full rounded-lg bg-white border border-amber-900/25 px-3 py-2 text-[#3d2817] text-sm placeholder:text-[#6b5344]/60 focus:outline-none focus:ring-2 focus:ring-amber-700/35" />
             </div>
           </div>
@@ -1458,8 +1458,8 @@
         }
         var nm = document.getElementById("tableEditFullName").value.trim();
         var em = document.getElementById("tableEditEmail").value.trim();
-        if (!nm || !em) {
-          errBox.textContent = "full_name and email are required.";
+        if (!nm) {
+          errBox.textContent = "full_name is required.";
           errBox.classList.remove("hidden");
           return;
         }
@@ -1650,8 +1650,8 @@
         errBox.textContent = "";
         var nm = document.getElementById("newStudentFullName").value.trim();
         var em = document.getElementById("newStudentEmail").value.trim();
-        if (!nm || !em) {
-          errBox.textContent = "Full Name and Email are required.";
+        if (!nm) {
+          errBox.textContent = "Full Name is required.";
           errBox.classList.remove("hidden");
           return;
         }

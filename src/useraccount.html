@@ -31,11 +31,51 @@
       </div>
       <div class="flex flex-col sm:flex-row sm:gap-4">
         <dt class="profile-dt-black-bold shrink-0 w-40">Contact Number</dt>
-        <dd id="fieldContactNumber" class="font-medium"></dd>
+        <dd class="font-medium min-w-0 flex-1">
+          <span id="fieldContactNumber"></span>
+          <input type="text" id="fieldContactNumberInput" autocomplete="tel" maxlength="80"
+            class="hidden mt-0.5 w-full max-w-md rounded-md border border-stone-400 px-2 py-1.5 text-stone-900" />
+        </dd>
       </div>
       <div class="flex flex-col sm:flex-row sm:gap-4">
         <dt class="profile-dt-black-bold shrink-0 w-40">Email Address</dt>
-        <dd id="fieldEmailAddress" class="font-medium"></dd>
+        <dd class="font-medium min-w-0 flex-1">
+          <span id="fieldEmailAddress"></span>
+          <input type="email" id="fieldEmailAddressInput" autocomplete="email" maxlength="200"
+            class="hidden mt-0.5 w-full max-w-md rounded-md border border-stone-400 px-2 py-1.5 text-stone-900" />
+        </dd>
+      </div>
+      <div id="rowStudentDob" class="hidden flex flex-col sm:flex-row sm:gap-4">
+        <dt class="profile-dt-black-bold shrink-0 w-40">Date of Birth</dt>
+        <dd id="fieldStudentDob" class="font-medium"></dd>
+      </div>
+      <div id="rowCoachDob" class="hidden flex flex-col sm:flex-row sm:gap-4">
+        <dt class="profile-dt-black-bold shrink-0 w-40">Date of Birth</dt>
+        <dd id="fieldCoachDob" class="font-medium"></dd>
+      </div>
+      <div id="rowStudentSchool" class="hidden flex flex-col sm:flex-row sm:gap-4">
+        <dt class="profile-dt-black-bold shrink-0 w-40">School</dt>
+        <dd class="font-medium min-w-0 flex-1">
+          <span id="fieldStudentSchool"></span>
+          <input type="text" id="fieldStudentSchoolInput" autocomplete="off" maxlength="200"
+            class="hidden mt-0.5 w-full max-w-md rounded-md border border-stone-400 px-2 py-1.5 text-stone-900" />
+        </dd>
+      </div>
+      <div id="rowStudentHomeAddress" class="hidden flex flex-col sm:flex-row sm:gap-4">
+        <dt class="profile-dt-black-bold shrink-0 w-40">Home Address</dt>
+        <dd class="font-medium min-w-0 flex-1">
+          <span id="fieldStudentHomeAddress"></span>
+          <input type="text" id="fieldStudentHomeAddressInput" autocomplete="off" maxlength="250"
+            class="hidden mt-0.5 w-full max-w-md rounded-md border border-stone-400 px-2 py-1.5 text-stone-900" />
+        </dd>
+      </div>
+      <div id="rowCoachHomeAddress" class="hidden flex flex-col sm:flex-row sm:gap-4">
+        <dt class="profile-dt-black-bold shrink-0 w-40">Home Address</dt>
+        <dd class="font-medium min-w-0 flex-1">
+          <span id="fieldCoachHomeAddress"></span>
+          <input type="text" id="fieldCoachHomeAddressInput" autocomplete="street-address" maxlength="250"
+            class="hidden mt-0.5 w-full max-w-md rounded-md border border-stone-400 px-2 py-1.5 text-stone-900" />
+        </dd>
       </div>
       <div class="flex flex-col sm:flex-row sm:gap-4">
         <dt class="profile-dt-black-bold shrink-0 w-40">Status</dt>
@@ -50,7 +90,22 @@
         <dd id="fieldExpiryDate" class="font-medium"></dd>
       </div>
     </dl>
+    <div id="studentProfileActions" class="hidden mt-5 flex flex-wrap gap-2 items-center">
+      <button type="button" id="btnStudentProfileUpdate" class="profile-student-update-btn">Update</button>
+      <button type="button" id="btnStudentProfileConfirm" class="hidden profile-student-confirm-btn">Confirm</button>
+      <button type="button" id="btnStudentProfileCancel" class="hidden text-sm font-medium text-stone-600 underline decoration-stone-400 hover:text-stone-800">Cancel</button>
+    </div>
+    <div id="coachProfileActions" class="hidden mt-5 flex flex-wrap gap-2 items-center">
+      <button type="button" id="btnCoachProfileUpdate" class="profile-student-update-btn">Update</button>
+      <button type="button" id="btnCoachProfileConfirm" class="hidden profile-student-confirm-btn">Confirm</button>
+      <button type="button" id="btnCoachProfileCancel" class="hidden text-sm font-medium text-stone-600 underline decoration-stone-400 hover:text-stone-800">Cancel</button>
+    </div>
+    <div id="coachManagerProfileActions" class="hidden mt-5 flex flex-wrap gap-2 items-center">
+      <button type="button" id="btnCmProfileConfirm" class="hidden profile-cm-confirm-btn">Confirm</button>
+      <button type="button" id="btnCmProfileCancel" class="hidden profile-cm-cancel-btn">Cancel</button>
+    </div>
     <p id="errorBox" class="hidden text-sm text-red-600 mt-4"></p>
+    <p id="infoBox" class="hidden text-sm text-emerald-800 mt-2"></p>
   </div>
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
@@ -63,6 +118,241 @@
       var loadState = document.getElementById("loadState");
       var fields = document.getElementById("accountFields");
       var errBox = document.getElementById("errorBox");
+      var infoBox = document.getElementById("infoBox");
+      var fieldContactNumber = document.getElementById("fieldContactNumber");
+      var fieldEmailAddress = document.getElementById("fieldEmailAddress");
+      var fieldContactNumberInput = document.getElementById("fieldContactNumberInput");
+      var fieldEmailAddressInput = document.getElementById("fieldEmailAddressInput");
+      var rowStudentDob = document.getElementById("rowStudentDob");
+      var fieldStudentDob = document.getElementById("fieldStudentDob");
+      var rowCoachDob = document.getElementById("rowCoachDob");
+      var fieldCoachDob = document.getElementById("fieldCoachDob");
+      var rowStudentSchool = document.getElementById("rowStudentSchool");
+      var fieldStudentSchool = document.getElementById("fieldStudentSchool");
+      var fieldStudentSchoolInput = document.getElementById("fieldStudentSchoolInput");
+      var rowStudentHomeAddress = document.getElementById("rowStudentHomeAddress");
+      var fieldStudentHomeAddress = document.getElementById("fieldStudentHomeAddress");
+      var fieldStudentHomeAddressInput = document.getElementById("fieldStudentHomeAddressInput");
+      var rowCoachHomeAddress = document.getElementById("rowCoachHomeAddress");
+      var fieldCoachHomeAddress = document.getElementById("fieldCoachHomeAddress");
+      var fieldCoachHomeAddressInput = document.getElementById("fieldCoachHomeAddressInput");
+      var studentProfileActions = document.getElementById("studentProfileActions");
+      var btnStudentProfileUpdate = document.getElementById("btnStudentProfileUpdate");
+      var btnStudentProfileConfirm = document.getElementById("btnStudentProfileConfirm");
+      var btnStudentProfileCancel = document.getElementById("btnStudentProfileCancel");
+      var coachProfileActions = document.getElementById("coachProfileActions");
+      var btnCoachProfileUpdate = document.getElementById("btnCoachProfileUpdate");
+      var btnCoachProfileConfirm = document.getElementById("btnCoachProfileConfirm");
+      var btnCoachProfileCancel = document.getElementById("btnCoachProfileCancel");
+      var coachManagerProfileActions = document.getElementById("coachManagerProfileActions");
+      // Optional: some deployments don't show a CoachManager "Update" button.
+      // Keep the variable defined to avoid runtime ReferenceError in edit-mode helpers.
+      var btnCmProfileUpdate = document.getElementById("btnCmProfileUpdate");
+      var btnCmProfileConfirm = document.getElementById("btnCmProfileConfirm");
+      var btnCmProfileCancel = document.getElementById("btnCmProfileCancel");
+      var editing = false;
+      var lastUser = null;
+
+      function displayDash(v) {
+        if (v == null) {
+          return "—";
+        }
+        var s = String(v).trim();
+        return s !== "" && s !== "—" ? s : "—";
+      }
+
+      function rawEditableFromApi(v) {
+        if (v == null) {
+          return "";
+        }
+        var s = String(v).trim();
+        return s === "—" ? "" : s;
+      }
+
+      function applyContactEmailToDom(u) {
+        fieldContactNumber.textContent = displayDash(u.contact_number);
+        fieldEmailAddress.textContent = displayDash(u.email_address);
+      }
+
+      function applyStudentExtraFieldsToDom(u) {
+        if (fieldStudentDob) fieldStudentDob.textContent = displayDash(u.date_of_birth);
+        if (fieldStudentSchool) fieldStudentSchool.textContent = displayDash(u.school);
+        if (fieldStudentHomeAddress) fieldStudentHomeAddress.textContent = displayDash(u.home_address);
+      }
+
+      function applyCoachExtraFieldsToDom(u) {
+        if (fieldCoachDob) fieldCoachDob.textContent = displayDash(u.date_of_birth);
+        if (fieldCoachHomeAddress) fieldCoachHomeAddress.textContent = displayDash(u.home_address);
+      }
+
+      function setContactFieldEditMode(on) {
+        if (fieldContactNumberInput) {
+          fieldContactNumberInput.classList.toggle("hidden", !on);
+        }
+        if (fieldEmailAddressInput) {
+          fieldEmailAddressInput.classList.toggle("hidden", !on);
+        }
+        fieldContactNumber.classList.toggle("hidden", on);
+        fieldEmailAddress.classList.toggle("hidden", on);
+      }
+
+      function setStudentExtraFieldEditMode(on) {
+        if (fieldStudentSchoolInput) {
+          fieldStudentSchoolInput.classList.toggle("hidden", !on);
+        }
+        if (fieldStudentHomeAddressInput) {
+          fieldStudentHomeAddressInput.classList.toggle("hidden", !on);
+        }
+        if (fieldStudentSchool) {
+          fieldStudentSchool.classList.toggle("hidden", on);
+        }
+        if (fieldStudentHomeAddress) {
+          fieldStudentHomeAddress.classList.toggle("hidden", on);
+        }
+      }
+
+      function setCoachExtraFieldEditMode(on) {
+        if (fieldCoachHomeAddressInput) {
+          fieldCoachHomeAddressInput.classList.toggle("hidden", !on);
+        }
+        if (fieldCoachHomeAddress) {
+          fieldCoachHomeAddress.classList.toggle("hidden", on);
+        }
+      }
+
+      function setCoachManagerEditMode(on) {
+        if (on) {
+          setStudentEditMode(false);
+          setCoachEditMode(false);
+        }
+        setContactFieldEditMode(on);
+        setStudentExtraFieldEditMode(false);
+        setCoachExtraFieldEditMode(false);
+        if (btnCmProfileUpdate) {
+          btnCmProfileUpdate.classList.toggle("hidden", on);
+        }
+        if (btnCmProfileConfirm) {
+          btnCmProfileConfirm.classList.toggle("hidden", !on);
+        }
+        if (btnCmProfileCancel) {
+          btnCmProfileCancel.classList.toggle("hidden", !on);
+        }
+      }
+
+      function setStudentEditMode(on) {
+        editing = on;
+        if (on) {
+          setCoachEditMode(false);
+          setCoachManagerEditMode(false);
+        }
+        setContactFieldEditMode(on);
+        setStudentExtraFieldEditMode(on);
+        setCoachExtraFieldEditMode(false);
+        if (btnStudentProfileUpdate) {
+          btnStudentProfileUpdate.classList.toggle("hidden", on);
+        }
+        if (btnStudentProfileConfirm) {
+          btnStudentProfileConfirm.classList.toggle("hidden", !on);
+        }
+        if (btnStudentProfileCancel) {
+          btnStudentProfileCancel.classList.toggle("hidden", !on);
+        }
+      }
+
+      function setCoachEditMode(on) {
+        editing = on;
+        if (on) {
+          setStudentEditMode(false);
+          setCoachManagerEditMode(false);
+        }
+        setContactFieldEditMode(on);
+        setStudentExtraFieldEditMode(false);
+        setCoachExtraFieldEditMode(on);
+        if (btnCoachProfileUpdate) {
+          btnCoachProfileUpdate.classList.toggle("hidden", on);
+        }
+        if (btnCoachProfileConfirm) {
+          btnCoachProfileConfirm.classList.toggle("hidden", !on);
+        }
+        if (btnCoachProfileCancel) {
+          btnCoachProfileCancel.classList.toggle("hidden", !on);
+        }
+      }
+
+      function fillUserFields(u) {
+        document.getElementById("fieldUserType").textContent =
+          u.usertype != null && String(u.usertype).trim() !== ""
+            ? String(u.usertype)
+            : String(u.role || "—");
+        document.getElementById("fieldUsername").textContent =
+          u.username != null ? String(u.username) : "—";
+        document.getElementById("fieldFullName").textContent = (function () {
+          var fn =
+            u.full_name != null && String(u.full_name).trim() !== ""
+              ? String(u.full_name).trim()
+              : "";
+          return fn !== "" && fn !== "—" ? fn : "—";
+        })();
+        document.getElementById("fieldClubName").textContent =
+          u.club_name != null && String(u.club_name).trim() !== ""
+            ? String(u.club_name)
+            : "—";
+        applyContactEmailToDom(u);
+        applyStudentExtraFieldsToDom(u);
+        applyCoachExtraFieldsToDom(u);
+        document.getElementById("fieldStatus").textContent =
+          u.status != null && String(u.status).trim() !== ""
+            ? String(u.status)
+            : "—";
+        document.getElementById("fieldCreated").textContent = (function () {
+          if (u.creation_date == null) {
+            return "—";
+          }
+          var s = String(u.creation_date);
+          return window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+            ? window.api.formatDateDisplayDdMmYyyy(s) || s
+            : s;
+        })();
+        document.getElementById("fieldExpiryDate").textContent = (function () {
+          if (u.expiry_date == null) {
+            return "—";
+          }
+          var s = String(u.expiry_date);
+          return window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
+            ? window.api.formatDateDisplayDdMmYyyy(s) || s
+            : s;
+        })();
+        if (u.role === "Student" || u.role === "Coach") {
+          var lc = document.getElementById("labelClubName");
+          var ld = document.getElementById("labelCreated");
+          if (lc) {
+            lc.textContent = "Club Name";
+          }
+          if (ld) {
+            ld.textContent = "Creation Date";
+          }
+        }
+        if (u.role === "Student") {
+          if (rowStudentDob) rowStudentDob.classList.remove("hidden");
+          if (rowStudentSchool) rowStudentSchool.classList.remove("hidden");
+          if (rowStudentHomeAddress) rowStudentHomeAddress.classList.remove("hidden");
+          if (rowCoachDob) rowCoachDob.classList.add("hidden");
+          if (rowCoachHomeAddress) rowCoachHomeAddress.classList.add("hidden");
+        } else if (u.role === "Coach") {
+          if (rowStudentDob) rowStudentDob.classList.add("hidden");
+          if (rowStudentSchool) rowStudentSchool.classList.add("hidden");
+          if (rowStudentHomeAddress) rowStudentHomeAddress.classList.add("hidden");
+          if (rowCoachDob) rowCoachDob.classList.remove("hidden");
+          if (rowCoachHomeAddress) rowCoachHomeAddress.classList.remove("hidden");
+        } else {
+          if (rowStudentDob) rowStudentDob.classList.add("hidden");
+          if (rowStudentSchool) rowStudentSchool.classList.add("hidden");
+          if (rowStudentHomeAddress) rowStudentHomeAddress.classList.add("hidden");
+          if (rowCoachDob) rowCoachDob.classList.add("hidden");
+          if (rowCoachHomeAddress) rowCoachHomeAddress.classList.add("hidden");
+        }
+      }
+
       window.api
         .api("/me")
         .then(function (data) {
@@ -70,62 +360,16 @@
           if (!u) {
             throw new Error("No user in response");
           }
-          document.getElementById("fieldUserType").textContent =
-            u.usertype != null && String(u.usertype).trim() !== ""
-              ? String(u.usertype)
-              : String(u.role || "—");
-          document.getElementById("fieldUsername").textContent =
-            u.username != null ? String(u.username) : "—";
-          document.getElementById("fieldFullName").textContent = (function () {
-            var fn =
-              u.full_name != null && String(u.full_name).trim() !== ""
-                ? String(u.full_name).trim()
-                : "";
-            return fn !== "" && fn !== "—" ? fn : "—";
-          })();
-          document.getElementById("fieldClubName").textContent =
-            u.club_name != null && String(u.club_name).trim() !== ""
-              ? String(u.club_name)
-              : "—";
-          document.getElementById("fieldContactNumber").textContent =
-            u.contact_number != null && String(u.contact_number).trim() !== "" && String(u.contact_number).trim() !== "—"
-              ? String(u.contact_number).trim()
-              : "—";
-          document.getElementById("fieldEmailAddress").textContent =
-            u.email_address != null && String(u.email_address).trim() !== "" && String(u.email_address).trim() !== "—"
-              ? String(u.email_address).trim()
-              : "—";
-          document.getElementById("fieldStatus").textContent =
-            u.status != null && String(u.status).trim() !== ""
-              ? String(u.status)
-              : "—";
-          document.getElementById("fieldCreated").textContent = (function () {
-            if (u.creation_date == null) {
-              return "—";
-            }
-            var s = String(u.creation_date);
-            return window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
-              ? window.api.formatDateDisplayDdMmYyyy(s) || s
-              : s;
-          })();
-          document.getElementById("fieldExpiryDate").textContent = (function () {
-            if (u.expiry_date == null) {
-              return "—";
-            }
-            var s = String(u.expiry_date);
-            return window.api && typeof window.api.formatDateDisplayDdMmYyyy === "function"
-              ? window.api.formatDateDisplayDdMmYyyy(s) || s
-              : s;
-          })();
-          if (u.role === "Student" || u.role === "Coach") {
-            var lc = document.getElementById("labelClubName");
-            var ld = document.getElementById("labelCreated");
-            if (lc) {
-              lc.textContent = "Club Name";
-            }
-            if (ld) {
-              ld.textContent = "Creation Date";
-            }
+          fillUserFields(u);
+          lastUser = u;
+          if (u.role === "Student" && studentProfileActions) {
+            studentProfileActions.classList.remove("hidden");
+          }
+          if (u.role === "Coach" && coachProfileActions) {
+            coachProfileActions.classList.remove("hidden");
+          }
+          if (u.role === "CoachManager" && coachManagerProfileActions) {
+            coachManagerProfileActions.classList.remove("hidden");
           }
           loadState.classList.add("hidden");
           fields.classList.remove("hidden");
@@ -135,6 +379,195 @@
           errBox.textContent = e.message || "Could not load account.";
           errBox.classList.remove("hidden");
         });
+
+      if (btnStudentProfileUpdate) {
+        btnStudentProfileUpdate.addEventListener("click", function () {
+          window.api.api("/me").then(function (data) {
+            var u = data.user;
+            if (!u || u.role !== "Student") {
+              return;
+            }
+            fieldContactNumberInput.value = rawEditableFromApi(u.contact_number);
+            fieldEmailAddressInput.value = rawEditableFromApi(u.email_address);
+            if (fieldStudentSchoolInput) fieldStudentSchoolInput.value = rawEditableFromApi(u.school);
+            if (fieldStudentHomeAddressInput) fieldStudentHomeAddressInput.value = rawEditableFromApi(u.home_address);
+            errBox.classList.add("hidden");
+            setStudentEditMode(true);
+          });
+        });
+      }
+
+      if (btnStudentProfileCancel) {
+        btnStudentProfileCancel.addEventListener("click", function () {
+          setStudentEditMode(false);
+          errBox.classList.add("hidden");
+        });
+      }
+
+      if (btnStudentProfileConfirm) {
+        btnStudentProfileConfirm.addEventListener("click", function () {
+          errBox.classList.add("hidden");
+          var email = (fieldEmailAddressInput && fieldEmailAddressInput.value) || "";
+          var phone = (fieldContactNumberInput && fieldContactNumberInput.value) || "";
+          var school = (fieldStudentSchoolInput && fieldStudentSchoolInput.value) || "";
+          var homeAddress = (fieldStudentHomeAddressInput && fieldStudentHomeAddressInput.value) || "";
+          btnStudentProfileConfirm.disabled = true;
+          window.api
+            .api("/me/student-contact", {
+              method: "PATCH",
+              body: JSON.stringify({
+                email_address: email.trim(),
+                contact_number: phone.trim(),
+                school: school.trim(),
+                home_address: homeAddress.trim(),
+              }),
+            })
+            .then(function (res) {
+              applyContactEmailToDom({
+                contact_number: res.contact_number != null ? res.contact_number : phone,
+                email_address: res.email_address != null ? res.email_address : email,
+              });
+              applyStudentExtraFieldsToDom({
+                date_of_birth: lastUser && lastUser.date_of_birth,
+                school: res.school != null ? res.school : school,
+                home_address: res.home_address != null ? res.home_address : homeAddress,
+              });
+              setStudentEditMode(false);
+            })
+            .catch(function (e) {
+              errBox.textContent = e.message || "Could not save.";
+              errBox.classList.remove("hidden");
+            })
+            .finally(function () {
+              btnStudentProfileConfirm.disabled = false;
+            });
+        });
+      }
+
+      if (btnCoachProfileUpdate) {
+        btnCoachProfileUpdate.addEventListener("click", function () {
+          window.api.api("/me").then(function (data) {
+            var u = data.user;
+            if (!u || u.role !== "Coach") {
+              return;
+            }
+            fieldContactNumberInput.value = rawEditableFromApi(u.contact_number);
+            fieldEmailAddressInput.value = rawEditableFromApi(u.email_address);
+            if (fieldCoachHomeAddressInput) {
+              fieldCoachHomeAddressInput.value = rawEditableFromApi(u.home_address);
+            }
+            errBox.classList.add("hidden");
+            setCoachEditMode(true);
+          });
+        });
+      }
+
+      if (btnCoachProfileCancel) {
+        btnCoachProfileCancel.addEventListener("click", function () {
+          setCoachEditMode(false);
+          errBox.classList.add("hidden");
+        });
+      }
+
+      if (btnCoachProfileConfirm) {
+        btnCoachProfileConfirm.addEventListener("click", function () {
+          errBox.classList.add("hidden");
+          var email = (fieldEmailAddressInput && fieldEmailAddressInput.value) || "";
+          var phone = (fieldContactNumberInput && fieldContactNumberInput.value) || "";
+          var home =
+            (fieldCoachHomeAddressInput && fieldCoachHomeAddressInput.value) || "";
+          btnCoachProfileConfirm.disabled = true;
+          window.api
+            .api("/me/coach-contact", {
+              method: "PATCH",
+              body: JSON.stringify({
+                email_address: email.trim(),
+                contact_number: phone.trim(),
+                home_address: home.trim(),
+              }),
+            })
+            .then(function (res) {
+              applyContactEmailToDom({
+                contact_number:
+                  res.contact_number != null ? res.contact_number : phone,
+                email_address: res.email_address != null ? res.email_address : email,
+              });
+              applyCoachExtraFieldsToDom({
+                date_of_birth:
+                  lastUser && lastUser.date_of_birth ? lastUser.date_of_birth : "—",
+                home_address: res.home_address != null ? res.home_address : home,
+              });
+              if (lastUser) {
+                lastUser.home_address =
+                  res.home_address != null ? res.home_address : home.trim() || "—";
+              }
+              setCoachEditMode(false);
+            })
+            .catch(function (e) {
+              errBox.textContent = e.message || "Could not save.";
+              errBox.classList.remove("hidden");
+            })
+            .finally(function () {
+              btnCoachProfileConfirm.disabled = false;
+            });
+        });
+      }
+
+      if (btnCmProfileCancel) {
+        btnCmProfileCancel.addEventListener("click", function () {
+          setCoachManagerEditMode(false);
+          errBox.classList.add("hidden");
+        });
+      }
+
+      if (btnCmProfileConfirm) {
+        btnCmProfileConfirm.addEventListener("click", function () {
+          errBox.classList.add("hidden");
+          if (infoBox) {
+            infoBox.classList.add("hidden");
+            infoBox.textContent = "";
+          }
+          var email = (fieldEmailAddressInput && fieldEmailAddressInput.value) || "";
+          var phone = (fieldContactNumberInput && fieldContactNumberInput.value) || "";
+          btnCmProfileConfirm.disabled = true;
+          if (btnCmProfileCancel) btnCmProfileCancel.disabled = true;
+          window.api
+            .api("/me/contact", {
+              method: "POST",
+              body: JSON.stringify({
+                email_address: email.trim(),
+                contact_number: phone.trim(),
+              }),
+            })
+            .then(function (res) {
+              if (!res || !res.ok) {
+                throw new Error((res && res.error) || "Update failed");
+              }
+              var next = {
+                contact_number: phone.trim() || "—",
+                email_address: email.trim() || "—",
+              };
+              applyContactEmailToDom(next);
+              if (lastUser) {
+                lastUser.contact_number = next.contact_number;
+                lastUser.email_address = next.email_address;
+              }
+              setCoachManagerEditMode(false);
+              if (infoBox) {
+                infoBox.textContent = "Saved to userLogin.";
+                infoBox.classList.remove("hidden");
+              }
+            })
+            .catch(function (e) {
+              errBox.textContent = e.message || "Could not save.";
+              errBox.classList.remove("hidden");
+            })
+            .finally(function () {
+              btnCmProfileConfirm.disabled = false;
+              if (btnCmProfileCancel) btnCmProfileCancel.disabled = false;
+            });
+        });
+      }
     })();
   </script>
 </body>

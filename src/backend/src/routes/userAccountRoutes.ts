@@ -2,7 +2,11 @@ import fs from "fs";
 import path from "path";
 import { Router } from "express";
 import { requireAuth } from "../middleware/requireAuth";
-import { clubDataDir } from "../coachListCsv";
+import {
+  clubDataDir,
+  isValidClubFolderId,
+  updateCoachRow,
+} from "../coachListCsv";
 import {
   findCoachRoleLoginByUid,
   findStudentRoleLoginByUid,
@@ -10,11 +14,31 @@ import {
   updateStudentLoginPasswordInCsv,
 } from "../coachStudentLoginCsv";
 import type { CsvUser } from "../userlistCsv";
-import { findUserByUid, updateUserPasswordInCsv } from "../userlistCsv";
+import {
+  findCoachManagerClubUidByClubName,
+  findUserByUid,
+  updateUserPasswordInCsv,
+} from "../userlistCsv";
 import {
   changeAuthenticatedUserLoginPasswordMongo,
   isMongoConfigured,
+  updateCoachManagerContactMongo,
+  userLoginCsvReadFallbackEnabled,
 } from "../userListMongo";
+import {
+  findClubUidForCoachIdPreferred,
+  updateCoachRowMongo,
+} from "../coachListMongo";
+import { patchStudentSelfContact } from "../studentListCsv";
+import { patchStudentSelfProfile } from "../studentListCsv";
+
+function looksLikeValidEmail(s: string): boolean {
+  const t = String(s ?? "").trim();
+  if (!t) {
+    return true;
+  }
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t);
+}
 
 /**
  * Turn CSV values that may be absolute file paths or file:// URLs into a path
@@ -132,6 +156,192 @@ export function resolveClubPhotoRelForServing(
 export function createUserAccountRouter(): Router {
   const r = Router();
 
+  /**
+   * Student-only: persist email + contact to club roster (`UserList_Student` in Mongo
+   * `ClubMaster_DB`, or `UserList_Student.json` on disk when Mongo is off).
+   */
+  r.patch("/student-contact", requireAuth, async (req, res) => {
+    if (req.user?.role !== "Student") {
+      res.status(403).json({ ok: false, error: "Only students may update this profile." });
+      return;
+    }
+    const uid = req.user?.sub;
+    if (uid == null || String(uid).trim() === "") {
+      res.status(401).json({ ok: false, error: "Invalid session." });
+      return;
+    }
+    const email = String(req.body?.email_address ?? req.body?.email ?? "").trim();
+    const phone = String(
+      req.body?.contact_number ?? req.body?.phone ?? req.body?.contactNumber ?? "",
+    ).trim();
+    const school = String(req.body?.school ?? "").trim();
+    const home_address = String(
+      req.body?.home_address ?? req.body?.homeAddress ?? "",
+    ).trim();
+    if (!looksLikeValidEmail(email)) {
+      res.status(400).json({ ok: false, error: "Invalid email address." });
+      return;
+    }
+    try {
+      const out =
+        school || home_address
+          ? await patchStudentSelfProfile(String(uid).trim(), {
+              email_address: email,
+              contact_number: phone,
+              school,
+              home_address,
+            })
+          : await patchStudentSelfContact(String(uid).trim(), email, phone);
+      if (!out.ok) {
+        res.status(400).json({ ok: false, error: out.error });
+        return;
+      }
+      res.json({
+        ok: true,
+        message: "Profile updated.",
+        email_address: email || "—",
+        contact_number: phone || "—",
+        school: school || "—",
+        home_address: home_address || "—",
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      res.status(503).json({ ok: false, error: msg });
+    }
+  });
+
+  /**
+   * Coach-only: persist email + contact to club roster (`UserList_Coach` in Mongo
+   * `ClubMaster_DB`, or `UserList_Coach.json` on disk when Mongo is off).
+   */
+  r.patch("/coach-contact", requireAuth, async (req, res) => {
+    if (req.user?.role !== "Coach") {
+      res.status(403).json({
+        ok: false,
+        error: "Only coaches may update roster contact here.",
+      });
+      return;
+    }
+    const uid = String(req.user?.sub ?? "").trim();
+    if (!uid) {
+      res.status(401).json({ ok: false, error: "Invalid session." });
+      return;
+    }
+    const email_address = String(req.body?.email_address ?? req.body?.email ?? "").trim();
+    const contact_number = String(
+      req.body?.contact_number ?? req.body?.phone ?? req.body?.contactNumber ?? "",
+    ).trim();
+    const home_address = String(
+      req.body?.home_address ?? req.body?.homeAddress ?? req.body?.address ?? "",
+    ).trim();
+    if (!looksLikeValidEmail(email_address)) {
+      res.status(400).json({ ok: false, error: "Invalid email address." });
+      return;
+    }
+    const jwtFolder = String(req.user?.club_folder_uid ?? "").trim();
+    const username = String(req.user?.username ?? "").trim();
+
+    type CoachLoginSlice = NonNullable<
+      ReturnType<typeof coachProfileFromUserLoginCoachCsv>
+    >;
+    let coachLogin: CoachLoginSlice | null = null;
+    if (isMongoConfigured()) {
+      try {
+        const { loadMeProfileFromUserLoginMongo } = await import(
+          "../userLoginCollectionMongo"
+        );
+        const mongoMe = await loadMeProfileFromUserLoginMongo(uid, "Coach", {
+          username,
+          clubFolderUid: jwtFolder,
+        });
+        if (mongoMe?.coachLogin) {
+          coachLogin = mongoMe.coachLogin;
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    const allowFile = !isMongoConfigured() || userLoginCsvReadFallbackEnabled();
+    if (!coachLogin && allowFile) {
+      coachLogin = coachProfileFromUserLoginCoachCsv(uid);
+    }
+    const clubNameTrimmed =
+      coachLogin?.club_name &&
+      String(coachLogin.club_name).trim() !== "" &&
+      String(coachLogin.club_name).trim() !== "—"
+        ? String(coachLogin.club_name).trim()
+        : "";
+    let club_folder_uid: string | null = null;
+    const fromLoginCoach = (coachLogin?.club_folder_uid ?? "").trim();
+    if (fromLoginCoach && isValidClubFolderId(fromLoginCoach)) {
+      club_folder_uid = fromLoginCoach;
+    } else if (jwtFolder && isValidClubFolderId(jwtFolder)) {
+      club_folder_uid = jwtFolder;
+    } else if (clubNameTrimmed) {
+      const u = findCoachManagerClubUidByClubName(clubNameTrimmed);
+      club_folder_uid = u && isValidClubFolderId(u) ? u : null;
+    }
+    if (!club_folder_uid) {
+      const fromRoster = await findClubUidForCoachIdPreferred(uid);
+      if (fromRoster && isValidClubFolderId(fromRoster)) {
+        club_folder_uid = fromRoster;
+      }
+    }
+    if (!club_folder_uid) {
+      res.status(400).json({
+        ok: false,
+        error:
+          "Could not resolve your club folder. Ask the club to link your login to a club folder.",
+      });
+      return;
+    }
+
+    const { findCoachRosterRow } = await import("../coachSelfFilter");
+    const crow = await findCoachRosterRow(club_folder_uid, uid);
+    if (!crow) {
+      res.status(404).json({
+        ok: false,
+        error: "No coach roster row found for this account in UserList_Coach.",
+      });
+      return;
+    }
+    const clubName =
+      String(crow.clubName ?? "").trim() || clubNameTrimmed || "—";
+    const payload = {
+      coachName: crow.coachName,
+      email: email_address,
+      phone: contact_number,
+      sex: crow.sex,
+      dateOfBirth: crow.dateOfBirth,
+      joinedDate: crow.joinedDate,
+      homeAddress: home_address,
+      country: crow.country,
+      remark: crow.remark,
+      hourlyRate: crow.hourlyRate,
+      status: crow.status,
+    };
+    try {
+      const result = isMongoConfigured()
+        ? await updateCoachRowMongo(club_folder_uid, clubName, crow.coachId, payload)
+        : updateCoachRow(club_folder_uid, clubName, crow.coachId, payload);
+      if (!result.ok) {
+        res.status(400).json({ ok: false, error: result.error });
+        return;
+      }
+      res.json({
+        ok: true,
+        message: "Profile updated.",
+        coach_id: crow.coachId,
+        email_address: email_address || "—",
+        contact_number: contact_number || "—",
+        home_address: home_address || "—",
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      res.status(503).json({ ok: false, error: msg });
+    }
+  });
+
   r.post("/password", requireAuth, async (req, res) => {
     const uid = req.user?.sub;
     if (uid == null || String(uid).trim() === "") {
@@ -186,6 +396,48 @@ export function createUserAccountRouter(): Router {
       return;
     }
     res.json({ ok: true, message: "Password updated." });
+  });
+
+  r.post("/contact", requireAuth, async (req, res) => {
+    if (req.user?.role !== "CoachManager") {
+      res.status(403).json({
+        ok: false,
+        error: "Only Coach Manager can update email and contact number here.",
+      });
+      return;
+    }
+    if (!isMongoConfigured()) {
+      res.status(400).json({
+        ok: false,
+        error: "MongoDB is required to save your profile.",
+      });
+      return;
+    }
+    const uid = req.user?.sub;
+    if (uid == null || String(uid).trim() === "") {
+      res.status(401).json({ ok: false, error: "Invalid session." });
+      return;
+    }
+    const email_address = String(req.body?.email_address ?? "");
+    const contact_number = String(req.body?.contact_number ?? "");
+    try {
+      const out = await updateCoachManagerContactMongo(
+        String(uid),
+        String(req.user?.username ?? "").trim(),
+        { email_address, contact_number },
+      );
+      if (!out.ok) {
+        res.status(400).json({ ok: false, error: out.error });
+        return;
+      }
+      res.json({ ok: true });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      res.status(503).json({
+        ok: false,
+        error: `Login database unavailable: ${msg}`,
+      });
+    }
   });
 
   return r;

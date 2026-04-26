@@ -99,6 +99,9 @@ export interface UserLoginDocument {
    * set together with `club_folder_uid` when the manager creates the login.
    */
   club_id?: string;
+  /** Coach Manager self-service profile (optional). */
+  email_address?: string;
+  contact_number?: string;
 }
 
 export type UserLoginInsert = Omit<UserLoginDocument, "_id">;
@@ -613,6 +616,8 @@ export const userLoginJsonSchema: Document = {
     student_id: { bsonType: "string" },
     class_id: { bsonType: "string" },
     club_id: { bsonType: "string" },
+    email_address: { bsonType: "string" },
+    contact_number: { bsonType: "string" },
   },
   additionalProperties: false,
 };

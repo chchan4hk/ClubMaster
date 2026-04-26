@@ -143,8 +143,15 @@
       <div class="flex flex-wrap gap-3 gap-y-2 items-end">
         <div class="mr-1">
           <label for="filterCoachSalaryMonth" class="block text-xs text-amber-200/70 mb-1">Month</label>
-          <input id="filterCoachSalaryMonth" type="month"
-            class="rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
+          <div class="flex items-center gap-2">
+            <input id="filterCoachSalaryMonth" type="month"
+              class="rounded-lg bg-amber-950/50 border border-amber-600/25 px-3 py-2 text-sm text-amber-50 [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-amber-400/45" />
+            <button type="button" id="btnPickCoachSalaryMonth"
+              class="rounded-lg border border-amber-600/25 bg-amber-500/10 px-3 py-2 text-amber-200 hover:bg-amber-500/20"
+              title="Pick month" aria-label="Pick month">
+              📅
+            </button>
+          </div>
         </div>
         <button type="button" id="btnReload"
           class="rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium px-4 py-2">
@@ -494,6 +501,31 @@
       var lessonFeePieChartInst = null;
       var salaryPaymentPieChartInst = null;
 
+      // Month picker helper (native calendar UI where supported).
+      (function bindMonthPickerButton() {
+        var input = document.getElementById("filterCoachSalaryMonth");
+        var btn = document.getElementById("btnPickCoachSalaryMonth");
+        if (!input || !btn) {
+          return;
+        }
+        btn.addEventListener("click", function () {
+          try {
+            if (typeof input.showPicker === "function") {
+              input.showPicker();
+              return;
+            }
+          } catch (e) {
+            /* ignore */
+          }
+          input.focus();
+          try {
+            input.click();
+          } catch (e2) {
+            /* ignore */
+          }
+        });
+      })();
+
       function defaultMonthYm() {
         var d = new Date();
         return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
@@ -516,8 +548,8 @@
         return { first: first, last: last };
       }
 
-      /** Lesson overlaps calendar month if [lessonStart, lessonEnd] intersects [monthFirst, monthLast]. */
-      function lessonOverlapsMonth(row, ym) {
+      /** Lesson is in selected month if lesson_start_date month equals ym ("YYYY-MM"). */
+      function lessonStartsInMonth(row, ym) {
         if (!ym || String(ym).trim() === "") {
           return true;
         }
@@ -526,18 +558,12 @@
           return true;
         }
         var s = (row.lessonStartDate || row.lesson_start_date || "").slice(0, 10);
-        var e = (row.lessonEndDate || row.lesson_end_date || "").slice(0, 10);
-        // No schedule dates: still show the row so fee allocation is not hidden (fix dates in Lesson List if needed).
-        if (!s && !e) {
+        // No start date: still show the row so fee allocation is not hidden (fix dates in Lesson List if needed).
+        if (!s) {
           return true;
         }
-        if (!s) {
-          s = e;
-        }
-        if (!e) {
-          e = s;
-        }
-        return s <= r.last && e >= r.first;
+        // Only match by start month.
+        return s >= r.first && s <= r.last;
       }
 
       function filterAllocationRows(rows, ym) {
@@ -545,7 +571,7 @@
           return rows.slice();
         }
         return rows.filter(function (row) {
-          return lessonOverlapsMonth(row, ym);
+          return lessonStartsInMonth(row, ym);
         });
       }
 
@@ -554,7 +580,7 @@
           return rows.slice();
         }
         return rows.filter(function (row) {
-          return lessonOverlapsMonth(row, ym);
+          return lessonStartsInMonth(row, ym);
         });
       }
 
@@ -581,26 +607,31 @@
       }
 
       /**
-       * Right chart: partition received lesson fees into salary marked Paid vs remainder (pending).
-       * paidRecorded is sum of salary_amount for filtered rows with Payment_Status Paid.
+       * Right chart: total coach salary Paid vs Pending for the selected month.
+       * Paid = sum(salary_amount) where Payment_Status == "Paid"
+       * Pending = sum(all salary_amount) - Paid
        */
-      function salaryPaidPendingFromReceived(recvTotal, salaryRowsFiltered) {
-        var paidRecorded = 0;
+      function salaryPaidPendingFromSalaryRows(salaryRowsFiltered) {
+        var totalSalary = 0;
+        var paidSalary = 0;
         salaryRowsFiltered.forEach(function (r) {
+          var amt = parseSalaryAmountCell(r.salary_amount);
+          totalSalary += amt;
           var st = String(r.Payment_Status || "").trim().toLowerCase();
           if (st === "paid") {
-            paidRecorded += parseSalaryAmountCell(r.salary_amount);
+            paidSalary += amt;
           }
         });
-        paidRecorded = Math.round(paidRecorded * 100) / 100;
-        recvTotal = Math.round(recvTotal * 100) / 100;
-        var paidShown = Math.min(recvTotal, paidRecorded);
-        var pendingShown = Math.max(0, Math.round((recvTotal - paidShown) * 100) / 100);
+        totalSalary = Math.round(totalSalary * 100) / 100;
+        paidSalary = Math.round(paidSalary * 100) / 100;
+        var pendingSalary = Math.max(
+          0,
+          Math.round((totalSalary - paidSalary) * 100) / 100
+        );
         return {
-          recvTotal: recvTotal,
-          paidRecorded: paidRecorded,
-          paidShown: paidShown,
-          pendingShown: pendingShown,
+          totalSalary: totalSalary,
+          paidSalary: paidSalary,
+          pendingSalary: pendingSalary,
         };
       }
 
@@ -632,9 +663,9 @@
           return;
         }
         var rows = [
-          { label: "Collected lesson fees (received)", v: s.recvTotal },
-          { label: "Salary marked Paid (Total)", v: s.paidShown },
-          { label: "To be Paid (Total)", v: s.pendingShown },
+          { label: "Total salary (all coaches)", v: s.totalSalary },
+          { label: "Paid salary (Total)", v: s.paidSalary },
+          { label: "Pending salary (Total)", v: s.pendingSalary },
         ];
         var html = "";
         rows.forEach(function (r) {
@@ -714,12 +745,7 @@
 
       function updateSalaryPaymentPieChart(allocRows, salaryRowsFiltered) {
         var canvas = document.getElementById("salaryPaymentPieChart");
-        var recvTotal = 0;
-        allocRows.forEach(function (r) {
-          recvTotal += Number(r.receivedLessonFeeTotal) || 0;
-        });
-        recvTotal = Math.round(recvTotal * 100) / 100;
-        var s = salaryPaidPendingFromReceived(recvTotal, salaryRowsFiltered);
+        var s = salaryPaidPendingFromSalaryRows(salaryRowsFiltered);
         renderSalaryPaymentPieSummary(s);
         if (!canvas || typeof Chart === "undefined") {
           if (salaryPaymentPieChartInst) {
@@ -728,8 +754,8 @@
           }
           return;
         }
-        var d0 = s.paidShown;
-        var d1 = s.pendingShown;
+        var d0 = s.paidSalary;
+        var d1 = s.pendingSalary;
         if (salaryPaymentPieChartInst) {
           salaryPaymentPieChartInst.destroy();
           salaryPaymentPieChartInst = null;

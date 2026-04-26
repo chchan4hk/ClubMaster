@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My payments — Student</title>
+  <title>My Payment — Student</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/css/style.css" />
   <link rel="stylesheet" href="/css/btn-cancel-metallic-brown.css" />
@@ -64,23 +64,55 @@
         inset 0 2px 8px rgba(255, 255, 255, 0.9),
         0 4px 16px rgba(5, 150, 105, 0.08);
     }
+
+    /* Maximize visible area for My Payment table */
+    .student-pay-shell {
+      max-width: 100% !important;
+      padding: 16px !important;
+      padding-bottom: 24px !important;
+    }
+    @media (min-width: 1024px) {
+      .student-pay-shell {
+        padding: 18px !important;
+        padding-bottom: 28px !important;
+        gap: 18px !important;
+      }
+      .student-pay-aside {
+        display: none !important; /* hide aside to maximize table width */
+      }
+    }
+    .student-pay-table-card {
+      padding: 12px !important;
+    }
+    @media (min-width: 640px) {
+      .student-pay-table-card {
+        padding: 14px !important;
+      }
+    }
+    .student-pay-table-scroll {
+      max-height: min(62vh, 720px);
+      overflow: auto;
+      border-radius: 12px;
+    }
+    .student-pay-table thead th {
+      position: sticky;
+      top: 0;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(6px);
+      z-index: 1;
+    }
   </style>
 </head>
 <body class="student-pay-root antialiased">
-  <div class="max-w-6xl mx-auto p-6 pb-24 relative z-[1] lg:flex lg:gap-6">
+  <div class="student-pay-shell max-w-6xl mx-auto p-6 pb-24 relative z-[1] lg:flex lg:gap-6">
     <div class="flex-1 min-w-0">
-      <header class="mb-6 flex flex-wrap justify-between gap-4 items-start">
+      <header class="mb-6">
         <div>
           <p>
             <a href="/student.html" target="_top" class="text-sm text-amber-700 hover:text-amber-900 underline-offset-2 hover:underline font-medium">← Go Back</a>
           </p>
-          <h1 class="text-2xl font-bold text-amber-900 mt-2 tracking-tight">My payments</h1>
-          <p class="text-xs text-amber-800/70 mt-1">After you pay, your coach manager will confirm receipt in Mongo <code class="text-amber-900/80 bg-white/60 px-1 rounded">LessonReserveList</code> (or the JSON file mirror) before <strong>Payment confirm</strong> is set.</p>
+          <h1 class="text-2xl font-bold text-amber-900 mt-2 tracking-tight">My Payment</h1>
         </div>
-        <button type="button" id="logoutBtn"
-          class="rounded-lg bg-white/80 border border-amber-300/60 text-amber-900 px-4 py-2 text-sm hover:bg-white shadow-sm">
-          Sign out
-        </button>
       </header>
 
       <p id="loadError" class="hidden text-sm text-red-700 mb-4 font-medium"></p>
@@ -130,7 +162,7 @@
         <strong class="font-semibold">Payment overdue</strong> — please settle outstanding amounts as soon as possible to avoid late fees or lesson suspension.
       </div>
 
-      <section class="student-pay-card rounded-xl p-4 mb-4 overflow-x-auto">
+      <section class="student-pay-card student-pay-table-card rounded-xl p-4 mb-4">
         <div class="flex flex-wrap justify-between gap-2 items-center mb-3">
           <h2 class="text-lg font-semibold text-amber-900">My lesson fees</h2>
           <button type="button" id="btnOpenPay"
@@ -138,9 +170,10 @@
             Make a payment
           </button>
         </div>
-        <table class="w-full text-sm text-left border-collapse min-w-[860px] text-amber-950">
-          <thead>
-            <tr class="border-b border-amber-200/80 text-amber-800/75">
+        <div class="student-pay-table-scroll border border-amber-200/70 bg-white/40">
+          <table class="student-pay-table w-full text-sm text-left border-collapse min-w-[860px] text-amber-950">
+            <thead>
+              <tr class="border-b border-amber-200/80 text-amber-800/75">
               <th class="py-2 pr-2 font-medium">Lesson / type</th>
               <th class="py-2 pr-2 font-medium">Coach</th>
               <th class="py-2 pr-2 font-medium text-right">Fee</th>
@@ -150,12 +183,13 @@
               <th class="py-2 pr-2 font-medium">Status</th>
               <th class="py-2 pr-2 font-medium">Payment Confirmed</th>
               <th class="py-2 pr-2 font-medium"></th>
-            </tr>
-          </thead>
-          <tbody id="lessonBody">
-            <tr><td class="py-6 text-amber-700/70" colspan="9">Loading…</td></tr>
-          </tbody>
-        </table>
+              </tr>
+            </thead>
+            <tbody id="lessonBody">
+              <tr><td class="py-6 text-amber-700/70" colspan="9">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section class="student-pay-card rounded-xl p-4 mb-4">
@@ -165,7 +199,7 @@
       </section>
     </div>
 
-    <aside class="w-full lg:w-56 shrink-0 space-y-3 mt-6 lg:mt-0">
+    <aside class="student-pay-aside w-full lg:w-56 shrink-0 space-y-3 mt-6 lg:mt-0">
       <div class="student-pay-card rounded-xl p-4 space-y-2">
         <h3 class="text-xs font-semibold text-amber-900 uppercase tracking-wide">Quick actions</h3>
         <button type="button" id="btnStmtPdf"
@@ -180,12 +214,35 @@
           class="block rounded-lg bg-white/70 hover:bg-white border border-amber-200/80 px-3 py-2 text-sm text-amber-800 font-medium">
           Browse lessons
         </a>
-        <a id="linkContact" href="#"
-          class="block rounded-lg bg-white/70 hover:bg-white border border-amber-200/80 px-3 py-2 text-sm text-amber-800 font-medium">
+        <button type="button" id="btnContactClub"
+          class="w-full text-left rounded-lg bg-white/70 hover:bg-white border border-amber-200/80 px-3 py-2 text-sm text-amber-800 font-medium">
           Contact club
-        </a>
+        </button>
       </div>
     </aside>
+  </div>
+
+  <div id="modalContactClub" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 bg-amber-950/30 backdrop-blur-sm" aria-modal="true" role="dialog" aria-labelledby="modalContactClubTitle">
+    <div class="student-pay-modal-panel rounded-2xl max-w-md w-full shadow-xl p-5 sm:p-6">
+      <h3 id="modalContactClubTitle" class="text-lg font-semibold text-amber-950">Contact club</h3>
+      <p class="text-sm text-amber-800/80 mt-2">How would you like to reach the coach manager?</p>
+      <div class="mt-5 flex flex-col sm:flex-row gap-3">
+        <button type="button" id="btnContactPickEmail"
+          class="flex-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-4 py-3 shadow-sm">
+          Email
+        </button>
+        <button type="button" id="btnContactPickWhatsapp"
+          class="flex-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-3 shadow-sm">
+          Whatsapp
+        </button>
+      </div>
+      <div class="mt-4 flex justify-end">
+        <button type="button" id="btnContactPickCancel"
+          class="rounded-lg border border-amber-300/70 bg-white/80 text-amber-900 text-sm font-medium px-4 py-2 hover:bg-white">
+          Cancel
+        </button>
+      </div>
+    </div>
   </div>
 
   <div id="modalPay" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-amber-950/25 backdrop-blur-sm overflow-y-auto" aria-modal="true">
@@ -451,7 +508,9 @@
               : sp.studentId || "—";
           document.getElementById("hdrLevel").textContent = sp.level || "—";
           document.getElementById("hdrCoach").textContent = sp.coach || "—";
-          document.getElementById("hdrClub").textContent = data.clubName ? "Club: " + data.clubName : "";
+          document.getElementById("hdrClub").textContent = data.clubName
+            ? String(data.clubName)
+            : "";
           document.getElementById("hdrOutstanding").textContent = "$" + fmtMoney(data.outstandingBalance);
           var ob = document.getElementById("hdrOverdueBadge");
           var ban = document.getElementById("overdueBanner");
@@ -587,17 +646,6 @@
           var links = data.links || {};
           document.getElementById("linkBookings").href = links.myBookings || "#";
           document.getElementById("linkBrowse").href = links.lessonBrowse || "#";
-          var sidForSubject =
-            window.api && typeof window.api.displayStudentIdForUi === "function"
-              ? window.api.displayStudentIdForUi(sp.studentId || "") ||
-                  sp.studentId ||
-                  ""
-              : sp.studentId || "";
-          document.getElementById("linkContact").href =
-            "mailto:?subject=" +
-            encodeURIComponent(
-              "Payment — " + (data.clubName || "club") + " (" + sidForSubject + ")"
-            );
 
           storeQrUrls(data.paymentInstructions || {});
           var refBox = document.getElementById("refLines");
@@ -631,6 +679,104 @@
       function closePayModal() {
         document.getElementById("modalPay").classList.add("hidden");
       }
+
+      function closeContactClubModal() {
+        var m = document.getElementById("modalContactClub");
+        if (m) {
+          m.classList.add("hidden");
+        }
+      }
+
+      function openContactClubModal() {
+        var m = document.getElementById("modalContactClub");
+        if (m) {
+          m.classList.remove("hidden");
+        }
+      }
+
+      function studentIdForContactSubject() {
+        var sp = (payload && payload.studentProfile) || {};
+        if (window.api && typeof window.api.displayStudentIdForUi === "function") {
+          return (
+            window.api.displayStudentIdForUi(sp.studentId || "") ||
+            sp.studentId ||
+            ""
+          );
+        }
+        return sp.studentId || "";
+      }
+
+      function launchCoachManagerEmail() {
+        closeContactClubModal();
+        var c = (payload && payload.coachManagerContact) || {};
+        var em = String(c.email || "").trim();
+        if (!em) {
+          window.alert("Coach manager email is not available for this club yet.");
+          return;
+        }
+        var subj =
+          "Payment — " +
+          ((payload && payload.clubName) || "Club") +
+          " (" +
+          studentIdForContactSubject() +
+          ")";
+        window.location.href = "mailto:" + em + "?subject=" + encodeURIComponent(subj);
+      }
+
+      function launchCoachManagerWhatsapp() {
+        closeContactClubModal();
+        var c = (payload && payload.coachManagerContact) || {};
+        var d = String(c.whatsappDigits || "").trim();
+        if (!d || d.length < 8) {
+          window.alert(
+            "Coach manager WhatsApp number is not available for this club yet.",
+          );
+          return;
+        }
+        window.open("https://wa.me/" + d, "_blank", "noopener,noreferrer");
+      }
+
+      document.getElementById("btnContactClub").addEventListener("click", function () {
+        if (!payload) {
+          return;
+        }
+        openContactClubModal();
+      });
+      document
+        .getElementById("btnContactPickCancel")
+        .addEventListener("click", closeContactClubModal);
+      document
+        .getElementById("btnContactPickEmail")
+        .addEventListener("click", launchCoachManagerEmail);
+      document
+        .getElementById("btnContactPickWhatsapp")
+        .addEventListener("click", launchCoachManagerWhatsapp);
+      (function wireContactClubModalBackdrop() {
+        var root = document.getElementById("modalContactClub");
+        if (!root) {
+          return;
+        }
+        root.addEventListener("click", function (ev) {
+          if (ev.target === root) {
+            closeContactClubModal();
+          }
+        });
+        var inner = root.querySelector(".student-pay-modal-panel");
+        if (inner) {
+          inner.addEventListener("click", function (ev) {
+            ev.stopPropagation();
+          });
+        }
+      })();
+      document.addEventListener("keydown", function (ev) {
+        if (ev.key !== "Escape") {
+          return;
+        }
+        var m = document.getElementById("modalContactClub");
+        if (m && !m.classList.contains("hidden")) {
+          closeContactClubModal();
+        }
+      });
 
       document.getElementById("btnOpenPay").addEventListener("click", openPayModal);
       document.getElementById("btnPayCancel").addEventListener("click", closePayModal);
@@ -755,12 +901,6 @@
         );
         w.document.close();
         w.print();
-      });
-
-      document.getElementById("logoutBtn").addEventListener("click", function () {
-        if (window.auth && window.auth.logout) {
-          window.auth.logout();
-        }
       });
 
       load();
