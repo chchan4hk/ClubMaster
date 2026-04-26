@@ -28,6 +28,7 @@ import {
   getUserListCoachCollection,
   getUserListCollection,
   getUserListStudentCollection,
+  getUserLoginCollection,
   isMongoConfigured,
 } from "./db/DBConnection";
 
@@ -235,4 +236,46 @@ export async function purgeClubScopedMongoDataForFolderUid(
   });
 
   return { deleted, errors };
+}
+
+/**
+ * Removes all `userLogin` rows for this club folder: Coach Manager (`uid` = folder id),
+ * and Coach / Student rows with `club_folder_uid` or `club_id` matching the folder.
+ */
+export async function purgeUserLoginForClubFolderUid(
+  folderUid: string,
+): Promise<{ deleted: number; error?: string }> {
+  const id = folderUid.replace(/^\uFEFF/, "").trim();
+  if (!isMongoConfigured() || !isValidClubFolderId(id)) {
+    return { deleted: 0 };
+  }
+  try {
+    const coll = await getUserLoginCollection();
+    const reClub = clubIdExactRegex(id);
+    const r = await coll.deleteMany({
+      $or: [
+        { usertype: "Coach Manager", uid: reClub },
+        { club_folder_uid: reClub },
+        { club_id: reClub },
+      ],
+    });
+    return { deleted: r.deletedCount ?? 0 };
+  } catch (e) {
+    return {
+      deleted: 0,
+      error: e instanceof Error ? e.message : String(e),
+    };
+  }
+}
+
+/**
+ * Club-scoped collections first, then `userLogin` (so logins are not left pointing at removed club data).
+ */
+export async function purgeEntireClubFromMongo(folderUid: string): Promise<{
+  collections: PurgeClubMongoResult;
+  userLogin: { deleted: number; error?: string };
+}> {
+  const collections = await purgeClubScopedMongoDataForFolderUid(folderUid);
+  const userLogin = await purgeUserLoginForClubFolderUid(folderUid);
+  return { collections, userLogin };
 }

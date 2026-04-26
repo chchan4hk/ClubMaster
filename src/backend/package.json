@@ -26,7 +26,8 @@
     "mongo:clear-coach-salary": "node ./node_modules/tsx/dist/cli.mjs ./scripts/clear-coachSalary-mongo.ts",
     "mongo:clear-lesson-reserve-salary": "node ./node_modules/tsx/dist/cli.mjs ./scripts/clear-ClubMaster-lesson-and-salary-collections.ts",
     "mongo:seed-prize-list-cm3": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-prizeList-CM00000003.ts",
-    "mongo:seed-userlist-coach": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-userlist-coach-json-to-mongo.ts"
+    "mongo:seed-userlist-coach": "node ./node_modules/tsx/dist/cli.mjs ./scripts/seed-userlist-coach-json-to-mongo.ts",
+    "mongo:purge-club": "node ./node_modules/tsx/dist/cli.mjs ./scripts/purge-club-from-mongo.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
