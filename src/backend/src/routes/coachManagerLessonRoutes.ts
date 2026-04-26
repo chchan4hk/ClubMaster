@@ -19,6 +19,7 @@ import { getDataClubRootPath, isValidClubFolderId } from "../coachListCsv";
 import { loadCoachesPreferred } from "../coachListMongo";
 import {
   appendLessonRow,
+  cloneLessonCatalogRow,
   ensureLessonListFile,
   decrementLessonReservedNumber,
   incrementLessonReservedNumber,
@@ -66,6 +67,7 @@ import {
   getLessonSeriesInfoCollection,
   isMongoConfigured,
   LESSON_LIST_COLLECTION,
+  resolveLessonListDatabaseName,
   type LessonSeriesInfoDocument,
 } from "../db/DBConnection";
 import { lessonListUsesMongo } from "../lessonListMongo";
@@ -1442,6 +1444,43 @@ export function createCoachManagerLessonRouter(): Router {
       return;
     }
     res.json({ ok: true, lessonId: result.lessonId, message: "Lesson created." });
+  });
+
+  /**
+   * Coach Manager: clone an existing lesson catalog row (new Lesson ID; start/end dates cleared).
+   * Stored in MongoDB `LessonList` (default DB `ClubMaster_DB`) when Mongo is configured — product copy may call this “LessonInfo”.
+   */
+  r.post("/clone", requireRole("CoachManager"), async (req, res) => {
+    const ctx = await coachManagerClubContextAsync(req);
+    if (!ctx.ok) {
+      res.status(ctx.status).json({ ok: false, error: ctx.error });
+      return;
+    }
+    const body = req.body as Record<string, unknown> | null;
+    const sourceLessonId = String(
+      body?.sourceLessonId ?? body?.lessonId ?? body?.LessonID ?? "",
+    ).trim();
+    if (!sourceLessonId) {
+      res.status(400).json({ ok: false, error: "sourceLessonId is required." });
+      return;
+    }
+    const fileClub = resolveLessonFileClubId(ctx.clubId);
+    const result = await cloneLessonCatalogRow(
+      fileClub,
+      sourceLessonId,
+      ctx.clubId,
+    );
+    if (!result.ok) {
+      res.status(400).json({ ok: false, error: result.error });
+      return;
+    }
+    res.json({
+      ok: true,
+      lessonId: result.lessonId,
+      message: "Lesson cloned.",
+      mongoDatabase: resolveLessonListDatabaseName(),
+      mongoCollection: LESSON_LIST_COLLECTION,
+    });
   });
 
   r.put("/", requireRole("CoachManager"), async (req, res) => {

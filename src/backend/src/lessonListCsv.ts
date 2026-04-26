@@ -1249,6 +1249,54 @@ export async function appendLessonRow(
   return { ok: true, lessonId };
 }
 
+/**
+ * Duplicates an existing lesson row with a newly allocated Lesson ID.
+ * Copies all editable fields except lesson start/end dates (left blank for the coach to set).
+ * Persists via {@link appendLessonRow} (Mongo `LessonList` when configured, else JSON).
+ */
+export async function cloneLessonCatalogRow(
+  clubId: string,
+  sourceLessonId: string,
+  ownerClubUid?: string,
+): Promise<{ ok: true; lessonId: string } | { ok: false; error: string }> {
+  await ensureLessonListFile(clubId);
+  const lessons = await loadLessons(clubId);
+  const src = lessons.find((r) => lessonIdsEqual(r.lessonId, sourceLessonId));
+  if (!src) {
+    return { ok: false, error: "Source lesson not found." };
+  }
+  return appendLessonRow(
+    clubId,
+    {
+      sportType: src.sportType,
+      year: src.year,
+      classId: src.classId,
+      classInfo: src.classInfo,
+      classTime: src.classTime,
+      classFee: src.classFee,
+      classSun: src.classSun,
+      classMon: src.classMon,
+      classTue: src.classTue,
+      classWed: src.classWed,
+      classThur: src.classThur,
+      classFri: src.classFri,
+      classSat: src.classSat,
+      ageGroup: src.ageGroup,
+      maxNumber: src.maxNumber,
+      frequency: src.frequency,
+      lessonStartDate: "",
+      lessonEndDate: "",
+      sportCenter: src.sportCenter,
+      courtNo: src.courtNo,
+      coachName: src.coachName,
+      studentCoach: src.studentCoach,
+      remarks: src.remarks,
+      status: src.status,
+    },
+    ownerClubUid,
+  );
+}
+
 export async function updateLessonRow(
   clubId: string,
   lessonId: string,

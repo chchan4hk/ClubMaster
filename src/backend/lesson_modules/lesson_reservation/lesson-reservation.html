@@ -102,6 +102,32 @@
       filter: brightness(0.97);
     }
 
+    /* Clone lesson — black / gold / brown metallic */
+    .btn-clone-lesson-black-gold {
+      background: linear-gradient(
+        165deg,
+        #0c0a09 0%,
+        #1c1917 22%,
+        #292524 48%,
+        #713f12 78%,
+        #a16207 100%
+      );
+      color: #fde68a;
+      border: 1px solid rgba(251, 191, 36, 0.45);
+      font-weight: 600;
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.45);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.35),
+        0 2px 10px rgba(12, 10, 9, 0.45);
+    }
+    .btn-clone-lesson-black-gold:hover {
+      filter: brightness(1.06) saturate(1.05);
+    }
+    .btn-clone-lesson-black-gold:active {
+      filter: brightness(0.96);
+    }
+
   </style>
 </head>
 <body class="profile-password-page cm-module-shell min-h-full p-4 sm:p-6">
@@ -1889,7 +1915,7 @@
           return;
         }
         headRow.innerHTML =
-          '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap min-w-[14rem]">Actions</th>' +
+          '<th class="py-2 pr-3 font-medium text-slate-400 whitespace-nowrap min-w-[17rem]">Actions</th>' +
           LESSON_TABLE_COLS.map(function (col) {
             return (
               '<th class="' + lessonTableThClass(col) + '">' +
@@ -1921,6 +1947,9 @@
               '<button type="button" class="cm-row-reserved rounded-md bg-black hover:bg-neutral-900 text-white text-xs font-medium px-2.5 py-1.5 border border-white/10" data-idx="' +
               idx +
               '">Status</button>' +
+              '<button type="button" class="cm-row-clone-lesson btn-clone-lesson-black-gold rounded-md text-xs px-2.5 py-1.5" data-idx="' +
+              idx +
+              '">Clone Lesson</button>' +
               lessonSeriesButtonHtml(idx) +
               "</span></td>" +
               tds +
@@ -2280,6 +2309,47 @@
           });
       }
 
+      async function cloneLessonAtIndex(idx) {
+        var L = cachedLessons[idx];
+        if (!L) {
+          return;
+        }
+        var lid = String(L.LessonID || L.lessonId || "").trim();
+        if (!lid) {
+          return;
+        }
+        var disp =
+          window.api && typeof window.api.displayLessonIdForUi === "function"
+            ? window.api.displayLessonIdForUi(lid) || lid
+            : lid;
+        if (
+          !window.confirm(
+            "Clone lesson " +
+              disp +
+              "?\n\nA new Lesson ID will be assigned. All other fields copy across; Lesson start date and Lesson end date will be left blank for you to set.",
+          )
+        ) {
+          return;
+        }
+        try {
+          var data = await window.api.api("/coach-manager/lessons/clone", {
+            method: "POST",
+            body: JSON.stringify({ sourceLessonId: lid }),
+          });
+          if (!data || data.ok === false) {
+            throw new Error((data && data.error) || "Clone failed.");
+          }
+          window.alert(
+            "Cloned successfully. New Lesson ID: " +
+              String(data.lessonId || "") +
+              ".",
+          );
+          loadLessonListFromApi(lessonListPage);
+        } catch (e) {
+          window.alert(e && e.message ? e.message : String(e));
+        }
+      }
+
       (function bindLessonTableActions() {
         var tb = document.getElementById("fullLessonListBody");
         if (!tb || tb.dataset.cmRowBound === "1") {
@@ -2293,14 +2363,22 @@
             ev.target.closest("button.cm-row-lesson-series");
           var btnUp =
             ev.target && ev.target.closest && ev.target.closest("button.cm-row-update");
+          var btnClone =
+            ev.target &&
+            ev.target.closest &&
+            ev.target.closest("button.cm-row-clone-lesson");
           var btnRes =
             ev.target && ev.target.closest && ev.target.closest("button.cm-row-reserved");
-          var btn = btnSeries || btnUp || btnRes;
+          var btn = btnSeries || btnUp || btnClone || btnRes;
           if (!btn) {
             return;
           }
           var idx = parseInt(btn.getAttribute("data-idx"), 10);
           if (isNaN(idx) || idx < 0 || idx >= cachedLessons.length) {
+            return;
+          }
+          if (btnClone) {
+            void cloneLessonAtIndex(idx);
             return;
           }
           if (btnSeries) {
