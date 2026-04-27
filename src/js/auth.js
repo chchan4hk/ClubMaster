@@ -44,6 +44,11 @@ function setSession(token, role, userType) {
   if (userType != null && String(userType).trim() !== "") {
     localStorage.setItem(USER_TYPE_KEY, String(userType).trim());
   }
+  try {
+    sessionStorage.removeItem("sportCoach.dashboardMeCache");
+  } catch {
+    /* ignore */
+  }
 }
 
 function clearSession() {

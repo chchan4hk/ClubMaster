@@ -1,0 +1,57 @@
+/**
+ * Role title gradient (shared by coach / student / admin / coach-manager pages).
+ * Fewer gradient stops + paint containment than the previous inline version to cut compositor work.
+ */
+
+.cm-role-heading {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+@media (min-width: 640px) {
+  .cm-role-heading {
+    font-size: 1.35rem;
+  }
+}
+
+.cm-role-shimmer {
+  display: inline-block;
+  font-weight: 700;
+  contain: paint;
+  background: linear-gradient(
+    100deg,
+    #ffffff 0%,
+    #f3e4c4 28%,
+    #daa520 52%,
+    #fef08a 72%,
+    #ffffff 100%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  /* Brief static gradient before motion — lighter first paint / scroll. */
+  animation: cm-role-gold-shift 48s ease-in-out infinite alternate;
+  animation-delay: 0.75s;
+}
+
+@keyframes cm-role-gold-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cm-role-shimmer {
+    animation: none;
+    background: none;
+    color: #e8c547;
+    -webkit-text-fill-color: #e8c547;
+  }
+}

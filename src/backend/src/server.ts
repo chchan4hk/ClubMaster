@@ -104,6 +104,7 @@ function resolveStaticRoot(): string {
 }
 
 const staticRoot = resolveStaticRoot();
+const cssStatic = path.join(staticRoot, "css");
 const sourceImageStatic = path.join(staticRoot, "source", "image");
 const dataClubStatic = path.join(backendRoot, "data_club");
 const adminDataStatic = path.join(backendRoot, "data", "admin");
@@ -154,6 +155,7 @@ const SOURCE_IMAGE_CACHE_MS = isProd
 app.get("/", (_req, res) => {
   const mainHtml = path.join(staticRoot, "main.html");
   if (fs.existsSync(mainHtml)) {
+    res.setHeader("Cache-Control", "private, no-cache, must-revalidate");
     res.sendFile(mainHtml);
     return;
   }
@@ -555,8 +557,26 @@ app.use(
     etag: true,
   }),
 );
+/** Stylesheets: long cache + immutable in production (URLs are versioned by deploy, not querystrings). */
 app.use(
-  express.static(staticRoot, isProd ? { maxAge: STATIC_MAX_AGE_MS, etag: true } : {}),
+  "/css",
+  express.static(cssStatic, {
+    etag: true,
+    ...(isProd
+      ? { maxAge: STATIC_MAX_AGE_MS, immutable: true }
+      : {}),
+  }),
+);
+app.use(
+  express.static(staticRoot, {
+    etag: true,
+    ...(isProd ? { maxAge: STATIC_MAX_AGE_MS } : {}),
+    setHeaders: (res, filePath) => {
+      if (filePath.toLowerCase().endsWith(".html")) {
+        res.setHeader("Cache-Control", "private, no-cache, must-revalidate");
+      }
+    },
+  }),
 );
 
 app.use("/api", (req, res) => {
@@ -582,32 +602,35 @@ const server = app.listen(PORT, "0.0.0.0", () => {
     );
   }
   if (isMongoConfigured()) {
-    void Promise.all([
-      ensureUserLoginCollection(),
-      ensureBasicInfoCollection(),
-      ensureClubInfoCollection(),
-      ensureLessonListCollection(),
-      ensurePaymentListCollection(),
-      ensureLessonSeriesInfoCollection(),
-      ensureLessonReserveListCollection(),
-      ensureLessonPaymentLedgerCollection(),
-      ensurePrizeListRowCollection(),
-      ensureCoachSalaryCollection(),
-      ensureUserListStudentIndexes(),
-      rebuildStudentIdClubIndex(),
-    ])
-      .then(() => {
-        console.log(
-          "MongoDB: `userLogin`, `basicInfo`, `clubInfo`, `LessonList`, `PaymentList`, `LessonSeriesInfo`, `LessonReserveList`, `LessonPaymentLedger`, `PrizeList`, `CoachManager`, and `UserList_Student` indexes/roster index warmed (see src/backend/src/db/DBConnection.ts).",
-        );
-      })
-      .catch((e) => {
-        const msg = e instanceof Error ? e.message : String(e);
-        console.warn(
-          "MongoDB collection init (userLogin / basicInfo / clubInfo / LessonList / PaymentList / LessonSeriesInfo / LessonReserveList / LessonPaymentLedger / PrizeList / CoachManager / UserList_Student):",
-          msg,
-        );
-      });
+    /** Defer concurrent collection ensures so the first static/HTML responses are not starved at cold start. */
+    setTimeout(() => {
+      void Promise.all([
+        ensureUserLoginCollection(),
+        ensureBasicInfoCollection(),
+        ensureClubInfoCollection(),
+        ensureLessonListCollection(),
+        ensurePaymentListCollection(),
+        ensureLessonSeriesInfoCollection(),
+        ensureLessonReserveListCollection(),
+        ensureLessonPaymentLedgerCollection(),
+        ensurePrizeListRowCollection(),
+        ensureCoachSalaryCollection(),
+        ensureUserListStudentIndexes(),
+        rebuildStudentIdClubIndex(),
+      ])
+        .then(() => {
+          console.log(
+            "MongoDB: `userLogin`, `basicInfo`, `clubInfo`, `LessonList`, `PaymentList`, `LessonSeriesInfo`, `LessonReserveList`, `LessonPaymentLedger`, `PrizeList`, `CoachManager`, and `UserList_Student` indexes/roster index warmed (see src/backend/src/db/DBConnection.ts).",
+          );
+        })
+        .catch((e) => {
+          const msg = e instanceof Error ? e.message : String(e);
+          console.warn(
+            "MongoDB collection init (userLogin / basicInfo / clubInfo / LessonList / PaymentList / LessonSeriesInfo / LessonReserveList / LessonPaymentLedger / PrizeList / CoachManager / UserList_Student):",
+            msg,
+          );
+        });
+    }, 200);
   }
 });
 

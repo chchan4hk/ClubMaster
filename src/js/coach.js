@@ -48,7 +48,11 @@ if (window.dashboardInit("Coach", "Coach")) {
   }
 
   function syncClubFolderFromMe() {
-    return window.api.api("/me").then(function (data) {
+    var p =
+      typeof window.dashboardWaitMe === "function"
+        ? window.dashboardWaitMe()
+        : window.api.api("/me");
+    return p.then(function (data) {
       var u = data.user || {};
       var cfu =
         u.club_folder_uid != null && String(u.club_folder_uid).trim() !== ""

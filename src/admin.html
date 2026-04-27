@@ -4,8 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>ClubMaster - Admin</title>
-  <link rel="stylesheet" href="css/dashboard-metal-nav.css" />
-  <link rel="stylesheet" href="css/overview-stage-photo.css" />
+  <link rel="stylesheet" href="css/dashboard-shell.css" />
   <style>
     *,
     *::before,
@@ -42,62 +41,6 @@
     }
     .hidden {
       display: none !important;
-    }
-
-    .cm-role-heading {
-      margin: 0;
-      font-size: 1.1rem;
-      font-weight: 700;
-      line-height: 1.25;
-    }
-    @media (min-width: 640px) {
-      .cm-role-heading {
-        font-size: 1.35rem;
-      }
-    }
-    .cm-role-shimmer {
-      display: inline-block;
-      font-weight: 700;
-      background: linear-gradient(
-        100deg,
-        #ffffff 0%,
-        #fefdfb 6%,
-        #faf3e0 14%,
-        #f3e4c4 22%,
-        #e8b86a 30%,
-        #e5983a 38%,
-        #daa520 46%,
-        #f0c419 52%,
-        #facc15 58%,
-        #fde047 64%,
-        #fef08a 70%,
-        #fde047 76%,
-        #f5e6c8 84%,
-        #faf3e0 92%,
-        #ffffff 100%
-      );
-      background-size: 300% 100%;
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      -webkit-text-fill-color: transparent;
-      animation: cm-role-gold-shift 56s ease-in-out infinite alternate;
-    }
-    @keyframes cm-role-gold-shift {
-      0% {
-        background-position: 0% 50%;
-      }
-      100% {
-        background-position: 100% 50%;
-      }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .cm-role-shimmer {
-        animation: none;
-        background: none;
-        color: #e8c547;
-        -webkit-text-fill-color: #e8c547;
-      }
     }
 
     .cm-top-frame {
