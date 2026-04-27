@@ -1,16 +1,8 @@
-import fs from "fs";
-import path from "path";
-import {
-  clubDataDir,
-  isValidClubFolderId,
-  loadCoaches,
-  type CoachCsvRow,
-} from "./coachListCsv";
+import type { CoachCsvRow } from "./coachListCsv";
+import { loadCoachesPreferred } from "./coachListMongo";
 import { loadLessons, type LessonCsvRow } from "./lessonListCsv";
 import { loadLessonReservationsPreferred } from "./lessonReserveListMongo";
 import type { LessonReserveRecord } from "./lessonReserveList";
-
-export const COACH_SALARY_FILENAME = "CoachSalary.json";
 
 export const COACH_SALARY_PAYMENT_METHODS = [
   "Bank Transfer",
@@ -66,131 +58,6 @@ export type CoachSalaryFileV1 = {
   version: 1;
   coachSalaries: CoachSalaryRecord[];
 };
-
-export function coachSalaryPath(clubId: string): string {
-  const dir = clubDataDir(clubId);
-  return dir ? path.join(dir, COACH_SALARY_FILENAME) : "";
-}
-
-function boolFromUnknown(x: unknown): boolean {
-  if (typeof x === "boolean") {
-    return x;
-  }
-  if (typeof x === "number") {
-    return x !== 0;
-  }
-  if (typeof x === "string") {
-    const s = x.trim().toLowerCase();
-    return s === "true" || s === "1" || s === "yes";
-  }
-  return false;
-}
-
-function parseFile(raw: string): CoachSalaryFileV1 {
-  const data = JSON.parse(raw) as Record<string, unknown>;
-  if (Number(data.version) !== 1) {
-    throw new Error("Unsupported CoachSalary.json version.");
-  }
-  const arr = data.coachSalaries;
-  if (arr != null && !Array.isArray(arr)) {
-    throw new Error("Invalid coachSalaries structure.");
-  }
-  const coachSalaries: CoachSalaryRecord[] = [];
-  if (Array.isArray(arr)) {
-    for (const x of arr) {
-      if (!x || typeof x !== "object") {
-        continue;
-      }
-      const o = x as Record<string, unknown>;
-      coachSalaries.push({
-        CoachSalaryID: String(o.CoachSalaryID ?? "").trim(),
-        lessonId: String(o.lessonId ?? "").trim(),
-        ClubID: String(o.ClubID ?? "").trim(),
-        club_name: String(o.club_name ?? "").trim(),
-        coach_id: String(o.coach_id ?? o.CoachID ?? "").trim(),
-        salary_amount:
-          typeof o.salary_amount === "number" && Number.isFinite(o.salary_amount)
-            ? o.salary_amount
-            : String(o.salary_amount ?? "").trim(),
-        Payment_Method: String(o.Payment_Method ?? "").trim(),
-        Payment_Status: String(o.Payment_Status ?? "").trim(),
-        Payment_Confirm: boolFromUnknown(o.Payment_Confirm),
-        Payment_date: String(o.Payment_date ?? o.payment_date ?? "").trim() || undefined,
-        createdAt: String(o.createdAt ?? "").trim(),
-        lastUpdatedDate: String(o.lastUpdatedDate ?? "").trim(),
-      });
-    }
-  }
-  return { version: 1, coachSalaries };
-}
-
-function migrateCoachSalaryJsonKeysOnDisk(clubId: string): void {
-  const p = coachSalaryPath(clubId);
-  if (!p || !fs.existsSync(p)) {
-    return;
-  }
-  let raw: string;
-  try {
-    raw = fs.readFileSync(p, "utf8");
-  } catch {
-    return;
-  }
-  let data: Record<string, unknown>;
-  try {
-    data = JSON.parse(raw) as Record<string, unknown>;
-  } catch {
-    return;
-  }
-  const arr = data.coachSalaries;
-  if (!Array.isArray(arr)) {
-    return;
-  }
-  let changed = false;
-  for (const x of arr) {
-    if (!x || typeof x !== "object") {
-      continue;
-    }
-    const o = x as Record<string, unknown>;
-    if ("CoachID" in o && !("coach_id" in o)) {
-      o.coach_id = String(o.CoachID ?? "").trim();
-      delete o.CoachID;
-      changed = true;
-    } else if ("CoachID" in o && "coach_id" in o) {
-      delete o.CoachID;
-      changed = true;
-    }
-  }
-  if (changed) {
-    fs.writeFileSync(p, JSON.stringify(data, null, 2) + "\n", "utf8");
-  }
-}
-
-export function loadCoachSalaryDocument(clubId: string): CoachSalaryFileV1 {
-  if (!isValidClubFolderId(clubId)) {
-    throw new Error("Invalid club ID.");
-  }
-  const p = coachSalaryPath(clubId);
-  if (!p || !fs.existsSync(p)) {
-    throw new Error("CoachSalary.json was not found for this club.");
-  }
-  migrateCoachSalaryJsonKeysOnDisk(clubId);
-  return parseFile(fs.readFileSync(p, "utf8"));
-}
-
-export function saveCoachSalaryDocument(
-  clubId: string,
-  doc: CoachSalaryFileV1,
-): void {
-  const p = coachSalaryPath(clubId);
-  if (!p || !fs.existsSync(p)) {
-    throw new Error("CoachSalary.json was not found for this club.");
-  }
-  const out: CoachSalaryFileV1 = {
-    version: 1,
-    coachSalaries: Array.isArray(doc.coachSalaries) ? doc.coachSalaries : [],
-  };
-  fs.writeFileSync(p, JSON.stringify(out, null, 2) + "\n", "utf8");
-}
 
 export function normalizeCoachSalaryPaymentMethod(
   value: string,
@@ -361,7 +228,7 @@ export async function buildLessonFeeAllocationRows(
       .localeCompare(b.lessonId.trim().toUpperCase()),
   );
   const reservations = await loadLessonReservationsPreferred(fileClub);
-  const coaches = rosterCoaches ?? loadCoaches(fileClub);
+  const coaches = rosterCoaches ?? (await loadCoachesPreferred(fileClub));
   const doc = salaryDoc;
   const byLesson = coachSalaryByLessonId(doc);
 
@@ -427,7 +294,7 @@ export async function applyLessonFeeAllocationsToDocument(
   const lessonById = new Map(
     lessons.map((l) => [l.lessonId.trim().toUpperCase(), l]),
   );
-  const coaches = rosterCoaches ?? loadCoaches(fileClub);
+  const coaches = rosterCoaches ?? (await loadCoachesPreferred(fileClub));
   const now = new Date().toISOString();
   const today = now.slice(0, 10);
   let seq = nextCoachSalarySequenceNumber(doc.coachSalaries, clubId);
@@ -483,34 +350,10 @@ export async function applyLessonFeeAllocationsToDocument(
   return { created, updated };
 }
 
-/**
- * Legacy file-based upsert (reads/writes `data_club/{club}/CoachSalary.json`).
- * Live Coach Manager APIs use MongoDB via {@link coachSalaryMongo} instead.
- */
-export async function applyLessonFeeAllocations(
-  fileClub: string,
-  clubId: string,
-  clubName: string,
-  items: FeeAllocationApplyItem[],
-  rosterCoaches?: CoachCsvRow[],
-): Promise<{ created: number; updated: number }> {
-  const doc = loadCoachSalaryDocument(fileClub);
-  const summary = await applyLessonFeeAllocationsToDocument(
-    doc,
-    fileClub,
-    clubId,
-    clubName,
-    items,
-    rosterCoaches,
-  );
-  saveCoachSalaryDocument(fileClub, doc);
-  return summary;
-}
-
 export type BuildCoachSalaryTableRowsOpts = {
   /** When set, only salary rows for this coach_id and only lesson/reservation rows needed for those salaries. */
   onlyCoachId?: string;
-  /** When set (e.g. Mongo roster), used instead of reading `UserList_Coach.json` from disk. */
+  /** When set, avoids an extra coach roster load (Mongo `UserList_Coach`). */
   rosterCoaches?: CoachCsvRow[];
   /** Salary rows from MongoDB `ClubMaster_DB.CoachManager` (or legacy in-memory file shape). */
   salaryDoc: CoachSalaryFileV1;
@@ -541,7 +384,7 @@ export async function buildCoachSalaryTableRows(
     }
   }
 
-  const coaches = opts.rosterCoaches ?? loadCoaches(fileClub);
+  const coaches = opts.rosterCoaches ?? (await loadCoachesPreferred(fileClub));
   const coachMap = coachNameMap(coaches);
   const allLessons = await loadLessons(fileClub);
   const lessons =

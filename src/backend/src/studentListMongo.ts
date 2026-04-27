@@ -263,13 +263,56 @@ export async function listAllStudentIdClubPairsFromMongo(): Promise<
   return out;
 }
 
+const USERLIST_STUDENT_CLUB_STUDENT_INDEX = "userlist_student_club_student";
+
+function rosterCompoundKeyMatches(
+  key: Record<string, unknown> | undefined,
+  expected: Record<string, 1>,
+): boolean {
+  if (!key || typeof key !== "object") {
+    return false;
+  }
+  const expKeys = Object.keys(expected).sort().join("\0");
+  const gotKeys = Object.keys(key).sort().join("\0");
+  if (expKeys !== gotKeys) {
+    return false;
+  }
+  for (const k of Object.keys(expected)) {
+    if (key[k] !== 1) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Ensures the canonical compound index on `UserList_Student`.
+ * If an older index exists on the same keys with Mongo’s default name (e.g.
+ * `club_folder_uid_1_student_id_1`), it is dropped first — otherwise
+ * `createIndex` fails with “Index already exists with a different name”.
+ */
 export async function ensureUserListStudentIndexes(): Promise<void> {
   if (!isMongoConfigured()) {
     return;
   }
   const coll = await getUserListStudentCollection();
-  await coll.createIndex(
-    { club_folder_uid: 1, student_id: 1 },
-    { unique: true, name: "userlist_student_club_student" },
-  );
+  const compound = { club_folder_uid: 1 as const, student_id: 1 as const };
+  const existing = await coll.indexes();
+  for (const ix of existing) {
+    const name = String(ix.name ?? "");
+    if (!name || name === "_id_") {
+      continue;
+    }
+    const key = ix.key as Record<string, unknown> | undefined;
+    if (
+      rosterCompoundKeyMatches(key, compound) &&
+      name !== USERLIST_STUDENT_CLUB_STUDENT_INDEX
+    ) {
+      await coll.dropIndex(name);
+    }
+  }
+  await coll.createIndex(compound, {
+    unique: true,
+    name: USERLIST_STUDENT_CLUB_STUDENT_INDEX,
+  });
 }

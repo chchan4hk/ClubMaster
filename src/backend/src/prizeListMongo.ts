@@ -13,17 +13,11 @@ import {
 import { findUserByUid } from "./userlistCsv";
 import { userLoginCsvReadFallbackEnabled } from "./userListMongo";
 import {
-  appendPrizeRow,
-  deletePrizeRow,
-  findClubUidForPrizeId,
-  loadPrizeListRaw,
-  loadPrizes,
   PRIZE_ID_NUM_WIDTH,
   PRIZE_LIST_COLUMNS,
   prizeCsvRowToApiFields,
   type PrizeCsvRow,
   type PrizeListRaw,
-  updatePrizeRow,
 } from "./prizeListJson";
 
 /** Numeric suffix width after `-P` (e.g. `CM000001-P000001`). */
@@ -152,46 +146,33 @@ export async function loadPrizesMongo(clubFolderUid: string): Promise<PrizeCsvRo
 }
 
 /**
- * Prize list: MongoDB `PrizeList` in {@link resolvePrizeListRowDatabaseName} when configured,
- * otherwise `data_club/{clubId}/PrizeList.json`.
+ * Prize list: MongoDB `PrizeList` in {@link resolvePrizeListRowDatabaseName} only.
  */
 export async function loadPrizesPreferred(clubId: string): Promise<PrizeCsvRow[]> {
   if (!isMongoConfigured()) {
-    return loadPrizes(clubId);
-  }
-  try {
-    return await loadPrizesMongo(clubId);
-  } catch (e) {
-    console.warn(
-      "[PrizeList] Mongo load failed; falling back to JSON files.",
-      e instanceof Error ? e.message : e,
+    throw new Error(
+      "MongoDB is required for PrizeList. Configure MONGODB_URI / MONGO_URI.",
     );
-    return loadPrizes(clubId);
   }
+  return await loadPrizesMongo(clubId);
 }
 
 export async function loadPrizeListRawPreferred(clubId: string): Promise<PrizeListRaw> {
   if (!isMongoConfigured()) {
-    return loadPrizeListRaw(clubId);
-  }
-  try {
-    const prizes = await loadPrizesMongo(clubId);
-    const id = clubId.trim();
-    const dbName = resolvePrizeListRowDatabaseName();
-    const relativePath = `mongodb/${dbName}/${PRIZE_LIST_ROW_COLLECTION}/${id}`;
-    const headers = [...PRIZE_LIST_COLUMNS];
-    const rows = prizes.map((p) => {
-      const api = prizeCsvRowToApiFields(p);
-      return headers.map((h) => api[h] ?? "");
-    });
-    return { relativePath, headers, rows };
-  } catch (e) {
-    console.warn(
-      "[PrizeList] Mongo raw table failed; falling back to JSON files.",
-      e instanceof Error ? e.message : e,
+    throw new Error(
+      "MongoDB is required for PrizeList. Configure MONGODB_URI / MONGO_URI.",
     );
-    return loadPrizeListRaw(clubId);
   }
+  const prizes = await loadPrizesMongo(clubId);
+  const id = clubId.trim();
+  const dbName = resolvePrizeListRowDatabaseName();
+  const relativePath = `mongodb/${dbName}/${PRIZE_LIST_ROW_COLLECTION}/${id}`;
+  const headers = [...PRIZE_LIST_COLUMNS];
+  const rows = prizes.map((p) => {
+    const api = prizeCsvRowToApiFields(p);
+    return headers.map((h) => api[h] ?? "");
+  });
+  return { relativePath, headers, rows };
 }
 
 /**
@@ -443,54 +424,39 @@ type PrizeUpdateResult = { ok: true } | { ok: false; error: string };
 
 export async function appendPrizeRowPreferred(
   clubId: string,
-  input: Parameters<typeof appendPrizeRow>[1],
+  input: Parameters<typeof appendPrizeRowMongo>[1],
 ): Promise<PrizeAppendResult> {
-  if (isMongoConfigured()) {
-    try {
-      return await appendPrizeRowMongo(clubId, input);
-    } catch (e) {
-      console.warn(
-        "[PrizeList] Mongo append failed; falling back to JSON files.",
-        e instanceof Error ? e.message : e,
-      );
-    }
+  if (!isMongoConfigured()) {
+    throw new Error(
+      "MongoDB is required for PrizeList. Configure MONGODB_URI / MONGO_URI.",
+    );
   }
-  return appendPrizeRow(clubId, input);
+  return await appendPrizeRowMongo(clubId, input);
 }
 
 export async function updatePrizeRowPreferred(
   clubId: string,
   prizeId: string,
-  input: Parameters<typeof updatePrizeRow>[2],
+  input: Parameters<typeof updatePrizeRowMongo>[2],
 ): Promise<PrizeUpdateResult> {
-  if (isMongoConfigured()) {
-    try {
-      return await updatePrizeRowMongo(clubId, prizeId, input);
-    } catch (e) {
-      console.warn(
-        "[PrizeList] Mongo update failed; falling back to JSON files.",
-        e instanceof Error ? e.message : e,
-      );
-    }
+  if (!isMongoConfigured()) {
+    throw new Error(
+      "MongoDB is required for PrizeList. Configure MONGODB_URI / MONGO_URI.",
+    );
   }
-  return updatePrizeRow(clubId, prizeId, input);
+  return await updatePrizeRowMongo(clubId, prizeId, input);
 }
 
 export async function deletePrizeRowPreferred(
   clubId: string,
   prizeId: string,
 ): Promise<PrizeUpdateResult> {
-  if (isMongoConfigured()) {
-    try {
-      return await deletePrizeRowMongo(clubId, prizeId);
-    } catch (e) {
-      console.warn(
-        "[PrizeList] Mongo delete failed; falling back to JSON files.",
-        e instanceof Error ? e.message : e,
-      );
-    }
+  if (!isMongoConfigured()) {
+    throw new Error(
+      "MongoDB is required for PrizeList. Configure MONGODB_URI / MONGO_URI.",
+    );
   }
-  return deletePrizeRow(clubId, prizeId);
+  return await deletePrizeRowMongo(clubId, prizeId);
 }
 
 export async function findClubUidForPrizeIdPreferred(
@@ -500,20 +466,14 @@ export async function findClubUidForPrizeIdPreferred(
   if (!id) {
     return null;
   }
-  if (isMongoConfigured()) {
-    try {
-      await ensurePrizeListRowCollectionOnce();
-      const col = await getPrizeListRowCollection();
-      const doc = await col.findOne({
-        PrizeID: new RegExp(`^${escapeRegExp(id)}$`, "i"),
-      });
-      const folder = String(doc?.ClubID ?? "").trim();
-      if (folder) {
-        return folder;
-      }
-    } catch {
-      /* fall through */
-    }
+  if (!isMongoConfigured()) {
+    return null;
   }
-  return findClubUidForPrizeId(prizeId);
+  await ensurePrizeListRowCollectionOnce();
+  const col = await getPrizeListRowCollection();
+  const doc = await col.findOne({
+    PrizeID: new RegExp(`^${escapeRegExp(id)}$`, "i"),
+  });
+  const folder = String(doc?.ClubID ?? "").trim();
+  return folder || null;
 }

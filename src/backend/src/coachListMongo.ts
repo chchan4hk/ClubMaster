@@ -9,8 +9,6 @@ import {
   coachRowToRecord,
   findClubUidForCoachId,
   isValidClubFolderId,
-  loadCoachListRaw,
-  loadCoaches,
   normalizeCoachIdInput,
   normalizePrefixedCoachIdForClub,
   purgeCoachRowFromAllClubFolders,
@@ -148,44 +146,32 @@ export async function loadCoachesMongo(clubFolderUid: string): Promise<CoachCsvR
 }
 
 /**
- * Coach roster: Mongo `UserList_Coach` when configured, otherwise `UserList_Coach.json` under `data_club`.
+ * Coach roster: MongoDB `UserList_Coach` only (ClubMaster_DB).
  */
 export async function loadCoachesPreferred(clubId: string): Promise<CoachCsvRow[]> {
   if (!isMongoConfigured()) {
-    return loadCoaches(clubId);
-  }
-  try {
-    return await loadCoachesMongo(clubId);
-  } catch (e) {
-    console.warn(
-      "[UserList_Coach] Mongo load failed; falling back to JSON files.",
-      e instanceof Error ? e.message : e,
+    throw new Error(
+      "MongoDB is required for coach roster (UserList_Coach). Configure MONGODB_URI / MONGO_URI.",
     );
-    return loadCoaches(clubId);
   }
+  return await loadCoachesMongo(clubId);
 }
 
 export async function loadCoachListRawPreferred(clubId: string): Promise<CoachListRaw> {
   if (!isMongoConfigured()) {
-    return loadCoachListRaw(clubId);
-  }
-  try {
-    const coaches = await loadCoachesMongo(clubId);
-    const id = clubId.trim();
-    const relativePath = `mongodb/${USER_LIST_COACH_COLLECTION}/${id}`;
-    const headers = [...COACH_LIST_COLUMNS];
-    const rows = coaches.map((c) => {
-      const rec = coachRowToRecord(c);
-      return COACH_LIST_COLUMNS.map((col) => rec[col] ?? "");
-    });
-    return { relativePath, headers, rows };
-  } catch (e) {
-    console.warn(
-      "[UserList_Coach] Mongo raw table failed; falling back to JSON files.",
-      e instanceof Error ? e.message : e,
+    throw new Error(
+      "MongoDB is required for coach roster (UserList_Coach). Configure MONGODB_URI / MONGO_URI.",
     );
-    return loadCoachListRaw(clubId);
   }
+  const coaches = await loadCoachesMongo(clubId);
+  const id = clubId.trim();
+  const relativePath = `mongodb/${USER_LIST_COACH_COLLECTION}/${id}`;
+  const headers = [...COACH_LIST_COLUMNS];
+  const rows = coaches.map((c) => {
+    const rec = coachRowToRecord(c);
+    return COACH_LIST_COLUMNS.map((col) => rec[col] ?? "");
+  });
+  return { relativePath, headers, rows };
 }
 
 function normEqCoachField(a: string, b: string): boolean {

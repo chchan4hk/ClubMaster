@@ -1,7 +1,5 @@
-import fs from "fs";
-import path from "path";
 import type { Document } from "mongodb";
-import { clubDataDir, isValidClubFolderId, getDataClubRootPath } from "./coachListCsv";
+import { isValidClubFolderId } from "./coachListCsv";
 import {
   findPaymentListClubDocument,
   paymentListUsesMongo,
@@ -15,6 +13,14 @@ const PM_PAD = 6;
 
 /** Coach-manager folder ids: new payment ids use `{club}-PY0000001`. */
 const CM_FOLDER_UID_RE = /^CM\d+$/i;
+
+function requirePaymentListMongo(): void {
+  if (!paymentListUsesMongo()) {
+    throw new Error(
+      "MongoDB is required for PaymentList (ClubMaster_DB.PaymentList). Configure MONGODB_URI / MONGO_URI.",
+    );
+  }
+}
 
 export type PaymentListRecord = {
   paymentId: string;
@@ -37,17 +43,13 @@ export type PaymentListFileV1 = {
   payments: PaymentListRecord[];
 };
 
-function dataClubRoot(): string {
-  return getDataClubRootPath();
-}
-
+/** Virtual path for diagnostics / API metadata (data lives in MongoDB only). */
 export function paymentListPath(clubId: string): string {
-  const dir = clubDataDir(clubId);
-  return dir ? path.join(dir, PAYMENT_LIST_FILENAME) : "";
-}
-
-function emptyFile(): PaymentListFileV1 {
-  return { version: 1, payments: [] };
+  const id = clubId.trim();
+  if (!isValidClubFolderId(id)) {
+    return "";
+  }
+  return `mongodb:PaymentList/${encodeURIComponent(id)}`;
 }
 
 export function paymentRecordFromUnknown(x: unknown): PaymentListRecord | null {
@@ -73,36 +75,6 @@ export function paymentRecordFromUnknown(x: unknown): PaymentListRecord | null {
   };
 }
 
-function parseFile(raw: string): PaymentListFileV1 {
-  const data = JSON.parse(raw) as Record<string, unknown>;
-  if (Number(data.version) !== 1) {
-    throw new Error("Unsupported PaymentList.json version.");
-  }
-  const arr = data.payments;
-  const payments: PaymentListRecord[] = [];
-  if (Array.isArray(arr)) {
-    for (const x of arr) {
-      const r = paymentRecordFromUnknown(x);
-      if (r && r.paymentId) {
-        payments.push(r);
-      }
-    }
-  }
-  return { version: 1, payments };
-}
-
-function readPaymentListFromJsonFile(clubId: string): PaymentListRecord[] {
-  const p = paymentListPath(clubId);
-  if (!p || !fs.existsSync(p)) {
-    return [];
-  }
-  try {
-    return parseFile(fs.readFileSync(p, "utf8")).payments;
-  } catch {
-    return [];
-  }
-}
-
 function paymentRecordToDocument(r: PaymentListRecord): Document {
   return { ...r } as Document;
 }
@@ -111,35 +83,27 @@ async function persistPaymentList(
   clubId: string,
   payments: PaymentListRecord[],
 ): Promise<void> {
+  requirePaymentListMongo();
   const id = clubId.trim();
-  if (paymentListUsesMongo()) {
-    await replacePaymentListForClub(
-      id,
-      payments.map((row) => paymentRecordToDocument(row)),
-    );
-    return;
-  }
-  const p = paymentListPath(id);
-  if (!p) {
-    throw new Error("Invalid club ID.");
-  }
-  const file: PaymentListFileV1 = { version: 1, payments };
-  fs.writeFileSync(p, JSON.stringify(file, null, 2) + "\n", "utf8");
+  await replacePaymentListForClub(
+    id,
+    payments.map((row) => paymentRecordToDocument(row)),
+  );
 }
 
 function maxPaymentNumericParts(paymentId: string): { pm: number; py: number } {
-  const id = paymentId.replace(/^\uFEFF/, "").trim();
-  const suff = id.match(/-PY(\d+)$/i);
+  const pid = paymentId.replace(/^\uFEFF/, "").trim();
+  const suff = pid.match(/-PY(\d+)$/i);
   if (suff) {
     const n = Number.parseInt(suff[1]!, 10);
     return { pm: 0, py: Number.isNaN(n) ? 0 : n };
   }
-  const lonePy = id.match(/^PY(\d+)$/i);
+  const lonePy = pid.match(/^PY(\d+)$/i);
   if (lonePy) {
     const n = Number.parseInt(lonePy[1]!, 10);
     return { pm: 0, py: Number.isNaN(n) ? 0 : n };
   }
-  const pm = id.match(PM_ID_RE);
+  const pm = pid.match(PM_ID_RE);
   if (pm) {
     const n = Number.parseInt(pm[1]!, 10);
     return { pm: Number.isNaN(n) ? 0 : n, py: 0 };
@@ -168,56 +132,37 @@ function nextPaymentListId(
 }
 
 export async function ensurePaymentListFile(clubId: string): Promise<void> {
+  requirePaymentListMongo();
   if (!isValidClubFolderId(clubId)) {
     throw new Error("Invalid club ID.");
   }
   const id = clubId.trim();
-  const clubDir = path.join(dataClubRoot(), id);
-  if (!fs.existsSync(clubDir)) {
-    fs.mkdirSync(clubDir, { recursive: true });
-  }
-  if (paymentListUsesMongo()) {
-    const existing = await findPaymentListClubDocument(id);
-    if (existing) {
-      return;
-    }
-    let payments: PaymentListRecord[] = readPaymentListFromJsonFile(id);
-    await replacePaymentListForClub(
-      id,
-      payments.map((row) => paymentRecordToDocument(row)),
-    );
+  const existing = await findPaymentListClubDocument(id);
+  if (existing) {
     return;
   }
-  const p = paymentListPath(clubId);
-  if (!p) {
-    throw new Error("Invalid club ID.");
-  }
-  if (!fs.existsSync(p)) {
-    fs.writeFileSync(p, JSON.stringify(emptyFile(), null, 2) + "\n", "utf8");
-  }
+  await replacePaymentListForClub(id, []);
 }
 
 export async function loadPaymentList(clubId: string): Promise<PaymentListRecord[]> {
   if (!isValidClubFolderId(clubId)) {
     return [];
   }
+  requirePaymentListMongo();
   const id = clubId.trim();
-  if (paymentListUsesMongo()) {
-    await ensurePaymentListFile(clubId);
-    const doc = await findPaymentListClubDocument(id);
-    if (!doc || !Array.isArray(doc.payments)) {
-      return [];
-    }
-    const out: PaymentListRecord[] = [];
-    for (const x of doc.payments) {
-      const r = paymentRecordFromUnknown(x);
-      if (r && r.paymentId) {
-        out.push(r);
-      }
-    }
-    return out;
+  await ensurePaymentListFile(clubId);
+  const doc = await findPaymentListClubDocument(id);
+  if (!doc || !Array.isArray(doc.payments)) {
+    return [];
   }
-  return readPaymentListFromJsonFile(id);
+  const out: PaymentListRecord[] = [];
+  for (const x of doc.payments) {
+    const r = paymentRecordFromUnknown(x);
+    if (r && r.paymentId) {
+      out.push(r);
+    }
+  }
+  return out;
 }
 
 export async function savePaymentList(
@@ -243,11 +188,11 @@ export async function appendPaymentListRecords(
   const today = new Date().toISOString().slice(0, 10);
   const ids: string[] = [];
   for (const it of items) {
-    const id = nextPaymentListId(clubId.trim(), payments);
-    ids.push(id);
+    const pid = nextPaymentListId(clubId.trim(), payments);
+    ids.push(pid);
     payments.push({
       ...it,
-      paymentId: id,
+      paymentId: pid,
       createdAt: today,
       lastUpdatedAt: today,
     });

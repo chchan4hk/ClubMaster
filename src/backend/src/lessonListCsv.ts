@@ -1,12 +1,4 @@
-import fs from "fs";
-import path from "path";
-import {
-  parseCsvLine,
-  clubDataDir,
-  isValidClubFolderId,
-  getDataClubRootPath,
-} from "./coachListCsv";
-import { invalidateDataFileCache, readFileCached } from "./dataFileCache";
+import { isValidClubFolderId } from "./coachListCsv";
 import {
   findLessonListClubDocument,
   iterateLessonListClubDocuments,
@@ -105,23 +97,17 @@ async function persistLessons(
   clubId: string,
   lessons: LessonCsvRow[],
 ): Promise<void> {
-  const id = clubId.trim();
-  if (lessonListUsesMongo()) {
-    await replaceLessonListForClub(
-      id,
-      lessons.map((row) => lessonRowToStoredJson(row)),
+  if (!lessonListUsesMongo()) {
+    throw new Error(
+      "MongoDB is required for LessonList (ClubMaster_DB.LessonList). Configure MONGODB_URI / MONGO_URI.",
     );
-    return;
   }
-  const p = lessonListPath(id);
-  if (!p) {
-    throw new Error("Invalid club ID.");
-  }
-  writeLessonsToJsonFile(p, lessons);
+  const id = clubId.trim();
+  await replaceLessonListForClub(
+    id,
+    lessons.map((row) => lessonRowToStoredJson(row)),
+  );
 }
-
-/** Legacy filename; migrated to JSON on first access. */
-const LEGACY_LESSON_LIST_CSV = "LessonList.csv";
 
 export type LessonCsvRow = {
   lessonId: string;
@@ -227,31 +213,21 @@ const LESSON_ROW_KEYS: (keyof LessonCsvRow)[] = [
 
 export const LESSON_LIST_HEADER = LESSON_LIST_COLUMNS.join(",");
 
-type LessonListJsonFile = {
-  version?: number;
-  lessons: LessonCsvRow[];
-};
-
-function dataClubRoot(): string {
-  return getDataClubRootPath();
-}
-
+/** Virtual path for diagnostics / API metadata (lessons live in MongoDB only). */
 export function lessonListPath(clubId: string): string {
-  const dir = clubDataDir(clubId);
-  return dir ? path.join(dir, LESSON_LIST_FILENAME) : "";
-}
-
-export function lessonListResolvedPath(clubId: string): string {
   const id = clubId.trim();
   if (!isValidClubFolderId(id)) {
     return "";
   }
-  return path.normalize(lessonListPath(id));
+  return `mongodb:${LESSON_LIST_COLLECTION}/${encodeURIComponent(id)}`;
+}
+
+export function lessonListResolvedPath(clubId: string): string {
+  return lessonListPath(clubId);
 }
 
 /**
- * Folder under backend/data_club/ that holds LessonList.json for API read/write.
- * Defaults to the signed-in club UID (authedClubId).
+ * Club folder UID used for LessonList in MongoDB.
  * Set LESSON_LIST_CLUB_ID to pin reads/writes to another folder (dev only).
  */
 export function resolveLessonFileClubId(authedClubId: string): string {
@@ -429,29 +405,6 @@ export function lessonFromUnknown(o: unknown): LessonCsvRow {
   };
 }
 
-function parseLessonsJsonRaw(raw: string): LessonCsvRow[] {
-  let data: unknown;
-  try {
-    data = JSON.parse(raw);
-  } catch {
-    return [];
-  }
-  if (Array.isArray(data)) {
-    return data.map((x) => lessonFromUnknown(x));
-  }
-  if (data && typeof data === "object" && Array.isArray((data as LessonListJsonFile).lessons)) {
-    return (data as LessonListJsonFile).lessons.map((x) => lessonFromUnknown(x));
-  }
-  return [];
-}
-
-function readLessonsFromJsonFile(p: string): LessonCsvRow[] {
-  if (!fs.existsSync(p)) {
-    return [];
-  }
-  return readFileCached(p, (raw) => parseLessonsJsonRaw(raw), []);
-}
-
 function lessonRowToStoredJson(r: LessonCsvRow): Record<string, unknown> {
   const { clubUid, reservedNumber, studentCoach, ...rest } = r;
   const out: Record<string, unknown> = {
@@ -464,314 +417,6 @@ function lessonRowToStoredJson(r: LessonCsvRow): Record<string, unknown> {
     out.student_coach = sc;
   }
   return out;
-}
-
-/**
- * Lessons are JSON-only (LessonList.json). Remove a parallel LessonList.csv so
- * editors and tools do not treat CSV as the live store (same idea as PrizeList).
- */
-function retireLegacyLessonListCsvBesideJson(jsonPath: string): void {
-  const pCsv = path.join(path.dirname(jsonPath), LEGACY_LESSON_LIST_CSV);
-  if (!fs.existsSync(pCsv)) {
-    return;
-  }
-  try {
-    fs.unlinkSync(pCsv);
-  } catch {
-    try {
-      fs.renameSync(pCsv, `${pCsv}.retired.${Date.now()}.bak`);
-    } catch {
-      /* ignore */
-    }
-  }
-}
-
-function writeLessonsToJsonFile(p: string, lessons: LessonCsvRow[]): void {
-  const payload = {
-    version: 1,
-    lessons: lessons.map(lessonRowToStoredJson),
-  };
-  fs.writeFileSync(p, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
-  /** So the next `loadLessons` sees this write (avoids stale cache on back-to-back increments). */
-  invalidateDataFileCache(p);
-  retireLegacyLessonListCsvBesideJson(p);
-}
-
-function normHeader(h: string): string {
-  return h
-    .replace(/^\uFEFF/, "")
-    .replace(/^"|"$/g, "")
-    .replace(/\t/g, " ")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, " ");
-}
-
-function normCompact(h: string): string {
-  return normHeader(h).replace(/\s/g, "");
-}
-
-type LessonColIdx = {
-  lessonId: number;
-  clubUid: number;
-  sportType: number;
-  year: number;
-  classId: number;
-  classInfo: number;
-  classTime: number;
-  classFee: number;
-  classSun: number;
-  classMon: number;
-  classTue: number;
-  classWed: number;
-  classThur: number;
-  classFri: number;
-  classSat: number;
-  ageGroup: number;
-  maxNumber: number;
-  reservedNumber: number;
-  frequency: number;
-  lessonStartDate: number;
-  lessonEndDate: number;
-  sportCenter: number;
-  courtNo: number;
-  coachName: number;
-  studentCoach: number;
-  status: number;
-  createdAt: number;
-  lastUpdatedDate: number;
-  remarks: number;
-};
-
-function colIndex(headerCells: string[], candidates: string[]): number {
-  const norms = headerCells.map(normHeader);
-  const compacts = headerCells.map(normCompact);
-  for (const cand of candidates) {
-    const n = normHeader(cand);
-    let i = norms.indexOf(n);
-    if (i >= 0) {
-      return i;
-    }
-    const c = normCompact(cand);
-    i = compacts.indexOf(c);
-    if (i >= 0) {
-      return i;
-    }
-  }
-  return -1;
-}
-
-function resolveLessonColumnIndices(headerCells: string[]): LessonColIdx {
-  return {
-    lessonId: colIndex(headerCells, [
-      "LessonID",
-      "lessonid",
-      "Lesson ID",
-      "lesson id",
-    ]),
-    clubUid: colIndex(headerCells, [
-      "ClubID",
-      "clubid",
-      "Club ID",
-      "club id",
-      "club_uid",
-      "clubUid",
-    ]),
-    sportType: colIndex(headerCells, ["SportType", "sport type", "sporttype"]),
-    year: colIndex(headerCells, ["Year", "year"]),
-    classId: colIndex(headerCells, ["class_id", "Class ID", "class id"]),
-    classInfo: colIndex(headerCells, [
-      "class_info",
-      "Class Info",
-      "class info",
-    ]),
-    classTime: colIndex(headerCells, [
-      "class_time",
-      "Class Time",
-      "class time",
-    ]),
-    classFee: colIndex(headerCells, [
-      "class_fee",
-      "Class Fee",
-      "class fee",
-    ]),
-    classSun: colIndex(headerCells, ["class_sun", "Class Sun", "class sun"]),
-    classMon: colIndex(headerCells, ["class_mon", "Class Mon", "class mon"]),
-    classTue: colIndex(headerCells, ["class_tue", "Class Tue", "class tue"]),
-    classWed: colIndex(headerCells, ["class_wed", "Class Wed", "class wed"]),
-    classThur: colIndex(headerCells, [
-      "class_thur",
-      "class_thu",
-      "Class Thur",
-      "class thur",
-    ]),
-    classFri: colIndex(headerCells, ["class_fri", "Class Fri", "class fri"]),
-    classSat: colIndex(headerCells, ["class_sat", "Class Sat", "class sat"]),
-    ageGroup: colIndex(headerCells, ["Age_group", "Age group", "age group"]),
-    maxNumber: colIndex(headerCells, [
-      "max_number",
-      "Max number",
-      "max number",
-    ]),
-    reservedNumber: colIndex(headerCells, [
-      "ReservedNumber",
-      "reservednumber",
-      "Reserved number",
-      "reserved number",
-      "reserved_number",
-    ]),
-    frequency: colIndex(headerCells, ["Frequency", "frequency"]),
-    lessonStartDate: colIndex(headerCells, [
-      "lesson_start_date",
-      "Lesson start date",
-      "lesson start date",
-    ]),
-    lessonEndDate: colIndex(headerCells, [
-      "lesson_end_date",
-      "Lesson end date",
-      "lesson end date",
-    ]),
-    sportCenter: colIndex(headerCells, [
-      "Sport_center",
-      "sport_center",
-      "Sport center",
-      "sport center",
-    ]),
-    courtNo: colIndex(headerCells, [
-      "court_no",
-      "Court_no",
-      "Court no",
-      "court no",
-      "Court No",
-    ]),
-    coachName: colIndex(headerCells, [
-      "Coach Name",
-      "coach name",
-      "CoachName",
-      "coach_name",
-    ]),
-    studentCoach: colIndex(headerCells, [
-      "student_coach",
-      "Student_coach",
-      "Student Coach",
-      "student coach",
-    ]),
-    status: colIndex(headerCells, ["status", "Status"]),
-    createdAt: colIndex(headerCells, [
-      "Created_at",
-      "created_at",
-      "Created at",
-      "created at",
-    ]),
-    lastUpdatedDate: colIndex(headerCells, [
-      "LastUpdated_Date",
-      "lastupdated_date",
-      "Last Updated Date",
-      "last updated date",
-    ]),
-    remarks: colIndex(headerCells, ["Remarks", "remarks", "Remark", "remark"]),
-  };
-}
-
-function ensureLessonIndices(idx: LessonColIdx): void {
-  if (idx.lessonId < 0 || idx.sportType < 0) {
-    throw new Error(
-      "LessonList: need LessonID and SportType columns in legacy CSV migration.",
-    );
-  }
-}
-
-/** One-time migration from legacy LessonList.csv to LessonList.json */
-function parseAllLessonsFromLegacyCsvPath(csvPath: string): LessonCsvRow[] {
-  if (!fs.existsSync(csvPath)) {
-    return [];
-  }
-  const raw = fs.readFileSync(csvPath, "utf8");
-  const lines = raw.split(/\r?\n/).filter((l) => l.trim());
-  if (lines.length < 2) {
-    return [];
-  }
-  const headerLine = lines[0]!.replace(/^\uFEFF/, "");
-  const headerCells = parseCsvLine(headerLine);
-  const idx = resolveLessonColumnIndices(headerCells);
-  ensureLessonIndices(idx);
-  const out: LessonCsvRow[] = [];
-  const get = (cells: string[], ix: number) =>
-    ix >= 0 && ix < cells.length ? (cells[ix] ?? "").trim() : "";
-
-  for (let i = 1; i < lines.length; i++) {
-    const cells = parseCsvLine(lines[i]!);
-    if (cells.length < 1) {
-      continue;
-    }
-    while (cells.length < headerCells.length) {
-      cells.push("");
-    }
-    const lessonId = get(cells, idx.lessonId);
-    if (!lessonId) {
-      continue;
-    }
-    out.push({
-      lessonId,
-      clubUid: idx.clubUid >= 0 ? get(cells, idx.clubUid) : "",
-      sportType: get(cells, idx.sportType),
-      year: get(cells, idx.year),
-      classId: get(cells, idx.classId),
-      classInfo: get(cells, idx.classInfo),
-      classTime: get(cells, idx.classTime),
-      classFee: get(cells, idx.classFee),
-      classSun: get(cells, idx.classSun) || "N",
-      classMon: get(cells, idx.classMon) || "N",
-      classTue: get(cells, idx.classTue) || "N",
-      classWed: get(cells, idx.classWed) || "N",
-      classThur: get(cells, idx.classThur) || "N",
-      classFri: get(cells, idx.classFri) || "N",
-      classSat: get(cells, idx.classSat) || "N",
-      ageGroup: get(cells, idx.ageGroup),
-      maxNumber: get(cells, idx.maxNumber),
-      reservedNumber: sanitizeReservedNumber(
-        idx.reservedNumber >= 0 ? get(cells, idx.reservedNumber) : "",
-      ),
-      frequency: get(cells, idx.frequency),
-      lessonStartDate: get(cells, idx.lessonStartDate),
-      lessonEndDate: get(cells, idx.lessonEndDate),
-      sportCenter: get(cells, idx.sportCenter),
-      courtNo: get(cells, idx.courtNo),
-      coachName: get(cells, idx.coachName),
-      studentCoach: get(cells, idx.studentCoach),
-      status: get(cells, idx.status) || "ACTIVE",
-      createdAt: get(cells, idx.createdAt),
-      lastUpdatedDate: get(cells, idx.lastUpdatedDate),
-      remarks: get(cells, idx.remarks),
-    });
-  }
-  return out;
-}
-
-function migrateLegacyCsvToJson(clubId: string): void {
-  const dir = clubDataDir(clubId.trim());
-  if (!dir) {
-    return;
-  }
-  const pJson = lessonListPath(clubId);
-  if (!pJson || fs.existsSync(pJson)) {
-    return;
-  }
-  const pCsv = path.join(dir, LEGACY_LESSON_LIST_CSV);
-  if (!fs.existsSync(pCsv)) {
-    return;
-  }
-  const id = clubId.trim();
-  const lessons = parseAllLessonsFromLegacyCsvPath(pCsv).map((r) => ({
-    ...r,
-    clubUid: r.clubUid || id,
-  }));
-  writeLessonsToJsonFile(pJson, lessons);
-  try {
-    fs.renameSync(pCsv, `${pCsv}.bak`);
-  } catch {
-    /* keep csv if rename fails */
-  }
 }
 
 export function lessonCsvRowToApiFields(r: LessonCsvRow): Record<string, string> {
@@ -816,70 +461,35 @@ export async function ensureLessonListFile(clubId: string): Promise<void> {
   if (!isValidClubFolderId(clubId)) {
     throw new Error("Invalid club ID.");
   }
-  const id = clubId.trim();
-  const clubDir = path.join(dataClubRoot(), id);
-  if (!fs.existsSync(clubDir)) {
-    fs.mkdirSync(clubDir, { recursive: true });
-  }
-  if (lessonListUsesMongo()) {
-    const existing = await findLessonListClubDocument(id);
-    if (existing) {
-      return;
-    }
-    migrateLegacyCsvToJson(clubId);
-    const p = lessonListPath(clubId);
-    let lessons: LessonCsvRow[] = [];
-    if (p && fs.existsSync(p)) {
-      lessons = readLessonsFromJsonFile(p).map((r) => ({
-        ...r,
-        clubUid: r.clubUid || id,
-        reservedNumber: sanitizeReservedNumber(r.reservedNumber),
-      }));
-      if (fs.existsSync(p)) {
-        retireLegacyLessonListCsvBesideJson(p);
-      }
-    }
-    await replaceLessonListForClub(
-      id,
-      lessons.map((row) => lessonRowToStoredJson(row)),
+  if (!lessonListUsesMongo()) {
+    throw new Error(
+      "MongoDB is required for LessonList (ClubMaster_DB.LessonList). Configure MONGODB_URI / MONGO_URI.",
     );
+  }
+  const id = clubId.trim();
+  const existing = await findLessonListClubDocument(id);
+  if (existing) {
     return;
   }
-  const p = lessonListPath(clubId);
-  if (!p) {
-    throw new Error("Invalid club ID.");
-  }
-  migrateLegacyCsvToJson(clubId);
-  if (!fs.existsSync(p)) {
-    writeLessonsToJsonFile(p, []);
-  }
-  if (fs.existsSync(p)) {
-    retireLegacyLessonListCsvBesideJson(p);
-  }
+  await replaceLessonListForClub(id, []);
 }
 
 export async function loadLessons(clubId: string): Promise<LessonCsvRow[]> {
   if (!isValidClubFolderId(clubId)) {
     return [];
   }
-  const id = clubId.trim();
-  if (lessonListUsesMongo()) {
-    await ensureLessonListFile(clubId);
-    const doc = await findLessonListClubDocument(id);
-    if (!doc || !Array.isArray(doc.lessons)) {
-      return [];
-    }
-    return doc.lessons.map((x) => lessonFromUnknown(x)).map((r) => ({
-      ...r,
-      clubUid: r.clubUid || id,
-      reservedNumber: sanitizeReservedNumber(r.reservedNumber),
-    }));
+  if (!lessonListUsesMongo()) {
+    throw new Error(
+      "MongoDB is required for LessonList (ClubMaster_DB.LessonList). Configure MONGODB_URI / MONGO_URI.",
+    );
   }
-  const p = lessonListPath(clubId);
-  if (!p || !fs.existsSync(p)) {
+  const id = clubId.trim();
+  await ensureLessonListFile(clubId);
+  const doc = await findLessonListClubDocument(id);
+  if (!doc || !Array.isArray(doc.lessons)) {
     return [];
   }
-  return readLessonsFromJsonFile(p).map((r) => ({
+  return doc.lessons.map((x) => lessonFromUnknown(x)).map((r) => ({
     ...r,
     clubUid: r.clubUid || id,
     reservedNumber: sanitizeReservedNumber(r.reservedNumber),
@@ -893,66 +503,32 @@ let lessonIdClubIndexReady = false;
 let lessonIdClubIndexRebuild: Promise<void> | null = null;
 
 /**
- * Rebuilds LessonID → club UID from Mongo `LessonList` when configured, else from distinct
- * `LessonList.json` files (dedupes LESSON_LIST_CLUB_ID pin).
+ * Rebuilds LessonID → club UID from Mongo `LessonList`.
  */
 export async function rebuildLessonIdClubIndex(): Promise<void> {
   const next = new Map<string, string>();
-  if (lessonListUsesMongo()) {
-    const docs = await iterateLessonListClubDocuments();
-    for (const doc of docs) {
-      const name = String(doc._id ?? "").trim();
-      if (!isValidClubFolderId(name)) {
+  if (!lessonListUsesMongo()) {
+    lessonIdToClubId.clear();
+    lessonIdClubIndexReady = true;
+    return;
+  }
+  const docs = await iterateLessonListClubDocuments();
+  for (const doc of docs) {
+    const name = String(doc._id ?? "").trim();
+    if (!isValidClubFolderId(name)) {
+      continue;
+    }
+    const fileClub = resolveLessonFileClubId(name);
+    const lessons = (Array.isArray(doc.lessons) ? doc.lessons : []).map((x) =>
+      lessonFromUnknown(x),
+    );
+    for (const row of lessons) {
+      const u = row.lessonId.replace(/^\uFEFF/, "").trim().toUpperCase();
+      if (!u || next.has(u)) {
         continue;
       }
-      const fileClub = resolveLessonFileClubId(name);
-      const lessons = (Array.isArray(doc.lessons) ? doc.lessons : []).map((x) =>
-        lessonFromUnknown(x),
-      );
-      for (const row of lessons) {
-        const u = row.lessonId.replace(/^\uFEFF/, "").trim().toUpperCase();
-        if (!u || next.has(u)) {
-          continue;
-        }
-        const logical = (row.clubUid && row.clubUid.trim()) || fileClub;
-        next.set(u, logical);
-      }
-    }
-  } else {
-    const root = dataClubRoot();
-    if (fs.existsSync(root)) {
-      const seenFiles = new Set<string>();
-      for (const name of fs.readdirSync(root)) {
-        if (!isValidClubFolderId(name)) {
-          continue;
-        }
-        const fileClub = resolveLessonFileClubId(name);
-        const p = lessonListPath(fileClub);
-        if (!p) {
-          continue;
-        }
-        const abs = path.normalize(p);
-        if (seenFiles.has(abs)) {
-          continue;
-        }
-        if (!fs.existsSync(p)) {
-          continue;
-        }
-        seenFiles.add(abs);
-        const lessons = readLessonsFromJsonFile(p).map((r) => ({
-          ...r,
-          clubUid: r.clubUid || fileClub,
-          reservedNumber: sanitizeReservedNumber(r.reservedNumber),
-        }));
-        for (const row of lessons) {
-          const u = row.lessonId.replace(/^\uFEFF/, "").trim().toUpperCase();
-          if (!u || next.has(u)) {
-            continue;
-          }
-          const logical = (row.clubUid && row.clubUid.trim()) || fileClub;
-          next.set(u, logical);
-        }
-      }
+      const logical = (row.clubUid && row.clubUid.trim()) || fileClub;
+      next.set(u, logical);
     }
   }
   lessonIdToClubId.clear();
@@ -1045,9 +621,7 @@ export type LessonListRaw = {
 
 export async function loadLessonListRaw(clubId: string): Promise<LessonListRaw> {
   const id = clubId.trim();
-  const relativePath = lessonListUsesMongo()
-    ? `mongodb:${LESSON_LIST_COLLECTION}/${id}`
-    : `data_club/${id}/${LESSON_LIST_FILENAME}`;
+  const relativePath = `mongodb:${LESSON_LIST_COLLECTION}/${id}`;
   if (!isValidClubFolderId(id)) {
     return { relativePath, headers: [], rows: [] };
   }
@@ -1336,12 +910,6 @@ export async function updateLessonRow(
     return { ok: false, error: "SportType is required." };
   }
   await ensureLessonListFile(clubId);
-  if (!lessonListUsesMongo()) {
-    const p = lessonListPath(clubId);
-    if (!p || !fs.existsSync(p)) {
-      return { ok: false, error: "Lesson list not found." };
-    }
-  }
   const lessons = await loadLessons(clubId);
   let found = false;
   const next = lessons.map((row) => {
@@ -1379,12 +947,6 @@ export async function incrementLessonReservedNumber(
     return { ok: false, error: "LessonID is required." };
   }
   await ensureLessonListFile(clubId);
-  if (!lessonListUsesMongo()) {
-    const p = lessonListPath(clubId);
-    if (!p || !fs.existsSync(p)) {
-      return { ok: false, error: "Lesson list not found." };
-    }
-  }
   const lessons = await loadLessons(clubId);
   let found = false;
   const today = new Date().toISOString().slice(0, 10);
@@ -1418,12 +980,6 @@ export async function decrementLessonReservedNumber(
     return { ok: false, error: "LessonID is required." };
   }
   await ensureLessonListFile(clubId);
-  if (!lessonListUsesMongo()) {
-    const p = lessonListPath(clubId);
-    if (!p || !fs.existsSync(p)) {
-      return { ok: false, error: "Lesson list not found." };
-    }
-  }
   const lessons = await loadLessons(clubId);
   let found = false;
   const today = new Date().toISOString().slice(0, 10);
@@ -1457,12 +1013,6 @@ export async function removeLessonRow(
     return { ok: false, error: "LessonID is required." };
   }
   await ensureLessonListFile(clubId);
-  if (!lessonListUsesMongo()) {
-    const p = lessonListPath(clubId);
-    if (!p || !fs.existsSync(p)) {
-      return { ok: false, error: "Lesson list not found." };
-    }
-  }
   const lessons = await loadLessons(clubId);
   const today = new Date().toISOString().slice(0, 10);
   let found = false;

@@ -12,7 +12,6 @@ import {
 import { isValidClubFolderId, type CoachCsvRow } from "../coachListCsv";
 import {
   PRIZE_LIST_ROW_COLLECTION,
-  isMongoConfigured,
   resolvePrizeListRowDatabaseName,
 } from "../db/DBConnection";
 import {
@@ -22,10 +21,8 @@ import {
   updatePrizeRowPreferred,
 } from "../prizeListMongo";
 import {
-  PRIZE_LIST_FILENAME,
   prizeCsvRowToApiFields,
   prizeCsvRowsToPrizeListRaw,
-  prizeListResolvedPath,
   prizeListStorageClubId,
 } from "../prizeListJson";
 import { enrichPrizeStudentNamesFromStudentRoster } from "../prizeStudentNameEnrich";
@@ -231,20 +228,13 @@ export function createCoachManagerPrizeRouter(): Router {
           prizes = [];
         }
       }
-      let prizeListRawFiltered = prizeCsvRowsToPrizeListRaw(ctx.clubId, prizes);
-      if (isMongoConfigured()) {
-        const dbName = resolvePrizeListRowDatabaseName();
-        prizeListRawFiltered = {
-          ...prizeListRawFiltered,
-          relativePath: `mongodb/${dbName}/${PRIZE_LIST_ROW_COLLECTION}/${ctx.clubId.trim()}`,
-        };
-      }
-      const fileEnc = encodeURIComponent(PRIZE_LIST_FILENAME);
+      const dbName = resolvePrizeListRowDatabaseName();
+      const prizeListRawFiltered = {
+        ...prizeCsvRowsToPrizeListRaw(ctx.clubId, prizes),
+        relativePath: `mongodb/${dbName}/${PRIZE_LIST_ROW_COLLECTION}/${ctx.clubId.trim()}`,
+      };
       const storageId = prizeListStorageClubId(ctx.clubId);
-      const storageEnc = encodeURIComponent(storageId);
-      const listFileUrl = isMongoConfigured()
-        ? null
-        : `/backend/data_club/${storageEnc}/${fileEnc}`;
+      const listFileUrl: string | null = null;
       const listQ = parsePrizeListQuery(_req);
       const totalPrizes = prizes.length;
       let pagePrizes = prizes;
@@ -265,14 +255,12 @@ export function createCoachManagerPrizeRouter(): Router {
         ok: true,
         clubId: ctx.clubId,
         clubName: ctx.clubName,
-        prizeListStorage: isMongoConfigured() ? "mongodb" : "json_file",
+        prizeListStorage: "mongodb",
         prizeListStorageClubId: storageId,
         prizeListFileUrl: listFileUrl,
-        prizeListResolvedPath: isMongoConfigured()
-          ? `mongodb:${resolvePrizeListRowDatabaseName()}/${PRIZE_LIST_ROW_COLLECTION}`
-          : prizeListResolvedPath(ctx.clubId),
+        prizeListResolvedPath: `mongodb:${dbName}/${PRIZE_LIST_ROW_COLLECTION}`,
         prizes: pagePrizes.map((p) => prizeCsvRowToApiFields(p)),
-        /** Tabular view: Mongo `PrizeList` collection or `PrizeList.json`. */
+        /** Tabular view: Mongo `PrizeList` collection. */
         prizeListRaw: prizeListRawOut,
         ...(prizesParseWarning ? { prizesParseWarning } : {}),
       };

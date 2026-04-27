@@ -1,4 +1,3 @@
-import fs from "fs";
 import { Router, type Request } from "express";
 import { findStudentRoleLoginByUid } from "../coachStudentLoginCsv";
 import { requireAuth, requireRole } from "../middleware/requireAuth";
@@ -23,7 +22,6 @@ import {
   ensureLessonListFile,
   decrementLessonReservedNumber,
   incrementLessonReservedNumber,
-  LESSON_LIST_FILENAME,
   lessonCsvRowToApiFields,
   lessonIdsEqual,
   lessonListPath,
@@ -270,21 +268,11 @@ function coachManagerLessonDebugSnapshot(
   const idOk = storageId ? isValidClubFolderId(storageId) : false;
   const resolved = idOk ? lessonListResolvedPath(storageId) : "";
   const pathForFile = idOk ? lessonListPath(storageId) : "";
-  let lessonFileExistsOnDisk = false;
-  let fileSizeBytes: number | null = null;
-  let fileHeadPreview = "";
-  let fileReadError: string | null = null;
-  if (pathForFile) {
-    try {
-      lessonFileExistsOnDisk = fs.existsSync(pathForFile);
-      if (lessonFileExistsOnDisk) {
-        fileSizeBytes = fs.statSync(pathForFile).size;
-        fileHeadPreview = fs.readFileSync(pathForFile, "utf8").slice(0, 500);
-      }
-    } catch (e) {
-      fileReadError = e instanceof Error ? e.message : String(e);
-    }
-  }
+  /** Lesson rows are stored in MongoDB only; no on-disk LessonList.json. */
+  const lessonFileExistsOnDisk = false;
+  const fileSizeBytes: number | null = null;
+  const fileHeadPreview = "";
+  const fileReadError: string | null = null;
   return {
     route: "GET /api/coach-manager/lessons",
     cwd: process.cwd(),
@@ -891,10 +879,7 @@ export function createCoachManagerLessonRouter(): Router {
         pageLessons.map((l) => l.lessonId.trim().toUpperCase()),
       );
       const idEnc = encodeURIComponent(fileClub);
-      const fileEnc = encodeURIComponent(LESSON_LIST_FILENAME);
-      const lessonListFileUrl = lessonListUsesMongo()
-        ? `mongodb:${LESSON_LIST_COLLECTION}/${idEnc}`
-        : `/backend/data_club/${idEnc}/${fileEnc}`;
+      const lessonListFileUrl = `mongodb:${LESSON_LIST_COLLECTION}/${idEnc}`;
       let activeSportCenters: string[] = [];
       let activeSportCentersLoadError: string | null = null;
       try {

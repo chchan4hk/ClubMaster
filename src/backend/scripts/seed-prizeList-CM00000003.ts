@@ -1,10 +1,12 @@
 /**
- * Upserts rows from `data_club/CM00000003/PrizeList.json` into MongoDB database
- * `ClubMaster_DB` (or `MONGO_PRIZE_LIST_TARGET_DB` / `MONGO_DATABASE`) collection `PrizeList`.
+ * Upserts sample prize rows into MongoDB `ClubMaster_DB` (or
+ * `MONGO_PRIZE_LIST_TARGET_DB` / `MONGO_DATABASE`) collection `PrizeList`.
+ * Edit SAMPLE_PRIZE_ROWS below if you need different seed data.
  */
 import path from "path";
 import { loadLocalEnvFile } from "../src/config/env";
-import { loadPrizes, prizeCsvRowToApiFields } from "../src/prizeListJson";
+import type { PrizeCsvRow } from "../src/prizeListJson";
+import { prizeCsvRowToApiFields } from "../src/prizeListJson";
 import {
   closeMongoClient,
   ensurePrizeListRowCollection,
@@ -17,6 +19,27 @@ const backendRoot = path.join(__dirname, "..");
 loadLocalEnvFile(backendRoot);
 
 const CLUB_FOLDER = "CM00000003";
+
+const SAMPLE_PRIZE_ROWS: PrizeCsvRow[] = [
+  {
+    prizeId: "PR000001",
+    clubId: "CM00000003",
+    clubName: "流星羽毛球會",
+    sportType: "Badminton",
+    year: "2025",
+    association: "香港羽毛球總會",
+    competition: "全港青少年錦標賽",
+    ageGroup: "2012-2013",
+    prizeType: "Men's Double",
+    studentName: "Chan Dai Man",
+    ranking: "Gold",
+    status: "ACTIVE",
+    createdAt: "2026-04-10",
+    lastUpdatedDate: "2026-04-11",
+    verifiedBy: "Felix Fan",
+    remarks: "Good",
+  },
+];
 
 function apiFieldsToInsert(
   api: ReturnType<typeof prizeCsvRowToApiFields>,
@@ -49,16 +72,13 @@ async function main(): Promise<void> {
     );
     process.exit(1);
   }
-  const rows = loadPrizes(CLUB_FOLDER);
-  if (!rows.length) {
-    console.warn(
-      `No prize rows loaded for ${CLUB_FOLDER} (check PrizeList.json exists and has prize_id + student_name).`,
-    );
+  if (!SAMPLE_PRIZE_ROWS.length) {
+    console.warn("No sample prize rows defined.");
   }
   await ensurePrizeListRowCollection();
   const col = await getPrizeListRowCollection();
   let n = 0;
-  for (const row of rows) {
+  for (const row of SAMPLE_PRIZE_ROWS) {
     const doc = apiFieldsToInsert(prizeCsvRowToApiFields(row));
     if (!doc.PrizeID.trim()) {
       continue;

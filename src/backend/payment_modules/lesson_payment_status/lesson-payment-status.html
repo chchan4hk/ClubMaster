@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lesson Payment Status — Coach Manager</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="/css/style.css" />
   <link rel="stylesheet" href="/css/profile-password-panels.css" />
   <link rel="stylesheet" href="/css/coach-manager-module-shell.css" />
@@ -293,6 +292,7 @@
     </div>
   </div>
 
+  <script src="/js/chart-lazy.js"></script>
   <script src="/js/api.js"></script>
   <script src="/js/date-ddmm-ui.js"></script>
   <script src="/js/auth.js"></script>
@@ -485,10 +485,19 @@
         }
       }
 
-      function renderCharts(payload, filtered) {
+      async function renderCharts(payload, filtered) {
         var barEl = document.getElementById("chartBar");
         var pieEl = document.getElementById("chartPie");
-        if (!barEl || !pieEl || typeof Chart === "undefined") {
+        if (!barEl || !pieEl) {
+          return;
+        }
+        try {
+          await window.ensureChartJs();
+        } catch (e) {
+          console.warn(e);
+          return;
+        }
+        if (typeof Chart === "undefined") {
           return;
         }
         var barData = payload.chartBarCollections || [];
@@ -939,7 +948,7 @@
           renderKpis(data.kpis, data.period);
           filteredRows = applyFilters(data.rows || []);
           renderTable(filteredRows, ctx);
-          renderCharts(data, filteredRows);
+          await renderCharts(data, filteredRows);
         } catch (e) {
           if (errEl) {
             errEl.textContent = e.message || String(e);
@@ -960,13 +969,13 @@
         });
       }
 
-      function onFilterChange() {
+      async function onFilterChange() {
         if (!lastPayload) {
           return;
         }
         filteredRows = applyFilters(lastPayload.rows || []);
         renderTable(filteredRows, { clubId: lastPayload.clubId, clubName: lastPayload.clubName });
-        renderCharts(lastPayload, filteredRows);
+        await renderCharts(lastPayload, filteredRows);
       }
 
       document.getElementById("btnReload").addEventListener("click", loadData);

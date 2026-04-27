@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Coach Salary — Coach Manager</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <link rel="stylesheet" href="/css/style.css" />
   <link rel="stylesheet" href="/css/profile-password-panels.css" />
   <link rel="stylesheet" href="/css/coach-manager-module-shell.css" />
@@ -260,6 +259,7 @@
     </div>
   </div>
 
+  <script src="/js/chart-lazy.js"></script>
   <script src="/js/api.js"></script>
   <script src="/js/auth.js"></script>
   <script>
@@ -684,11 +684,28 @@
         }
       }
 
-      function updateLessonFeePieChart(allocRows) {
+      async function updateLessonFeePieChart(allocRows) {
         var canvas = document.getElementById("lessonFeeReceivedPieChart");
         var t = lessonFeeCapacityTotals(allocRows);
         renderLessonFeePieSummary(t);
-        if (!canvas || typeof Chart === "undefined") {
+        if (!canvas) {
+          if (lessonFeePieChartInst) {
+            lessonFeePieChartInst.destroy();
+            lessonFeePieChartInst = null;
+          }
+          return;
+        }
+        try {
+          await window.ensureChartJs();
+        } catch (e) {
+          console.warn(e);
+          if (lessonFeePieChartInst) {
+            lessonFeePieChartInst.destroy();
+            lessonFeePieChartInst = null;
+          }
+          return;
+        }
+        if (typeof Chart === "undefined") {
           if (lessonFeePieChartInst) {
             lessonFeePieChartInst.destroy();
             lessonFeePieChartInst = null;
@@ -743,11 +760,28 @@
         });
       }
 
-      function updateSalaryPaymentPieChart(allocRows, salaryRowsFiltered) {
+      async function updateSalaryPaymentPieChart(allocRows, salaryRowsFiltered) {
         var canvas = document.getElementById("salaryPaymentPieChart");
         var s = salaryPaidPendingFromSalaryRows(salaryRowsFiltered);
         renderSalaryPaymentPieSummary(s);
-        if (!canvas || typeof Chart === "undefined") {
+        if (!canvas) {
+          if (salaryPaymentPieChartInst) {
+            salaryPaymentPieChartInst.destroy();
+            salaryPaymentPieChartInst = null;
+          }
+          return;
+        }
+        try {
+          await window.ensureChartJs();
+        } catch (e) {
+          console.warn(e);
+          if (salaryPaymentPieChartInst) {
+            salaryPaymentPieChartInst.destroy();
+            salaryPaymentPieChartInst = null;
+          }
+          return;
+        }
+        if (typeof Chart === "undefined") {
           if (salaryPaymentPieChartInst) {
             salaryPaymentPieChartInst.destroy();
             salaryPaymentPieChartInst = null;
@@ -802,12 +836,12 @@
         });
       }
 
-      function updateBothPieCharts(filteredAlloc, filteredSalary) {
-        updateLessonFeePieChart(filteredAlloc);
-        updateSalaryPaymentPieChart(filteredAlloc, filteredSalary);
+      async function updateBothPieCharts(filteredAlloc, filteredSalary) {
+        await updateLessonFeePieChart(filteredAlloc);
+        await updateSalaryPaymentPieChart(filteredAlloc, filteredSalary);
       }
 
-      function refreshCoachSalaryMonthView() {
+      async function refreshCoachSalaryMonthView() {
         var sel = document.getElementById("filterCoachSalaryMonth");
         var ym = sel && sel.value ? String(sel.value).trim() : "";
         var filteredAlloc = filterAllocationRows(cachedAllocationRows, ym);
@@ -820,7 +854,7 @@
           ? "No salary rows for lessons overlapping the selected month."
           : "No salary records yet.";
         renderTable(filteredSalary, filteredSalary.length ? null : emptySal);
-        updateBothPieCharts(filteredAlloc, filteredSalary);
+        await updateBothPieCharts(filteredAlloc, filteredSalary);
         var hint = document.getElementById("coachSalaryMonthHint");
         if (hint) {
           hint.textContent = ym
@@ -1004,7 +1038,7 @@
           if (monEl && !monEl.value) {
             monEl.value = defaultMonthYm();
           }
-          refreshCoachSalaryMonthView();
+          await refreshCoachSalaryMonthView();
         } catch (e) {
           var msg = userFacingCoachSalaryError(e);
           showLoadError(msg);
@@ -1015,7 +1049,7 @@
             ab.innerHTML =
               '<tr><td colspan="6" class="py-6 text-red-300">' + escapeHtml(msg) + "</td></tr>";
           }
-          updateBothPieCharts([], []);
+          await updateBothPieCharts([], []);
           document.getElementById("tableBody").innerHTML =
             '<tr><td colspan="9" class="py-6 text-red-300">' + escapeHtml(msg) + "</td></tr>";
           toast(msg, false);

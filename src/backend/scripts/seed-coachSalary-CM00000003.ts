@@ -1,10 +1,11 @@
 /**
- * Upserts rows from `data_club/CM00000003/CoachSalary.json` into MongoDB database
- * `ClubMaster_DB` (or `MONGO_COACH_SALARY_TARGET_DB` / `MONGO_DATABASE`) collection `CoachManager`.
+ * Upserts sample coach salary rows into MongoDB `ClubMaster_DB` (or
+ * `MONGO_COACH_SALARY_TARGET_DB` / `MONGO_DATABASE`) collection `CoachManager`.
+ * Edit SAMPLE_ROWS below if you need different seed data.
  */
 import path from "path";
 import { loadLocalEnvFile } from "../src/config/env";
-import { loadCoachSalaryDocument } from "../src/coachSalaryJson";
+import type { CoachSalaryRecord } from "../src/coachSalaryJson";
 import {
   closeMongoClient,
   ensureCoachSalaryCollection,
@@ -18,19 +19,62 @@ loadLocalEnvFile(backendRoot);
 
 const CLUB_FOLDER = "CM00000003";
 
-function rowToInsert(row: {
-  CoachSalaryID: string;
-  lessonId: string;
-  ClubID: string;
-  club_name: string;
-  coach_id: string;
-  salary_amount: number | string;
-  Payment_Method: string;
-  Payment_Status: string;
-  Payment_Confirm: boolean;
-  createdAt: string;
-  lastUpdatedDate: string;
-}): CoachSalaryInsert {
+const SAMPLE_ROWS: CoachSalaryRecord[] = [
+  {
+    CoachSalaryID: "CS000001",
+    lessonId: "LE000001",
+    ClubID: "CM00000003",
+    club_name: "流星羽毛球會",
+    salary_amount: 4740,
+    Payment_Method: "Bank Transfer",
+    Payment_Status: "Paid",
+    Payment_Confirm: true,
+    createdAt: "2026-04-18",
+    lastUpdatedDate: "2026-04-18T14:39:07.595Z",
+    coach_id: "C000001",
+  },
+  {
+    CoachSalaryID: "CS000002",
+    lessonId: "LE000002",
+    ClubID: "CM00000003",
+    club_name: "流星羽毛球會",
+    salary_amount: 7200,
+    Payment_Method: "Bank Transfer",
+    Payment_Status: "Pending",
+    Payment_Confirm: false,
+    createdAt: "2026-04-18",
+    lastUpdatedDate: "2026-04-18T14:19:09.014Z",
+    coach_id: "",
+  },
+  {
+    CoachSalaryID: "CS000003",
+    lessonId: "LE000003",
+    ClubID: "CM00000003",
+    club_name: "流星羽毛球會",
+    salary_amount: 1000,
+    Payment_Method: "Bank Transfer",
+    Payment_Status: "Pending",
+    Payment_Confirm: false,
+    createdAt: "2026-04-18",
+    lastUpdatedDate: "2026-04-18T14:19:11.156Z",
+    coach_id: "C000001",
+  },
+  {
+    CoachSalaryID: "CS000004",
+    lessonId: "LE000004",
+    ClubID: "CM00000003",
+    club_name: "流星羽毛球會",
+    salary_amount: 15000,
+    Payment_Method: "Bank Transfer",
+    Payment_Status: "Paid",
+    Payment_Confirm: true,
+    createdAt: "2026-04-18",
+    lastUpdatedDate: "2026-04-18T15:23:30.921Z",
+    coach_id: "C000001",
+  },
+];
+
+function rowToInsert(row: CoachSalaryRecord): CoachSalaryInsert {
   const amt = row.salary_amount;
   const salaryNum =
     typeof amt === "number" && Number.isFinite(amt)
@@ -59,11 +103,10 @@ async function main(): Promise<void> {
     );
     process.exit(1);
   }
-  const fileDoc = loadCoachSalaryDocument(CLUB_FOLDER);
   await ensureCoachSalaryCollection();
   const col = await getCoachSalaryCollection();
   let upserted = 0;
-  for (const row of fileDoc.coachSalaries) {
+  for (const row of SAMPLE_ROWS) {
     const doc = rowToInsert(row);
     if (!doc.CoachSalaryID) {
       console.warn("Skipping row without CoachSalaryID.");
