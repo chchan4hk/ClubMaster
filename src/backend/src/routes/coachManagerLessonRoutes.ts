@@ -37,6 +37,7 @@ import {
   type LessonCsvRow,
   type LessonListRaw,
 } from "../lessonListCsv";
+import type { LessonReserveRecord } from "../lessonReserveList";
 import {
   appendLessonReservationPreferred,
   ensureLessonReserveListPreferred,
@@ -203,6 +204,58 @@ function mergeLessonPutWithExisting(
     classFri: bodyHasOwn(rawBody, "class_fri") ? w.classFri : existing.classFri,
     classSat: bodyHasOwn(rawBody, "class_sat") ? w.classSat : existing.classSat,
   };
+}
+
+/** True when any reservation for this lesson has paid / partial payment or coach payment confirm (LessonReserveList). */
+function lessonReserveHasBlockingPaymentForLesson(
+  reservations: LessonReserveRecord[],
+  lessonId: string,
+): boolean {
+  const t = lessonId.replace(/^\uFEFF/, "").trim();
+  if (!t) {
+    return false;
+  }
+  for (const r of reservations) {
+    if (!lessonIdsEqual(r.lessonId, t)) {
+      continue;
+    }
+    const ps = String(r.Payment_Status ?? "")
+      .trim()
+      .toUpperCase()
+      .replace(/\s+/g, "_");
+    if (ps === "PAID" || ps === "PARTIALLY_PAID") {
+      return true;
+    }
+    if (r.Payment_Confirm === true) {
+      return true;
+    }
+  }
+  return false;
+}
+
+async function assertLessonRemoveAllowedNoReservationPayments(
+  clubFolderUid: string,
+  lessonId: string,
+): Promise<{ ok: true } | { ok: false; status: number; error: string }> {
+  try {
+    const reservations = await loadLessonReservationsPreferred(clubFolderUid);
+    if (lessonReserveHasBlockingPaymentForLesson(reservations, lessonId)) {
+      return {
+        ok: false,
+        status: 409,
+        error:
+          "Cannot remove this lesson: LessonReserveList has at least one reservation for this lesson with recorded payment (PAID or partial) or confirmed payment. Resolve or adjust payments before removing the lesson.",
+      };
+    }
+    return { ok: true };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return {
+      ok: false,
+      status: 503,
+      error: `Could not verify LessonReserveList payments: ${msg}`,
+    };
+  }
 }
 
 function coachManagerLessonDebugSnapshot(
@@ -1316,21 +1369,43 @@ export function createCoachManagerLessonRouter(): Router {
       return;
     }
 
-    // Block cancellation when payment is already PAID / COMPLETED for this reservation.
-    // PaymentList records are keyed by `lessonReserveId` (not lessonId), so resolve the active reservation first.
+    // Resolve the student's ACTIVE reservation for this lesson (same logic as removal).
+    // 1) Block if LessonReserveList.Payment_Status is PAID (fee recorded on the reservation).
+    // 2) Block if PaymentList has PAID/COMPLETED for that lessonReserveId (ledger mirror).
     let activeReserveId: string | null = null;
     try {
       const all = await loadLessonReservationsPreferred(fileClub);
-      const lid = lessonId.trim().toUpperCase();
-      const match = all.find(
-        (r) =>
-          r.lessonId.trim().toUpperCase() === lid &&
+      const reqL = lessonId.replace(/^\uFEFF/, "").trim().toUpperCase();
+      const suffixLe = (id: string): string | null => {
+        const u = id.replace(/^\uFEFF/, "").trim().toUpperCase();
+        const m = u.match(/^(?:[A-Z0-9]+-)?(LE\d+)$/);
+        return m ? m[1]! : null;
+      };
+      const reqSuffix = suffixLe(reqL);
+      const match = all.find((r) => {
+        const rl = r.lessonId.replace(/^\uFEFF/, "").trim().toUpperCase();
+        const sameLesson =
+          rl === reqL ||
+          (reqSuffix != null && suffixLe(rl) === reqSuffix);
+        return (
+          sameLesson &&
           lessonReservationStudentIdsEqual(fileClub, r.student_id, studentId) &&
-          String(r.status ?? "").trim().toUpperCase() === "ACTIVE",
-      );
-      activeReserveId = match ? String(match.lessonReserveId ?? "").trim() : null;
+          String(r.status ?? "").trim().toUpperCase() === "ACTIVE"
+        );
+      });
+      if (match) {
+        const paySt = String(match.Payment_Status ?? "").trim().toUpperCase();
+        if (paySt === "PAID") {
+          res.status(403).json({
+            ok: false,
+            error:
+              "This booking cannot be cancelled because the lesson fee is already marked PAID on your reservation.",
+          });
+          return;
+        }
+        activeReserveId = String(match.lessonReserveId ?? "").trim() || null;
+      }
     } catch {
-      // If reservation list cannot be read, fall through to existing cancel flow (it will error appropriately).
       activeReserveId = null;
     }
     if (activeReserveId) {
@@ -1546,6 +1621,14 @@ export function createCoachManagerLessonRouter(): Router {
     const lessonId = String(
       req.body?.LessonID ?? req.body?.lessonId ?? "",
     ).trim();
+    const payGate = await assertLessonRemoveAllowedNoReservationPayments(
+      ctx.clubId,
+      lessonId,
+    );
+    if (!payGate.ok) {
+      res.status(payGate.status).json({ ok: false, error: payGate.error });
+      return;
+    }
     const result = await removeLessonRow(
       resolveLessonFileClubId(ctx.clubId),
       lessonId,
@@ -1710,6 +1793,14 @@ export function createCoachManagerLessonRouter(): Router {
         ok: false,
         error: "This lesson is already INACTIVE.",
       });
+      return;
+    }
+    const payGate = await assertLessonRemoveAllowedNoReservationPayments(
+      ctx.clubId,
+      target.lessonId,
+    );
+    if (!payGate.ok) {
+      res.status(payGate.status).json({ ok: false, error: payGate.error });
       return;
     }
     const result = await removeLessonRow(fileClub, target.lessonId);

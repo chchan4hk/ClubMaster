@@ -140,20 +140,16 @@ function inferLessonKind(lesson: LessonCsvRow): string {
 
 const ISO_DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 
-/** Payment due date: 7 calendar days before lesson start (UTC calendar math). */
-function dueDateSevenDaysBeforeLessonStart(lessonStartDate: string): string | null {
+/**
+ * Payment due date for status/KPIs: lesson start day (YYYY-MM-DD).
+ * Overdue only after this date has passed (less strict than the former "7 days before lesson").
+ */
+function dueDateOnLessonStart(lessonStartDate: string): string | null {
   const s = lessonStartDate.trim().slice(0, 10);
   if (!ISO_DATE_ONLY.test(s)) {
     return null;
   }
-  const y = Number(s.slice(0, 4));
-  const m = Number(s.slice(5, 7));
-  const d = Number(s.slice(8, 10));
-  if (!y || m < 1 || m > 12 || d < 1 || d > 31) {
-    return null;
-  }
-  const utcMs = Date.UTC(y, m - 1, d - 7);
-  return new Date(utcMs).toISOString().slice(0, 10);
+  return s;
 }
 
 function defaultDueDate(
@@ -163,7 +159,7 @@ function defaultDueDate(
 ): string {
   const start = lesson?.lessonStartDate?.trim();
   if (start) {
-    const fromLessonStart = dueDateSevenDaysBeforeLessonStart(start);
+    const fromLessonStart = dueDateOnLessonStart(start);
     if (fromLessonStart) {
       return fromLessonStart;
     }

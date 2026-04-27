@@ -28,7 +28,7 @@
       color: #44403c !important;
     }
 
-    /* Edit lesson: light surface + dark type (readable on pale gold / cream) */
+    /* Edit Lesson panel: light surface + dark type (readable on pale gold / cream) */
     #tableEditPanel.table-edit-panel-surface {
       background: linear-gradient(180deg, #faf7f0 0%, #f3ead8 100%) !important;
       border-color: rgba(180, 140, 60, 0.35) !important;
@@ -75,31 +75,31 @@
       color: #292524;
     }
 
-    /* Lesson Series — gold / pale yellow metallic */
+    /* Lesson Series — dark orange / grey metallic */
     .btn-lesson-series-metallic {
       background: linear-gradient(
         165deg,
-        #fffef7 0%,
-        #fefce8 14%,
-        #fef9c3 32%,
-        #fef08a 55%,
-        #fde047 72%,
-        #eab308 100%
+        #57534e 0%,
+        #44403c 18%,
+        #57534e 34%,
+        #78716c 52%,
+        #9a3412 72%,
+        #7c2d12 100%
       );
-      border: 1px solid rgba(254, 249, 195, 0.95);
-      color: #713f12;
+      border: 1px solid rgba(68, 64, 60, 0.95);
+      color: #fef3c7;
       font-weight: 700;
-      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.88);
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.45);
       box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.92),
-        inset 0 -1px 0 rgba(202, 138, 4, 0.28),
-        0 2px 10px rgba(113, 63, 18, 0.28);
+        inset 0 1px 0 rgba(255, 255, 255, 0.14),
+        inset 0 -1px 0 rgba(28, 25, 23, 0.55),
+        0 2px 10px rgba(28, 25, 23, 0.35);
     }
     .btn-lesson-series-metallic:hover {
-      filter: brightness(1.05) saturate(1.04);
+      filter: brightness(1.06) saturate(1.05);
     }
     .btn-lesson-series-metallic:active {
-      filter: brightness(0.97);
+      filter: brightness(0.96);
     }
 
     /* Clone lesson — black / gold / brown metallic */
@@ -362,7 +362,7 @@
       </div>
 
       <div id="tableEditPanel" class="table-edit-panel-surface hidden mt-6 pt-6 border-t border-white/10 rounded-lg bg-slate-900/40 p-4">
-        <h3 class="text-base font-semibold text-amber-200 mb-3">Edit lesson</h3>
+        <h3 class="text-base font-semibold text-amber-200 mb-3">Edit Lesson</h3>
         <p class="text-xs text-slate-500 mb-4">
           Click <strong>Confirm</strong> to save your changes.
         </p>
@@ -535,10 +535,14 @@
           </div>
           <p id="tableEditErr" class="hidden text-sm text-red-300"></p>
           <p id="tableEditOk" class="hidden text-sm text-amber-300"></p>
-          <div class="flex flex-wrap gap-2 pt-2">
+          <div class="flex flex-wrap gap-2 pt-2 items-center">
             <button type="button" id="btnAssignStudentFromEdit"
               class="rounded-lg bg-amber-700 hover:bg-amber-600 text-white font-medium px-4 py-2 text-sm">
               Assign Student
+            </button>
+            <button type="button" id="btnLessonSeriesFromEdit" hidden
+              class="btn-lesson-series-metallic rounded-lg px-4 py-2 text-sm">
+              Lesson Series
             </button>
             <button type="button" id="tableEditConfirmBtn"
               class="btn-confirm-black rounded-lg px-4 py-2 text-sm disabled:opacity-50 disabled:pointer-events-none">
@@ -547,6 +551,10 @@
             <button type="button" id="tableEditCancelBtn"
               class="btn-cancel-metallic-brown rounded-lg px-4 py-2 text-sm">
               Cancel
+            </button>
+            <button type="button" id="tableEditRemoveBtn" hidden
+              class="rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 text-sm border border-red-800/60 shadow-sm">
+              Remove
             </button>
           </div>
         </form>
@@ -1811,6 +1819,16 @@
             : "") || (L.LastUpdated_Date || "");
         document.getElementById("tableEditErr").classList.add("hidden");
         document.getElementById("tableEditOk").classList.add("hidden");
+        var seriesFromEdit = document.getElementById("btnLessonSeriesFromEdit");
+        var removeFromEdit = document.getElementById("tableEditRemoveBtn");
+        var cmEdit =
+          role === "CoachManager" && !coachLessonsReadOnly;
+        if (seriesFromEdit) {
+          seriesFromEdit.hidden = !cmEdit;
+        }
+        if (removeFromEdit) {
+          removeFromEdit.hidden = !cmEdit;
+        }
         var panel = document.getElementById("tableEditPanel");
         if (panel) {
           panel.classList.remove("hidden");
@@ -1820,17 +1838,6 @@
             /* ignore */
           }
         }
-      }
-
-      function lessonSeriesButtonHtml(idx) {
-        if (role !== "CoachManager" || coachLessonsReadOnly) {
-          return "";
-        }
-        return (
-          '<button type="button" class="cm-row-lesson-series btn-lesson-series-metallic rounded-md text-xs font-semibold px-2.5 py-1.5" data-idx="' +
-          idx +
-          '">Lesson Series</button>'
-        );
       }
 
       /** Coach My Bookings: one-line summary (class + date span). */
@@ -1902,7 +1909,6 @@
                 '<button type="button" class="cm-row-reserved rounded-md bg-black hover:bg-neutral-900 text-white text-xs font-medium px-2.5 py-1.5 border border-white/10" data-idx="' +
                 idx +
                 '">Status</button>' +
-                lessonSeriesButtonHtml(idx) +
                 "</span></td>" +
                 '<td class="py-2 pr-3 text-xs align-top text-slate-300 whitespace-pre-wrap break-words max-w-[18rem]">' +
                 escapeHtml(seriesText) +
@@ -1950,7 +1956,6 @@
               '<button type="button" class="cm-row-clone-lesson btn-clone-lesson-black-gold rounded-md text-xs px-2.5 py-1.5" data-idx="' +
               idx +
               '">Clone Lesson</button>' +
-              lessonSeriesButtonHtml(idx) +
               "</span></td>" +
               tds +
               "</tr>"
@@ -2357,10 +2362,6 @@
         }
         tb.dataset.cmRowBound = "1";
         tb.addEventListener("click", function (ev) {
-          var btnSeries =
-            ev.target &&
-            ev.target.closest &&
-            ev.target.closest("button.cm-row-lesson-series");
           var btnUp =
             ev.target && ev.target.closest && ev.target.closest("button.cm-row-update");
           var btnClone =
@@ -2369,7 +2370,7 @@
             ev.target.closest("button.cm-row-clone-lesson");
           var btnRes =
             ev.target && ev.target.closest && ev.target.closest("button.cm-row-reserved");
-          var btn = btnSeries || btnUp || btnClone || btnRes;
+          var btn = btnUp || btnClone || btnRes;
           if (!btn) {
             return;
           }
@@ -2379,15 +2380,6 @@
           }
           if (btnClone) {
             void cloneLessonAtIndex(idx);
-            return;
-          }
-          if (btnSeries) {
-            var Ls = cachedLessons[idx];
-            var lid = String(Ls.LessonID || Ls.lessonId || "").trim();
-            if (!lid) {
-              return;
-            }
-            openLessonSeriesModal(lid);
             return;
           }
           if (btnRes) {
@@ -2701,6 +2693,59 @@
       document.getElementById("tableEditCancelBtn").addEventListener("click", function () {
         hideTableEditPanel();
       });
+
+      var btnLessonSeriesFromEdit = document.getElementById("btnLessonSeriesFromEdit");
+      if (btnLessonSeriesFromEdit) {
+        btnLessonSeriesFromEdit.addEventListener("click", function () {
+          var lid = document.getElementById("tableEditLessonId").value.trim();
+          if (!lid) {
+            return;
+          }
+          openLessonSeriesModal(lid);
+        });
+      }
+      var tableEditRemoveBtn = document.getElementById("tableEditRemoveBtn");
+      if (tableEditRemoveBtn) {
+        tableEditRemoveBtn.addEventListener("click", function () {
+          var lid = document.getElementById("tableEditLessonId").value.trim();
+          if (!lid) {
+            return;
+          }
+          var disp =
+            window.api && typeof window.api.displayLessonIdForUi === "function"
+              ? window.api.displayLessonIdForUi(lid) || lid
+              : lid;
+          if (
+            !window.confirm(
+              "Remove lesson " +
+                disp +
+                "?\n\nThe lesson will be marked INACTIVE in the catalog.",
+            )
+          ) {
+            return;
+          }
+          var btn = tableEditRemoveBtn;
+          btn.disabled = true;
+          window.api
+            .api("/coach-manager/lessons/remove", {
+              method: "POST",
+              body: JSON.stringify({ lessonId: lid }),
+            })
+            .then(function (data) {
+              if (!data || data.ok === false) {
+                throw new Error((data && data.error) || "Remove failed.");
+              }
+              hideTableEditPanel();
+              loadLessonListFromApi(lessonListPage);
+            })
+            .catch(function (e) {
+              window.alert((e && e.message) || String(e));
+            })
+            .finally(function () {
+              btn.disabled = false;
+            });
+        });
+      }
 
       document.getElementById("tableEditConfirmBtn").addEventListener("click", function () {
         var btn = document.getElementById("tableEditConfirmBtn");
