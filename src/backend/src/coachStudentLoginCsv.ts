@@ -18,6 +18,7 @@ import { isMongoConfigured } from "./db/DBConnection";
 import {
   allocateNextCoachLoginUidMongo,
   allocateNextStudentLoginUidMongo,
+  coachRoleLoginExistsForCoachIdAndClubMongo,
   findUserByUsernameAnyStoreMongo,
   insertCoachRoleMongo,
   insertStudentRoleMongo,
@@ -1658,6 +1659,26 @@ export function coachRoleLoginExistsForCoachIdAndClub(
   });
 }
 
+/** File-backed or Mongo `userLogin`: duplicate coach login for roster coach id + club. */
+export async function coachRoleLoginExistsForCoachIdAndClubPreferred(
+  coachId: string,
+  clubFolderUid: string,
+  clubName: string,
+): Promise<boolean> {
+  if (isMongoConfigured()) {
+    try {
+      return await coachRoleLoginExistsForCoachIdAndClubMongo(
+        coachId,
+        clubFolderUid,
+        clubName,
+      );
+    } catch {
+      return coachRoleLoginExistsForCoachIdAndClub(coachId, clubName);
+    }
+  }
+  return coachRoleLoginExistsForCoachIdAndClub(coachId, clubName);
+}
+
 /** Appends a row to userLogin_Coach.csv (UID must later match CoachID in a club roster to sign in). */
 export async function appendCoachRoleLoginRow(input: {
   username: string;
@@ -1666,6 +1687,8 @@ export async function appendCoachRoleLoginRow(input: {
   clubName: string;
   /** Coach Manager folder UID (`data_club/{id}/`); JSON writes `club_id` + `club_folder_uid`; Mongo writes both on `userLogin`. */
   clubFolderUid?: string;
+  /** Roster `coach_id` from `UserList_Coach` — Mongo `uid` and `coach_id` use this value when set. */
+  rosterCoachId?: string;
   /** YYYY-MM-DD or empty */
   expiryDate?: string;
 }): Promise<{ ok: true; uid: string } | { ok: false; error: string }> {
@@ -1695,10 +1718,19 @@ export async function appendCoachRoleLoginRow(input: {
   const safeExpiry = String(input.expiryDate ?? "")
     .trim()
     .replace(/,/g, "");
+  const rosterCid = String(input.rosterCoachId ?? "")
+    .trim()
+    .replace(/,/g, " ");
+  const useRosterUid = Boolean(rosterCid);
   if (isMongoConfigured()) {
-    const uid = await allocateNextCoachLoginUidMongo();
+    const uid = useRosterUid ? rosterCid : await allocateNextCoachLoginUidMongo();
     if (await userLoginUidCollisionPreferred(uid)) {
-      return { ok: false, error: "Could not allocate a new Coach ID; try again." };
+      return {
+        ok: false,
+        error: useRosterUid
+          ? "A coach login already exists for that roster coach id / uid in userLogin."
+          : "Could not allocate a new Coach ID; try again.",
+      };
     }
     const ins = await insertCoachRoleMongo({
       uid,
@@ -1707,6 +1739,7 @@ export async function appendCoachRoleLoginRow(input: {
       fullName: safeFull,
       clubName: safeClub,
       clubFolderUid: safeFolderUid || undefined,
+      ...(useRosterUid ? { coach_id: rosterCid } : {}),
       expiryDate: safeExpiry || undefined,
     });
     if (!ins.ok) {
@@ -1716,9 +1749,14 @@ export async function appendCoachRoleLoginRow(input: {
   }
 
   ensureCoachStudentLoginFilesExist();
-  const uid = allocateNextCoachLoginUid();
+  const uid = useRosterUid ? rosterCid : allocateNextCoachLoginUid();
   if (await userLoginUidCollisionPreferred(uid)) {
-    return { ok: false, error: "Could not allocate a new Coach ID; try again." };
+    return {
+      ok: false,
+      error: useRosterUid
+        ? "A coach login already exists for that roster coach id / uid."
+        : "Could not allocate a new Coach ID; try again.",
+    };
   }
   const today = new Date().toISOString().slice(0, 10);
   const storePath = coachLoginPath();
@@ -1727,7 +1765,7 @@ export async function appendCoachRoleLoginRow(input: {
     const rows = loadCoachRoleLogins();
     rows.push({
       uid,
-      coachId: uid,
+      coachId: useRosterUid ? rosterCid : uid,
       username: username.replace(/,/g, " "),
       password: "",
       passwordHash: hashPassword(safePass),
@@ -1767,7 +1805,7 @@ export async function appendStudentRoleLoginRow(input: {
   fullName: string;
   clubName: string;
   clubFolderUid?: string;
-  /** Roster StudentID when known — Mongo `uid` becomes `{clubFolderUid}-{studentId}`. */
+  /** Roster `student_id` from `UserList_Student` (e.g. `HK00004-S000004`); Mongo `uid` and `student_id` copy this when set. */
   rosterStudentId?: string;
   /** YYYY-MM-DD or empty */
   expiryDate?: string;
@@ -1828,7 +1866,8 @@ export async function appendStudentRoleLoginRow(input: {
       fullName: safeFull,
       clubName: safeClub,
       clubFolderUid: safeFolderUid || undefined,
-      ...(useScopedUid ? { student_id: rosterSid } : {}),
+      /** Same as roster / JWT `sub`: full `{club}-S…` id, not the `S…` suffix alone. */
+      ...(useScopedUid ? { student_id: uid } : {}),
       expiryDate: safeExpiry || undefined,
     });
     if (!ins.ok) {
@@ -1854,7 +1893,7 @@ export async function appendStudentRoleLoginRow(input: {
     const rows = loadStudentRoleLogins();
     rows.push({
       uid,
-      studentId: useScopedUid ? rosterSid : uid,
+      studentId: uid,
       username: username.replace(/,/g, " "),
       password: "",
       passwordHash: hashPassword(safePass),

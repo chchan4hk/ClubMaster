@@ -452,12 +452,6 @@ export async function studentRoleLoginExistsForStudentIdAndClubMongo(
   if (!sid || (!cfu && !cn)) {
     return false;
   }
-  if (cfu) {
-    const p = `${cfu}-`;
-    if (sid.toUpperCase().startsWith(p.toUpperCase())) {
-      sid = sid.slice(p.length).trim();
-    }
-  }
   const coll = await collWithIndexes();
   const clubFolderOrId =
     cfu ?
@@ -468,6 +462,24 @@ export async function studentRoleLoginExistsForStudentIdAndClubMongo(
         ],
       }
     : { club_name: new RegExp(`^${escapeRegex(clubName.trim())}$`, "i") };
+
+  /** Roster keys like `HK00004-S000004` stored on both `uid` and `student_id`. */
+  const fullKeyRe = new RegExp(`^${escapeRegex(sid)}$`, "i");
+  const byFullScoped = await coll.findOne({
+    usertype: "Student",
+    $or: [{ uid: fullKeyRe }, { student_id: fullKeyRe }],
+    ...clubFolderOrId,
+  });
+  if (byFullScoped) {
+    return true;
+  }
+
+  if (cfu) {
+    const p = `${cfu}-`;
+    if (sid.toUpperCase().startsWith(p.toUpperCase())) {
+      sid = sid.slice(p.length).trim();
+    }
+  }
 
   const uidComposite = cfu ? `${cfu}-${sid}` : "";
 
@@ -496,6 +508,39 @@ export async function studentRoleLoginExistsForStudentIdAndClubMongo(
     ...clubFolderOrId,
   });
   return Boolean(byLegacyUid);
+}
+
+/**
+ * True if Mongo `userLogin` already has a Coach row for this roster `coach_id`
+ * in the same club (by `club_folder_uid` when set, else `club_name`).
+ */
+export async function coachRoleLoginExistsForCoachIdAndClubMongo(
+  coachId: string,
+  clubFolderUid: string,
+  clubName: string,
+): Promise<boolean> {
+  const cid = String(coachId ?? "").trim();
+  const cfu = String(clubFolderUid ?? "").trim();
+  const cn = String(clubName ?? "").trim();
+  if (!cid || (!cfu && !cn)) {
+    return false;
+  }
+  const coll = await collWithIndexes();
+  const re = new RegExp(`^${escapeRegex(cid)}$`, "i");
+  const clubMatch =
+    cfu ?
+      {
+        $or: [
+          { club_folder_uid: new RegExp(`^${escapeRegex(cfu)}$`, "i") },
+          { club_id: new RegExp(`^${escapeRegex(cfu)}$`, "i") },
+        ],
+      }
+    : { club_name: new RegExp(`^${escapeRegex(cn.trim())}$`, "i") };
+  const hit = await coll.findOne({
+    usertype: "Coach",
+    $and: [{ $or: [{ coach_id: re }, { uid: re }] }, clubMatch],
+  });
+  return Boolean(hit);
 }
 
 async function maxCoachNumericFromMongo(): Promise<number> {
@@ -1000,6 +1045,8 @@ export async function insertCoachRoleMongo(input: {
   fullName: string;
   clubName: string;
   clubFolderUid?: string;
+  /** Roster CoachID from `UserList_Coach`; defaults to `uid`. */
+  coach_id?: string;
   expiryDate?: string;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
   const { creation, last } = nowDates();
@@ -1007,6 +1054,7 @@ export async function insertCoachRoleMongo(input: {
     ? parseYyyyMmDdToDate(input.expiryDate.trim())
     : null;
   const uid = input.uid.trim();
+  const coachIdField = String(input.coach_id ?? "").trim() || uid;
   const coll = await collWithIndexes();
   const cfuCoach = String(input.clubFolderUid ?? "").trim();
   const doc: UserLoginInsert = {
@@ -1022,7 +1070,7 @@ export async function insertCoachRoleMongo(input: {
     status: true,
     lastUpdate_date: last,
     Expiry_date: exp,
-    coach_id: uid,
+    coach_id: coachIdField,
     ...(cfuCoach
       ? { club_folder_uid: cfuCoach, club_id: cfuCoach }
       : {}),
@@ -1043,7 +1091,7 @@ export async function insertStudentRoleMongo(input: {
   fullName: string;
   clubName: string;
   clubFolderUid?: string;
-  /** When set, stored as Mongo `student_id` (JWT `sub` for students). Defaults to `uid`. */
+  /** When set, stored as Mongo `student_id` (JWT `sub` for students); use full roster id (e.g. `HK00004-S000004`) when linking roster. Defaults to `uid`. */
   student_id?: string;
   expiryDate?: string;
 }): Promise<{ ok: true } | { ok: false; error: string }> {

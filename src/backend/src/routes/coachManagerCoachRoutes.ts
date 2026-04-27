@@ -36,7 +36,7 @@ import {
 } from "../coachListMongo";
 import {
   appendCoachRoleLoginRow,
-  coachRoleLoginExistsForCoachIdAndClub,
+  coachRoleLoginExistsForCoachIdAndClubPreferred,
   deleteRoleLoginByUidOrMissing,
   findCoachRoleLoginByUid,
   usernameTakenForNewLoginPreferred,
@@ -550,7 +550,13 @@ export function createCoachManagerCoachRouter(): Router {
     }
     if (uniqueCoachIds.length === 1) {
       const rosterCid = uniqueCoachIds[0]!;
-      if (coachRoleLoginExistsForCoachIdAndClub(rosterCid, ctx.clubName)) {
+      if (
+        await coachRoleLoginExistsForCoachIdAndClubPreferred(
+          rosterCid,
+          ctx.clubId,
+          ctx.clubName,
+        )
+      ) {
         res.status(400).json({
           ok: false,
           error: "The Coach's User login was created before!",
@@ -578,6 +584,9 @@ export function createCoachManagerCoachRouter(): Router {
       fullName,
       clubName: ctx.clubName,
       clubFolderUid: ctx.clubId,
+      ...(uniqueCoachIds.length === 1
+        ? { rosterCoachId: uniqueCoachIds[0]! }
+        : {}),
       expiryDate,
     });
     if (!out.ok) {
@@ -590,6 +599,8 @@ export function createCoachManagerCoachRouter(): Router {
         ? "Coach login account created in MongoDB (userLogin)."
         : "Coach login account created in userLogin_Coach.",
       uid: out.uid,
+      coach_id:
+        uniqueCoachIds.length === 1 ? uniqueCoachIds[0]! : undefined,
       clubId: ctx.clubId,
       clubName: ctx.clubName,
     });
