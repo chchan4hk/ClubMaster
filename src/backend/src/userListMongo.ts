@@ -453,7 +453,7 @@ export async function studentRoleLoginExistsForStudentIdAndClubMongo(
     return false;
   }
   const coll = await collWithIndexes();
-  const clubFolderOrId =
+  const clubMatch =
     cfu ?
       {
         $or: [
@@ -461,14 +461,20 @@ export async function studentRoleLoginExistsForStudentIdAndClubMongo(
           { club_id: new RegExp(`^${escapeRegex(cfu)}$`, "i") },
         ],
       }
-    : { club_name: new RegExp(`^${escapeRegex(clubName.trim())}$`, "i") };
+    : { club_name: new RegExp(`^${escapeRegex(cn.trim())}$`, "i") };
 
-  /** Roster keys like `HK00004-S000004` stored on both `uid` and `student_id`. */
+  /**
+   * Roster keys like `HK0000003-S0000003` on `uid` / `student_id`.
+   * Must not spread `clubMatch` beside `$or` for uid/student_id — two `$or` keys collapse
+   * to one object property and the identity check is lost (false "login already exists").
+   */
   const fullKeyRe = new RegExp(`^${escapeRegex(sid)}$`, "i");
   const byFullScoped = await coll.findOne({
     usertype: "Student",
-    $or: [{ uid: fullKeyRe }, { student_id: fullKeyRe }],
-    ...clubFolderOrId,
+    $and: [
+      { $or: [{ uid: fullKeyRe }, { student_id: fullKeyRe }] },
+      clubMatch,
+    ],
   });
   if (byFullScoped) {
     return true;
@@ -486,7 +492,7 @@ export async function studentRoleLoginExistsForStudentIdAndClubMongo(
   const byRosterId = await coll.findOne({
     usertype: "Student",
     student_id: new RegExp(`^${escapeRegex(sid)}$`, "i"),
-    ...clubFolderOrId,
+    ...clubMatch,
   });
   if (byRosterId) {
     return true;
@@ -495,7 +501,7 @@ export async function studentRoleLoginExistsForStudentIdAndClubMongo(
     const byCompositeUid = await coll.findOne({
       usertype: "Student",
       uid: new RegExp(`^${escapeRegex(uidComposite)}$`, "i"),
-      ...clubFolderOrId,
+      ...clubMatch,
     });
     if (byCompositeUid) {
       return true;
@@ -505,7 +511,7 @@ export async function studentRoleLoginExistsForStudentIdAndClubMongo(
   const byLegacyUid = await coll.findOne({
     usertype: "Student",
     uid: new RegExp(`^${escapeRegex(sid)}$`, "i"),
-    ...clubFolderOrId,
+    ...clubMatch,
   });
   return Boolean(byLegacyUid);
 }
