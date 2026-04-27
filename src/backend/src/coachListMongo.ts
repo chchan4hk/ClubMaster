@@ -25,7 +25,8 @@ import {
 
 let coachListIndexesEnsured = false;
 
-async function ensureUserListCoachIndexesOnce(): Promise<void> {
+/** Ensure Mongo indexes for `UserList_Coach`. Safe to call at boot or on first roster read. */
+export async function ensureUserListCoachIndexesOnce(): Promise<void> {
   if (coachListIndexesEnsured) {
     return;
   }

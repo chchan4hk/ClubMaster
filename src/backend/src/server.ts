@@ -57,6 +57,7 @@ import {
   isValidClubFolderId,
 } from "./coachListCsv";
 import {
+  ensureUserListCoachIndexesOnce,
   findClubUidForCoachIdPreferred,
   loadCoachesPreferred,
 } from "./coachListMongo";
@@ -109,6 +110,15 @@ const sourceImageStatic = path.join(staticRoot, "source", "image");
 const dataClubStatic = path.join(backendRoot, "data_club");
 const adminDataStatic = path.join(backendRoot, "data", "admin");
 const adminUiStatic = path.join(backendRoot, "admin");
+
+/** Synchronous line write to stdout avoids interleaved startup logs under Windows / tsx watch. */
+function writeStartupLine(line: string): void {
+  try {
+    fs.writeSync(1, `${line}\n`);
+  } catch {
+    console.log(line);
+  }
+}
 
 ensureUserlistFileExists();
 ensureUserlistSchema();
@@ -590,12 +600,12 @@ app.use("/api", (req, res) => {
 
 const server = app.listen(PORT, "0.0.0.0", () => {
   const envLabel = process.env.NODE_ENV === "production" ? "production" : "development";
-  console.log(`Server listening on ${PORT} (${envLabel}).`);
-  console.log(`  Login: /main.html (same origin as this server)`);
-  console.log(`Static root: ${staticRoot}`);
-  console.log(`Backend root: ${backendRoot}`);
+  writeStartupLine(`Server listening on ${PORT} (${envLabel}).`);
+  writeStartupLine(`  Login: /main.html (same origin as this server)`);
+  writeStartupLine(`Static root: ${staticRoot}`);
+  writeStartupLine(`Backend root: ${backendRoot}`);
   if (!shouldEnableAccessLog()) {
-    console.log(
+    writeStartupLine(
       "  Logs: slow requests >= " +
         (process.env.SLOW_REQUEST_LOG_MS || "200") +
         "ms · Set ACCESS_LOG=1 for every request line · PERF_MEMORY_LOG=0 to disable 60s RSS logs.",
@@ -616,20 +626,15 @@ const server = app.listen(PORT, "0.0.0.0", () => {
         ensurePrizeListRowCollection(),
         ensureCoachSalaryCollection(),
         ensureUserListStudentIndexes(),
+        ensureUserListCoachIndexesOnce(),
         rebuildStudentIdClubIndex(),
-      ])
-        .then(() => {
-          console.log(
-            "MongoDB: `userLogin`, `basicInfo`, `clubInfo`, `LessonList`, `PaymentList`, `LessonSeriesInfo`, `LessonReserveList`, `LessonPaymentLedger`, `PrizeList`, `CoachManager`, and `UserList_Student` indexes/roster index warmed (see src/backend/src/db/DBConnection.ts).",
-          );
-        })
-        .catch((e) => {
-          const msg = e instanceof Error ? e.message : String(e);
-          console.warn(
-            "MongoDB collection init (userLogin / basicInfo / clubInfo / LessonList / PaymentList / LessonSeriesInfo / LessonReserveList / LessonPaymentLedger / PrizeList / CoachManager / UserList_Student):",
+      ]).catch((e) => {
+        const msg = e instanceof Error ? e.message : String(e);
+        writeStartupLine(
+          "MongoDB collection init (userLogin / basicInfo / clubInfo / LessonList / PaymentList / LessonSeriesInfo / LessonReserveList / LessonPaymentLedger / PrizeList / CoachManager / UserList_Student / UserList_Coach): " +
             msg,
-          );
-        });
+        );
+      });
     }, 200);
   }
 });
